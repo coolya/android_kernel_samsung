@@ -982,6 +982,18 @@ int s3c2410_dma_devconfig(enum dma_ch id, enum s3c2410_dmasrc source,
 		ch->rqcfg.src_inc = 1;
 		ch->rqcfg.dst_inc = 0;
 		break;
+	case S3C_DMA_MEM2MEM:
+		ch->req[0].rqtype = MEMTOMEM;
+		ch->req[1].rqtype = MEMTOMEM;
+		ch->rqcfg.src_inc = 1;
+		ch->rqcfg.dst_inc = 1;
+		break;
+	case S3C_DMA_MEM2MEM_SET:
+		ch->req[0].rqtype = MEMTOMEM;
+		ch->req[1].rqtype = MEMTOMEM;
+		ch->rqcfg.src_inc = 0;
+		ch->rqcfg.dst_inc = 1;
+		break;
 	default:
 		ret = -EINVAL;
 		goto devcfg_exit;
