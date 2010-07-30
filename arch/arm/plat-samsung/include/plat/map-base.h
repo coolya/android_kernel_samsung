@@ -22,7 +22,7 @@
  * an single MOVS instruction (ie, only 8 bits of set data)
  */
 
-#define S3C_ADDR_BASE	(0xF4000000)
+#define S3C_ADDR_BASE	(0xFD000000)
 
 #ifndef __ASSEMBLY__
 #define S3C_ADDR(x)	((void __iomem __force *)S3C_ADDR_BASE + (x))
