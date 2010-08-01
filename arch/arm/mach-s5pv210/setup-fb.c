@@ -25,7 +25,6 @@
 #include <linux/io.h>
 #include <mach/map.h>
 #include <mach/pd.h>
-#include <mach/gpio-bank.h>
 
 struct platform_device; /* don't need the contents */
 
