@@ -30,3 +30,11 @@ config S5P_EXT_INT
 	help
 	  Use the external interrupts (other than GPIO interrupts.)
 	  Note: Do not choose this for S5P6440.
+
+# FB part
+config S5P_DEV_FB
+	bool
+	depends on FB_S3C
+	default y
+	help
+	  Compile in platform device definitions for FIMD controller
