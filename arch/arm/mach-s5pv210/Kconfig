@@ -102,4 +102,10 @@ config MACH_S5PC110_CRESPO
 	  Machine support for Samsung CRESPO
 	  S5PC110(MCP) is one of package option of S5PV210
 
+config S5PV210_SETUP_FB
+	bool
+	depends on FB_S3C
+	default y
+	help
+	  Common setup code for FIMD controller.
 endif
