@@ -1224,7 +1224,7 @@ static int s3cfb_probe(struct platform_device *pdev)
 	}
 
 	fbdev->dev = &pdev->dev;
-#if defined(CONFIG_MACH_S5PC110_ARIES)
+#if defined(CONFIG_MACH_S5PC110_CRESPO)
 	s3cfb_set_lcd_info(fbdev);
 #endif
 

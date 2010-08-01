@@ -692,7 +692,7 @@ static int get_hwversion(void)
 	int err;
 	int hwver = -1;
 
-	err = gpio_request(S5PC11X_MP01(5), "DCI_ID");
+	err = gpio_request(S5PV210_MP01(5), "DCI_ID");
 
 	if (err) {
 		printk(KERN_ERR "failed to request MP01(5) for "
@@ -700,14 +700,14 @@ static int get_hwversion(void)
 		return err;
 	}
 
-	gpio_direction_input(S5PC11X_MP01(5));
+	gpio_direction_input(S5PV210_MP01(5));
 	
-	s3c_gpio_setpull(S5PC11X_MP01(5), S3C_GPIO_PULL_DOWN); //DIC_ID s/w Pull down
+	s3c_gpio_setpull(S5PV210_MP01(5), S3C_GPIO_PULL_DOWN); //DIC_ID s/w Pull down
 
 	//printk("++++++++++++++++++++++++++++++++++++DIC_ID s/w Pull down\n", hwver);
 	
-	hwver = gpio_get_value(S5PC11X_MP01(5));
-	gpio_free(S5PC11X_MP01(5));
+	hwver = gpio_get_value(S5PV210_MP01(5));
+	gpio_free(S5PV210_MP01(5));
 
 	if(hwver == 1)
 		printk("+++[Old_hwver] : %d\n", hwver);
@@ -1034,7 +1034,7 @@ static int __init tl2796_probe(struct spi_device *spi)
 
 	lcd.lcd_dev = lcd_device_register("s5p_lcd",&spi->dev,&lcd,&s5p_lcd_ops);
 
-	lcd.bl_dev = backlight_device_register("s5p_bl",&spi->dev,&lcd,&s5p_bl_ops);
+	lcd.bl_dev = backlight_device_register("s5p_bl",&spi->dev,&lcd,&s5p_bl_ops, NULL);
 	
 	lcd.bl_dev->props.max_brightness = 255;
 
