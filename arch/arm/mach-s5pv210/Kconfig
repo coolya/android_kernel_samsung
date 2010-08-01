@@ -19,11 +19,13 @@ config CPU_S5PV210
 
 config S5PV210_SETUP_I2C1
 	bool
+	default	y
 	help
 	  Common setup code for i2c bus 1.
 
 config S5PV210_SETUP_I2C2
 	bool
+	default	y
 	help
 	  Common setup code for i2c bus 2.
 
@@ -94,6 +96,8 @@ config MACH_S5PC110_CRESPO
 	select ARCH_DISCONTIGMEM_ENABLE
 	select S3C_DEV_WDT
 	select HAVE_S3C2410_WATCHDOG
+	select S3C_DEV_I2C1
+	select S3C_DEV_I2C2
 	help
 	  Machine support for Samsung CRESPO
 	  S5PC110(MCP) is one of package option of S5PV210
