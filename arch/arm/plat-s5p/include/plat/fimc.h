@@ -15,7 +15,7 @@
 #include <linux/videodev2.h>
 
 #define FIMC_SRC_MAX_W		1920
-#define FIMC_SRC_MAX_H		1088
+#define FIMC_SRC_MAX_H		1280
 
 struct platform_device;
 
@@ -73,6 +73,7 @@ struct s3c_platform_camera {
 	const char			srclk_name[16];	/* source of mclk name */
 	const char			clk_name[16];	/* mclk name */
 	u32				clk_rate;	/* mclk ratio */
+	struct clk			*srclk;		/* parent for mclk */
 	struct clk			*clk;		/* mclk */
 	int				line_length;	/* max length */
 	int				width;		/* default resol */
@@ -97,13 +98,17 @@ struct s3c_platform_camera {
 
 /* For camera interface driver */
 struct s3c_platform_fimc {
+	const char			srclk_name[16];		/* source of interface clock name */
+	const char			clk_name[16];		/* interface clock name */
+	const char			lclk_name[16];		/* interface clock name */
+	u32				clk_rate;		/* clockrate for interface clock */
 	enum fimc_cam_index		default_cam;		/* index of default cam */
 	struct s3c_platform_camera	*camera[5];		/* FIXME */
 	int				hw_ver;
 
 	void				(*cfg_gpio)(struct platform_device *pdev);
-	int				(*clk_on)(struct platform_device *pdev, struct clk **clk);
-	int				(*clk_off)(struct platform_device *pdev, struct clk **clk);
+	int				(*clk_on)(struct platform_device *pdev, struct clk *clk);
+	int				(*clk_off)(struct platform_device *pdev, struct clk *clk);
 };
 
 extern void s3c_fimc0_set_platdata(struct s3c_platform_fimc *fimc);
@@ -116,7 +121,7 @@ extern void s3c_fimc1_cfg_gpio(struct platform_device *pdev);
 extern void s3c_fimc2_cfg_gpio(struct platform_device *pdev);
 
 /* platform specific clock functions */
-extern int s3c_fimc_clk_on(struct platform_device *pdev, struct clk **clk);
-extern int s3c_fimc_clk_off(struct platform_device *pdev, struct clk **clk);
+extern int s3c_fimc_clk_on(struct platform_device *pdev, struct clk *clk);
+extern int s3c_fimc_clk_off(struct platform_device *pdev, struct clk *clk);
 
 #endif /*__ASM_PLAT_FIMC_H */

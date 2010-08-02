@@ -179,11 +179,7 @@ struct platform_device s3c_device_fimc0 = {
 
 static struct s3c_platform_fimc default_fimc0_data __initdata = {
 	.default_cam	= CAMERA_PAR_A,
-#if defined(CONFIG_CPU_S5PV210_EVT1)
 	.hw_ver	= 0x45,
-#else
-	.hw_ver	= 0x43,
-#endif
 };
 
 void __init s3c_fimc0_set_platdata(struct s3c_platform_fimc *pd)
@@ -205,11 +201,8 @@ void __init s3c_fimc0_set_platdata(struct s3c_platform_fimc *pd)
 
 		if (!npd->clk_off)
 			npd->clk_off = s3c_fimc_clk_off;
-#if defined(CONFIG_CPU_S5PV210_EVT1)
+
 		npd->hw_ver = 0x45;
-#else
-		npd->hw_ver = 0x43;
-#endif
 
 		s3c_device_fimc0.dev.platform_data = npd;
 	}
@@ -237,11 +230,7 @@ struct platform_device s3c_device_fimc1 = {
 
 static struct s3c_platform_fimc default_fimc1_data __initdata = {
 	.default_cam	= CAMERA_PAR_A,
-#if defined(CONFIG_CPU_S5PV210_EVT1)
 	.hw_ver	= 0x50,
-#else
-	.hw_ver	= 0x43,
-#endif
 };
 
 void __init s3c_fimc1_set_platdata(struct s3c_platform_fimc *pd)
@@ -263,11 +252,8 @@ void __init s3c_fimc1_set_platdata(struct s3c_platform_fimc *pd)
 
 		if (!npd->clk_off)
 			npd->clk_off = s3c_fimc_clk_off;
-#if defined(CONFIG_CPU_S5PV210_EVT1)
+
 		npd->hw_ver = 0x50;
-#else
-		npd->hw_ver = 0x43;
-#endif
 
 		s3c_device_fimc1.dev.platform_data = npd;
 	}
@@ -295,11 +281,7 @@ struct platform_device s3c_device_fimc2 = {
 
 static struct s3c_platform_fimc default_fimc2_data __initdata = {
 	.default_cam	= CAMERA_PAR_A,
-#if defined(CONFIG_CPU_S5PV210_EVT1)
 	.hw_ver	= 0x45,
-#else
-	.hw_ver	= 0x43,
-#endif
 };
 
 void __init s3c_fimc2_set_platdata(struct s3c_platform_fimc *pd)
@@ -321,11 +303,8 @@ void __init s3c_fimc2_set_platdata(struct s3c_platform_fimc *pd)
 
 		if (!npd->clk_off)
 			npd->clk_off = s3c_fimc_clk_off;
-#if defined(CONFIG_CPU_S5PV210_EVT1)
+
 		npd->hw_ver = 0x45;
-#else
-		npd->hw_ver = 0x43;
-#endif
 
 		s3c_device_fimc2.dev.platform_data = npd;
 	}
