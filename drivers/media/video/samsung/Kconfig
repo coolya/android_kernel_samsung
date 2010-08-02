@@ -1,0 +1,76 @@
+config VIDEO_SAMSUNG
+	bool "Samsung Multimedia Devices"
+	depends on VIDEO_CAPTURE_DRIVERS && VIDEO_V4L2
+	select VIDEO_FIXED_MINOR_RANGES
+	default n
+	---help---
+	  This is a representative video4linux configuration for Samsung multimedia devices.
+
+config VIDEO_SAMSUNG_V4L2
+	bool "V4L2 API for digital camera to be contributed by samsung"
+	depends on VIDEO_DEV && VIDEO_SAMSUNG
+	default n
+	---help---
+	 This feature is for new V4L2 APIs all about digital camera
+
+if CPU_S5PV210
+source "drivers/media/video/samsung/fimc/Kconfig"
+#source "drivers/media/video/samsung/mfc50/Kconfig"
+#source "drivers/media/video/samsung/jpeg_v2/Kconfig"
+#source "drivers/media/video/samsung/tv20/Kconfig"
+#source "drivers/media/video/samsung/tsi/Kconfig"
+if CPU_S5PV210_EVT1
+#source "drivers/media/video/samsung/rotator/Kconfig"
+#source "drivers/media/video/samsung/g2d/Kconfig"
+endif
+endif
+
+
+if VIDEO_SAMSUNG
+comment "Reserved memory configurations"
+
+config VIDEO_SAMSUNG_MEMSIZE_FIMC0
+	int "Memory size in kbytes for FIMC0"
+	depends on VIDEO_FIMC
+	default "5120"
+
+config VIDEO_SAMSUNG_MEMSIZE_FIMC1
+	int "Memory size in kbytes for FIMC1"
+	depends on VIDEO_FIMC
+	default "5120"
+
+config VIDEO_SAMSUNG_MEMSIZE_FIMC2
+	int "Memory size in kbytes for FIMC2"
+	depends on VIDEO_FIMC
+	default "5120"
+
+config VIDEO_SAMSUNG_MEMSIZE_MFC
+	int "Memory size in kbytes for MFC"
+	depends on VIDEO_MFC50 && ( VIDEO_MFC_MEM_PORT_COUNT = 1)
+	default "65536"
+
+config VIDEO_SAMSUNG_MEMSIZE_MFC0
+	int "Memory size in kbytes for MFC port0"
+	depends on VIDEO_MFC50 && (!VIDEO_MFC_MEM_PORT_COUNT = 1)
+	default "32768"
+
+config VIDEO_SAMSUNG_MEMSIZE_MFC1
+	int "Memory size in kbytes for MFC port1"
+	depends on VIDEO_MFC50 && (!VIDEO_MFC_MEM_PORT_COUNT = 1)
+	default "32768"
+
+config VIDEO_SAMSUNG_MEMSIZE_JPEG
+	int "Memory size in kbytes for JPEG"
+	depends on VIDEO_JPEG_V2 
+	default "32768"
+
+config VIDEO_SAMSUNG_MEMSIZE_TV
+        int "Memory size in kbytes for TV"
+        depends on VIDEO_TV
+        default "8192"
+
+config VIDEO_SAMSUNG_MEMSIZE_TEXSTREAM
+	int "Memory size in kbytes for Texture Stream"
+	default "6144"
+
+endif
