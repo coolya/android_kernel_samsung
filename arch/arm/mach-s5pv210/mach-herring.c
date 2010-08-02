@@ -13,6 +13,7 @@
 #include <linux/init.h>
 #include <linux/serial_core.h>
 #include <linux/gpio.h>
+#include <linux/videodev2.h>
 #include <linux/i2c.h>
 #include <linux/i2c-gpio.h>
 #include <linux/regulator/max8998.h>
@@ -43,7 +44,8 @@
 #include <plat/fb.h>
 #include <plat/iic.h>
 
-#include <plat/gpio-cfg.h>
+#include <plat/fimc.h>
+#include <plat/clock.h>
 
 struct class *sec_class;
 EXPORT_SYMBOL(sec_class);
@@ -1203,7 +1205,8 @@ static struct s3c_platform_camera s5ka3dfx = {
 /* Interface setting */
 static struct s3c_platform_fimc fimc_plat = {
 	.srclk_name	= "mout_mpll",
-	.clk_name	= "sclk_fimc_lclk",
+	.clk_name	= "sclk_fimc",
+	.lclk_name	= "sclk_fimc_lclk",
 	.clk_rate	= 166750000,
 	.default_cam	= CAMERA_PAR_A,
 	.camera		= {
@@ -2751,6 +2754,13 @@ static struct platform_device *herring_devices[] __initdata = {
 #ifdef CONFIG_FB_S3C
 	&s3c_device_fb,
 #endif
+
+#ifdef CONFIG_VIDEO_FIMC
+	&s3c_device_fimc0,
+	&s3c_device_fimc1,
+	&s3c_device_fimc2,
+#endif
+
 #ifdef CONFIG_FB_S3C_TL2796
 	&s3c_device_spi_gpio,
 #endif
@@ -3062,7 +3072,6 @@ static void __init herring_machine_init(void)
 	s3c_fimc0_set_platdata(&fimc_plat);
 	s3c_fimc1_set_platdata(&fimc_plat);
 	s3c_fimc2_set_platdata(&fimc_plat);
-	s3c_csis_set_platdata(NULL);
 #endif
 
 #ifdef CONFIG_VIDEO_MFC50
