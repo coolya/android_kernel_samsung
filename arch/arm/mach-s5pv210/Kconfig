@@ -109,19 +109,31 @@ config S5PV210_SETUP_FB
 	help
 	  Common setup code for FIMD controller.
 
-config ANDROID_PMEM_MEMSIZE_PMEM 
-	int "The size of PMEM (android)"
-	depends on ANDROID_PMEM && MACH_S5PC110_CRESPO 
-	default "16384"
+config S5PV210_SETUP_FIMC0
+	bool
+	depends on VIDEO_FIMC
+	default y
+	help
+	  Common setup code for FIMC controller 0.
 
-config ANDROID_PMEM_MEMSIZE_PMEM_GPU1 
-	int "The size of PMEM for GPU"
-	depends on ANDROID_PMEM && MACH_S5PC110_CRESPO
-	default "10240"
+config S5PV210_SETUP_FIMC1
+	bool
+	depends on VIDEO_FIMC
+	default y
+	help
+	  Common setup code for FIMC controller 1.
 
-config ANDROID_PMEM_MEMSIZE_PMEM_ADSP 
-	int "The size of PMEM for ADSP"
-	depends on ANDROID_PMEM && MACH_S5PC110_CRESPO
-	default "1024"
+config S5PV210_SETUP_FIMC2
+	bool
+	depends on VIDEO_FIMC
+	default y
+	help
+	  Common setup code for FIMC controller 2.
 
+config S5PV210_SETUP_CSIS
+	bool
+	depends on VIDEO_FIMC
+	default y
+	help
+	  Common setup code for MIPI-CSIS
 endif
