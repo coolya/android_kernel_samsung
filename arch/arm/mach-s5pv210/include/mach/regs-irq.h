@@ -16,4 +16,10 @@
 #include <asm/hardware/vic.h>
 #include <mach/map.h>
 
+/* interrupt controller */
+#define S5P_VIC0REG(x)                  ((x) + S5P_VA_VIC0)
+#define S5P_VIC1REG(x)                  ((x) + S5P_VA_VIC1)
+#define S5P_VIC2REG(x)                  ((x) + S5P_VA_VIC2)
+#define S5P_VIC3REG(x)                  ((x) + S5P_VA_VIC3)
+
 #endif /* __ASM_ARCH_REGS_IRQ_H */

@@ -192,7 +192,8 @@ struct s3c_gpio_pm s3c_gpio_pm_2bit = {
 	.resume = s3c_gpio_pm_2bit_resume,
 };
 
-#ifdef CONFIG_ARCH_S3C64XX
+#if defined(CONFIG_ARCH_S3C64XX) || defined(CONFIG_ARCH_S5PV210) 
+
 static void s3c_gpio_pm_4bit_save(struct s3c_gpio_chip *chip)
 {
 	chip->pm_save[1] = __raw_readl(chip->base + OFFS_CON);

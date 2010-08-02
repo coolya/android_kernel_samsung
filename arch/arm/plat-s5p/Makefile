@@ -20,6 +20,10 @@ obj-y				+= devs.o
 obj-y				+= bootmem.o
 obj-$(CONFIG_S5P_EXT_INT)	+= irq-eint.o
 
+obj-$(CONFIG_PM)		+= pm.o
+obj-$(CONFIG_PM)		+= irq-pm.o
+obj-$(CONFIG_PM)		+= sleep.o
+
 ifndef CONFIG_S5P_HIGH_RES_TIMERS
 obj-$(CONFIG_SYSTIMER_S5P)	+= systimer-s5p.o
 else

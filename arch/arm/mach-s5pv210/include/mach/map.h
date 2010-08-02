@@ -80,6 +80,11 @@
 #define S5PV210_PA_VIC3		(0xF2300000)
 #define S5P_PA_VIC3		S5PV210_PA_VIC3
 
+#define S5P_VA_VIC0             (S3C_VA_IRQ + 0x0)
+#define S5P_VA_VIC1             (S3C_VA_IRQ + 0x10000)
+#define S5P_VA_VIC2             (S3C_VA_IRQ + 0x20000)
+#define S5P_VA_VIC3             (S3C_VA_IRQ + 0x30000)
+
 #define S5PV210_PA_LCD	   	(0xF8000000)
 #define S5P_PA_LCD		S5PV210_PA_LCD
 #define S5PV210_SZ_LCD		SZ_1M
