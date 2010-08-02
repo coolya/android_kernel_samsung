@@ -1146,5 +1146,10 @@ config RAMOOPS
 	  This enables panic and oops messages to be logged to a circular
 	  buffer in RAM where it can be read back at some later point.
 
+config S3C_MEM
+	bool "Support for /dev/s3c-mem"
+	default y
+	help
+	  you do say Y here, you can allocate physically linear memory
 endmenu
 
