@@ -31,6 +31,11 @@
 #include <mach/gpio.h>
 #include <mach/gpio-herring.h>
 
+#ifdef CONFIG_ANDROID_PMEM
+#include <linux/android_pmem.h>
+#include <plat/media.h>
+#endif
+
 #include <plat/regs-serial.h>
 #include <plat/s5pv210.h>
 #include <plat/devs.h>
@@ -2756,6 +2761,11 @@ static struct platform_device *herring_devices[] __initdata = {
         &s3c_device_i2c4,
 	&s3c_device_i2c6,
 //	&s3c_device_i2c10, /* For touchkey */
+#ifdef CONFIG_ANDROID_PMEM
+	&pmem_device,
+	&pmem_gpu1_device,
+	&pmem_adsp_device,
+#endif
 };
 
 unsigned int HWREV=0;

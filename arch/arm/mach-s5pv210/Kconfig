@@ -108,4 +108,20 @@ config S5PV210_SETUP_FB
 	default y
 	help
 	  Common setup code for FIMD controller.
+
+config ANDROID_PMEM_MEMSIZE_PMEM 
+	int "The size of PMEM (android)"
+	depends on ANDROID_PMEM && MACH_S5PC110_CRESPO 
+	default "16384"
+
+config ANDROID_PMEM_MEMSIZE_PMEM_GPU1 
+	int "The size of PMEM for GPU"
+	depends on ANDROID_PMEM && MACH_S5PC110_CRESPO
+	default "10240"
+
+config ANDROID_PMEM_MEMSIZE_PMEM_ADSP 
+	int "The size of PMEM for ADSP"
+	depends on ANDROID_PMEM && MACH_S5PC110_CRESPO
+	default "1024"
+
 endif
