@@ -2737,6 +2737,10 @@ EXPORT_SYMBOL(s3c_config_sleep_gpio);
 
 
 static struct platform_device *herring_devices[] __initdata = {
+
+#ifdef CONFIG_RTC_DRV_S3C
+	&s5p_device_rtc,
+#endif
 	&s5pv210_device_iis0,
 	&s5pv210_device_ac97,
 	&s3c_device_wdt,
@@ -3218,7 +3222,12 @@ MACHINE_START(SMDKC110, "SMDKC110")
 	.init_irq	= s5pv210_init_irq,
 	.map_io		= herring_map_io,
 	.init_machine	= herring_machine_init,
+#if	defined(CONFIG_S5P_HIGH_RES_TIMERS)
+	.timer		= &s5p_systimer,
+#else
 	.timer		= &s3c24xx_timer,
+#endif
+
 MACHINE_END
 
 void s3c_setup_uart_cfg_gpio(unsigned char port)

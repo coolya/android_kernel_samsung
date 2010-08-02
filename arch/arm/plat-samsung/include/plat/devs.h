@@ -99,6 +99,7 @@ extern struct platform_device s5pc100_device_pcm1;
 extern struct platform_device s5pc100_device_iis0;
 extern struct platform_device s5pc100_device_iis1;
 extern struct platform_device s5pc100_device_iis2;
+extern struct platform_device s5p_device_rtc;
 
 /* s3c2440 specific devices */
 

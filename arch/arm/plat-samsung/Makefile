@@ -12,7 +12,9 @@ obj-				:=
 # Objects we always build independent of SoC choice
 
 obj-y				+= init.o
+ifndef CONFIG_S5P_HIGH_RES_TIMERS
 obj-y				+= time.o
+endif
 obj-y				+= clock.o
 obj-y				+= pwm-clock.o
 obj-y				+= gpio.o

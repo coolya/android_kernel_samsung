@@ -25,6 +25,14 @@ config PLAT_S5P
 	help
 	  Base platform code for Samsung's S5P series SoC.
 
+config SYSTIMER_S5P
+	bool
+	depends on (ARCH_S5P6442 || ARCH_S5PV210)
+	default y
+	help
+	  Support System Timer for S5P Series
+
+
 config S5P_EXT_INT
 	bool
 	help
@@ -38,3 +46,21 @@ config S5P_DEV_FB
 	default y
 	help
 	  Compile in platform device definitions for FIMD controller
+
+config S5P_HIGH_RES_TIMERS
+	bool "HRtimer and Dynamic Tick support"
+	select GENERIC_TIME
+	select GENERIC_CLOCKEVENTS
+	select HIGH_RES_TIMERS
+	select HRT_RTC
+	select NO_HZ
+	default n
+	help
+	  Support for HRtimer and Dynamic Tick system.
+
+config HRT_RTC
+	bool
+	depends on S5P_HIGH_RES_TIMERS
+	default y
+	help
+	  RTC and System timer are used as HRT

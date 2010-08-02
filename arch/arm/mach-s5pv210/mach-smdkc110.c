@@ -97,5 +97,9 @@ MACHINE_START(SMDKC110, "SMDKC110")
 	.init_irq	= s5pv210_init_irq,
 	.map_io		= smdkc110_map_io,
 	.init_machine	= smdkc110_machine_init,
+#if	defined(CONFIG_S5P_HIGH_RES_TIMERS)
+	.timer		= &s5p_systimer,
+#else
 	.timer		= &s3c24xx_timer,
+#endif
 MACHINE_END
