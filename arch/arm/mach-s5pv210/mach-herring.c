@@ -21,6 +21,7 @@
 #include <linux/delay.h>
 #include <linux/spi/spi.h>
 #include <linux/spi/spi_gpio.h>
+#include <linux/pwm_backlight.h>
 
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
@@ -1221,7 +1222,7 @@ static struct s3c_platform_fimc fimc_plat = {
 };
 #endif
 
-#if defined(CONFIG_HAVE_PWM)
+#if defined(CONFIG_BACKLIGHT_PWM)
 static struct platform_pwm_backlight_data smdk_backlight_data = {
 	.pwm_id  = 3,
 	.max_brightness = 255,
@@ -2781,6 +2782,13 @@ static struct platform_device *herring_devices[] __initdata = {
 	&pmem_gpu1_device,
 	&pmem_adsp_device,
 #endif
+
+#ifdef CONFIG_HAVE_PWM
+	&s3c_device_timer[0],
+	&s3c_device_timer[1],
+	&s3c_device_timer[2],
+	&s3c_device_timer[3],
+#endif
 };
 
 unsigned int HWREV=0;
@@ -3098,7 +3106,8 @@ static void __init herring_machine_init(void)
 #ifdef CONFIG_BATTERY_S3C
 	&sec_device_battery,
 #endif
-#if defined(CONFIG_HAVE_PWM)
+
+#if defined(CONFIG_BACKLIGHT_PWM)
 	smdk_backlight_register();
 #endif
 	jupiter_switch_init();

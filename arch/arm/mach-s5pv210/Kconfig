@@ -99,6 +99,7 @@ config MACH_S5PC110_CRESPO
 	select HAVE_S3C2410_WATCHDOG
 	select S3C_DEV_I2C1
 	select S3C_DEV_I2C2
+	select HAVE_PWM
 	help
 	  Machine support for Samsung CRESPO
 	  S5PC110(MCP) is one of package option of S5PV210
@@ -137,4 +138,20 @@ config S5PV210_SETUP_CSIS
 	default y
 	help
 	  Common setup code for MIPI-CSIS
+
+config ANDROID_PMEM_MEMSIZE_PMEM
+	int "ANDROID PMEM support for CRESPO"
+	depends on ANDROID_PMEM
+	default "16384"
+
+config ANDROID_PMEM_MEMSIZE_PMEM_GPU1
+	int "ANDROID PMEM support for CRESPO GPU"
+	depends on ANDROID_PMEM
+	default "10240"
+
+config ANDROID_PMEM_MEMSIZE_PMEM_ADSP
+	int "ANDROID PMEM support for CRESPO ADSP"
+	depends on ANDROID_PMEM
+	default "1024"
+
 endif
