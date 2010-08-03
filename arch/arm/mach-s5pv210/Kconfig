@@ -66,7 +66,8 @@ config MACH_GONI
 
 config S5PC110_DEV_ONENAND
 	bool
-	help
+	default y if CPU_S5PV210
+	help 
 	  Compile in platform device definition for OneNAND1 controller
 
 config MACH_SMDKV210

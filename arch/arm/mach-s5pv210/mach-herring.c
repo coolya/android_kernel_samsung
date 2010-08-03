@@ -2741,6 +2741,7 @@ EXPORT_SYMBOL(s3c_config_sleep_gpio);
 
 static struct platform_device *herring_devices[] __initdata = {
 
+	&s5pc110_device_onenand,
 #ifdef CONFIG_RTC_DRV_S3C
 	&s5p_device_rtc,
 #endif
@@ -2855,7 +2856,7 @@ static void __init herring_map_io(void)
 	s5pv210_reserve_bootmem();
 
 #ifdef CONFIG_MTD_ONENAND
-	s3c_device_onenand.name = "s5pc110-onenand";
+	s5pc110_device_onenand.name = "s5pc110-onenand";
 #endif
 }
 
@@ -2869,13 +2870,13 @@ static void __init herring_fixup(struct machine_desc *desc,
 	mi->bank[0].node = 0;
 
 	mi->bank[1].start = 0x40000000;
-        mi->bank[1].size = 256 * SZ_1M;
-        mi->bank[1].node = 1;
+	mi->bank[1].size = 256 * SZ_1M;
+	mi->bank[1].node = 1;
 
-        mi->bank[2].start = 0x50000000;
-        mi->bank[2].size = 128 * SZ_1M;
-        mi->bank[2].node = 2;
-        mi->nr_banks = 3;
+	mi->bank[2].start = 0x50000000;
+	mi->bank[2].size = 128 * SZ_1M;
+	mi->bank[2].node = 2;
+	mi->nr_banks = 3;
 
 }
 
@@ -3094,7 +3095,9 @@ static void __init herring_machine_init(void)
 #ifdef CONFIG_S5PV210_SETUP_SDHCI
 	s3c_sdhci_set_platdata();
 #endif
-
+#ifdef CONFIG_BATTERY_S3C
+	&sec_device_battery,
+#endif
 #if defined(CONFIG_HAVE_PWM)
 	smdk_backlight_register();
 #endif

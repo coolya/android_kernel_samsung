@@ -35,6 +35,45 @@ enum soc_type {
 	TYPE_S5PC110,
 };
 
+struct mtd_partition s3c_partition_info[] = {
+	{
+		.name		= "misc",
+		.offset		= (768*SZ_1K),          /* for bootloader */
+		.size		= (256*SZ_1K),
+		.mask_flags	= MTD_CAP_NANDFLASH,
+	},
+	{
+		.name		= "recovery",
+		.offset		= MTDPART_OFS_APPEND,
+		.size		= (5*SZ_1M),
+	},
+	{
+		.name		= "kernel",
+		.offset		= MTDPART_OFS_APPEND,
+		.size		= (5*SZ_1M),
+	},
+	{
+		.name		= "ramdisk",
+		.offset		= MTDPART_OFS_APPEND,
+		.size		= (3*SZ_1M),
+	},
+	{
+		.name		= "system",
+		.offset		= MTDPART_OFS_APPEND,
+		.size		= (90*SZ_1M),
+	},
+	{
+		.name		= "cache",
+		.offset		= MTDPART_OFS_APPEND,
+		.size		= (80*SZ_1M),
+	},
+	{
+		.name		= "userdata",
+		.offset		= MTDPART_OFS_APPEND,
+		.size		= MTDPART_SIZ_FULL,
+	}
+};
+
 #define ONENAND_ERASE_STATUS		0x00
 #define ONENAND_MULTI_ERASE_SET		0x01
 #define ONENAND_ERASE_START		0x03
@@ -782,6 +821,10 @@ static int s3c_onenand_probe(struct platform_device *pdev)
 	struct resource *r;
 	int size, err;
 	unsigned long onenand_ctrl_cfg = 0;
+#ifdef CONFIG_MTD_PARTITIONS
+	struct mtd_partition *partitions =  NULL;
+	int num_partitions = 0;
+#endif
 
 	pdata = pdev->dev.platform_data;
 	/* No need to check pdata. the platform data is optional */
@@ -928,6 +971,29 @@ static int s3c_onenand_probe(struct platform_device *pdev)
 		dev_info(&onenand->pdev->dev, "OneNAND Sync. Burst Read enabled\n");
 
 #ifdef CONFIG_MTD_PARTITIONS
+#ifdef CONFIG_MTD_CMDLINE_PARTS
+	err = parse_mtd_partitions(mtd, part_probes, &onenand->parts, 0);
+	if (err > 0)
+		add_mtd_partitions(mtd, onenand->parts, err);
+	else if (err <= 0 && pdata && pdata->parts)
+		add_mtd_partitions(mtd, pdata->parts, pdata->nr_parts);
+	else
+#endif
+	if (num_partitions <= 0) {
+		/* default partition table */
+		num_partitions = ARRAY_SIZE(s3c_partition_info);	/* pdata->nr_parts */
+		partitions = s3c_partition_info;			/* pdata->parts */
+	}
+
+	if (partitions && num_partitions > 0)
+		err = add_mtd_partitions(mtd, partitions, num_partitions);
+	else
+#endif
+		err = add_mtd_device(mtd);
+
+
+/*
+#ifdef CONFIG_MTD_PARTITIONS
 	err = parse_mtd_partitions(mtd, part_probes, &onenand->parts, 0);
 	if (err > 0)
 		add_mtd_partitions(mtd, onenand->parts, err);
@@ -936,6 +1002,7 @@ static int s3c_onenand_probe(struct platform_device *pdev)
 	else
 #endif
 		err = add_mtd_device(mtd);
+*/
 
 	platform_set_drvdata(pdev, mtd);
 
