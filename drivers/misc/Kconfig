@@ -57,6 +57,21 @@ config ANDROID_PMEM
 	bool "Android pmem allocator"
 	default y
 
+if  ANDROID_PMEM
+   comment "Reserved memory configurations"
+config ANDROID_PMEM_MEMSIZE_PMEM
+        int "Memory size in kbytes for android surface using pmem"
+        default "8192"
+
+config ANDROID_PMEM_MEMSIZE_PMEM_GPU1
+        int "Memory size in kbytes for android surface using pmem_gpu1"
+        default "3072"
+
+config ANDROID_PMEM_MEMSIZE_PMEM_ADSP
+        int "Memory size in kbytes for android surface using pmem_adsp"
+        default "6144"
+endif
+
 config ATMEL_PWM
 	tristate "Atmel AT32/AT91 PWM support"
 	depends on AVR32 || ARCH_AT91SAM9263 || ARCH_AT91SAM9RL || ARCH_AT91CAP9
