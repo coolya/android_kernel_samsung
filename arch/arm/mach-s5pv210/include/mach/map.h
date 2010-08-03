@@ -120,6 +120,18 @@
 #endif
 #define S5P_PA_SDRAM		S5PV210_PA_SDRAM
 
+/* KEYPAD IF */
+#define S5PV2XX_SZ_KEYPAD       SZ_4K
+
+#define S5PV2XX_PA_ADC          (0xE1700000)
+#define S3C_PA_ADC              S5PV2XX_PA_ADC
+
+#define S5PV2XX_PA_KEYPAD       (0xE1600000)
+#define S3C_PA_KEYPAD           S5PV2XX_PA_KEYPAD
+#define S3C_SZ_KEYPAD           S5PV2XX_SZ_KEYPAD
+
+
+
 /* I2S */
 #define S5PV210_PA_IIS0		0xEEE30000
 #define S5PV210_PA_IIS1		0xE2100000

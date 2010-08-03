@@ -15,6 +15,7 @@
 
 #include <mach/map.h>
 
+
 /* Base addresses for each of the banks */
 
 #define S5PV210_GPA0_BASE		(S5P_VA_GPIO + 0x000)

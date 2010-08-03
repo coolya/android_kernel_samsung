@@ -2746,6 +2746,7 @@ static struct platform_device *herring_devices[] __initdata = {
 #ifdef CONFIG_RTC_DRV_S3C
 	&s5p_device_rtc,
 #endif
+	&s3c_device_keypad,
 	&s5pv210_device_iis0,
 	&s5pv210_device_ac97,
 	&s3c_device_wdt,
