@@ -15,6 +15,8 @@
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <linux/platform_device.h>
+#include <linux/clk.h>
+#include <linux/err.h>
 
 #include <mach/irqs.h>
 #include <mach/map.h>
@@ -23,6 +25,8 @@
 #include <plat/iic.h>
 #include <plat/devs.h>
 #include <plat/cpu.h>
+
+#include <asm/io.h>
 
 static struct resource s3c_i2c_resource[] = {
 	[0] = {
@@ -51,8 +55,8 @@ struct platform_device s3c_device_i2c0 = {
 static struct s3c2410_platform_i2c default_i2c_data0 __initdata = {
 	.flags		= 0,
 	.slave_addr	= 0x10,
-	.frequency	= 100*1000,
-	.sda_delay	= 100,
+	.frequency	= 400*1000,
+	.sda_delay	= S3C2410_IICLC_SDA_DELAY15 | S3C2410_IICLC_FILTER_ON,
 };
 
 void __init s3c_i2c0_set_platdata(struct s3c2410_platform_i2c *pd)
@@ -70,3 +74,32 @@ void __init s3c_i2c0_set_platdata(struct s3c2410_platform_i2c *pd)
 
 	s3c_device_i2c0.dev.platform_data = npd;
 }
+
+void s3c_i2c0_force_stop()
+{
+	struct resource *ioarea;
+	void __iomem *regs;
+	struct clk *clk;
+	unsigned long iicstat;
+
+	regs = ioremap(S3C_PA_IIC, SZ_4K);
+	if(regs == NULL) {
+		printk(KERN_ERR "%s, cannot request IO\n", __func__);
+		return;
+	}
+
+	clk = clk_get(&s3c_device_i2c0.dev, "i2c");
+	if(clk == NULL || IS_ERR(clk)) {
+		printk(KERN_ERR "%s, cannot get cloock\n", __func__);
+		return;
+	}
+
+	clk_enable(clk);
+	iicstat = readl(regs + S3C2410_IICSTAT);
+	writel(iicstat & ~S3C2410_IICSTAT_TXRXEN, regs + S3C2410_IICSTAT);
+	clk_disable(clk);
+
+	iounmap(regs);
+}
+EXPORT_SYMBOL(s3c_i2c0_force_stop);
+

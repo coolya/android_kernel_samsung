@@ -24,7 +24,7 @@ struct platform_device; /* don't need the contents */
 void s3c_i2c1_cfg_gpio(struct platform_device *dev)
 {
 	s3c_gpio_cfgpin(S5PV210_GPD1(2), S3C_GPIO_SFN(2));
-	s3c_gpio_setpull(S5PV210_GPD1(2), S3C_GPIO_PULL_UP);
+	s3c_gpio_setpull(S5PV210_GPD1(2), S3C_GPIO_PULL_NONE);
 	s3c_gpio_cfgpin(S5PV210_GPD1(3), S3C_GPIO_SFN(2));
-	s3c_gpio_setpull(S5PV210_GPD1(3), S3C_GPIO_PULL_UP);
+	s3c_gpio_setpull(S5PV210_GPD1(3), S3C_GPIO_PULL_NONE);
 }

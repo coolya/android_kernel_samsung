@@ -61,4 +61,8 @@ extern void s3c_i2c0_cfg_gpio(struct platform_device *dev);
 extern void s3c_i2c1_cfg_gpio(struct platform_device *dev);
 extern void s3c_i2c2_cfg_gpio(struct platform_device *dev);
 
+extern void s3c_i2c0_force_stop(void);
+extern void s3c_i2c1_force_stop(void);
+extern void s3c_i2c2_force_stop(void);
+
 #endif /* __ASM_ARCH_IIC_H */
