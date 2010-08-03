@@ -2774,8 +2774,11 @@ static struct platform_device *herring_devices[] __initdata = {
 #if defined(CONFIG_S3C_DEV_I2C2)
 	&s3c_device_i2c2,
 #endif
-        &s3c_device_i2c4,
+	&s3c_device_i2c4,
 	&s3c_device_i2c6,
+#ifdef CONFIG_BATTERY_S3C
+	&sec_device_battery,
+#endif
 //	&s3c_device_i2c10, /* For touchkey */
 #ifdef CONFIG_ANDROID_PMEM
 	&pmem_device,
@@ -3102,9 +3105,6 @@ static void __init herring_machine_init(void)
 #endif
 #ifdef CONFIG_S5PV210_SETUP_SDHCI
 	s3c_sdhci_set_platdata();
-#endif
-#ifdef CONFIG_BATTERY_S3C
-	&sec_device_battery,
 #endif
 
 #if defined(CONFIG_BACKLIGHT_PWM)
