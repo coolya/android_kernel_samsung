@@ -56,10 +56,15 @@ struct s3c_gpio_cfg {
 	int		(*set_pull)(struct s3c_gpio_chip *chip, unsigned offs,
 				    s3c_gpio_pull_t pull);
 
+	int		(*set_pin)(struct s3c_gpio_chip *chip, unsigned offs,
+				    s3c_gpio_pull_t level);
+
 	unsigned (*get_config)(struct s3c_gpio_chip *chip, unsigned offs);
 	int	 (*set_config)(struct s3c_gpio_chip *chip, unsigned offs,
 			       unsigned config);
 };
+
+extern int		s3c_gpio_setpin(unsigned int pin, s3c_gpio_pull_t level);
 
 #define S3C_GPIO_SPECIAL_MARK	(0xfffffff0)
 #define S3C_GPIO_SPECIAL(x)	(S3C_GPIO_SPECIAL_MARK | (x))
