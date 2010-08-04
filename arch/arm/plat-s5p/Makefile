@@ -18,7 +18,7 @@ obj-y				+= clock.o
 obj-y				+= irq.o
 obj-y				+= devs.o
 obj-y				+= bootmem.o
-obj-$(CONFIG_S5P_EXT_INT)	+= irq-eint.o
+obj-$(CONFIG_S5P_EXT_INT)	+= irq-eint.o irq-eint-group.o
 
 obj-$(CONFIG_PM)		+= pm.o
 obj-$(CONFIG_PM)		+= irq-pm.o
