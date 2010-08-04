@@ -2805,6 +2805,9 @@ static struct platform_device *herring_devices[] __initdata = {
 	&s3c_device_timer[2],
 	&s3c_device_timer[3],
 #endif
+#ifdef CONFIG_TOUCHSCREEN_QT602240
+	&s3c_device_qtts,
+#endif
 };
 
 unsigned int HWREV=0;
