@@ -236,9 +236,29 @@ config S3C_DMA
 
 config S3C_PL330_DMA
 	bool
-	select PL330
 	help
 	  S3C DMA API Driver for PL330 DMAC.
+
+config S5P_DMA_PL330
+	bool
+	depends on ARCH_S5PV210
+	default y
+	help
+	  Support DMA PL330 for all SAMSUNG S5P SOCs.
+
+choice
+	prompt "Select PL330 DMA Driver"
+	depends on S5P_DMA_PL330
+	
+config OLD_DMA_PL330
+	bool "OLD S3C DMA Driver"
+
+config NEW_DMA_PL330
+	bool "NEW S3C DMA Driver"
+	select PL330
+	
+endchoice
+
 
 comment "Power management"
 

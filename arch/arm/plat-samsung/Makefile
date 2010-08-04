@@ -55,7 +55,8 @@ obj-$(CONFIG_SAMSUNG_DEV_TS)	+= dev-ts.o
 
 obj-$(CONFIG_S3C_DMA)		+= dma.o
 
-obj-$(CONFIG_S3C_PL330_DMA)	+= s3c-pl330.o
+obj-$(CONFIG_OLD_DMA_PL330)	+= dma-pl330.o
+obj-$(CONFIG_NEW_DMA_PL330)	+= s3c-pl330.o
 
 # PM support
 
