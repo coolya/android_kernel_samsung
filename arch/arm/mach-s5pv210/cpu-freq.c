@@ -1,11 +1,8 @@
-/*
- *  linux/arch/arm/plat-s5pc11x/s5pc11x-cpufreq.c
+/*  linux/arch/arm/mach-s5pv210/cpu-freq.c
  *
- *  CPU frequency scaling for S5PC110
+ *  Copyright (C) 2010 Samsung Electronics Co., Ltd.
  *
- *  Copyright (C) 2008 Samsung Electronics
- *
- *  Based on cpu-sa1110.c, Copyright (C) 2001 Russell King
+ *  CPUFreq driver support for S5PC110/S5PV210
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -246,7 +243,7 @@ struct S5PC110_clk_info clk_info[] = {
 }
 };
 
-u32		onenand_if_base	= 0x00;
+unsigned long onenand_if_base = 0x00;
 
 static u32 s5p_cpu_clk_tab_size(void)
 {
