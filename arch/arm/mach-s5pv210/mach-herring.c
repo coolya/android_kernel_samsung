@@ -2781,6 +2781,14 @@ static struct platform_device *herring_devices[] __initdata = {
 #endif
 	&s3c_device_i2c4,
 	&s3c_device_i2c6,
+	&s3c_device_i2c7,
+#ifdef CONFIG_USB_GADGET
+	&s3c_device_usbgadget,
+#endif
+#ifdef CONFIG_USB_ANDROID
+	&s3c_device_android_usb,
+	&s3c_device_usb_mass_storage,
+#endif
 #ifdef CONFIG_BATTERY_S3C
 	&sec_device_battery,
 #endif
@@ -3127,18 +3135,25 @@ static void __init herring_machine_init(void)
 /* Initializes OTG Phy. */
 void otg_phy_init(void)
 {
+	printk("PKD::%s::%d\n",__func__,__LINE__);
 	__raw_writel(__raw_readl(S5P_USB_PHY_CONTROL)
 		|(0x1<<0), S5P_USB_PHY_CONTROL); /*USB PHY0 Enable */
+	printk("PKD::%s::%d\n",__func__,__LINE__);
 	__raw_writel((__raw_readl(S3C_USBOTG_PHYPWR)
 		&~(0x3<<3)&~(0x1<<0))|(0x1<<5), S3C_USBOTG_PHYPWR);
+	printk("PKD::%s::%d\n",__func__,__LINE__);
 	__raw_writel((__raw_readl(S3C_USBOTG_PHYCLK)
 		&~(0x5<<2))|(0x3<<0), S3C_USBOTG_PHYCLK);
+	printk("PKD::%s::%d\n",__func__,__LINE__);
 	__raw_writel((__raw_readl(S3C_USBOTG_RSTCON)
 		&~(0x3<<1))|(0x1<<0), S3C_USBOTG_RSTCON);
+	printk("PKD::%s::%d\n",__func__,__LINE__);
 	udelay(10);
 	__raw_writel(__raw_readl(S3C_USBOTG_RSTCON)
 		&~(0x7<<0), S3C_USBOTG_RSTCON);
+	printk("PKD::%s::%d\n",__func__,__LINE__);
 	udelay(10);
+	printk("PKD::%s::%d\n",__func__,__LINE__);
 }
 EXPORT_SYMBOL(otg_phy_init);
 
@@ -3160,7 +3175,7 @@ void usb_host_phy_init(void)
 {
 	struct clk *otg_clk;
 
-	otg_clk = clk_get(NULL, "usbotg");
+	otg_clk = clk_get(NULL, "otg");
 	clk_enable(otg_clk);
 
 	if (readl(S5P_USB_PHY_CONTROL) & (0x1<<1))
