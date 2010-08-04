@@ -249,7 +249,15 @@
 
 #define EINT_REG_NR(x)			(EINT_OFFSET(x) >> 3)
 
+#define eint_offset(irq)		((irq) < IRQ_EINT16_31 ? ((irq)-IRQ_EINT0)\
+						: (irq-S5P_IRQ_EINT_BASE))
+
 #define eint_irq_to_bit(irq)		(1 << (EINT_OFFSET(irq) & 0x7))
+
+#define eint_conf_reg(irq)		((eint_offset(irq)) >> 3)
+#define eint_filt_reg(irq)		((eint_offset(irq)) >> 2)
+#define eint_mask_reg(irq)		((eint_offset(irq)) >> 3)
+#define eint_pend_reg(irq)		((eint_offset(irq)) >> 3)
 
 /* values for S5P_EXTINT0 */
 #define S5P_EXTINT_LOWLEV		(0x00)
