@@ -366,6 +366,8 @@ static int mmc_sdio_init_card(struct mmc_host *host, u32 ocr,
 		card = oldcard;
 		return 0;
 	}
+	else
+		host->card = card;
 
 	/*
 	 * Switch to high-speed (if supported).
@@ -396,13 +398,13 @@ static int mmc_sdio_init_card(struct mmc_host *host, u32 ocr,
 	if (err)
 		goto remove;
 
-	if (!oldcard)
-		host->card = card;
 	return 0;
 
 remove:
-	if (!oldcard)
+	if (!oldcard) {
 		mmc_remove_card(card);
+		host->card = NULL;
+	}
 
 err:
 	return err;

@@ -280,7 +280,10 @@ void mmc_set_data_timeout(struct mmc_data *data, const struct mmc_card *card)
 	 * SDIO cards only define an upper 1 s limit on access.
 	 */
 	if (mmc_card_sdio(card)) {
-		data->timeout_ns = 1000000000;
+		if (card->host->caps & MMC_CAP_ATHEROS_WIFI)
+			data->timeout_ns = 2000000000;
+		else
+			data->timeout_ns = 1000000000;
 		data->timeout_clks = 0;
 		return;
 	}
@@ -921,7 +924,10 @@ static void mmc_power_up(struct mmc_host *host)
 	 * This delay should be sufficient to allow the power supply
 	 * to reach the minimum voltage.
 	 */
-	mmc_delay(10);
+	if (host->caps & MMC_CAP_ATHEROS_WIFI)
+		mmc_delay(400);
+	else
+		mmc_delay(10);
 
 	host->ios.clock = host->f_min;
 
@@ -1114,8 +1120,18 @@ void mmc_rescan(struct work_struct *work)
 	mmc_bus_get(host);
 
 	/* if there is a card registered, check whether it is still present */
-	if ((host->bus_ops != NULL) && host->bus_ops->detect && !host->bus_dead)
-		host->bus_ops->detect(host);
+	if ((host->bus_ops != NULL) && host->bus_ops->detect && !host->bus_dead) {
+		if(host->ops->get_cd && host->ops->get_cd(host) == 0) {
+			if(host->bus_ops->remove)
+				host->bus_ops->remove(host);
+
+			mmc_claim_host(host);
+			mmc_detach_bus(host);
+			mmc_release_host(host);
+		}
+		else
+			host->bus_ops->detect(host);
+	}
 
 	/* If the card was removed the bus will be marked
 	 * as dead - extend the wakelock so userspace
@@ -1316,6 +1332,13 @@ int mmc_card_can_sleep(struct mmc_host *host)
 	return 0;
 }
 EXPORT_SYMBOL(mmc_card_can_sleep);
+
+void mmc_card_adjust_cfg(struct mmc_host *host, int rw)
+{
+	if(host->ops->adjust_cfg)
+		host->ops->adjust_cfg(host, rw);
+}
+EXPORT_SYMBOL(mmc_card_adjust_cfg);
 
 #ifdef CONFIG_PM
 
