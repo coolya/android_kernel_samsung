@@ -19,12 +19,14 @@ config CPU_S5PV210
 
 config S5PV210_SETUP_I2C1
 	bool
+	depends on S3C_DEV_I2C1
 	default	y
 	help
 	  Common setup code for i2c bus 1.
 
 config S5PV210_SETUP_I2C2
 	bool
+	depends on S3C_DEV_I2C2
 	default	y
 	help
 	  Common setup code for i2c bus 2.
@@ -64,6 +66,25 @@ config MACH_GONI
 	  Machine support for Samsung GONI board
 	  S5PC110(MCP) is one of package option of S5PV210
 
+comment "MMC/SD slot setup"
+depends on PLAT_S5P
+
+menu "Use 8-bit bus width"
+config S5PV210_SD_CH0_8BIT
+bool "Channel 0"
+depends on PLAT_S5P
+default n
+help
+IF channel 0 uses 8-bit bus, channel 1 is disabled.
+
+config S5PV210_SD_CH2_8BIT
+bool "Channel 2"
+depends on PLAT_S5P
+default n
+help
+IF channel 2 uses 8-bit bus, channel 3 is disabled.
+endmenu
+
 config S5PC110_DEV_ONENAND
 	bool
 	default y if CPU_S5PV210
@@ -97,9 +118,13 @@ config MACH_S5PC110_CRESPO
 	select ARCH_DISCONTIGMEM_ENABLE
 	select S3C_DEV_WDT
 	select HAVE_S3C2410_WATCHDOG
-	select S3C_DEV_I2C1
 	select S3C_DEV_I2C2
 	select HAVE_PWM
+	select S3C_DEV_HSMMC
+	select S3C_DEV_HSMMC1 if !S5PV210_SD_CH0_8BIT
+	select S3C_DEV_HSMMC2
+	select S3C_DEV_HSMMC3 if !S5PV210_SD_CH2_8BIT
+	select S5PV210_SETUP_SDHCI
 	help
 	  Machine support for Samsung CRESPO
 	  S5PC110(MCP) is one of package option of S5PV210

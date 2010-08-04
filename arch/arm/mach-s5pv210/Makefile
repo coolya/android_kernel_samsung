@@ -23,6 +23,8 @@ obj-$(CONFIG_MACH_SMDKC110)	+= mach-smdkc110.o
 obj-$(CONFIG_MACH_GONI)		+= mach-goni.o
 obj-$(CONFIG_MACH_S5PC110_CRESPO)	+= mach-herring.o
 
+obj-$(CONFIG_S5PV210_SETUP_SDHCI)       += setup-sdhci.o
+
 # device support
 
 obj-y				+= dev-audio.o

@@ -44,7 +44,7 @@
 #include <plat/cpu.h>
 #include <plat/fb.h>
 #include <plat/iic.h>
-
+#include <plat/sdhci.h>
 #include <plat/fimc.h>
 #include <plat/clock.h>
 
@@ -89,6 +89,7 @@ static void jupiter_switch_init(void)
 				 S5PV210_UFCON_RXTRIG4)
 
 extern void s5pv210_reserve_bootmem(void);
+extern void s3c_sdhci_set_platdata(void);
 
 static struct s3c2410_uartcfg herring_uartcfgs[] __initdata = {
 	[0] = {
@@ -3038,8 +3039,13 @@ static void __init herring_machine_init(void)
 
 	/* i2c */
 	s3c_i2c0_set_platdata(NULL);
+#ifdef CONFIG_S3C_DEV_I2C1
 	s3c_i2c1_set_platdata(NULL);
+#endif
+
+#ifdef CONFIG_S3C_DEV_I2C2
 	s3c_i2c2_set_platdata(NULL);
+#endif
 	i2c_register_board_info(0, i2c_devs0, ARRAY_SIZE(i2c_devs0));
 	i2c_register_board_info(1, i2c_devs1, ARRAY_SIZE(i2c_devs1));
 	i2c_register_board_info(2, i2c_devs2, ARRAY_SIZE(i2c_devs2));
