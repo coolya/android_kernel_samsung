@@ -292,7 +292,6 @@ typedef struct {
  * C U S T O M  I O C T L S
  *
 */
-#define FBIO_WAITFORVSYNC		_IO('F', 32)
 #define S3CFB_WIN_POSITION		_IOW('F', 203, \
 						struct s3cfb_user_window)
 #define S3CFB_WIN_SET_PLANE_ALPHA	_IOW('F', 204, \
