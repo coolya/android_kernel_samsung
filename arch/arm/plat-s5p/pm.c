@@ -1,253 +1,23 @@
 /* linux/arch/arm/plat-s5p/pm.c
  *
  * Copyright (c) 2010 Samsung Electronics Co., Ltd.
- *              http://www.samsung.com/
+ *		http://www.samsung.com
  *
  * S5P Power Manager (Suspend-To-RAM) support
  *
- * Based on arch/arm/mach-pxa/pm.c
+ * Based on arch/arm/plat-s3c24xx/pm.c
+ * Copyright (c) 2004,2006 Simtec Electronics
+ *	Ben Dooks <ben@simtec.co.uk>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
 */
 
-#include <linux/init.h>
 #include <linux/suspend.h>
-#include <linux/errno.h>
-#include <linux/time.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/crc32.h>
-#include <linux/ioport.h>
-#include <linux/delay.h>
-#include <linux/serial_core.h>
-#include <linux/io.h>
-#include <linux/platform_device.h>
-
-#include <asm/cacheflush.h>
-#include <mach/hardware.h>
-
-#include <plat/map-base.h>
-#include <plat/regs-serial.h>
-#include <plat/regs-timer.h>
-#include <mach/regs-clock.h>
-#include <plat/gpio-cfg.h>
-#include <mach/regs-mem.h>
-#include <mach/regs-irq.h>
-#include <mach/regs-gpio.h>
-#include <linux/gpio.h>
-#include <asm/mach/time.h>
-
 #include <plat/pm.h>
-#include <mach/irqs.h>
 
 #define PFX "s5p pm: "
-
-static struct sleep_save core_save[] = {
-/* PLL Control */
-	SAVE_ITEM(S5P_APLL_CON),
-	SAVE_ITEM(S5P_MPLL_CON),
-	SAVE_ITEM(S5P_EPLL_CON),
-	SAVE_ITEM(S5P_VPLL_CON),
-/* Clock source */
-	SAVE_ITEM(S5P_CLK_SRC0),
-	SAVE_ITEM(S5P_CLK_SRC1),
-	SAVE_ITEM(S5P_CLK_SRC2),
-	SAVE_ITEM(S5P_CLK_SRC3),
-	SAVE_ITEM(S5P_CLK_SRC4),
-	SAVE_ITEM(S5P_CLK_SRC5),
-	SAVE_ITEM(S5P_CLK_SRC6),
-/* Clock source Mask */
-	SAVE_ITEM(S5P_CLK_SRC_MASK0),
-	SAVE_ITEM(S5P_CLK_SRC_MASK1),
-/* Clock Divider */
-	SAVE_ITEM(S5P_CLK_DIV0),
-	SAVE_ITEM(S5P_CLK_DIV1),
-	SAVE_ITEM(S5P_CLK_DIV2),
-	SAVE_ITEM(S5P_CLK_DIV3),
-	SAVE_ITEM(S5P_CLK_DIV4),
-	SAVE_ITEM(S5P_CLK_DIV5),
-	SAVE_ITEM(S5P_CLK_DIV6),
-	SAVE_ITEM(S5P_CLK_DIV7),
-/* Clock Main Main Gate */
-	SAVE_ITEM(S5P_CLKGATE_MAIN0),
-	SAVE_ITEM(S5P_CLKGATE_MAIN1),
-	SAVE_ITEM(S5P_CLKGATE_MAIN2),
-/* Clock source Peri Gate */
-	SAVE_ITEM(S5P_CLKGATE_PERI0),
-	SAVE_ITEM(S5P_CLKGATE_PERI1),
-/* Clock source SCLK Gate */
-	SAVE_ITEM(S5P_CLKGATE_SCLK0),
-	SAVE_ITEM(S5P_CLKGATE_SCLK1),
-/* Clock IP Clock gate */
-	SAVE_ITEM(S5P_CLKGATE_IP0),
-	SAVE_ITEM(S5P_CLKGATE_IP1),
-	SAVE_ITEM(S5P_CLKGATE_IP2),
-	SAVE_ITEM(S5P_CLKGATE_IP3),
-	SAVE_ITEM(S5P_CLKGATE_IP4),
-/* Clock Blcok and Bus gate */
-	SAVE_ITEM(S5P_CLKGATE_BLOCK),
-	SAVE_ITEM(S5P_CLKGATE_BUS0),
-/* Clock ETC */
-	SAVE_ITEM(S5P_CLK_OUT),
-	SAVE_ITEM(S5P_MDNIE_SEL),
-/* PWM Register */
-	SAVE_ITEM(S3C2410_TCFG0),
-	SAVE_ITEM(S3C2410_TCFG1),
-	SAVE_ITEM(S3C64XX_TINT_CSTAT),
-	SAVE_ITEM(S3C2410_TCON),
-	SAVE_ITEM(S3C2410_TCNTB(0)),
-	SAVE_ITEM(S3C2410_TCMPB(0)),
-	SAVE_ITEM(S3C2410_TCNTO(0)),
-};
-
-static struct sleep_save sromc_save[] = {
-	SAVE_ITEM(S5P_SROM_BW),
-	SAVE_ITEM(S5P_SROM_BC0),
-	SAVE_ITEM(S5P_SROM_BC1),
-	SAVE_ITEM(S5P_SROM_BC2),
-	SAVE_ITEM(S5P_SROM_BC3),
-	SAVE_ITEM(S5P_SROM_BC4),
-	SAVE_ITEM(S5P_SROM_BC5),
-};
- 
-static struct sleep_save gpio_save_ext[] = {
-
-	SAVE_ITEM(S5P_EINT_CON(0)),
-	SAVE_ITEM(S5P_EINT_CON(1)),
-	SAVE_ITEM(S5P_EINT_CON(2)),
-	SAVE_ITEM(S5P_EINT_CON(3)),
-
-	SAVE_ITEM(S5P_EINT_MASK(0)),
-	SAVE_ITEM(S5P_EINT_MASK(1)),
-	SAVE_ITEM(S5P_EINT_MASK(2)),
-	SAVE_ITEM(S5P_EINT_MASK(3)),
-
-	SAVE_ITEM(S5P_EINT_FLTCON(0,0)),
-	SAVE_ITEM(S5P_EINT_FLTCON(0,1)),
-	SAVE_ITEM(S5P_EINT_FLTCON(1,0)),
-	SAVE_ITEM(S5P_EINT_FLTCON(1,1)),
-	SAVE_ITEM(S5P_EINT_FLTCON(2,0)),
-	SAVE_ITEM(S5P_EINT_FLTCON(2,1)),
-	SAVE_ITEM(S5P_EINT_FLTCON(3,0)),
-	SAVE_ITEM(S5P_EINT_FLTCON(3,1)),
-};
-
-/*gpio group interrupt*/
-static struct sleep_save gpio_save_gpio_int[] = {
-
-	SAVE_ITEM(S5PV210_GPA0_INT_CON),
-	SAVE_ITEM(S5PV210_GPA1_INT_CON),
-	SAVE_ITEM(S5PV210_GPB_INT_CON),
-	SAVE_ITEM(S5PV210_GPC0_INT_CON),
-	SAVE_ITEM(S5PV210_GPC1_INT_CON),
-	SAVE_ITEM(S5PV210_GPD0_INT_CON),
-	SAVE_ITEM(S5PV210_GPD1_INT_CON),
-	SAVE_ITEM(S5PV210_GPE0_INT_CON),
-	SAVE_ITEM(S5PV210_GPE1_INT_CON),
-	SAVE_ITEM(S5PV210_GPF0_INT_CON),
-	SAVE_ITEM(S5PV210_GPF1_INT_CON),
-	SAVE_ITEM(S5PV210_GPF2_INT_CON),
-	SAVE_ITEM(S5PV210_GPF3_INT_CON),
-	SAVE_ITEM(S5PV210_GPG0_INT_CON),
-	SAVE_ITEM(S5PV210_GPG1_INT_CON),
-	SAVE_ITEM(S5PV210_GPG2_INT_CON),
-	SAVE_ITEM(S5PV210_GPG3_INT_CON),
-	SAVE_ITEM(S5PV210_GPJ0_INT_CON),
-	SAVE_ITEM(S5PV210_GPJ1_INT_CON),
-	SAVE_ITEM(S5PV210_GPJ2_INT_CON),
-	SAVE_ITEM(S5PV210_GPJ3_INT_CON),
-	SAVE_ITEM(S5PV210_GPJ4_INT_CON),
-
-	SAVE_ITEM(S5PV210_GPA0_INT_MASK),
-	SAVE_ITEM(S5PV210_GPA1_INT_MASK),
-	SAVE_ITEM(S5PV210_GPB_INT_MASK),
-	SAVE_ITEM(S5PV210_GPC0_INT_MASK),
-	SAVE_ITEM(S5PV210_GPC1_INT_MASK),
-	SAVE_ITEM(S5PV210_GPD0_INT_MASK),
-	SAVE_ITEM(S5PV210_GPD1_INT_MASK),
-	SAVE_ITEM(S5PV210_GPE0_INT_MASK),
-	SAVE_ITEM(S5PV210_GPE1_INT_MASK),
-	SAVE_ITEM(S5PV210_GPF0_INT_MASK),
-	SAVE_ITEM(S5PV210_GPF1_INT_MASK),
-	SAVE_ITEM(S5PV210_GPF2_INT_MASK),
-	SAVE_ITEM(S5PV210_GPF3_INT_MASK),
-	SAVE_ITEM(S5PV210_GPG0_INT_MASK),
-	SAVE_ITEM(S5PV210_GPG1_INT_MASK),
-	SAVE_ITEM(S5PV210_GPG2_INT_MASK),
-	SAVE_ITEM(S5PV210_GPG3_INT_MASK),
-	SAVE_ITEM(S5PV210_GPJ0_INT_MASK),
-	SAVE_ITEM(S5PV210_GPJ1_INT_MASK),
-	SAVE_ITEM(S5PV210_GPJ2_INT_MASK),
-	SAVE_ITEM(S5PV210_GPJ3_INT_MASK),
-	SAVE_ITEM(S5PV210_GPJ4_INT_MASK),
-
-	SAVE_ITEM(S5PV210_GPA0_INT_FLTCON0),
-	SAVE_ITEM(S5PV210_GPA0_INT_FLTCON1),
-	SAVE_ITEM(S5PV210_GPA1_INT_FLTCON0),
-	SAVE_ITEM(S5PV210_GPA1_INT_FLTCON1),
-	SAVE_ITEM(S5PV210_GPB_INT_FLTCON0),
-	SAVE_ITEM(S5PV210_GPB_INT_FLTCON1),
-	SAVE_ITEM(S5PV210_GPC0_INT_FLTCON0),
-	SAVE_ITEM(S5PV210_GPC0_INT_FLTCON1),
-	SAVE_ITEM(S5PV210_GPC1_INT_FLTCON0),
-	SAVE_ITEM(S5PV210_GPC1_INT_FLTCON1),
-	SAVE_ITEM(S5PV210_GPD0_INT_FLTCON0),
-	SAVE_ITEM(S5PV210_GPD0_INT_FLTCON1),
-	SAVE_ITEM(S5PV210_GPD1_INT_FLTCON0),
-	SAVE_ITEM(S5PV210_GPD1_INT_FLTCON1),
-	SAVE_ITEM(S5PV210_GPE0_INT_FLTCON0),
-	SAVE_ITEM(S5PV210_GPE0_INT_FLTCON1),
-	SAVE_ITEM(S5PV210_GPE1_INT_FLTCON0),
-	SAVE_ITEM(S5PV210_GPE1_INT_FLTCON1),
-	SAVE_ITEM(S5PV210_GPF0_INT_FLTCON0),
-	SAVE_ITEM(S5PV210_GPF0_INT_FLTCON1),
-	SAVE_ITEM(S5PV210_GPF1_INT_FLTCON0),
-	SAVE_ITEM(S5PV210_GPF1_INT_FLTCON1),
-	SAVE_ITEM(S5PV210_GPF2_INT_FLTCON0),
-	SAVE_ITEM(S5PV210_GPF2_INT_FLTCON1),
-	SAVE_ITEM(S5PV210_GPF3_INT_FLTCON0),
-	SAVE_ITEM(S5PV210_GPF3_INT_FLTCON1),
-	SAVE_ITEM(S5PV210_GPG0_INT_FLTCON0),
-	SAVE_ITEM(S5PV210_GPG0_INT_FLTCON1),
-	SAVE_ITEM(S5PV210_GPG1_INT_FLTCON0),
-	SAVE_ITEM(S5PV210_GPG1_INT_FLTCON1),
-	SAVE_ITEM(S5PV210_GPG2_INT_FLTCON0),
-	SAVE_ITEM(S5PV210_GPG2_INT_FLTCON1),
-	SAVE_ITEM(S5PV210_GPG3_INT_FLTCON0),
-	SAVE_ITEM(S5PV210_GPG3_INT_FLTCON1),
-	SAVE_ITEM(S5PV210_GPJ0_INT_FLTCON0),
-	SAVE_ITEM(S5PV210_GPJ0_INT_FLTCON1),
-	SAVE_ITEM(S5PV210_GPJ1_INT_FLTCON0),
-	SAVE_ITEM(S5PV210_GPJ1_INT_FLTCON1),
-	SAVE_ITEM(S5PV210_GPJ2_INT_FLTCON0),
-	SAVE_ITEM(S5PV210_GPJ2_INT_FLTCON1),
-	SAVE_ITEM(S5PV210_GPJ3_INT_FLTCON0),
-	SAVE_ITEM(S5PV210_GPJ3_INT_FLTCON1),
-	SAVE_ITEM(S5PV210_GPJ4_INT_FLTCON0),
-	SAVE_ITEM(S5PV210_GPJ4_INT_FLTCON1),
-
-};
-
-/* this lot should be really saved by the IRQ code */
-/* VICXADDRESSXX initilaization to be needed */
-static struct sleep_save irq_save[] = {
-	SAVE_ITEM(S5P_VIC0REG(VIC_INT_SELECT)),
-	SAVE_ITEM(S5P_VIC1REG(VIC_INT_SELECT)),
-	SAVE_ITEM(S5P_VIC2REG(VIC_INT_SELECT)),
-	SAVE_ITEM(S5P_VIC3REG(VIC_INT_SELECT)),
-	SAVE_ITEM(S5P_VIC0REG(VIC_INT_ENABLE)),
-	SAVE_ITEM(S5P_VIC1REG(VIC_INT_ENABLE)),
-	SAVE_ITEM(S5P_VIC2REG(VIC_INT_ENABLE)),
-	SAVE_ITEM(S5P_VIC3REG(VIC_INT_ENABLE)),
-	SAVE_ITEM(S5P_VIC0REG(VIC_INT_SOFT)),
-	SAVE_ITEM(S5P_VIC1REG(VIC_INT_SOFT)),
-	SAVE_ITEM(S5P_VIC2REG(VIC_INT_SOFT)),
-	SAVE_ITEM(S5P_VIC3REG(VIC_INT_SOFT)),
-};
-
-
 
 /* s3c_pm_check_resume_pin
  *
@@ -257,7 +27,7 @@ static struct sleep_save irq_save[] = {
 
 static void s3c_pm_check_resume_pin(unsigned int pin, unsigned int irqoffs)
 {
-
+	/* nothing here yet */
 }
 
 /* s3c_pm_configure_extint
@@ -267,30 +37,16 @@ static void s3c_pm_check_resume_pin(unsigned int pin, unsigned int irqoffs)
 
 void s3c_pm_configure_extint(void)
 {
-
-	/* for each of the external interrupts (EINT0..EINT15) we
-	 * need to check wether it is an external interrupt source,
-	 * and then configure it as an input if it is not
-	*/
-	__raw_writel(s3c_irqwake_eintmask, S5P_EINT_WAKEUP_MASK);
+	/* nothing here yet */
 }
-
 
 void s3c_pm_restore_core(void)
 {
-	s3c_pm_do_restore_core(core_save, ARRAY_SIZE(core_save));
-	s3c_pm_do_restore(sromc_save, ARRAY_SIZE(sromc_save));
-	s3c_pm_do_restore(gpio_save_ext, ARRAY_SIZE(gpio_save_ext));
-	s3c_pm_do_restore(gpio_save_gpio_int, ARRAY_SIZE(gpio_save_gpio_int));
-	s3c_pm_do_restore(irq_save, ARRAY_SIZE(irq_save));
+	/* nothing here yet */
 }
 
 void s3c_pm_save_core(void)
 {
-	s3c_pm_do_save(sromc_save, ARRAY_SIZE(sromc_save));
-	s3c_pm_do_save(core_save, ARRAY_SIZE(core_save));
-	s3c_pm_do_save(gpio_save_ext, ARRAY_SIZE(gpio_save_ext));
-	s3c_pm_do_save(gpio_save_gpio_int, ARRAY_SIZE(gpio_save_gpio_int));
-	s3c_pm_do_save(irq_save, ARRAY_SIZE(irq_save));
+	/* nothing here yet */
 }
 

@@ -138,9 +138,6 @@
 #define S5P_EINT_BASE2		(IRQ_VIC_END + 1)
 #define S5P_IRQ_EINT_BASE   S5P_EINT_BASE2
 
-#define IRQ_EINT_BIT(x)		((x) < IRQ_EINT16_31 ? (x - IRQ_EINT0) :\
-				(x - S5P_EINT_BASE2))
-
 #define S5P_EINT(x)    ((x) + S5P_IRQ_EINT_BASE)
 
 

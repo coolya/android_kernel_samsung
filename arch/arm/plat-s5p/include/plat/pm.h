@@ -17,12 +17,11 @@
 #include <mach/cpuidle.h>
 #endif /* CONFIG_S5P_LPAUDIO */
 
-#ifdef CONFIG_PM
+#if defined(CONFIG_PM)
 
 extern __init int s3c_pm_init(void);
 
 #else
-
 static inline int s3c_pm_init(void)
 {
 	return 0;

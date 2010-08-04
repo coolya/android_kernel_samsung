@@ -15,7 +15,7 @@
  * management
 */
 
-#ifdef CONFIG_PM
+#if defined(CONFIG_PM)
 
 extern __init int s3c_pm_init(void);
 

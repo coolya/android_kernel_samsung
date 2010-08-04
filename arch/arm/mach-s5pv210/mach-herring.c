@@ -3042,7 +3042,6 @@ static void __init herring_machine_init(void)
 	//s3c_device_onenand.dev.platform_data = &s5p_onenand_data;
 #endif
 
-
 	qt_touch_init();
 
 #ifdef CONFIG_DM9000
@@ -3100,11 +3099,9 @@ static void __init herring_machine_init(void)
 	s3c_adc_set_platdata(&s3c_adc_platform);
 #endif
 
-#if 0 /* will be initialized at pm.c */
 #if defined(CONFIG_PM)
 	s3c_pm_init();
 //	s5pc11x_pm_init();
-#endif
 #endif
 
 #ifdef CONFIG_VIDEO_FIMC

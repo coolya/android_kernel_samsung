@@ -94,4 +94,6 @@
 						((irq) - S5P_EINT_BASE1) : \
 						((irq) + 16 - S5P_EINT_BASE2))
 
+#define IRQ_EINT_BIT(x)		EINT_OFFSET(x)
+
 #endif /* __ASM_PLAT_S5P_IRQS_H */
