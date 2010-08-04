@@ -10,6 +10,7 @@
 #include <linux/cpufreq.h>
 
 //extern void s5pc110_lock_power_domain(unsigned int nToken);
+#define MHZ	(1000 * 1000)
 
 #define MAXIMUM_FREQ 1000000
 #define USE_FREQ_TABLE
