@@ -24,7 +24,6 @@
 #include <plat/sdhci.h>
 
 #include <plat/gpio-cfg.h>
-#include <mach/gpio-bank.h>
 #include <mach/regs-gpio.h>
 #include <mach/gpio.h>
 
@@ -50,10 +49,8 @@ void s5pv210_setup_sdhci0_cfg_gpio(struct platform_device *dev, int width)
 		for (gpio = S5PV210_GPG1(3); gpio <= S5PV210_GPG1(6); gpio++) {
 			s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(3));
 			s3c_gpio_setpull(gpio, S3C_GPIO_PULL_NONE);
+			s3c_gpio_set_drvstrength(gpio, S3C_GPIO_DRVSTR_2X);
 		}
-
-		gpio = readl(S5PV210_GPG1DRV);
-		writel(gpio | 0x2a80, S5PV210_GPG1DRV);
 
 	case 0:
 	case 1:
@@ -64,11 +61,8 @@ void s5pv210_setup_sdhci0_cfg_gpio(struct platform_device *dev, int width)
 				s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(2));
 				s3c_gpio_setpull(gpio, S3C_GPIO_PULL_NONE);
 			}
+			s3c_gpio_set_drvstrength(gpio, S3C_GPIO_DRVSTR_2X);
 		}
-
-		gpio = readl(S5PV210_GPG0DRV);
-		writel(gpio | 0x2aaa, S5PV210_GPG0DRV);
-
 		break;
 	default:
 		printk(KERN_ERR "Wrong SD/MMC bus width : %d\n", width);
@@ -96,11 +90,8 @@ void s5pv210_setup_sdhci1_cfg_gpio(struct platform_device *dev, int width)
 				s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(2));
 				s3c_gpio_setpull(gpio, S3C_GPIO_PULL_NONE);
 			}
+			s3c_gpio_set_drvstrength(gpio, S3C_GPIO_DRVSTR_2X);
 		}
-
-		gpio = readl(S5PV210_GPG1DRV);
-		writel(gpio | 0x2aaa, S5PV210_GPG1DRV);
-
 		break;
 	default:
 		printk(KERN_ERR "Wrong SD/MMC bus width : %d\n", width);
@@ -118,10 +109,9 @@ void s5pv210_setup_sdhci2_cfg_gpio(struct platform_device *dev, int width)
 		for (gpio = S5PV210_GPG3(3); gpio <= S5PV210_GPG3(6); gpio++) {
 			s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(3));
 			s3c_gpio_setpull(gpio, S3C_GPIO_PULL_NONE);
+			s3c_gpio_set_drvstrength(gpio, S3C_GPIO_DRVSTR_2X);
 		}
 
-		gpio = readl(S5PV210_GPG3DRV);
-		writel(gpio | 0x2a80, S5PV210_GPG3DRV);
 	case 0:
 	case 1:
 	case 4:
@@ -131,10 +121,8 @@ void s5pv210_setup_sdhci2_cfg_gpio(struct platform_device *dev, int width)
 				s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(2));
 				s3c_gpio_setpull(gpio, S3C_GPIO_PULL_NONE);
 			}
+			s3c_gpio_set_drvstrength(gpio, S3C_GPIO_DRVSTR_2X);
 		}
-
-		writel(0x2aaa, S5PV210_GPG2DRV);
-
 		break;
 	default:
 		printk(KERN_ERR "Wrong SD/MMC bus width : %d\n", width);
@@ -152,15 +140,12 @@ void s5pv210_setup_sdhci3_cfg_gpio(struct platform_device *dev, int width)
 	case 4:
 		/* Set all the necessary GPIO function and pull up/down */
 		for (gpio = S5PV210_GPG3(0); gpio <= S5PV210_GPG3(6); gpio++) {
-			s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(2));
-			s3c_gpio_setpull(gpio, S3C_GPIO_PULL_UP);
+			if(gpio != S5PV210_GPG3(2)) {
+				s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(2));
+				s3c_gpio_setpull(gpio, S3C_GPIO_PULL_UP);
+			}
+			s3c_gpio_set_drvstrength(gpio, S3C_GPIO_DRVSTR_2X);
 		}
-
-		writel(0x2aaa, S5PV210_GPG3DRV);
-
-		/* Chip detect pin Pull up*/
-		s3c_gpio_setpull(S5PV210_GPG3(2), S3C_GPIO_PULL_UP);
-
 		break;
 	default:
 		printk(KERN_ERR "Wrong SD/MMC bus width : %d\n", width);
@@ -287,12 +272,12 @@ unsigned int universal_sdhci2_detect_ext_cd(void)
 			readl(S5PC11X_EINT3MASK));
 #endif
 #if defined(CONFIG_MACH_S5PC110_P1) || defined(CONFIG_MACH_S5PC110_CRESPO)
-	card_status = (readl(S5PV210_GPH3DAT)) & (1 << 4);
+	card_status = gpio_get_value(S5PV210_GPH3(4));
 	printk(KERN_DEBUG " Universal : Card status  %d\n",card_status?0:1);
 	return card_status ? 0 : 1;
 
 #else
-	card_status = (readl(S5PV210_GPH3DAT)) & (1 << 4);
+	card_status = gpio_get_value(S5PV210_GPH3(4));
 	printk(KERN_DEBUG " Universal : Card status  %d\n",card_status?1:0);
 	if(((HWREV >= 7) || (HWREV == 0x3)) && (HWREV !=8))
 	{

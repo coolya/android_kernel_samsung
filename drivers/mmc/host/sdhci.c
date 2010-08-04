@@ -24,6 +24,10 @@
 
 #include <linux/mmc/host.h>
 
+#if defined(CONFIG_MMC_SDHCI_S3C) || defined(CONFIG_MMC_SDHCI_MODULE)
+#include <plat/regs-sdhci.h>
+#endif
+
 #include "sdhci.h"
 
 #define DRIVER_NAME "sdhci"

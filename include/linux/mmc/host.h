@@ -108,7 +108,7 @@ struct mmc_host_ops {
 	int	(*get_cd)(struct mmc_host *host);
 
 	void	(*enable_sdio_irq)(struct mmc_host *host, int enable);
-
+	void	(*adjust_cfg)(struct mmc_host *host, int rw);
 	/* optional callback for HC quirks */
 	void	(*init_card)(struct mmc_host *host, struct mmc_card *card);
 };
@@ -156,7 +156,7 @@ struct mmc_host {
 #define MMC_CAP_DISABLE		(1 << 7)	/* Can the host be disabled */
 #define MMC_CAP_NONREMOVABLE	(1 << 8)	/* Nonremovable e.g. eMMC */
 #define MMC_CAP_WAIT_WHILE_BUSY	(1 << 9)	/* Waits while card is busy */
-
+#define MMC_CAP_ATHEROS_WIFI	(1 << 10)	/* For Atheros wifi module */
 	mmc_pm_flag_t		pm_caps;	/* supported pm features */
 
 	/* host specific block data */

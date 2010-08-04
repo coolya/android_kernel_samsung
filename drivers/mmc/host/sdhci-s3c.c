@@ -298,6 +298,7 @@ irqreturn_t sdhci_irq_cd(int irq, void *dev_id)
 	struct sdhci_s3c* sc = dev_id;
 
 	printk(KERN_DEBUG "sdhci: card interrupt.\n");
+	printk("sdhci: card interrupt.\n");
 
 	uint detect = sc->pdata->detect_ext_cd();
 

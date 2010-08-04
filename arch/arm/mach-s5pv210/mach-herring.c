@@ -2778,6 +2778,7 @@ static struct platform_device *herring_devices[] __initdata = {
 #ifdef CONFIG_FB_S3C_TL2796
 	&s3c_device_spi_gpio,
 #endif
+
 	&s3c_device_i2c0,
 #if defined(CONFIG_S3C_DEV_I2C1)
 	&s3c_device_i2c1,
@@ -2796,6 +2797,20 @@ static struct platform_device *herring_devices[] __initdata = {
 	&s3c_device_android_usb,
 	&s3c_device_usb_mass_storage,
 #endif
+
+#ifdef CONFIG_S3C_DEV_HSMMC
+	&s3c_device_hsmmc0,
+#endif
+#ifdef CONFIG_S3C_DEV_HSMMC1
+	&s3c_device_hsmmc1,
+#endif
+#ifdef CONFIG_S3C_DEV_HSMMC2
+	&s3c_device_hsmmc2,
+#endif
+#ifdef CONFIG_S3C_DEV_HSMMC3
+	&s3c_device_hsmmc3,
+#endif
+
 #ifdef CONFIG_BATTERY_S3C
 	&sec_device_battery,
 #endif
