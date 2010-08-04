@@ -68,7 +68,7 @@ void s5pv210_setup_sdhci0_cfg_gpio(struct platform_device *dev, int width)
 		printk(KERN_ERR "Wrong SD/MMC bus width : %d\n", width);
 	}
 
-#if defined (CONFIG_MACH_S5PC110_ARIES) && !(defined CONFIG_ARIES_VER_B4)
+#if defined(CONFIG_MACH_S5PC110_CRESPO)
 	s3c_gpio_cfgpin(S5PV210_GPJ2(7), S3C_GPIO_OUTPUT);
 	s3c_gpio_setpull(S5PV210_GPJ2(7), S3C_GPIO_PULL_NONE);
 	gpio_set_value(S5PV210_GPJ2(7), 1);
@@ -259,7 +259,7 @@ static int sdhci0_get_ro(struct mmc_host *mmc)
 }
 #endif
 
-#if defined (CONFIG_MACH_S5PC110_ARIES) || defined(CONFIG_MACH_S5PC110_P1) || defined(CONFIG_MACH_S5PC110_CRESPO)
+#if defined(CONFIG_MACH_S5PC110_CRESPO)
 unsigned int universal_sdhci2_detect_ext_cd(void)
 {
 	unsigned int card_status = 0;
@@ -271,7 +271,7 @@ unsigned int universal_sdhci2_detect_ext_cd(void)
 	printk("eint pend %x  eint mask %x",readl(S5PC11X_EINT3PEND),
 			readl(S5PC11X_EINT3MASK));
 #endif
-#if defined(CONFIG_MACH_S5PC110_P1) || defined(CONFIG_MACH_S5PC110_CRESPO)
+#if defined(CONFIG_MACH_S5PC110_CRESPO)
 	card_status = gpio_get_value(S5PV210_GPH3(4));
 	printk(KERN_DEBUG " Universal : Card status  %d\n",card_status?0:1);
 	return card_status ? 0 : 1;
@@ -293,18 +293,10 @@ unsigned int universal_sdhci2_detect_ext_cd(void)
 void universal_sdhci2_cfg_ext_cd(void)
 {
 	printk(" Universal :SD Detect configuration \n");
-
-#if defined(CONFIG_MACH_S5PC110_P1) || defined(CONFIG_MACH_S5PC110_CRESPO)
 	s3c_gpio_setpull(S5PV210_GPH3(4), S3C_GPIO_PULL_NONE);
-#else
-	if(((HWREV >= 7) || (HWREV == 0x3)) && (HWREV !=8))
-		s3c_gpio_setpull(S5PV210_GPH3(4), S3C_GPIO_PULL_NONE);
-	else
-		s3c_gpio_setpull(S5PV210_GPH3(4), S3C_GPIO_PULL_DOWN);
-#endif
 	set_irq_type(IRQ_EINT(28), IRQ_TYPE_EDGE_BOTH);
 }
-#endif // CONFIG_MACH_S5PC110_ARIES
+#endif
 
 static struct s3c_sdhci_platdata hsmmc0_platdata = {
 #if defined(CONFIG_S5PV210_SD_CH0_8BIT)
@@ -322,7 +314,7 @@ static struct s3c_sdhci_platdata hsmmc2_platdata = {
 	.max_width	= 8,
 	.host_caps	= MMC_CAP_8_BIT_DATA,
 #endif
-#if defined (CONFIG_MACH_S5PC110_ARIES) || defined(CONFIG_MACH_S5PC110_P1) || defined(CONFIG_MACH_S5PC110_CRESPO)
+#if defined(CONFIG_MACH_S5PC110_CRESPO)
 	.ext_cd = IRQ_EINT(28),
 	.cfg_ext_cd =universal_sdhci2_cfg_ext_cd,
 	.detect_ext_cd = universal_sdhci2_detect_ext_cd,
