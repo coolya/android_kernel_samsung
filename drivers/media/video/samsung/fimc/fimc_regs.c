@@ -1602,7 +1602,6 @@ int fimc_hwset_input_offset(struct fimc_control *ctrl, u32 pixelformat,
 			    struct v4l2_rect *crop)
 {
 	struct s3c_platform_fimc *pdata = to_fimc_plat(ctrl->dev);
-	printk("%s : hw_ver = 0x%x\n", __func__, pdata->hw_ver);
 
 	if (pdata->hw_ver == 0x50)
 		fimc50_hwset_input_offset(ctrl, pixelformat, bounds, crop);
