@@ -24,6 +24,8 @@
 #include <linux/spi/spi.h>
 #include <linux/spi/spi_gpio.h>
 #include <linux/pwm_backlight.h>
+#include <linux/clk.h>
+#include <linux/usb/ch9.h>
 
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
