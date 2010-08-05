@@ -137,6 +137,13 @@ config S5PV210_SETUP_FB
 	help
 	  Common setup code for FIMD controller.
 
+config S5P_ADC
+	bool	"S5PXXXX ADC driver"
+	depends on PLAT_S5P
+	default y
+	help
+	  ADC ( A/D Conversion ) driver for Samsung S5PXXXX
+
 config S5PV210_SETUP_FIMC0
 	bool
 	depends on VIDEO_FIMC

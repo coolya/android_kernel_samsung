@@ -36,6 +36,7 @@
 #include <mach/regs-clock.h>
 #include <mach/gpio.h>
 #include <mach/gpio-herring.h>
+#include <mach/adc.h>
 
 #ifdef CONFIG_ANDROID_PMEM
 #include <linux/android_pmem.h>
@@ -2770,7 +2771,9 @@ static struct platform_device *herring_devices[] __initdata = {
 #ifdef CONFIG_VIDEO_MFC50
 	&s3c_device_mfc,
 #endif
-
+#ifdef	CONFIG_S5P_ADC
+	&s3c_device_adc,
+#endif
 #ifdef CONFIG_VIDEO_FIMC
 	&s3c_device_fimc0,
 	&s3c_device_fimc1,
