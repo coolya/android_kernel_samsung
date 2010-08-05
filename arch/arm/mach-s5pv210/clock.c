@@ -943,6 +943,27 @@ static struct clksrc_clk clksrcs[] = {
 		.sources = &clkset_group2,
 		.reg_src = { .reg = S5P_CLK_SRC5, .shift = 12, .size = 4 },
 		.reg_div = { .reg = S5P_CLK_DIV5, .shift = 12, .size = 4 },
+	}, {
+		.clk		= {
+			.name		= "sclk_mdnie",	//"mdnie_sel"
+			.id		= -1,
+			.enable		= s5pv210_clk_mask1_ctrl,
+			.ctrlbit	= (1 << 0),
+		},
+		.sources	= &clkset_group2,
+		.reg_src	= { .reg = S5P_CLK_SRC3, .shift = 0, .size = 4 },
+		.reg_div = { .reg = S5P_CLK_DIV3, .shift = 0, .size = 4 },
+	}, {
+		.clk		= {
+			.name		= "sclk_mdnie_pwm",	//"mdnie_pwmclk_sel"
+			.id		= -1,
+			.enable		= s5pv210_clk_mask1_ctrl,
+			.ctrlbit	= (1 << 1),
+		},
+		.sources	= &clkset_group2,
+		.reg_src	= { .reg = S5P_CLK_SRC3, .shift = 4, .size = 4 },
+		.reg_div = { .reg = S5P_CLK_DIV3, .shift = 4, .size = 4 },
+
 	},
 };
 
@@ -984,6 +1005,7 @@ void __init_or_cpufreq s5pv210_setup_clocks(void)
 	unsigned long vpll;
 	unsigned int ptr;
 	u32 clkdiv0, clkdiv1;
+	struct clksrc_clk *pclkSrc;
 
 	printk(KERN_DEBUG "%s: registering clocks\n", __func__);
 
@@ -1032,8 +1054,40 @@ void __init_or_cpufreq s5pv210_setup_clocks(void)
 	clk_h.rate = hclk_psys;
 	clk_p.rate = pclk_psys;
 
-	for (ptr = 0; ptr < ARRAY_SIZE(clksrcs); ptr++)
-		s3c_set_clksrc(&clksrcs[ptr], true);
+	/*Assign clock source and rates for IP's*/
+	for (ptr = 0; ptr < ARRAY_SIZE(clksrcs); ptr++) {
+		pclkSrc = &clksrcs[ptr];
+		if(!strcmp(pclkSrc->clk.name, "sclk_mdnie"))
+		{
+			clk_set_parent(&pclkSrc->clk, &clk_mout_mpll.clk);
+			clk_set_rate(&pclkSrc->clk, 167*MHZ);  //clk_mdnie_sel.clk
+		}
+		else if(!strcmp(pclkSrc->clk.name, "sclk_mmc") && (pclkSrc->clk.id == 0)) //mmc0
+		{
+			clk_set_parent(&pclkSrc->clk, &clk_mout_mpll.clk);
+			clk_set_rate(&pclkSrc->clk, 52*MHZ);
+		}
+		else if(!strcmp(pclkSrc->clk.name, "sclk_mmc") && (pclkSrc->clk.id != 0)) //mmc1,mmc2,mmc3
+		{
+			clk_set_parent(&pclkSrc->clk, &clk_mout_mpll.clk);
+			clk_set_rate(&pclkSrc->clk, 50*MHZ);
+		}
+		else if(!strcmp(pclkSrc->clk.name, "sclk_spi"))//spi0, spi1
+		{
+			clk_set_parent(&pclkSrc->clk, &clk_mout_epll.clk);
+		}
+		else if(!strcmp(pclkSrc->clk.name, "sclk_cam")&& (pclkSrc->clk.id == 0))//cam0
+		{
+			clk_set_parent(&pclkSrc->clk, &clk_xusbxti);
+		}
+		else if(!strcmp(pclkSrc->clk.name, "sclk_g2d"))
+		{
+			clk_set_parent(&pclkSrc->clk, &clk_mout_mpll.clk);
+			clk_set_rate(&pclkSrc->clk, 250*MHZ);
+		}
+		/*Display the clock source*/
+		s3c_set_clksrc(pclkSrc, true);
+	}
 }
 
 static struct clk *clks[] __initdata = {
