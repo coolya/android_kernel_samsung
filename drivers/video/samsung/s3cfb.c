@@ -55,11 +55,7 @@ static int s3cfb_draw_logo(struct fb_info *fb)
 #ifdef CONFIG_FB_S3C_SPLASH_SCREEN
 	struct fb_fix_screeninfo *fix = &fb->fix;
 	struct fb_var_screeninfo *var = &fb->var;
-#if 0
-	struct s3c_platform_fb *pdata = to_fb_plat(fbdev->dev);
-	memcpy(fbdev->fb[pdata->default_win]->screen_base,
-	       LOGO_RGB24, fix->line_length * var->yres);
-#else
+
 	u32 height = var->yres / 3;
 	u32 line = fix->line_length;
 	u32 i, j;
@@ -90,7 +86,6 @@ static int s3cfb_draw_logo(struct fb_info *fb)
 			memset(fb->screen_base + i * line + j * 4 + 3, 0x00, 1);
 		}
 	}
-#endif
 #endif
 	return 0;
 }
@@ -614,11 +609,10 @@ static int s3cfb_ioctl(struct fb_info *fb, unsigned int cmd, unsigned long arg)
 	struct fb_var_screeninfo *var = &fb->var;
 	struct s3cfb_window *win = fb->par;
 	struct s3cfb_lcd *lcd = fbdev->lcd;
-#if 1
+	
 	// added by jamie (2009.08.18)
 	struct fb_fix_screeninfo *fix = &fb->fix;
     s3cfb_next_info_t next_fb_info;
-#endif
 
 	int ret = 0;
 
@@ -702,7 +696,6 @@ static int s3cfb_ioctl(struct fb_info *fb, unsigned int cmd, unsigned long arg)
 		}
 		break;
 
-#if 1
 	// added by jamie (2009.08.18)
     case S3CFB_GET_CURR_FB_INFO:
         next_fb_info.phy_start_addr = fix->smem_start;
@@ -720,7 +713,6 @@ static int s3cfb_ioctl(struct fb_info *fb, unsigned int cmd, unsigned long arg)
         if (copy_to_user((void *)arg, (s3cfb_next_info_t *) &next_fb_info, sizeof(s3cfb_next_info_t)))
             return -EFAULT;
         break;
-#endif
 	}
 
 	return ret;
@@ -1006,10 +998,6 @@ static int s3cfb_init_fbinfo(int id)
 				(var->upper_margin + var->lower_margin +
 				var->vsync_len + var->yres);
 
-#if defined(CONFIG_FB_S3C_LTE480WV)
-	// LTE480WV LCD Device tunig.
-	var->pixclock *= 2;
-#endif
 	dev_dbg(fbdev->dev, "pixclock: %d\n", var->pixclock);
 
 	s3cfb_set_bitfield(var);
@@ -1273,12 +1261,11 @@ static int s3cfb_probe(struct platform_device *pdev)
 		ret = -EINVAL;
 		goto err_irq;
 	}
-#if 1
+
 	// added by jamie (2009.08.18)
 	// enable VSYNC
 	s3cfb_set_vsync_interrupt(fbdev, 1);
 	s3cfb_set_global_interrupt(fbdev, 1);
-#endif
 
 #ifdef CONFIG_FB_S3C_TRACE_UNDERRUN
 	if (request_irq(platform_get_irq(pdev, 1), s3cfb_irq_fifo,
@@ -1314,9 +1301,6 @@ static int s3cfb_probe(struct platform_device *pdev)
 #if defined(CONFIG_FB_S3C_TL2796)
 	if (pdata->backlight_on)
 		pdata->backlight_on(pdev);
-#elif defined(CONFIG_FB_S3C_LTE480WV)
-	if (pdata->backlight_onoff)
-		pdata->backlight_onoff(pdev, 1);
 #endif
 
 	if (pdata->reset_lcd)
@@ -1339,15 +1323,6 @@ static int s3cfb_probe(struct platform_device *pdev)
 		dev_err(fbdev->dev, "failed to add sysfs entries\n");
 
 	dev_info(fbdev->dev, "registered successfully\n");
-
-#if 0 //def CONFIG_CPU_FREQ
-	fbdev->freq_transition.notifier_call = s3cfb_freq_transition;
-	fbdev->freq_policy.notifier_call = s3cfb_freq_policy;
-	cpufreq_register_notifier(&fbdev->freq_transition,
-						CPUFREQ_TRANSITION_NOTIFIER);
-	cpufreq_register_notifier(&fbdev->freq_policy,
-						CPUFREQ_POLICY_NOTIFIER);
-#endif
 
 	return 0;
 
@@ -1418,17 +1393,8 @@ extern void lcd_cfg_gpio_early_suspend(void);
 void s3cfb_early_suspend(struct early_suspend *h)
 {
 	struct s3cfb_global *info = container_of(h,struct s3cfb_global,early_suspend);
-#if defined(CONFIG_FB_S3C_LTE480WV)
-	struct s3c_platform_fb *pdata = to_fb_plat(info->dev);	
-	struct platform_device *pdev = to_platform_device(info->dev);
-#endif
 
 	printk("s3cfb_early_suspend is called\n");
-
-#if defined (CONFIG_FB_S3C_LTE480WV)
-	if (pdata->backlight_onoff)
-		pdata->backlight_onoff(pdev, 0);
-#endif
 
 #if defined (CONFIG_FB_S3C_TL2796)
 	tl2796_ldi_disable();
@@ -1478,14 +1444,6 @@ void s3cfb_late_resume(struct early_suspend *h)
 	max8698_ldo_enable_direct(MAX8698_LDO4);
 #endif
 
-
-#if defined (CONFIG_FB_S3C_LTE480WV)
-	if (info->lcd->init_ldi)
-		fbdev->lcd->init_ldi();
-	else
-		printk("no init_ldi\n");
-#endif
-	
 	clk_enable(info->clock);
 	s3cfb_init_global();
 	s3cfb_set_clock(info);
@@ -1500,20 +1458,14 @@ void s3cfb_late_resume(struct early_suspend *h)
 			s3cfb_enable_window(win->id);
 		}
 	}
-#if 1
+
 	// enable VSYNC
 	s3cfb_set_vsync_interrupt(fbdev, 1);
 	s3cfb_set_global_interrupt(fbdev, 1);
-#endif
+
 #if defined(CONFIG_FB_S3C_TL2796)
 	//tl2796_ldi_init();
 	tl2796_ldi_enable();
-#endif
-
-
-#if defined (CONFIG_FB_S3C_LTE480WV)
-	if (pdata->backlight_onoff)
-		pdata->backlight_onoff(pdev, 1);
 #endif
 
 	return ;
@@ -1522,11 +1474,6 @@ void s3cfb_late_resume(struct early_suspend *h)
 int s3cfb_suspend(struct platform_device *pdev, pm_message_t state)
 {
 	struct s3c_platform_fb *pdata = to_fb_plat(&pdev->dev);
-
-#if defined (CONFIG_FB_S3C_LTE480WV)
-	if (pdata->backlight_onoff)
-		pdata->backlight_onoff(pdev, 0);
-#endif
 
 	s3cfb_display_off(fbdev);
 	pdata->clk_off(pdev, &fbdev->clock);
@@ -1563,9 +1510,6 @@ int s3cfb_resume(struct platform_device *pdev)
 #if defined(CONFIG_FB_S3C_TL2796)
 	if (pdata->backlight_on)
 		pdata->backlight_on(pdev);
-#elif defined (CONFIG_FB_S3C_LTE480WV)
-	if (pdata->backlight_onoff)
-		pdata->backlight_onoff(pdev, 1);
 #endif
 
 
