@@ -731,8 +731,8 @@ EXPORT_SYMBOL(s3c_device_usb_ohci);
 /* USB Device (Gadget)*/
 static struct resource s3c_usbgadget_resource[] = {
 	[0] = {
-		.start	= S5P_PA_OTG,
-		.end	= S5P_PA_OTG + S5P_SZ_OTG - 1,
+		.start	= S3C_PA_OTG,
+		.end	= S3C_PA_OTG + S3C_SZ_OTG - 1,
 		.flags	= IORESOURCE_MEM,
 	},
 	[1] = {
