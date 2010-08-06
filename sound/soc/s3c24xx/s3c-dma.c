@@ -392,7 +392,6 @@ static int s3c_preallocate_dma_buffer(struct snd_pcm *pcm, int stream)
 	size_t size = s3c_dma_hardware.buffer_bytes_max;
 
 	pr_debug("Entered %s\n", __func__);
-
 	buf->dev.type = SNDRV_DMA_TYPE_DEV;
 	buf->dev.dev = pcm->card->dev;
 	buf->private_data = NULL;
@@ -412,7 +411,11 @@ static void s3c_dma_free_dma_buffers(struct snd_pcm *pcm)
 
 	pr_debug("Entered %s\n", __func__);
 
+#ifdef CONFIG_S5P_LPAUDIO
+	for (stream = 1; stream < 2; stream++) {
+#else
 	for (stream = 0; stream < 2; stream++) {
+#endif
 		substream = pcm->streams[stream].substream;
 		if (!substream)
 			continue;
@@ -440,14 +443,14 @@ static int s3c_dma_new(struct snd_card *card,
 		card->dev->dma_mask = &s3c_dma_mask;
 	if (!card->dev->coherent_dma_mask)
 		card->dev->coherent_dma_mask = 0xffffffff;
-
+#ifndef CONFIG_S5P_LPAUDIO
 	if (dai->playback.channels_min) {
 		ret = s3c_preallocate_dma_buffer(pcm,
 			SNDRV_PCM_STREAM_PLAYBACK);
 		if (ret)
 			goto out;
 	}
-
+#endif
 	if (dai->capture.channels_min) {
 		ret = s3c_preallocate_dma_buffer(pcm,
 			SNDRV_PCM_STREAM_CAPTURE);

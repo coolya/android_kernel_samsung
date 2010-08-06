@@ -1,6 +1,8 @@
 config SND_S3C24XX_SOC
-	tristate "SoC Audio for the Samsung S3CXXXX chips"
-	depends on ARCH_S3C2410 || ARCH_S3C64XX
+	tristate "Samsung S5P Audio Drivers"
+	depends on ARCH_S5PV210
+	#tristate "SoC Audio for the Samsung S3CXXXX chips"
+	#depends on ARCH_S3C2410 || ARCH_S3C64XX
 	select S3C64XX_DMA if ARCH_S3C64XX
 	help
 	  Say Y or M if you want to add support for codecs attached to
@@ -14,6 +16,9 @@ config SND_S3C24XX_SOC_I2S
 config SND_S3C_I2SV2_SOC
 	tristate
 
+config SND_S3C_SOC_PCM
+	tristate
+
 config SND_S3C2412_SOC_I2S
 	tristate
 	select SND_S3C_I2SV2_SOC
@@ -23,6 +28,11 @@ config SND_S3C64XX_SOC_I2S
 	tristate
 	select SND_S3C_I2SV2_SOC
 	select S3C64XX_DMA
+
+config SND_S5PC1XX_SOC_I2S
+	tristate
+	select SND_S3C_I2SV2_SOC
+	select S5PC1XX_DMA
 
 config SND_S3C64XX_SOC_I2S_V4
 	tristate
@@ -35,6 +45,9 @@ config SND_S3C_SOC_PCM
 config SND_S3C_SOC_AC97
 	tristate
 	select SND_SOC_AC97_BUS
+
+config SND_ARIES_SOC_WM8994
+	tristate
 
 config SND_S3C24XX_SOC_NEO1973_WM8753
 	tristate "SoC I2S Audio support for NEO1973 - WM8753"
@@ -69,6 +82,20 @@ config SND_S3C64XX_SOC_WM8580
 	select SND_S3C64XX_SOC_I2S_V4
 	help
 	  Say Y if you want to add support for SoC audio on the SMDK6410.
+
+config  SND_ARIES_WM8994 
+	tristate "SoC I2S Audio support for WM8994-I2S on UNIVERSAL"
+	depends on SND_S3C24XX_SOC && (MACH_S5PC110_ARIES || MACH_S5PC110_P1 || MACH_S5PC110_CRESPO)
+	select SND_ARIES_SOC_WM8994 if (MACH_S5PC110_ARIES || MACH_S5PC110_P1 || MACH_S5PC110_CRESPO)
+	select SND_SOC_WM8994
+	select SND_S5PC1XX_SOC_I2S 
+
+config	SND_ARIES_WM8994_MASTER
+	bool "WM8994 master"
+	depends on SND_ARIES_SOC_WM8994
+	default y 
+	help
+	  Say Y if you want to run SoC as I2S-Slave and CODEC as I2S-Master.
 
 config SND_S3C24XX_SOC_SMDK2443_WM9710
 	tristate "SoC AC97 Audio support for SMDK2443 - WM9710"

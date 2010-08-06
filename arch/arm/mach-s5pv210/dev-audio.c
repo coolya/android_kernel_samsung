@@ -39,7 +39,7 @@ static int s5pv210_cfg_i2s(struct platform_device *pdev)
 		s3c_gpio_cfgpin(S5PV210_GPC1(4), S3C_GPIO_SFN(4));
 		break;
 
-	case -1:
+	case 0:
 		s3c_gpio_cfgpin(S5PV210_GPI(0), S3C_GPIO_SFN(2));
 		s3c_gpio_cfgpin(S5PV210_GPI(1), S3C_GPIO_SFN(2));
 		s3c_gpio_cfgpin(S5PV210_GPI(2), S3C_GPIO_SFN(2));
@@ -68,20 +68,20 @@ static struct resource s5pv210_iis0_resource[] = {
 		.flags = IORESOURCE_MEM,
 	},
 	[1] = {
-		.start = DMACH_I2S0_TX,
-		.end   = DMACH_I2S0_TX,
+		.start = DMACH_I2S0_OUT,
+		.end   = DMACH_I2S0_OUT,
 		.flags = IORESOURCE_DMA,
 	},
 	[2] = {
-		.start = DMACH_I2S0_RX,
-		.end   = DMACH_I2S0_RX,
+		.start = DMACH_I2S0_IN,
+		.end   = DMACH_I2S0_IN,
 		.flags = IORESOURCE_DMA,
 	},
 };
 
 struct platform_device s5pv210_device_iis0 = {
-	.name		  = "s3c64xx-iis-v4",
-	.id		  = -1,
+	.name		  = "s5pc1xx-iis",
+	.id		  = 0,
 	.num_resources	  = ARRAY_SIZE(s5pv210_iis0_resource),
 	.resource	  = s5pv210_iis0_resource,
 	.dev = {

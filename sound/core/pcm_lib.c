@@ -30,6 +30,8 @@
 #include <sound/pcm_params.h>
 #include <sound/timer.h>
 
+unsigned int ring_buf_index = 0;
+unsigned int period_index = 0;
 /*
  * fill ring buffer with silence
  * runtime->silence_start: starting pointer to silence area
