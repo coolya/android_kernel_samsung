@@ -26,6 +26,7 @@
 #include <linux/io.h>
 #include <linux/memory.h>
 #include <linux/ctype.h>
+#include <linux/platform_device.h>
 #include <plat/clock.h>
 #include <plat/media.h>
 #include <plat/fimc.h>
@@ -103,17 +104,25 @@ void fimc_dma_free(struct fimc_control *ctrl, struct fimc_buf_set *bs, int i)
 
 void fimc_clk_en(struct fimc_control *ctrl, bool on)
 {
+	struct platform_device *pdev;
+	struct s3c_platform_fimc *pdata; 
+	struct clk *lclk;
+
+	pdev = to_platform_device(ctrl->dev);
+	pdata = to_fimc_plat(ctrl->dev);
+	lclk = clk_get(&pdev->dev, pdata->lclk_name);
+
 	if(on){
-		if(!ctrl->clk->usage){
+		if(!lclk->usage){
 			if(!ctrl->out)
 				fimc_info1("(%d) Clock %s(%d) enabled.\n", ctrl->id, ctrl->clk->name, ctrl->clk->id);
-			clk_enable(ctrl->clk);
+			clk_enable(lclk);
 		}
 	} else {
-		while(ctrl->clk->usage > 0){
+		while(lclk->usage > 0){
 			if(!ctrl->out)
 				fimc_info1("(%d) Clock %s(%d) disabled.\n", ctrl->id, ctrl->clk->name, ctrl->clk->id);
-			clk_disable(ctrl->clk);
+			clk_disable(lclk);
 		}
 	}	
 
@@ -896,6 +905,10 @@ static int fimc_open(struct file *filp)
 	prv_data->ctrl = ctrl;
 	filp->private_data = prv_data;
 
+	ret = s5pv210_pd_enable("fimc_pd");
+	if (ret < 0) 
+		fimc_err("failed to enable fimcn power domain\n");
+
 	if (in_use == 1) {
 		fimc_clk_en(ctrl, true);
 
@@ -1264,7 +1277,7 @@ static int __devinit fimc_probe(struct platform_device *pdev)
 {
 	struct s3c_platform_fimc *pdata;
 	struct fimc_control *ctrl;
-	struct clk *srclk, *lclk;
+	struct clk *srclk;
 	int ret;
 
 	if (!fimc_dev) {
@@ -1307,11 +1320,6 @@ static int __devinit fimc_probe(struct platform_device *pdev)
 
 	/* set rate for mclk */
 	clk_set_rate(ctrl->clk, pdata->clk_rate);
-
-	ret = s5pv210_pd_enable("fimc_pd");
-	
-	lclk = clk_get(&pdev->dev, pdata->lclk_name);
-        clk_enable(lclk);	
 
 	/* V4L2 device-subdev registration */
 	ret = v4l2_device_register(&pdev->dev, &ctrl->v4l2_dev);
