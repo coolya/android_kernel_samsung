@@ -151,20 +151,6 @@ static int s3c_rtc_setfreq(struct device *dev, int freq)
 
 /* Time read/write */
 
-/* Android Support Max year 2100 */
-int android_valid_tm(struct rtc_time *tm)
-{
-	if (tm->tm_year >= 100
-		|| ((unsigned)tm->tm_mon) >= 12
-		|| tm->tm_mday < 1
-		|| tm->tm_mday > rtc_month_days(tm->tm_mon, tm->tm_year + 2000)
-		|| ((unsigned)tm->tm_hour) >= 24
-		|| ((unsigned)tm->tm_min) >= 60
-		|| ((unsigned)tm->tm_sec) >= 60)
-		return -EINVAL;
-	return 0;
-}
-
 static int s3c_rtc_gettime(struct device *dev, struct rtc_time *rtc_tm)
 {
 	unsigned int have_retried = 0;
@@ -204,7 +190,6 @@ static int s3c_rtc_gettime(struct device *dev, struct rtc_time *rtc_tm)
 	rtc_tm->tm_hour = bcd2bin(rtc_tm->tm_hour);
 	rtc_tm->tm_mday = bcd2bin(rtc_tm->tm_mday);
 	rtc_tm->tm_mon = bcd2bin(rtc_tm->tm_mon);
-	rtc_tm->tm_year = bcd2bin(rtc_tm->tm_year);
 #if defined (CONFIG_CPU_S5PV210)
 	rtc_tm->tm_year = bcd2bin(rtc_tm->tm_year & 0xff) + 
 			  bcd2bin(rtc_tm->tm_year >> 8) * 100;
@@ -675,6 +660,7 @@ static int __devinit s3c_rtc_probe(struct platform_device *pdev)
 	else
 		rtc->max_user_freq = 128;
 
+	tm.tm_mon -= 1;
 	s3c_rtc_settime(&pdev->dev, &tm);  //update from pmic
 	/* check rtc time */
 	for (bcd_loop = S3C2410_RTCSEC; bcd_loop <= S3C2410_RTCYEAR
@@ -721,7 +707,7 @@ static int s3c_rtc_suspend(struct platform_device *pdev, pm_message_t state)
 //	save_time_delta(&s3c_rtc_delta, &time);
 
 	if (s3c_rtc_cpu_type == TYPE_S3C64XX) {
-		ticnt_en_save = readb(s3c_rtc_base + S3C2410_RTCCON);
+		ticnt_en_save = readw(s3c_rtc_base + S3C2410_RTCCON);
 		ticnt_en_save &= S3C64XX_RTCCON_TICEN;
 	}
 	s3c_rtc_enable(pdev, 0);
@@ -746,8 +732,8 @@ static int s3c_rtc_resume(struct platform_device *pdev)
 //	restore_time_delta(&s3c_rtc_delta, &time);
 	writel(ticnt_save, s3c_rtc_base + S3C2410_TICNT);
 	if (s3c_rtc_cpu_type == TYPE_S3C64XX && ticnt_en_save) {
-		tmp = readb(s3c_rtc_base + S3C2410_RTCCON);
-		writeb(tmp | ticnt_en_save, s3c_rtc_base + S3C2410_RTCCON);
+		tmp = readw(s3c_rtc_base + S3C2410_RTCCON);
+		writew(tmp | ticnt_en_save, s3c_rtc_base + S3C2410_RTCCON);
 	}
 
 	if (device_may_wakeup(&pdev->dev))
