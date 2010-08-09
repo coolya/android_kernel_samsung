@@ -56,6 +56,9 @@
 #include <plat/fimc.h>
 #include <plat/clock.h>
 #include <plat/regs-otg.h>
+#ifdef CONFIG_CPU_FREQ
+#include <mach/cpu-freq-v210.h>
+#endif
 
 struct class *sec_class;
 EXPORT_SYMBOL(sec_class);
@@ -139,13 +142,13 @@ static struct platform_device s3c_device_qtts = {
 #endif
 
 /* PMIC */
-static struct regulator_consumer_supply dcdc1_consumers[] = {
+static struct regulator_consumer_supply buck1_consumers[] = {
         {
                 .supply         = "vddarm",
         },
 };
 
-static struct regulator_init_data max8998_dcdc1_data = {
+static struct regulator_init_data max8998_buck1_data = {
         .constraints    = {
                 .name           = "VCC_ARM",
                 .min_uV         =  750000,
@@ -153,27 +156,26 @@ static struct regulator_init_data max8998_dcdc1_data = {
                 .always_on      = 1,
                 .valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
         },
-        .num_consumer_supplies  = ARRAY_SIZE(dcdc1_consumers),
-        .consumer_supplies      = dcdc1_consumers,
+        .num_consumer_supplies  = ARRAY_SIZE(buck1_consumers),
+        .consumer_supplies      =buck1_consumers,
 };
 
-static struct regulator_consumer_supply dcdc2_consumers[] = {
+static struct regulator_consumer_supply buck2_consumers[] = {
         {
                 .supply         = "vddint",
         },
 };
 
-static struct regulator_init_data max8998_dcdc2_data = {
+static struct regulator_init_data max8998_buck2_data = {
         .constraints    = {
                 .name           = "VCC_INTERNAL",
                 .min_uV         =  750000,
                 .max_uV         = 1500000,
                 .always_on      = 1,
-//              .apply_uV       = 1,
                 .valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
         },
-        .num_consumer_supplies  = ARRAY_SIZE(dcdc2_consumers),
-        .consumer_supplies      = dcdc2_consumers,
+        .num_consumer_supplies  = ARRAY_SIZE(buck2_consumers),
+        .consumer_supplies      =buck2_consumers,
 };
 static struct regulator_init_data max8998_ldo4_data = {
         .constraints    = {
@@ -185,8 +187,6 @@ static struct regulator_init_data max8998_ldo4_data = {
                 .valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
         },
 };
-
-
 
 
 static struct regulator_init_data max8998_ldo7_data = {
@@ -211,9 +211,9 @@ static struct regulator_init_data max8998_ldo17_data = {
         },
 };
 static struct max8998_subdev_data universal_regulators[] = {
-        { MAX8998_DCDC1, &max8998_dcdc1_data },
-        { MAX8998_DCDC2, &max8998_dcdc2_data },
-//      { MAX8998_DCDC4, &max8998_dcdc4_data },
+        { MAX8998_BUCK1, &max8998_buck1_data },
+        { MAX8998_BUCK2, &max8998_buck2_data },
+//      { MAX8998_BUCK4, &max8998_buck4_data },
         { MAX8998_LDO4, &max8998_ldo4_data },
 //      { MAX8998_LDO11, &max8998_ldo11_data },
 //      { MAX8998_LDO12, &max8998_ldo12_data },
@@ -224,11 +224,44 @@ static struct max8998_subdev_data universal_regulators[] = {
         { MAX8998_LDO17, &max8998_ldo17_data },
 };
 
+#if USE_1DOT2GHZ
 static struct max8998_platform_data max8998_platform_data = {
         .num_regulators = ARRAY_SIZE(universal_regulators),
         .regulators     = universal_regulators,
-};
+	
+	.set1           = S5PV210_GPH0(3),
+	.set2           = S5PV210_GPH0(4),
+	.set3           = S5PV210_GPH0(5),
+	.dvsarm1	= 0x16,  //1.30V
+	.dvsarm2        = 0x14,  // 1.25v
+	.dvsarm3        = 0x12,  // 1.20V
+	.dvsarm4        = 0x0c,  // 1.05V
+	.dvsarm5        = 0x08,  // 0.95V
+	
+	.dvsint1        = 0x10,  // 1.15v
+	.dvsint2        = 0x0e,  // 1.10v
+	.dvsint3        = 0x0a,  // 1.00V
 
+};
+#else
+static struct max8998_platform_data max8998_platform_data = {
+        .num_regulators = ARRAY_SIZE(universal_regulators),
+        .regulators     = universal_regulators,
+
+	.set1           = S5PV210_GPH0(3),
+	.set2           = S5PV210_GPH0(4),
+	.set3           = S5PV210_GPH0(5),
+	.dvsarm1        = 0x14,  // 1.25v
+	.dvsarm2        = 0x12,  // 1.20V
+	.dvsarm3        = 0x0c,  // 1.05V
+	.dvsarm4        = 0x08,  // 0.95V
+	.dvsarm5        = 0x00,
+
+	.dvsint1        = 0x0e,  // 1.10v
+	.dvsint2        = 0x0a,  // 1.00V
+	.dvsint3	= 0x00,
+};
+#endif //!(USE_1DOT2GHZ)
 #if 0
 /* I2C2 */
 static struct i2c_board_info i2c_devs2[] __initdata = {
