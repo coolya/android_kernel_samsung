@@ -927,7 +927,7 @@ static int fimc_open(struct file *filp)
 
 #ifdef CONFIG_CPU_FREQ
 	if (0 == ctrl->id)
-    		s5pc110_lock_dvfs_high_level(DVFS_LOCK_TOKEN_2, LEV_200MHZ);
+		s5pv210_set_cpufreq_level(RESTRICT_TABLE_1);
 #endif 
 
 	mutex_unlock(&ctrl->lock);
@@ -1061,7 +1061,7 @@ static int fimc_release(struct file *filp)
 	}
 #ifdef CONFIG_CPU_FREQ
 	if (0 == ctrl->id)
-		s5pc110_unlock_dvfs_high_level(DVFS_LOCK_TOKEN_2);
+		s5pv210_set_cpufreq_level(NORMAL_TABLE);
 #endif
 
 	fimc_info1("%s released.\n", ctrl->name);
