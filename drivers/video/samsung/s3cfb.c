@@ -197,14 +197,14 @@ static int s3cfb_map_video_memory(struct fb_info *fb)
 {
 	struct fb_fix_screeninfo *fix = &fb->fix;
 	struct s3cfb_window *win = fb->par;
-	int reserved_size = 0;
 
 	if (win->owner == DMA_MEM_OTHER)
 		return 0;
 
-	fix->smem_start = s3c_get_media_memory_bank(S3C_MDEV_FIMD, 1);
-	reserved_size = s3c_get_media_memsize_bank(S3C_MDEV_FIMD, 1);
-	fb->screen_base = ioremap_wc(fix->smem_start, reserved_size);
+	fb->screen_base = dma_alloc_writecombine(fbdev->dev,
+						 PAGE_ALIGN(fix->smem_len),
+						 (unsigned int*)
+						 &fix->smem_start, GFP_KERNEL);
 
 	if (!fb->screen_base)
 		return -ENOMEM;
