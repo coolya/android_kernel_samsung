@@ -203,7 +203,7 @@ static int s3cfb_map_video_memory(struct fb_info *fb)
 
 	fb->screen_base = dma_alloc_writecombine(fbdev->dev,
 						 PAGE_ALIGN(fix->smem_len),
-						 (unsigned int*)
+						 (unsigned int *)
 						 &fix->smem_start, GFP_KERNEL);
 
 	if (!fb->screen_base)
@@ -331,8 +331,7 @@ static int s3cfb_set_bitfield(struct fb_var_screeninfo *var)
 		var->blue.offset = 0;
 		var->blue.length = 8;
 		var->transp.offset = 24;
-		var->transp.length = 8; //added for LCD RGB32
-//		var->transp.length = 0; //added for LCD RGB32
+		var->transp.length = 8;	/* added for LCD RGB32 */
 
 		break;
 	}
@@ -609,10 +608,10 @@ static int s3cfb_ioctl(struct fb_info *fb, unsigned int cmd, unsigned long arg)
 	struct fb_var_screeninfo *var = &fb->var;
 	struct s3cfb_window *win = fb->par;
 	struct s3cfb_lcd *lcd = fbdev->lcd;
-	
-	// added by jamie (2009.08.18)
+
+	/* added by jamie (2009.08.18) */
 	struct fb_fix_screeninfo *fix = &fb->fix;
-    s3cfb_next_info_t next_fb_info;
+	s3cfb_next_info_t next_fb_info;
 
 	int ret = 0;
 
@@ -696,23 +695,22 @@ static int s3cfb_ioctl(struct fb_info *fb, unsigned int cmd, unsigned long arg)
 		}
 		break;
 
-	// added by jamie (2009.08.18)
-    case S3CFB_GET_CURR_FB_INFO:
-        next_fb_info.phy_start_addr = fix->smem_start;
-        next_fb_info.xres = var->xres;
-        next_fb_info.yres = var->yres;
-        next_fb_info.xres_virtual = var->xres_virtual;
-        next_fb_info.yres_virtual = var->yres_virtual;
-        next_fb_info.xoffset = var->xoffset;
-        next_fb_info.yoffset = var->yoffset;
-        //next_fb_info.lcd_offset_x = fbi->lcd_offset_x;
-        //next_fb_info.lcd_offset_y = fbi->lcd_offset_y;
-        next_fb_info.lcd_offset_x = 0;
-        next_fb_info.lcd_offset_y = 0;
+	/* added by jamie (2009.08.18) */
+	case S3CFB_GET_CURR_FB_INFO:
+		next_fb_info.phy_start_addr = fix->smem_start;
+		next_fb_info.xres = var->xres;
+		next_fb_info.yres = var->yres;
+		next_fb_info.xres_virtual = var->xres_virtual;
+		next_fb_info.yres_virtual = var->yres_virtual;
+		next_fb_info.xoffset = var->xoffset;
+		next_fb_info.yoffset = var->yoffset;
+		next_fb_info.lcd_offset_x = 0;
+		next_fb_info.lcd_offset_y = 0;
 
-        if (copy_to_user((void *)arg, (s3cfb_next_info_t *) &next_fb_info, sizeof(s3cfb_next_info_t)))
-            return -EFAULT;
-        break;
+		if (copy_to_user((void *)arg, (s3cfb_next_info_t *) &next_fb_info,
+					sizeof(s3cfb_next_info_t)))
+			return -EFAULT;
+		break;
 	}
 
 	return ret;
@@ -976,8 +974,8 @@ static int s3cfb_init_fbinfo(int id)
 	var->bits_per_pixel = 32;
 	var->xoffset = 0;
 	var->yoffset = 0;
-	var->width = lcd->p_width;	// height of lcd in mm
-	var->height = lcd->p_height; 	// width of lcd in mm 
+	var->width = lcd->p_width;	/* height of lcd in mm */
+	var->height = lcd->p_height;	/* width of lcd in mm */
 	var->transp.length = 0;
 
 	fix->line_length = var->xres_virtual * var->bits_per_pixel / 8;
@@ -1166,11 +1164,11 @@ s3cfb_freq_transition(struct notifier_block *nb, unsigned long val,
 #endif
 	switch (val) {
 	case CPUFREQ_PRECHANGE:
-		//printk(KERN_DEBUG "s3cfb cpufreq prechange\n");
+		/* printk(KERN_DEBUG "s3cfb cpufreq prechange\n"); */
 		break;
 
 	case CPUFREQ_POSTCHANGE:
-		//printk(KERN_DEBUG "s3cfb cpufreq postchange\n");
+		/* printk(KERN_DEBUG "s3cfb cpufreq postchange\n"); */
 		break;
 	}
 	return 0;
@@ -1220,7 +1218,7 @@ static int s3cfb_probe(struct platform_device *pdev)
 	pdata = to_fb_plat(&pdev->dev);
 
 #if defined(CONFIG_MACH_S5PC110_P1)
-	fbdev->lcd = (struct s3cfb_lcd*)pdata->lcd;
+	fbdev->lcd = (struct s3cfb_lcd *)pdata->lcd;
 #endif
 	if (pdata->cfg_gpio)
 		pdata->cfg_gpio(pdev);
@@ -1262,8 +1260,8 @@ static int s3cfb_probe(struct platform_device *pdev)
 		goto err_irq;
 	}
 
-	// added by jamie (2009.08.18)
-	// enable VSYNC
+	/* added by jamie (2009.08.18)
+	 * enable VSYNC */
 	s3cfb_set_vsync_interrupt(fbdev, 1);
 	s3cfb_set_global_interrupt(fbdev, 1);
 
@@ -1312,8 +1310,9 @@ static int s3cfb_probe(struct platform_device *pdev)
 	fbdev->early_suspend.suspend = s3cfb_early_suspend;
 	fbdev->early_suspend.resume = s3cfb_late_resume;
 	fbdev->early_suspend.level = EARLY_SUSPEND_LEVEL_DISABLE_FB;
-	//if, is in USER_SLEEP status and no active auto expiring wake lock
-	//if (has_wake_lock(WAKE_LOCK_SUSPEND) == 0 && get_suspend_state() == PM_SUSPEND_ON)
+	/* if, is in USER_SLEEP status and no active auto expiring wake lock
+	 * if (has_wake_lock(WAKE_LOCK_SUSPEND) == 0 &&
+	 * get_suspend_state() == PM_SUSPEND_ON) */
 	register_early_suspend(&fbdev->early_suspend);
 #endif
 #endif
@@ -1348,7 +1347,7 @@ static int s3cfb_remove(struct platform_device *pdev)
 
 #ifdef CONFIG_HAS_WAKELOCK
 #ifdef CONFIG_HAS_EARLYSUSPEND
-        unregister_early_suspend(&fbdev->early_suspend);
+	unregister_early_suspend(&fbdev->early_suspend);
 #endif
 #endif
 
@@ -1377,7 +1376,7 @@ static int s3cfb_remove(struct platform_device *pdev)
 
 	return 0;
 }
-#if defined (CONFIG_FB_S3C_TL2796)
+#if defined(CONFIG_FB_S3C_TL2796)
 extern void tl2796_ldi_init(void);
 extern void tl2796_ldi_enable(void);
 extern void tl2796_ldi_disable(void);
@@ -1386,36 +1385,38 @@ extern void tl2796_ldi_disable(void);
 #ifdef CONFIG_PM
 #ifdef CONFIG_HAS_EARLYSUSPEND
 
-#if defined (CONFIG_FB_S3C_TL2796)
+#if defined(CONFIG_FB_S3C_TL2796)
 extern void lcd_cfg_gpio_early_suspend(void);
 #endif
 
 void s3cfb_early_suspend(struct early_suspend *h)
 {
-	struct s3cfb_global *info = container_of(h,struct s3cfb_global,early_suspend);
+	struct s3cfb_global *info = container_of(h, struct s3cfb_global,
+								early_suspend);
 
 	printk("s3cfb_early_suspend is called\n");
 
-#if defined (CONFIG_FB_S3C_TL2796)
+#if defined(CONFIG_FB_S3C_TL2796)
 	tl2796_ldi_disable();
 #endif
 
 	s3cfb_display_off(info);
 	clk_disable(info->clock);
-#if defined (CONFIG_FB_S3C_TL2796)
+#if defined(CONFIG_FB_S3C_TL2796)
 	lcd_cfg_gpio_early_suspend();
 #endif
 
 	return ;
 }
 
-#if defined (CONFIG_FB_S3C_TL2796)
+#if defined(CONFIG_FB_S3C_TL2796)
 extern void lcd_cfg_gpio_late_resume(void);
 #endif
 
 void s3cfb_late_resume(struct early_suspend *h)
 {
-	struct s3cfb_global *info = container_of(h,struct s3cfb_global,early_suspend);
+	struct s3cfb_global *info = container_of(h, struct s3cfb_global,
+								early_suspend);
 	struct s3c_platform_fb *pdata = to_fb_plat(info->dev);
 	struct fb_info *fb;
 	struct s3cfb_window *win;
@@ -1424,13 +1425,13 @@ void s3cfb_late_resume(struct early_suspend *h)
 
 	printk("s3cfb_late_resume is called\n");
 
-#if defined (CONFIG_FB_S3C_TL2796)
+#if defined(CONFIG_FB_S3C_TL2796)
 	lcd_cfg_gpio_late_resume();
 #endif
 	dev_dbg(info->dev, "wake up from suspend\n");
 	if (pdata->cfg_gpio)
 		pdata->cfg_gpio(pdev);
-#if defined (CONFIG_FB_S3C_TL2796)
+#if defined(CONFIG_FB_S3C_TL2796)
 	if (pdata->backlight_on)
 		pdata->backlight_on(pdev);
 #endif
@@ -1459,18 +1460,17 @@ void s3cfb_late_resume(struct early_suspend *h)
 		}
 	}
 
-	// enable VSYNC
+	/* enable VSYNC */
 	s3cfb_set_vsync_interrupt(fbdev, 1);
 	s3cfb_set_global_interrupt(fbdev, 1);
 
 #if defined(CONFIG_FB_S3C_TL2796)
-	//tl2796_ldi_init();
 	tl2796_ldi_enable();
 #endif
 
 	return ;
 }
-#else //else !CONFIG_HAS_EARLYSUSPEND
+#else /* else !CONFIG_HAS_EARLYSUSPEND */
 int s3cfb_suspend(struct platform_device *pdev, pm_message_t state)
 {
 	struct s3c_platform_fb *pdata = to_fb_plat(&pdev->dev);
