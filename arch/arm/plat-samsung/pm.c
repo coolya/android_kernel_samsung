@@ -18,6 +18,7 @@
 #include <linux/delay.h>
 #include <linux/serial_core.h>
 #include <linux/io.h>
+#include <linux/regulator/max8998.h>
 
 #include <asm/cacheflush.h>
 #include <mach/hardware.h>
@@ -359,7 +360,54 @@ static void s3c_pm_finish(void)
 	s3c_pm_check_cleanup();
 }
 
+#ifdef CONFIG_REGULATOR
+
+static int pmic_controling_list;// a global variable to store ldo's status
+static int s3c_pm_prepare_late(suspend_state_t state)
+{
+	int i ;
+	//printk("\n%s called .\n",__func__);
+	pmic_controling_list = 0;
+
+	for (i=MAX8998_LDO3; i<=MAX8998_LDO17;i++) {
+		if (i!=MAX8998_LDO9 && i!=MAX8998_LDO3 && i!=MAX8998_LDO4) {
+			if (max8998_ldo_is_enabled_direct(i)) {
+				pmic_controling_list |= (0x1 << i);
+				max8998_ldo_disable_direct(i);
+			}
+		}
+	}
+	max8998_ldo_disable_direct(MAX8998_BUCK2);
+	max8998_ldo_disable_direct(MAX8998_BUCK1);
+	return 0;
+}
+
+static int s3c_pm_wake(suspend_state_t state)
+{
+	int i, saved_control;
+	//printk("\n%s called .\n",__func__);
+
+	max8998_ldo_enable_direct(MAX8998_BUCK1);
+	max8998_ldo_enable_direct(MAX8998_BUCK2);
+	
+	saved_control = pmic_controling_list;
+	
+	for (i=MAX8998_LDO3;i<=MAX8998_LDO17;i++) {
+		if ((saved_control  >> i) & 0x1) 
+			max8998_ldo_enable_direct(i);
+	}
+
+	return 0;
+}
+
+#endif
+
 static struct platform_suspend_ops s3c_pm_ops = {
+#ifdef CONFIG_REGULATOR
+	//.begin		= s3c_pm_begin,
+	.prepare_late	= s3c_pm_prepare_late,
+	.wake		= s3c_pm_wake,
+#endif
 	.enter		= s3c_pm_enter,
 	.prepare	= s3c_pm_prepare,
 	.finish		= s3c_pm_finish,

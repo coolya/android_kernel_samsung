@@ -93,6 +93,8 @@
 #define S5P_EPLL_MASK_M			(0x1FF<<16)
 #define S5P_EPLL_MASK_P			(0x3F<<8)
 #define S5P_EPLL_MASK_S			(0x3<<0)
+#define S5P_ARM_MCS_CON		S5P_CLKREG(0x6100)
+
 
 /* CLKSRC0 */
 #define S5P_CLKSRC0_APLL_MASK		(0x1<<0)
