@@ -175,7 +175,7 @@ int audio_power(int en)
 #ifdef CONFIG_MACH_S5PC110_ARIES
 		if(!hw_version_check()) //evt0 aries00 board
 			gpio_set_value(GPIO_CODEC_XTAL_EN, 1);
-#if (defined CONFIG_SND_ARIES_WM8994_MASTER)
+#if (defined CONFIG_SND_S5P_WM8994_MASTER)
 		else	
 		{
 			__raw_writel(__raw_readl(S5P_OTHERS) | (3<<8) , S5P_OTHERS);//..check this is executing or not 
@@ -183,18 +183,18 @@ int audio_power(int en)
 		}
 #endif
 #else
-#if (defined CONFIG_SND_ARIES_WM8994_MASTER)
+#if (defined CONFIG_SND_S5P_WM8994_MASTER)
 		__raw_writel(__raw_readl(S5P_OTHERS) | (3<<8) , S5P_OTHERS);// ..check this is executing or not 
 		//	__raw_writel(__raw_readl(S5P_CLK_OUT) | (0x1) , S5P_CLK_OUT);	
 #endif
 #endif
 #elif (defined CONFIG_JUPITER_VER_B4)
-#ifdef CONFIG_SND_ARIES_WM8994_MASTER
+#ifdef CONFIG_SND_S5P_WM8994_MASTER
 		val |= (0x11 << 12); //crystall
 #else
 		val |= (0x02 << 12); // epll
 		val |= (0x5 << 20);
-#endif	// end of CONFIG_SND_ARIES_WM8994_MASTER
+#endif	// end of CONFIG_SND_S5P_WM8994_MASTER
 		__raw_writel(val, S5P_CLK_OUT);
 #endif	//end of CONFIG_JUPITER_VER_05
 	}
@@ -211,24 +211,24 @@ int audio_power(int en)
 		gpio_set_value(GPIO_CODEC_XTAL_EN, 0);
 #elif (defined CONFIG_JUPITER_VER_B4)
 		DEBUG_LOG("LDO Disable = %d, XTAL CLK From AP EMUL", en);
-#ifdef CONFIG_SND_ARIES_WM8994_MASTER
+#ifdef CONFIG_SND_S5P_WM8994_MASTER
 		val &= ~(0x11 << 12); //crystall
 #else
 		val &= ~(0x02 << 12); // epll
 		val &= ~(0x5 << 20);
-#endif	//end of CONFIG_SND_ARIES_WM8994_MASTER
+#endif	//end of CONFIG_SND_S5P_WM8994_MASTER
 #elif (defined CONFIG_ARIES_VER_B0) || (defined CONFIG_ARIES_VER_B1) || (defined CONFIG_ARIES_VER_B2) || (defined CONFIG_ARIES_VER_B3) || (defined CONFIG_MACH_S5PC110_P1) || (defined CONFIG_MACH_S5PC110_ARIES) || (defined CONFIG_MACH_S5PC110_CRESPO)
 #ifdef CONFIG_MACH_S5PC110_ARIES
 		if(!hw_version_check()) //evt0 aries00 board
 			gpio_set_value(GPIO_CODEC_XTAL_EN, 0);
-#if (defined CONFIG_SND_ARIES_WM8994_MASTER)
+#if (defined CONFIG_SND_S5P_WM8994_MASTER)
 		else{
 			__raw_writel(__raw_readl(S5P_OTHERS) & (~(0x3<<8)) , S5P_OTHERS);
 			__raw_writel(__raw_readl(S5P_CLK_OUT) & (0xFFFFFFFE) , S5P_CLK_OUT);
 		}
 #endif
 #else
-#if (defined CONFIG_SND_ARIES_WM8994_MASTER)
+#if (defined CONFIG_SND_S5P_WM8994_MASTER)
 		__raw_writel(__raw_readl(S5P_OTHERS) & (~(0x3<<8)) , S5P_OTHERS);
 		__raw_writel(__raw_readl(S5P_CLK_OUT) & (0xFFFFFFFE) , S5P_CLK_OUT);
 #endif

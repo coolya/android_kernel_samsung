@@ -41,7 +41,7 @@
 #define WM8994_VERSION "0.1"
 #define SUBJECT "wm8994.c"
 
-#if defined(CONFIG_VIDEO_TV20) && defined(CONFIG_SND_ARIES_WM8994_MASTER) 
+#if defined(CONFIG_VIDEO_TV20) && defined(CONFIG_SND_S5P_WM8994_MASTER) 
 #define HDMI_USE_AUDIO
 #endif
 
@@ -1217,7 +1217,7 @@ static int wm8994_hw_params(struct snd_pcm_substream *substream,
 
 //TODO...we need to set proper BCLK & LRCLK to support different frequency songs..In modifying 
 //BCLK & LRCLK , its giving noisy and improper frequency sound..this has to be checked
-#ifndef CONFIG_SND_ARIES_WM8994_MASTER 
+#ifndef CONFIG_SND_S5P_WM8994_MASTER 
 	//wm8994_write(codec,WM8994_AIF1_BCLK, clocking1);
 	//wm8994_write(codec,WM8994_AIF1ADC_LRCLK, aif4);
 	//wm8994_write(codec,WM8994_AIF1DAC_LRCLK, aif5);

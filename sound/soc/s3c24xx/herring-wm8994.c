@@ -56,7 +56,7 @@ int smdkc110_hw_params(struct snd_pcm_substream *substream,
 	struct snd_soc_dai *codec_dai = rtd->dai->codec_dai;
 	int bfs, rfs, ret;
 	u32 ap_codec_clk;
-#ifndef CONFIG_SND_ARIES_WM8994_MASTER
+#ifndef CONFIG_SND_S5P_WM8994_MASTER
 	struct clk    *clk_out,*clk_epll;
 	int psr;
 #endif
@@ -85,7 +85,7 @@ int smdkc110_hw_params(struct snd_pcm_substream *substream,
 			return -EINVAL;
  	}
 
-#ifdef CONFIG_SND_ARIES_WM8994_MASTER 
+#ifdef CONFIG_SND_S5P_WM8994_MASTER 
 	/* Set the Codec DAI configuration */
 	ret = snd_soc_dai_set_fmt(codec_dai, SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF | SND_SOC_DAIFMT_CBM_CFM);
 	
