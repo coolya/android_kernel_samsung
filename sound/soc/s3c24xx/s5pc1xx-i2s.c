@@ -650,8 +650,6 @@ static __devinit int s3c64xx_iis_dev_probe(struct platform_device *pdev)
 	unsigned long base;
 	unsigned int  iismod;
 	int ret = 0;
-	pr_debug("Inside...%s...\n",__func__);//sayanata
-//	printk("Inside...%s...\n",__func__);//sayanata
 	if (pdev->id >= MAX_I2SV3) {
 		dev_err(&pdev->dev, "id %d out of range\n", pdev->id);
 		return -EINVAL;
@@ -659,7 +657,6 @@ static __devinit int s3c64xx_iis_dev_probe(struct platform_device *pdev)
 
 	s5pv210_pd_enable(i2s_pd_name[pdev->id]);	/* Enable Power domain */
 
-	pr_debug("Inside...%s...@..%d..\n",__func__,__LINE__);//sayanata
 	i2s = &s3c64xx_i2s[pdev->id];
 	i2s->dev = &pdev->dev;
 	dai = &s3c64xx_i2s_dai[pdev->id];
@@ -677,7 +674,6 @@ static __devinit int s3c64xx_iis_dev_probe(struct platform_device *pdev)
 	}
 	i2s->dma_playback->channel = res->start;
 
-	pr_debug("Inside...%s...@..%d..\n",__func__,__LINE__);//sayanata
 	res = platform_get_resource(pdev, IORESOURCE_DMA, 1);
 	if (!res) {
 		dev_err(&pdev->dev, "Unable to get I2S-RX dma resource\n");
@@ -685,7 +681,6 @@ static __devinit int s3c64xx_iis_dev_probe(struct platform_device *pdev)
 	}
 	i2s->dma_capture->channel = res->start;
 
-	pr_debug("Inside...%s...@..%d..\n",__func__,__LINE__);//sayanata
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!res) {
 		dev_err(&pdev->dev, "Unable to get I2S SFR address\n");
@@ -698,7 +693,6 @@ static __devinit int s3c64xx_iis_dev_probe(struct platform_device *pdev)
 		return -EBUSY;
 	}
 
-	pr_debug("Inside...%s...@..%d..\n",__func__,__LINE__);//sayanata
 	i2s->dma_capture->dma_addr = res->start + S3C2412_IISRXD;
 	i2s->dma_playback->dma_addr = res->start + S3C2412_IISTXD;
 
@@ -718,7 +712,6 @@ static __devinit int s3c64xx_iis_dev_probe(struct platform_device *pdev)
 		return -ENXIO;
 	}
 
-	pr_debug("Inside...%s...@..%d..\n",__func__,__LINE__);//sayanata
 	/* Configure the I2S pins if MUX'ed */
 	if (i2s_pdata && i2s_pdata->cfg_gpio && i2s_pdata->cfg_gpio(pdev)) {
 		dev_err(&pdev->dev, "Unable to configure gpio\n");
