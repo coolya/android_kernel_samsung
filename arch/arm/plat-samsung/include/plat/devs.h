@@ -46,6 +46,7 @@ extern struct platform_device s3c_device_fimc1;
 extern struct platform_device s3c_device_fimc2;
 extern struct platform_device s3c_device_ipc;
 extern struct platform_device s3c_device_mfc;
+extern struct platform_device s3c_device_jpeg;
 
 extern struct platform_device s3c_device_ohci;
 extern struct platform_device s3c_device_lcd;
