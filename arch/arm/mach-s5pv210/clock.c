@@ -1402,15 +1402,14 @@ void __init_or_cpufreq s5pv210_setup_clocks(void)
 			clk_set_parent(&pclkSrc->clk, &clk_mout_mpll.clk);
 			clk_set_rate(&pclkSrc->clk, 167*MHZ);  //clk_mdnie_sel.clk
 		}
-		else if(!strcmp(pclkSrc->clk.name, "sclk_mmc") && (pclkSrc->clk.id == 0)) //mmc0
+		else if(!strcmp(pclkSrc->clk.name, "sclk_mmc"))
 		{
 			clk_set_parent(&pclkSrc->clk, &clk_mout_mpll.clk);
-			clk_set_rate(&pclkSrc->clk, 52*MHZ);
-		}
-		else if(!strcmp(pclkSrc->clk.name, "sclk_mmc") && (pclkSrc->clk.id != 0)) //mmc1,mmc2,mmc3
-		{
-			clk_set_parent(&pclkSrc->clk, &clk_mout_mpll.clk);
-			clk_set_rate(&pclkSrc->clk, 50*MHZ);
+
+			if(pclkSrc->clk.id == 0) 
+				clk_set_rate(&pclkSrc->clk, 52*MHZ);
+			else
+				clk_set_rate(&pclkSrc->clk, 50*MHZ);
 		}
 		else if(!strcmp(pclkSrc->clk.name, "sclk_spi"))//spi0, spi1
 		{
@@ -1424,6 +1423,15 @@ void __init_or_cpufreq s5pv210_setup_clocks(void)
 		{
 			clk_set_parent(&pclkSrc->clk, &clk_mout_mpll.clk);
 			clk_set_rate(&pclkSrc->clk, 250*MHZ);
+		}
+		else if(!strcmp(pclkSrc->clk.name, "uclk1"))
+		{
+			clk_set_parent(&pclkSrc->clk, &clk_mout_mpll.clk);
+
+			if(pclkSrc->clk.id == 0)
+				clk_set_rate(&pclkSrc->clk, 133400000);
+			else
+				clk_set_rate(&pclkSrc->clk, 66700000);
 		}
 		/*Display the clock source*/
 		s3c_set_clksrc(pclkSrc, true);
