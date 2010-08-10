@@ -147,7 +147,7 @@ static void s5p_tick_timer_start(unsigned long load_val,
 	unsigned int tmp;
 
 	tmp = __raw_readl(rtc_base + S3C2410_RTCCON) &
-		~(S3C_RTCCON_TICEN | S3C2410_RTCCON_RTCEN);
+		~(S3C_RTCCON_TICEN);
 	__raw_writel(tmp, rtc_base + S3C2410_RTCCON);
 
 	__raw_writel(load_val, rtc_base + S3C2410_TICNT);
@@ -162,7 +162,7 @@ static inline void s5p_tick_timer_stop(void)
 	unsigned int tmp;
 
 	tmp = __raw_readl(rtc_base + S3C2410_RTCCON) &
-		~(S3C_RTCCON_TICEN | S3C2410_RTCCON_RTCEN);
+		~(S3C_RTCCON_TICEN);
 
 	__raw_writel(tmp, rtc_base + S3C2410_RTCCON);
 
