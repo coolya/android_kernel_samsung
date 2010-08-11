@@ -97,6 +97,13 @@ config	SND_S5P_WM8994_MASTER
 	help
 	  Say Y if you want to run SoC as I2S-Slave and CODEC as I2S-Master.
 
+config  S5P_INTERNAL_DMA
+	bool "IIS operate with Internal DMA"
+	depends on SND_S5P_SOC_WM8994
+	default n 
+	help
+	  Say Y for IIS to operate with Internal DMA(IIS's own DMA)
+	 
 config 	S5P_LPAUDIO
 	bool "S5P LP Audio Feature"
 	depends on S5P_INTERNAL_DMA

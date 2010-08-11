@@ -138,7 +138,7 @@ void s5p_i2s_set_clk_enabled(struct snd_soc_dai *dai, bool state)
 static int s5p_i2s_wr_hw_params(struct snd_pcm_substream *substream,
 				struct snd_pcm_hw_params *params, struct snd_soc_dai *dai)
 {
-#ifdef CONFIG_S5P_LPAUDIO
+#ifdef CONFIG_S5P_INTERNAL_DMA
 	if(substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		s5p_i2s_hw_params(substream, params, dai);
 	}else {
@@ -153,7 +153,7 @@ static int s5p_i2s_wr_trigger(struct snd_pcm_substream *substream,
 				int cmd, struct snd_soc_dai *dai)
 {
 	struct s3c_i2sv2_info *i2s = to_info(dai);
-#ifdef CONFIG_S5P_LPAUDIO
+#ifdef CONFIG_S5P_INTERNAL_DMA
 	if(substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		dump_reg(i2s);
 		s5p_i2s_trigger(substream, cmd, dai);
@@ -470,7 +470,7 @@ static int s5p_i2s_wr_startup(struct snd_pcm_substream *substream,
 		writel(iisfic, i2s->regs + S3C2412_IISFIC);
 	}
 
-#ifdef CONFIG_S5P_LPAUDIO
+#ifdef CONFIG_S5P_INTERNAL_DMA
 	if(substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		s5p_i2s_startup(dai);
 #endif
@@ -529,7 +529,7 @@ static void s5p_i2s_wr_shutdown(struct snd_pcm_substream *substream, struct snd_
 
 static void s3c64xx_iis_dai_init(struct snd_soc_dai *dai)
 {
-	dai->name = "s3c64xx-i2s";
+	dai->name = "s5pc1xx-i2s";
 	//dai->symmetric_rates = 1;//Not enforcing symmetric rate setting
 	dai->playback.channels_min = 2;
 	dai->playback.channels_max = 2;
@@ -807,7 +807,7 @@ static __devinit int s3c64xx_iis_dev_probe(struct platform_device *pdev)
 	iismod |= S3C2412_IISMOD_MODE_TXRX;
 	writel(iismod, i2s->regs + S3C2412_IISMOD);
 
-#ifdef CONFIG_S5P_LPAUDIO
+#ifdef CONFIG_S5P_INTERNAL_DMA
 	s5p_i2s_sec_init(i2s->regs, base);
 #endif
 
