@@ -434,6 +434,15 @@ unsigned int s5pv210_getspeed(unsigned int cpu)
 
 extern bool gbTransitionLogEnable;
 extern void print_clocks(void);
+#ifdef CONFIG_PM
+static int no_cpufreq_access;
+/*
+ * s5pv210_cpufreq_target: relation has an additional symantics other than
+ * the standard
+ * [0x30]:
+ *	1: disable further access to target until being re-enabled.
+ *	2: re-enable access to target */
+#endif
 static int s5pv210_target(struct cpufreq_policy *policy,
 		       unsigned int target_freq,
 		       unsigned int relation)
@@ -447,7 +456,30 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	struct timeval start, end;
 
 	//DBG("%s: called for target freq=%d\n",__func__,target_freq);
-
+#ifdef CONFIG_PM
+	if ((relation & ENABLE_FURTHER_CPUFREQ) &&
+			(relation & DISABLE_FURTHER_CPUFREQ)) {
+		/* Invalidate both if both marked */
+		relation &= ~ENABLE_FURTHER_CPUFREQ;
+		relation &= ~DISABLE_FURTHER_CPUFREQ;
+		pr_err("%s:%d denied marking \"FURTHER_CPUFREQ\""
+				" as both marked.\n",
+				__FILE__, __LINE__);
+	}
+	if (relation & ENABLE_FURTHER_CPUFREQ)
+		no_cpufreq_access = 0;
+	if (no_cpufreq_access == 1) {
+#ifdef CONFIG_PM_VERBOSE
+		pr_err("%s:%d denied access to %s as it is disabled"
+			       " temporarily\n", __FILE__, __LINE__, __func__);
+#endif
+		ret = -EINVAL;
+		goto out;
+	}
+	if (relation & DISABLE_FURTHER_CPUFREQ)
+		no_cpufreq_access = 1;
+	relation &= ~MASK_FURTHER_CPUFREQ;
+#endif
 	s5pv210_freqs.freqs.old = s5pv210_getspeed(0);
 
 	if(policy != NULL) {
@@ -835,17 +867,51 @@ out:
 }
 
 #ifdef CONFIG_PM
+static int previous_frequency;
+
 static int s5pv210_cpufreq_suspend(struct cpufreq_policy *policy,
 			pm_message_t pmsg)
 {
 	int ret = 0;
+	pr_info("cpufreq: Entering suspend.\n");
 
+	previous_frequency = cpufreq_get(0);
+	ret = __cpufreq_driver_target(cpufreq_cpu_get(0), SLEEP_FREQ,
+			DISABLE_FURTHER_CPUFREQ);
 	return ret;
 }
 
 static int s5pv210_cpufreq_resume(struct cpufreq_policy *policy)
 {
 	int ret = 0;
+	u32 rate;
+	int level = CPUFREQ_TABLE_END;
+	int i = 0;
+	struct cpufreq_frequency_table *freq_tab = s5pv210_freq_table[S5PV210_FREQ_TAB];
+
+	pr_info("cpufreq: Waking up from a suspend.\n");
+
+	__cpufreq_driver_target(cpufreq_cpu_get(0), previous_frequency,
+			ENABLE_FURTHER_CPUFREQ);
+
+	/* Clock information update with wakeup value */
+	rate = clk_get_rate(mpu_clk);
+
+	while (freq_tab[i].frequency != CPUFREQ_TABLE_END) {
+		if (freq_tab[i].frequency * 1000 == rate) {
+			level = freq_tab[i].index;
+			break;
+		}
+		i++;
+	}
+
+	if (level == CPUFREQ_TABLE_END) { /* Not found */
+		pr_err("[%s:%d] clock speed does not match: "
+				"%d. Using L1 of 800MHz.\n",
+				__FILE__, __LINE__, rate);
+		level = L1;
+	}
+
 	/* Clock inforamtion update with wakeup value */
 	memcpy(&s5pv210_freqs.old, &s5pv210_clk_info[bootup_level],
 			sizeof(struct s5pv210_domain_freq));

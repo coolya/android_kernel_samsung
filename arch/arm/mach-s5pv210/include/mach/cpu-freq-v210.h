@@ -54,6 +54,14 @@ enum freq_level_states {
 	LEV_100MHZ,
 };
 
+#define SLEEP_FREQ      (800 * 1000) /* Use 800MHz when entering sleep */
+
+/* additional symantics for "relation" in cpufreq with pm */
+#define DISABLE_FURTHER_CPUFREQ         0x10
+#define ENABLE_FURTHER_CPUFREQ          0x20
+#define MASK_FURTHER_CPUFREQ            0x30
+/* With 0x00(NOCHANGE), it depends on the previous "further" status */
+
 struct s5pv210_domain_freq {
 	unsigned long	apll_out;
 	unsigned long	armclk;
