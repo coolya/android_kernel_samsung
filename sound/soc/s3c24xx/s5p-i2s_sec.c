@@ -311,44 +311,6 @@ struct snd_soc_dai i2s_sec_fifo_dai = {
 };
 EXPORT_SYMBOL_GPL(i2s_sec_fifo_dai);
 
-static int get_dma_mode(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol)
-{
-	ucontrol->value.integer.value[0] = i2s_sec_fifo_dai.use_idma;
-
-	return 0;
-}
-
-static int set_dma_mode(struct snd_kcontrol *kcontrol,
-		struct snd_ctl_elem_value *ucontrol)
-{
-	if (i2s_sec_fifo_dai.use_idma == ucontrol->value.integer.value[0]
-		|| i2s_sec_fifo_dai.active)
-		return 0;
-
-	i2s_sec_fifo_dai.use_idma = ucontrol->value.integer.value[0];
-
-	return 1;
-}
-
-static int get_dma_mode(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol);
-static int set_dma_mode(struct snd_kcontrol *kcontrol,
-		struct snd_ctl_elem_value *ucontrol);
-
-static const char *dma_modes[] = {
-	"SysDMA",
-	"iDMA",
-};
-
-static const struct soc_enum dma_mode_enum[] = {
-	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(dma_modes), dma_modes),
-};
-
-const struct snd_kcontrol_new s5p_idma_control =
-	SOC_ENUM_EXT("Sec_Fifo Mode", dma_mode_enum[0],
-		get_dma_mode, set_dma_mode);
-EXPORT_SYMBOL_GPL(s5p_idma_control);
 
 void s5p_i2s_sec_init(void *regs, dma_addr_t phys_base)
 {

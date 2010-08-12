@@ -30,7 +30,6 @@
 extern struct snd_soc_dai i2s_sec_fifo_dai;
 extern struct snd_soc_dai i2s_dai;
 extern struct snd_soc_platform s3c_dma_wrapper;
-extern const struct snd_kcontrol_new s5p_idma_control;
 
 //static int set_epll_rate(unsigned long rate); //not-used
 
