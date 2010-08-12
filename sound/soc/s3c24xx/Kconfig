@@ -111,6 +111,14 @@ config 	S5P_LPAUDIO
 	help
 	 say Y for enabling LP audio Feature
 
+config 	ANDROID_BUF_NUM
+	int "Multiplication unit for Additional buffers"
+	depends on SND_S5P_WM8994
+	default "1"
+	help
+	  Set it to 1 till  Additional buffer logic gets implemented
+	  in PCM library.
+
 config SND_S3C24XX_SOC_SMDK2443_WM9710
 	tristate "SoC AC97 Audio support for SMDK2443 - WM9710"
 	depends on SND_S3C24XX_SOC && MACH_SMDK2443
