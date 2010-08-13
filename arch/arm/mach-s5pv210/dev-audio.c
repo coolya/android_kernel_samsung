@@ -68,13 +68,13 @@ static struct resource s5pv210_iis0_resource[] = {
 		.flags = IORESOURCE_MEM,
 	},
 	[1] = {
-		.start = DMACH_I2S0_OUT,
-		.end   = DMACH_I2S0_OUT,
+		.start = DMACH_I2S0_TX,
+		.end   = DMACH_I2S0_TX,
 		.flags = IORESOURCE_DMA,
 	},
 	[2] = {
-		.start = DMACH_I2S0_IN,
-		.end   = DMACH_I2S0_IN,
+		.start = DMACH_I2S0_RX,
+		.end   = DMACH_I2S0_RX,
 		.flags = IORESOURCE_DMA,
 	},
 };
