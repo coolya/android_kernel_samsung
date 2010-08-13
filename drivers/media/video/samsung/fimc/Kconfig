@@ -6,6 +6,23 @@ config VIDEO_FIMC
 	help
 	  This is a video4linux driver for Samsung FIMC device.
 
+choice
+depends on VIDEO_FIMC
+prompt "Select CSC Range config"
+default VIDEO_FIMC_RANGE_NARROW
+config VIDEO_FIMC_RANGE_NARROW
+	bool "Narrow"
+	depends on VIDEO_FIMC && ARCH_S5PV210
+	---help---
+	  RGB <-> YUV Color Conversion Narrow Range Equation
+
+config VIDEO_FIMC_RANGE_WIDE
+	bool "Wide"
+	depends on VIDEO_FIMC && ARCH_S5PV210
+	---help---
+	  RGB <-> YUV Color Conversion Wide Range Equation
+endchoice	
+
 config VIDEO_IPC
 	bool
 
