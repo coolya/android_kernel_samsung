@@ -248,5 +248,6 @@ extern int s3c_gpio_set_slewrate(unsigned int pin, unsigned int config);
 #define S3C_GPIO_SLEWRATE_SLOW  (1)
 
 extern int s3c_gpio_slp_setpull_updown(unsigned int pin, s3c_gpio_pull_t pull);
+extern int s5pv210_gpiolib_init(void);
 
 #endif /* __ASM_ARCH_GPIO_H */
