@@ -187,77 +187,77 @@
 #define S3C_DMA_M2M		0
 
 static struct s5p_dma_map __initdata s5pv210_dma_mappings[] = {
-	[DMACH_UART0] = {
+	[DMACH_UART0_TX] = {
 		.name       	= "uart0-dma-tx",
 		.channels   	= MAP1(S3C_PDMA0_UART0_TX),
 		.hw_addr.to	= S3C_PDMA0_UART0_TX,
 	},
-	[DMACH_UART0_SRC2] = {
+	[DMACH_UART0_RX] = {
 		.name       	= "uart0-dma-rx",
 		.channels   	= MAP1(S3C_PDMA0_UART0_RX),
 		.hw_addr.from 	= S3C_PDMA0_UART0_RX,
 	},
-	[DMACH_UART1] = {
+	[DMACH_UART1_TX] = {
 		.name		= "uart1-dma-tx",
 		.channels	= MAP1(S3C_PDMA0_UART1_TX),
 		.hw_addr.to 	= S3C_PDMA0_UART1_TX,
 	},
-	[DMACH_UART1_SRC2] = {
+	[DMACH_UART1_RX] = {
 		.name       	= "uart1-dma-rx",
 		.channels   	= MAP1(S3C_PDMA0_UART1_RX),
 		.hw_addr.from 	= S3C_PDMA0_UART1_RX,
 	},
-	[DMACH_UART2] = {
+	[DMACH_UART2_TX] = {
 		.name		= "uart2-dma-tx",
 		.channels	= MAP1(S3C_PDMA0_UART2_TX),
 		.hw_addr.to 	= S3C_PDMA0_UART2_TX,
 	},
-	[DMACH_UART2_SRC2] = {
+	[DMACH_UART2_RX] = {
 		.name       	= "uart2-dma-rx",
 		.channels   	= MAP1(S3C_PDMA0_UART2_RX),
 		.hw_addr.from 	= S3C_PDMA0_UART2_RX,
 	},
-	[DMACH_UART3] = {
+	[DMACH_UART3_TX] = {
 		.name		= "uart3-dma-tx",
 		.channels	= MAP1(S3C_PDMA0_UART3_TX),
 		.hw_addr.to 	= S3C_PDMA0_UART3_TX,
 	},
-	[DMACH_UART3_SRC2] = {
+	[DMACH_UART3_RX] = {
 		.name       	= "uart3-dma-rx",
 		.channels   	= MAP1(S3C_PDMA0_UART3_RX),
 		.hw_addr.from 	= S3C_PDMA0_UART3_RX,
 	},
-	[DMACH_I2S0_IN] = {
+	[DMACH_I2S0_RX] = {
 		.name           = "i2s0-in",
 		.channels       = MAP1(S3C_PDMA1_I2S0_RX),
 		.hw_addr.from     = S3C_PDMA1_I2S0_RX,
 	},
-	[DMACH_I2S0_OUT] = {
+	[DMACH_I2S0_TX] = {
 		.name           = "i2s0-out",
 		.channels       = MAP1(S3C_PDMA1_I2S0_TX),
 		.hw_addr.to     = S3C_PDMA1_I2S0_TX,
 	},
-	[DMACH_I2S0_OUT_S] = {
+	[DMACH_I2S0S_TX] = {
 		.name		= "i2s-v50-sec_out",
 		.channels	= MAP2(S3C_PDMA1_I2S0S_TX),
 		.hw_addr.to	= S3C_PDMA1_I2S0S_TX,
 	},
-	[DMACH_I2S1_IN] = {
+	[DMACH_I2S1_RX] = {
 		.name		= "i2s1-in",
 		.channels	= MAP2(S3C_PDMA1_I2S1_RX),
 		.hw_addr.from	= S3C_PDMA1_I2S1_RX,
 	},
-	[DMACH_I2S1_OUT] = {
+	[DMACH_I2S1_TX] = {
 		.name		= "i2s1-out",
 		.channels	= MAP2(S3C_PDMA1_I2S1_TX),
 		.hw_addr.to	= S3C_PDMA1_I2S1_TX,
 	},
-	[DMACH_I2S2_IN] = {
+	[DMACH_I2S2_RX] = {
 		.name		= "i2s2-in",
 		.channels	= MAP1(S3C_PDMA1_I2S2_RX),
 		.hw_addr.from	= S3C_PDMA1_I2S2_RX,
 	},
-	[DMACH_I2S2_OUT] = {
+	[DMACH_I2S2_TX] = {
 		.name		= "i2s2-out",
 		.channels	= MAP1(S3C_PDMA1_I2S2_TX),
 		.hw_addr.to	= S3C_PDMA1_I2S2_TX,
