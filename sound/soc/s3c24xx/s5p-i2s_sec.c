@@ -43,7 +43,7 @@ static struct s3c2410_dma_client s5p_dma_client_outs = {
 };
 
 static struct s3c_dma_params s5p_i2s_sec_pcm_out = {
-	.channel	= DMACH_I2S0_OUT_S,
+	.channel	= DMACH_I2S0S_TX,
 	.client		= &s5p_dma_client_outs,
 	.dma_size	= 4,
 };
