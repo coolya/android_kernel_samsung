@@ -47,9 +47,6 @@
 static char *usb_functions_ums[] = {
 	"usb_mass_storage",
 };
-static char *usb_functions_adb[] = {
-	"adb",
-};
 
 static char *usb_functions_rndis[] = {
 	"rndis",
@@ -84,11 +81,6 @@ static struct android_usb_product usb_products[] = {
 	},
 	{
 		.product_id	= S3C_ADB_PRODUCT_ID,
-		.num_functions	= ARRAY_SIZE(usb_functions_adb),
-		.functions	= usb_functions_adb,
-	},
-	{
-		.product_id	= S3C_ADB_PRODUCT_ID,
 		.num_functions	= ARRAY_SIZE(usb_functions_ums_adb),
 		.functions	= usb_functions_ums_adb,
 	},
@@ -113,8 +105,8 @@ static char device_serial[MAX_USB_SERIAL_NUM]="0123456789ABCDEF";
 static struct android_usb_platform_data android_usb_pdata = {
 	.vendor_id		= S3C_VENDOR_ID,
 	.product_id		= S3C_PRODUCT_ID,
-	.manufacturer_name	= "Android",//"Samsung",
-	.product_name		= "Android",//"Samsung SMDKV210",
+	.manufacturer_name	= "Samsung",//"Samsung",
+	.product_name		= "Samsung S5PC110",//"Samsung SMDKV210",
 	.serial_number		= device_serial,
 	.num_products 		= ARRAY_SIZE(usb_products),
 	.products 		= usb_products,
@@ -135,6 +127,7 @@ static struct usb_mass_storage_platform_data ums_pdata = {
 	.vendor			= "Android   ",//"Samsung",
 	.product		= "UMS Composite",//"SMDKV210",
 	.release		= 1,
+	.nluns			= 1,
 };
 struct platform_device s3c_device_usb_mass_storage= {
 	.name	= "usb_mass_storage",
