@@ -28,6 +28,11 @@
 
 #include <linux/io.h>
 
+#ifdef CONFIG_MTD_PARTITIONS
+#include <asm/setup.h>
+#include <linux/string.h>
+#endif
+
 enum soc_type {
 	TYPE_S3C6400,
 	TYPE_S3C6410,
@@ -221,6 +226,58 @@ static void s3c_dump_reg(void)
 			s3c_read_reg(i + 0x20), s3c_read_reg(i + 0x30));
 	}
 }
+#endif
+
+#ifdef CONFIG_MTD_PARTITIONS
+struct slsi_ptbl_entry {
+	char name[16];
+	__u32 offset;
+	__u32 size;
+	__u32 flags;
+};
+
+struct mtd_partition *partitions;
+int num_partitions;
+
+#define MAX_PARTITIONS 12
+#define ATAG_SLSI_PARTITION 0x28247574
+struct mtd_partition slsi_nand_partitions[MAX_PARTITIONS];
+char slsi_nand_names[MAX_PARTITIONS * 16];
+
+static int __init parse_tag_partition(const struct tag *tag)
+{
+	struct mtd_partition *ptn = slsi_nand_partitions;
+	char *name = slsi_nand_names;
+	struct slsi_ptbl_entry *entry = (void *) &tag->u;
+	unsigned count, n;
+
+	count = (tag->hdr.size - 2) /
+		(sizeof(struct slsi_ptbl_entry) / sizeof(__u32));
+
+	if (count > MAX_PARTITIONS)
+		count = MAX_PARTITIONS;
+
+	for (n = 0; n < count; n++) {
+		memcpy(name, entry->name, 15);
+		name[15] = 0;
+		ptn->name = name;
+		ptn->offset = entry->offset;
+		ptn->size = entry->size;
+
+		printk(KERN_INFO "Partition (from atag) %15s -- Offset:0x%08x Size:0x%08x\n",
+				entry->name, entry->offset, entry->size);
+
+		name += 16;
+		entry++;
+		ptn++;
+	}
+
+	num_partitions = count;
+	partitions = slsi_nand_partitions;
+
+	return 0;
+}
+__tagtable(ATAG_SLSI_PARTITION, parse_tag_partition);
 #endif
 
 static unsigned int s3c64xx_cmd_map(unsigned type, unsigned val)
@@ -821,10 +878,6 @@ static int s3c_onenand_probe(struct platform_device *pdev)
 	struct resource *r;
 	int size, err;
 	unsigned long onenand_ctrl_cfg = 0;
-#ifdef CONFIG_MTD_PARTITIONS
-	struct mtd_partition *partitions =  NULL;
-	int num_partitions = 0;
-#endif
 
 	pdata = pdev->dev.platform_data;
 	/* No need to check pdata. the platform data is optional */
