@@ -104,13 +104,6 @@ config  S5P_INTERNAL_DMA
 	help
 	  Say Y for IIS to operate with Internal DMA(IIS's own DMA)
 	 
-config 	S5P_LPAUDIO
-	bool "S5P LP Audio Feature"
-	depends on S5P_INTERNAL_DMA
-	default n
-	help
-	 say Y for enabling LP audio Feature
-
 config 	ANDROID_BUF_NUM
 	int "Multiplication unit for Additional buffers"
 	depends on SND_S5P_WM8994
