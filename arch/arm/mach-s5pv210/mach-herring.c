@@ -71,7 +71,7 @@ EXPORT_SYMBOL(switch_dev);
 
 void (*sec_set_param_value)(int idx, void *value);
 EXPORT_SYMBOL(sec_set_param_value);
-        
+
 void (*sec_get_param_value)(int idx, void *value);
 EXPORT_SYMBOL(sec_get_param_value);
 
@@ -109,15 +109,14 @@ static struct notifier_block herring_reboot_notifier = {
 static void jupiter_switch_init(void)
 {
 	sec_class = class_create(THIS_MODULE, "sec");
-	
+
 	if (IS_ERR(sec_class))
 		pr_err("Failed to create class(sec)!\n");
 
 	switch_dev = device_create(sec_class, NULL, 0, NULL, "switch");
-	
+
 	if (IS_ERR(switch_dev))
 		pr_err("Failed to create device(switch)!\n");
-
 };
 
 /* Following are default values for UCON, ULCON and UFCON UART registers */
@@ -133,9 +132,6 @@ static void jupiter_switch_init(void)
 #define S5PV210_UFCON_DEFAULT	(S3C2410_UFCON_FIFOMODE |	\
 				 S5PV210_UFCON_TXTRIG4 |	\
 				 S5PV210_UFCON_RXTRIG4)
-
-extern void s5pv210_reserve_bootmem(void);
-extern void s3c_sdhci_set_platdata(void);
 
 static struct s3c2410_uartcfg herring_uartcfgs[] __initdata = {
 	[0] = {
@@ -170,358 +166,337 @@ static struct s3c2410_uartcfg herring_uartcfgs[] __initdata = {
 
 #if defined(CONFIG_TOUCHSCREEN_QT602240)
 static struct platform_device s3c_device_qtts = {
-        .name = "qt602240-ts",
-        .id = -1,
+	.name	= "qt602240-ts",
+	.id	= -1,
 };
 #endif
 
 /* PMIC */
 static struct regulator_consumer_supply buck1_consumers[] = {
-        {
-                .supply         = "vddarm",
-        },
+	{
+		.supply         = "vddarm",
+	},
 };
 
 static struct regulator_init_data max8998_buck1_data = {
-        .constraints    = {
-                .name           = "VCC_ARM",
-                .min_uV         =  750000,
-                .max_uV         = 1500000,
-                .always_on      = 1,
-                .valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
+	.constraints    = {
+		.name           = "VCC_ARM",
+		.min_uV         =  750000,
+		.max_uV         = 1500000,
+		.always_on      = 1,
+		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
 		.state_mem	= {
 			.uV	= 1200000,
 			.mode	= REGULATOR_MODE_NORMAL,
 			.enabled = 0,
 		},
-        },
-        .num_consumer_supplies  = ARRAY_SIZE(buck1_consumers),
-        .consumer_supplies      =buck1_consumers,
+	},
+	.num_consumer_supplies	= ARRAY_SIZE(buck1_consumers),
+	.consumer_supplies	= buck1_consumers,
 };
 
 static struct regulator_consumer_supply buck2_consumers[] = {
-        {
-                .supply         = "vddint",
-        },
+	{
+		.supply         = "vddint",
+	},
 };
 
 static struct regulator_init_data max8998_buck2_data = {
-        .constraints    = {
-                .name           = "VCC_INTERNAL",
-                .min_uV         =  750000,
-                .max_uV         = 1500000,
-                .always_on      = 1,
-                .valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
+	.constraints    = {
+		.name           = "VCC_INTERNAL",
+		.min_uV         =  750000,
+		.max_uV         = 1500000,
+		.always_on      = 1,
+		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
 		.state_mem	= {
 			.uV	= 1100000,
 			.mode	= REGULATOR_MODE_NORMAL,
 			.enabled = 0,
 		},
-        },
-        .num_consumer_supplies  = ARRAY_SIZE(buck2_consumers),
-        .consumer_supplies      =buck2_consumers,
-};
-static struct regulator_init_data max8998_ldo4_data = {
-        .constraints    = {
-                .name           = "VCC_DAC",
-                .min_uV         = 3300000,
-                .max_uV         = 3300000,
-                .always_on      = 1,
-                .apply_uV       = 1,
-                .valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
-        },
+	},
+	.num_consumer_supplies  = ARRAY_SIZE(buck2_consumers),
+	.consumer_supplies      = buck2_consumers,
 };
 
+static struct regulator_init_data max8998_ldo4_data = {
+	.constraints    = {
+		.name           = "VCC_DAC",
+		.min_uV         = 3300000,
+		.max_uV         = 3300000,
+		.always_on      = 1,
+		.apply_uV       = 1,
+		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
+	},
+};
 
 static struct regulator_init_data max8998_ldo7_data = {
-        .constraints    = {
-                .name           = "VCC_LCD",
-                .min_uV         = 1600000,
-                .max_uV         = 3600000,
-                .always_on      = 1,
-                //.apply_uV     = 1,
-                .valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
-        },
+	.constraints    = {
+		.name           = "VCC_LCD",
+		.min_uV         = 1600000,
+		.max_uV         = 3600000,
+		.always_on      = 1,
+		/* .apply_uV     = 1, */
+		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
+	},
 };
 
 static struct regulator_init_data max8998_ldo17_data = {
-        .constraints    = {
-                .name           = "PM_LVDS_VDD",
-                .min_uV         = 1600000,
-                .max_uV         = 3600000,
-                .always_on      = 1,
-                //.apply_uV     = 1,
-                .valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
-        },
+	.constraints    = {
+		.name           = "PM_LVDS_VDD",
+		.min_uV         = 1600000,
+		.max_uV         = 3600000,
+		.always_on      = 1,
+		/* .apply_uV     = 1, */
+		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
+	},
 };
+
 static struct max8998_subdev_data universal_regulators[] = {
-        { MAX8998_BUCK1, &max8998_buck1_data },
-        { MAX8998_BUCK2, &max8998_buck2_data },
-//      { MAX8998_BUCK4, &max8998_buck4_data },
-        { MAX8998_LDO4, &max8998_ldo4_data },
-//      { MAX8998_LDO11, &max8998_ldo11_data },
-//      { MAX8998_LDO12, &max8998_ldo12_data },
-//      { MAX8998_LDO13, &max8998_ldo13_data },
-//      { MAX8998_LDO14, &max8998_ldo14_data },
-//      { MAX8998_LDO15, &max8998_ldo15_data },
-        { MAX8998_LDO7, &max8998_ldo7_data },
-        { MAX8998_LDO17, &max8998_ldo17_data },
+	{ MAX8998_BUCK1, &max8998_buck1_data },
+	{ MAX8998_BUCK2, &max8998_buck2_data },
+	/* { MAX8998_BUCK4, &max8998_buck4_data }, */
+	{ MAX8998_LDO4, &max8998_ldo4_data },
+	/* { MAX8998_LDO11, &max8998_ldo11_data }, */
+	/* { MAX8998_LDO12, &max8998_ldo12_data }, */
+	/* { MAX8998_LDO13, &max8998_ldo13_data }, */
+	/* { MAX8998_LDO14, &max8998_ldo14_data }, */
+	/* { MAX8998_LDO15, &max8998_ldo15_data }, */
+	{ MAX8998_LDO7, &max8998_ldo7_data },
+	{ MAX8998_LDO17, &max8998_ldo17_data },
 };
 
 #if USE_1DOT2GHZ
 static struct max8998_platform_data max8998_platform_data = {
-        .num_regulators = ARRAY_SIZE(universal_regulators),
-        .regulators     = universal_regulators,
-	
+	.num_regulators = ARRAY_SIZE(universal_regulators),
+	.regulators     = universal_regulators,
+
 	.set1           = S5PV210_GPH0(3),
 	.set2           = S5PV210_GPH0(4),
 	.set3           = S5PV210_GPH0(5),
-	.dvsarm1	= 0x16,  //1.30V
-	.dvsarm2        = 0x14,  // 1.25v
-	.dvsarm3        = 0x12,  // 1.20V
-	.dvsarm4        = 0x0c,  // 1.05V
-	.dvsarm5        = 0x08,  // 0.95V
-	
-	.dvsint1        = 0x10,  // 1.15v
-	.dvsint2        = 0x0e,  // 1.10v
-	.dvsint3        = 0x0a,  // 1.00V
+	.dvsarm1	= 0x16,  /* 1.30V */
+	.dvsarm2        = 0x14,  /* 1.25v */
+	.dvsarm3        = 0x12,  /* 1.20V */
+	.dvsarm4        = 0x0c,  /* 1.05V */
+	.dvsarm5        = 0x08,  /* 0.95V */
+
+	.dvsint1        = 0x10,  /* 1.15v */
+	.dvsint2        = 0x0e,  /* 1.10v */
+	.dvsint3        = 0x0a,  /* 1.00V */
 
 };
 #else
 static struct max8998_platform_data max8998_platform_data = {
-        .num_regulators = ARRAY_SIZE(universal_regulators),
-        .regulators     = universal_regulators,
+	.num_regulators = ARRAY_SIZE(universal_regulators),
+	.regulators     = universal_regulators,
 
 	.set1           = S5PV210_GPH0(3),
 	.set2           = S5PV210_GPH0(4),
 	.set3           = S5PV210_GPH0(5),
-	.dvsarm1        = 0x14,  // 1.25v
-	.dvsarm2        = 0x12,  // 1.20V
-	.dvsarm3        = 0x0c,  // 1.05V
-	.dvsarm4        = 0x08,  // 0.95V
+	.dvsarm1        = 0x14,  /* 1.25v */
+	.dvsarm2        = 0x12,  /* 1.20V */
+	.dvsarm3        = 0x0c,  /* 1.05V */
+	.dvsarm4        = 0x08,  /* 0.95V */
 	.dvsarm5        = 0x00,
 
-	.dvsint1        = 0x0e,  // 1.10v
-	.dvsint2        = 0x0a,  // 1.00V
+	.dvsint1        = 0x0e,  /* 1.10v */
+	.dvsint2        = 0x0a,  /* 1.00V */
 	.dvsint3	= 0x00,
 };
-#endif //!(USE_1DOT2GHZ)
+#endif
 
 struct platform_device sec_device_dpram = {
-        .name   = "dpram-device",
-        .id             = -1,
+	.name	= "dpram-device",
+	.id	= -1,
 };
 struct platform_device s3c_device_8998consumer = {
-        .name             = "max8998-consumer",
-        .id               = 0,
-        .dev = { .platform_data = &max8998_platform_data },
+	.name	= "max8998-consumer",
+	.id	= 0,
+	.dev = {
+		.platform_data = &max8998_platform_data
+	},
 };
-
 
 static void tl2796_cfg_gpio(struct platform_device *pdev)
 {
-        int i;
+	int i;
 
+	for (i = 0; i < 8; i++) {
+		s3c_gpio_cfgpin(S5PV210_GPF0(i), S3C_GPIO_SFN(2));
+		s3c_gpio_setpull(S5PV210_GPF0(i), S3C_GPIO_PULL_NONE);
+	}
 
-        /* Temporarry code for SLSI boot loader */
-        //max8998_ldo_set_voltage_direct(MAX8998_LDO7,1800000, 1800000);
-        //max8998_ldo_set_voltage_direct(MAX8998_LDO17,3000000,3000000);
+	for (i = 0; i < 8; i++) {
+		s3c_gpio_cfgpin(S5PV210_GPF1(i), S3C_GPIO_SFN(2));
+		s3c_gpio_setpull(S5PV210_GPF1(i), S3C_GPIO_PULL_NONE);
+	}
 
-        for (i = 0; i < 8; i++) {
-                s3c_gpio_cfgpin(S5PV210_GPF0(i), S3C_GPIO_SFN(2));
-                s3c_gpio_setpull(S5PV210_GPF0(i), S3C_GPIO_PULL_NONE);
-        }
+	for (i = 0; i < 8; i++) {
+		s3c_gpio_cfgpin(S5PV210_GPF2(i), S3C_GPIO_SFN(2));
+		s3c_gpio_setpull(S5PV210_GPF2(i), S3C_GPIO_PULL_NONE);
+	}
 
-        for (i = 0; i < 8; i++) {
-                s3c_gpio_cfgpin(S5PV210_GPF1(i), S3C_GPIO_SFN(2));
-                s3c_gpio_setpull(S5PV210_GPF1(i), S3C_GPIO_PULL_NONE);
-        }
+	for (i = 0; i < 4; i++) {
+		s3c_gpio_cfgpin(S5PV210_GPF3(i), S3C_GPIO_SFN(2));
+		s3c_gpio_setpull(S5PV210_GPF3(i), S3C_GPIO_PULL_NONE);
+	}
 
-        for (i = 0; i < 8; i++) {
-                s3c_gpio_cfgpin(S5PV210_GPF2(i), S3C_GPIO_SFN(2));
-                s3c_gpio_setpull(S5PV210_GPF2(i), S3C_GPIO_PULL_NONE);
-        }
-
-        for (i = 0; i < 4; i++) {
-                s3c_gpio_cfgpin(S5PV210_GPF3(i), S3C_GPIO_SFN(2));
-                s3c_gpio_setpull(S5PV210_GPF3(i), S3C_GPIO_PULL_NONE);
-        }
-
-        /* mDNIe SEL: why we shall write 0x2 ? */
+	/* mDNIe SEL: why we shall write 0x2 ? */
 #ifdef CONFIG_FB_S3C_MDNIE
-        writel(0x1, S5P_MDNIE_SEL);
+	writel(0x1, S5P_MDNIE_SEL);
 #else
-        writel(0x2, S5P_MDNIE_SEL);
-#endif
-#if 0
-	 /* drive strength to max */
-        writel(0xffffffff, S5PC_VA_GPIO + 0x12c);
-        writel(0xffffffff, S5PC_VA_GPIO + 0x14c);
-        writel(0xffffffff, S5PC_VA_GPIO + 0x16c);
-        writel(0x000000ff, S5PC_VA_GPIO + 0x18c);
+	writel(0x2, S5P_MDNIE_SEL);
 #endif
 
-        /* DISPLAY_CS */
-        s3c_gpio_cfgpin(S5PV210_MP01(1), S3C_GPIO_SFN(1));
-        /* DISPLAY_CLK */
-        s3c_gpio_cfgpin(S5PV210_MP04(1), S3C_GPIO_SFN(1));
-        /* DISPLAY_SO */
-        s3c_gpio_cfgpin(S5PV210_MP04(2), S3C_GPIO_SFN(1));
-        /* DISPLAY_SI */
-        s3c_gpio_cfgpin(S5PV210_MP04(3), S3C_GPIO_SFN(1));
+	/* DISPLAY_CS */
+	s3c_gpio_cfgpin(S5PV210_MP01(1), S3C_GPIO_SFN(1));
+	/* DISPLAY_CLK */
+	s3c_gpio_cfgpin(S5PV210_MP04(1), S3C_GPIO_SFN(1));
+	/* DISPLAY_SO */
+	s3c_gpio_cfgpin(S5PV210_MP04(2), S3C_GPIO_SFN(1));
+	/* DISPLAY_SI */
+	s3c_gpio_cfgpin(S5PV210_MP04(3), S3C_GPIO_SFN(1));
 
-        /* DISPLAY_CS */
-        s3c_gpio_setpull(S5PV210_MP01(1), S3C_GPIO_PULL_NONE);
-        /* DISPLAY_CLK */
-        s3c_gpio_setpull(S5PV210_MP04(1), S3C_GPIO_PULL_NONE);
-        /* DISPLAY_SO */
-        s3c_gpio_setpull(S5PV210_MP04(2), S3C_GPIO_PULL_NONE);
-        /* DISPLAY_SI */
-        s3c_gpio_setpull(S5PV210_MP04(3), S3C_GPIO_PULL_NONE);
-
-        /*KGVS : configuring GPJ2(4) as FM interrupt */
-        //s3c_gpio_cfgpin(S5PV210_GPJ2(4), S5PV210_GPJ2_4_GPIO_INT20_4);
-
+	/* DISPLAY_CS */
+	s3c_gpio_setpull(S5PV210_MP01(1), S3C_GPIO_PULL_NONE);
+	/* DISPLAY_CLK */
+	s3c_gpio_setpull(S5PV210_MP04(1), S3C_GPIO_PULL_NONE);
+	/* DISPLAY_SO */
+	s3c_gpio_setpull(S5PV210_MP04(2), S3C_GPIO_PULL_NONE);
+	/* DISPLAY_SI */
+	s3c_gpio_setpull(S5PV210_MP04(3), S3C_GPIO_PULL_NONE);
 }
-
 
 void lcd_cfg_gpio_early_suspend(void)
 {
+	int i;
 
-        int i;
-	printk("[%s]\n", __func__);
-
-        for (i = 0; i < 8; i++) {
+	for (i = 0; i < 8; i++) {
 		s3c_gpio_cfgpin(S5PV210_GPF0(i), S3C_GPIO_OUTPUT);
-                s3c_gpio_setpull(S5PV210_GPF0(i), S3C_GPIO_PULL_NONE);
+		s3c_gpio_setpull(S5PV210_GPF0(i), S3C_GPIO_PULL_NONE);
 		gpio_set_value(S5PV210_GPF0(i), 0);
-        }
+	}
 
-        for (i = 0; i < 8; i++) {
+	for (i = 0; i < 8; i++) {
 		s3c_gpio_cfgpin(S5PV210_GPF1(i), S3C_GPIO_OUTPUT);
-                s3c_gpio_setpull(S5PV210_GPF1(i), S3C_GPIO_PULL_NONE);
+		s3c_gpio_setpull(S5PV210_GPF1(i), S3C_GPIO_PULL_NONE);
 		gpio_set_value(S5PV210_GPF1(i), 0);
-        }
+	}
 
-        for (i = 0; i < 8; i++) {
+	for (i = 0; i < 8; i++) {
 		s3c_gpio_cfgpin(S5PV210_GPF2(i), S3C_GPIO_OUTPUT);
-                s3c_gpio_setpull(S5PV210_GPF2(i), S3C_GPIO_PULL_NONE);
+		s3c_gpio_setpull(S5PV210_GPF2(i), S3C_GPIO_PULL_NONE);
 		gpio_set_value(S5PV210_GPF2(i), 0);
-        }
+	}
 
-        for (i = 0; i < 4; i++) {
+	for (i = 0; i < 4; i++) {
 		s3c_gpio_cfgpin(S5PV210_GPF3(i), S3C_GPIO_OUTPUT);
-                s3c_gpio_setpull(S5PV210_GPF3(i), S3C_GPIO_PULL_NONE);
+		s3c_gpio_setpull(S5PV210_GPF3(i), S3C_GPIO_PULL_NONE);
 		gpio_set_value(S5PV210_GPF3(i), 0);
-        }
-	// drive strength to min 
-	writel(0x00000000, S5P_VA_GPIO + 0x12c); 	// GPF0DRV
-	writel(0x00000000, S5P_VA_GPIO + 0x14c);	// GPF1DRV
-	writel(0x00000000, S5P_VA_GPIO + 0x16c);	// GPF2DRV
-	writel(0x00000000, S5P_VA_GPIO + 0x18c);	// GPF3DRV
+	}
+	/* drive strength to min */
+	writel(0x00000000, S5P_VA_GPIO + 0x12c); /* GPF0DRV */
+	writel(0x00000000, S5P_VA_GPIO + 0x14c); /* GPF1DRV */
+	writel(0x00000000, S5P_VA_GPIO + 0x16c); /* GPF2DRV */
+	writel(0x00000000, S5P_VA_GPIO + 0x18c); /* GPF3DRV */
 
-	// OLED_DET
+	/* OLED_DET */
 	s3c_gpio_cfgpin(GPIO_OLED_DET, S3C_GPIO_OUTPUT);
-	s3c_gpio_setpull(GPIO_OLED_DET, S3C_GPIO_PULL_NONE);	
-	gpio_set_value(GPIO_OLED_DET, 0);	
+	s3c_gpio_setpull(GPIO_OLED_DET, S3C_GPIO_PULL_NONE);
+	gpio_set_value(GPIO_OLED_DET, 0);
 
-	// LCD_RST
+	/* LCD_RST */
 	s3c_gpio_cfgpin(GPIO_MLCD_RST, S3C_GPIO_OUTPUT);
-	s3c_gpio_setpull(GPIO_MLCD_RST, S3C_GPIO_PULL_NONE);	
+	s3c_gpio_setpull(GPIO_MLCD_RST, S3C_GPIO_PULL_NONE);
 	gpio_set_value(GPIO_MLCD_RST, 0);
 
-        /* DISPLAY_CS */
+	/* DISPLAY_CS */
 	s3c_gpio_cfgpin(GPIO_DISPLAY_CS, S3C_GPIO_OUTPUT);
-        s3c_gpio_setpull(GPIO_DISPLAY_CS, S3C_GPIO_PULL_NONE);
+	s3c_gpio_setpull(GPIO_DISPLAY_CS, S3C_GPIO_PULL_NONE);
 	gpio_set_value(GPIO_DISPLAY_CS, 0);
 
-        /* DISPLAY_CLK */
+	/* DISPLAY_CLK */
 	s3c_gpio_cfgpin(GPIO_DISPLAY_CLK, S3C_GPIO_OUTPUT);
-        s3c_gpio_setpull(GPIO_DISPLAY_CLK, S3C_GPIO_PULL_NONE);
+	s3c_gpio_setpull(GPIO_DISPLAY_CLK, S3C_GPIO_PULL_NONE);
 	gpio_set_value(GPIO_DISPLAY_CLK, 0);
-        /* DISPLAY_SO */
-        //s3c_gpio_cfgpin(S5PV210_MP04(2), S3C_GPIO_INPUT);
-        //s3c_gpio_setpull(S5PV210_MP04(2), S3C_GPIO_PULL_DOWN);
-        /* DISPLAY_SI */
+
+	/* DISPLAY_SO */
+	/*
+	s3c_gpio_cfgpin(S5PV210_MP04(2), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_MP04(2), S3C_GPIO_PULL_DOWN);
+	*/
+
+	/* DISPLAY_SI */
 	s3c_gpio_cfgpin(GPIO_DISPLAY_SI, S3C_GPIO_OUTPUT);
-        s3c_gpio_setpull(GPIO_DISPLAY_SI, S3C_GPIO_PULL_NONE);
+	s3c_gpio_setpull(GPIO_DISPLAY_SI, S3C_GPIO_PULL_NONE);
 	gpio_set_value(GPIO_DISPLAY_SI, 0);
 
-	// OLED_ID
+	/* OLED_ID */
 	s3c_gpio_cfgpin(GPIO_OLED_ID, S3C_GPIO_INPUT);
-	s3c_gpio_setpull(GPIO_OLED_ID, S3C_GPIO_PULL_DOWN);	
-//	gpio_set_value(GPIO_OLED_ID, 0);	
+	s3c_gpio_setpull(GPIO_OLED_ID, S3C_GPIO_PULL_DOWN);
+	/* gpio_set_value(GPIO_OLED_ID, 0); */
 
-	// DIC_ID
+	/* DIC_ID */
 	s3c_gpio_cfgpin(GPIO_DIC_ID, S3C_GPIO_INPUT);
-	s3c_gpio_setpull(GPIO_DIC_ID, S3C_GPIO_PULL_DOWN);	
-//	gpio_set_value(GPIO_DIC_ID, 0);
-
+	s3c_gpio_setpull(GPIO_DIC_ID, S3C_GPIO_PULL_DOWN);
+	/* gpio_set_value(GPIO_DIC_ID, 0); */
 }
 EXPORT_SYMBOL(lcd_cfg_gpio_early_suspend);
 
 void lcd_cfg_gpio_late_resume(void)
 {
-	printk("[%s]\n", __func__);
-
-	// OLED_DET
+	/* OLED_DET */
 	s3c_gpio_cfgpin(GPIO_OLED_DET, S3C_GPIO_INPUT);
-	s3c_gpio_setpull(GPIO_OLED_DET, S3C_GPIO_PULL_NONE);		
-	// OLED_ID
+	s3c_gpio_setpull(GPIO_OLED_DET, S3C_GPIO_PULL_NONE);
+	/* OLED_ID */
 	s3c_gpio_cfgpin(GPIO_OLED_ID, S3C_GPIO_OUTPUT);
-	s3c_gpio_setpull(GPIO_OLED_ID, S3C_GPIO_PULL_NONE);	
-//	gpio_set_value(GPIO_OLED_ID, 0);	
-	// DIC_ID
+	s3c_gpio_setpull(GPIO_OLED_ID, S3C_GPIO_PULL_NONE);
+	/* gpio_set_value(GPIO_OLED_ID, 0); */
+	/* DIC_ID */
 	s3c_gpio_cfgpin(GPIO_DIC_ID, S3C_GPIO_OUTPUT);
-	s3c_gpio_setpull(GPIO_DIC_ID, S3C_GPIO_PULL_NONE);	
-//	gpio_set_value(GPIO_DIC_ID, 0);
+	s3c_gpio_setpull(GPIO_DIC_ID, S3C_GPIO_PULL_NONE);
+	/* gpio_set_value(GPIO_DIC_ID, 0); */
 }
 EXPORT_SYMBOL(lcd_cfg_gpio_late_resume);
 
-
-
-
 static int tl2796_reset_lcd(struct platform_device *pdev)
 {
-        int err;
+	int err;
 
-//  Ver1 & Ver2 universal board kyoungheon
-        err = gpio_request(S5PV210_MP05(5), "MLCD_RST");
-        if (err) {
-                printk(KERN_ERR "failed to request MP0(5) for "
-                        "lcd reset control\n");
-                return err;
-        }
+	err = gpio_request(S5PV210_MP05(5), "MLCD_RST");
+	if (err) {
+		printk(KERN_ERR "failed to request MP0(5) for "
+				"lcd reset control\n");
+		return err;
+	}
 
-        gpio_direction_output(S5PV210_MP05(5), 1);
-        msleep(10);
+	gpio_direction_output(S5PV210_MP05(5), 1);
+	msleep(10);
 
-        gpio_set_value(S5PV210_MP05(5), 0);
-        msleep(10);
+	gpio_set_value(S5PV210_MP05(5), 0);
+	msleep(10);
 
-        gpio_set_value(S5PV210_MP05(5), 1);
-        msleep(10);
+	gpio_set_value(S5PV210_MP05(5), 1);
+	msleep(10);
 
-        gpio_free(S5PV210_MP05(5));
+	gpio_free(S5PV210_MP05(5));
 
-        return 0;
+	return 0;
 }
 
 static int tl2796_backlight_on(struct platform_device *pdev)
 {
-
 }
 
 static struct s3c_platform_fb tl2796_data __initdata = {
-        .hw_ver = 0x62,
-        .clk_name = "sclk_fimd",
-        .nr_wins = 5,
-        .default_win = CONFIG_FB_S3C_DEFAULT_WINDOW,
-        .swap = FB_SWAP_HWORD | FB_SWAP_WORD,
+	.hw_ver		= 0x62,
+	.clk_name	= "sclk_fimd",
+	.nr_wins	= 5,
+	.default_win	= CONFIG_FB_S3C_DEFAULT_WINDOW,
+	.swap		= FB_SWAP_HWORD | FB_SWAP_WORD,
 
-        .cfg_gpio = tl2796_cfg_gpio,
-        .backlight_on = tl2796_backlight_on,
-        .reset_lcd = tl2796_reset_lcd,
+	.cfg_gpio	= tl2796_cfg_gpio,
+	.backlight_on	= tl2796_backlight_on,
+	.reset_lcd	= tl2796_reset_lcd,
 };
 
 #define LCD_BUS_NUM     3
@@ -530,172 +505,169 @@ static struct s3c_platform_fb tl2796_data __initdata = {
 #define DISPLAY_CLK     S5PV210_MP04(1)
 #define DISPLAY_SI      S5PV210_MP04(3)
 
-
 static struct spi_board_info spi_board_info[] __initdata = {
-        {
-                .modalias       = "tl2796",
-                .platform_data  = NULL,
-                .max_speed_hz   = 1200000,
-                .bus_num        = LCD_BUS_NUM,
-                .chip_select    = 0,
-                .mode           = SPI_MODE_3,
-                .controller_data = (void *)DISPLAY_CS,
-        },
+	{
+		.modalias	= "tl2796",
+		.platform_data	= NULL,
+		.max_speed_hz	= 1200000,
+		.bus_num	= LCD_BUS_NUM,
+		.chip_select	= 0,
+		.mode		= SPI_MODE_3,
+		.controller_data = (void *)DISPLAY_CS,
+	},
 };
 
 static struct spi_gpio_platform_data tl2796_spi_gpio_data = {
-        .sck    = DISPLAY_CLK,
-        .mosi   = DISPLAY_SI,
-        .miso   = -1,
-        .num_chipselect = 2,
+	.sck	= DISPLAY_CLK,
+	.mosi	= DISPLAY_SI,
+	.miso	= -1,
+	.num_chipselect = 2,
 };
 
 static struct platform_device s3c_device_spi_gpio = {
-        .name   = "spi_gpio",
-        .id     = LCD_BUS_NUM,
-        .dev    = {
-                .parent         = &s3c_device_fb.dev,
-                .platform_data  = &tl2796_spi_gpio_data,
-        },
+	.name	= "spi_gpio",
+	.id	= LCD_BUS_NUM,
+	.dev	= {
+		.parent		= &s3c_device_fb.dev,
+		.platform_data	= &tl2796_spi_gpio_data,
+	},
 };
 
-
-
 static  struct  i2c_gpio_platform_data  i2c4_platdata = {
-        .sda_pin                = GPIO_AP_SDA_18V,
-        .scl_pin                = GPIO_AP_SCL_18V,
-        .udelay                 = 2,    /* 250KHz */
-        .sda_is_open_drain      = 0,
-        .scl_is_open_drain      = 0,
-        .scl_is_output_only     = 0,
-      };
+	.sda_pin		= GPIO_AP_SDA_18V,
+	.scl_pin		= GPIO_AP_SCL_18V,
+	.udelay			= 2,    /* 250KHz */
+	.sda_is_open_drain	= 0,
+	.scl_is_open_drain	= 0,
+	.scl_is_output_only	= 0,
+};
 
 static struct platform_device s3c_device_i2c4 = {
-        .name                           = "i2c-gpio",
-        .id                                     = 4,
-        .dev.platform_data      = &i2c4_platdata,
+	.name			= "i2c-gpio",
+	.id			= 4,
+	.dev.platform_data	= &i2c4_platdata,
 };
 
 static  struct  i2c_gpio_platform_data  i2c5_platdata = {
-        .sda_pin                = GPIO_AP_SDA_28V,
-        .scl_pin                = GPIO_AP_SCL_28V,
-        .udelay                 = 2,    /* 250KHz */
-        .sda_is_open_drain      = 0,
-        .scl_is_open_drain      = 0,
-        .scl_is_output_only     = 0,
+	.sda_pin		= GPIO_AP_SDA_28V,
+	.scl_pin		= GPIO_AP_SCL_28V,
+	.udelay			= 2,    /* 250KHz */
+	.sda_is_open_drain	= 0,
+	.scl_is_open_drain	= 0,
+	.scl_is_output_only	= 0,
 };
 
 static struct platform_device s3c_device_i2c5 = {
-        .name                           = "i2c-gpio",
-        .id                                     = 5,
-        .dev.platform_data      = &i2c5_platdata,
+	.name			= "i2c-gpio",
+	.id			= 5,
+	.dev.platform_data	= &i2c5_platdata,
 };
 
-
 static  struct  i2c_gpio_platform_data  i2c6_platdata = {
-        .sda_pin                = GPIO_AP_PMIC_SDA,
-        .scl_pin                = GPIO_AP_PMIC_SCL,
-        .udelay                 = 2,    /* 250KHz */
-        .sda_is_open_drain      = 0,
-        .scl_is_open_drain      = 0,
-        .scl_is_output_only     = 0,
+	.sda_pin                = GPIO_AP_PMIC_SDA,
+	.scl_pin                = GPIO_AP_PMIC_SCL,
+	.udelay                 = 2,    /* 250KHz */
+	.sda_is_open_drain      = 0,
+	.scl_is_open_drain      = 0,
+	.scl_is_output_only     = 0,
 };
 
 static struct platform_device s3c_device_i2c6 = {
-        .name                           = "i2c-gpio",
-        .id                                     = 6,
-        .dev.platform_data      = &i2c6_platdata,
+	.name			= "i2c-gpio",
+	.id			= 6,
+	.dev.platform_data      = &i2c6_platdata,
 };
 
 static  struct  i2c_gpio_platform_data  i2c7_platdata = {
-        .sda_pin                = GPIO_USB_SDA_28V,
-        .scl_pin                = GPIO_USB_SCL_28V,
-        .udelay                 = 2,    /* 250KHz */
-        .sda_is_open_drain      = 0,
-        .scl_is_open_drain      = 0,
-        .scl_is_output_only     = 0,
+	.sda_pin                = GPIO_USB_SDA_28V,
+	.scl_pin                = GPIO_USB_SCL_28V,
+	.udelay                 = 2,    /* 250KHz */
+	.sda_is_open_drain      = 0,
+	.scl_is_open_drain      = 0,
+	.scl_is_output_only     = 0,
 };
 
 static struct platform_device s3c_device_i2c7 = {
-        .name                           = "i2c-gpio",
-        .id                                     = 7,
-        .dev.platform_data      = &i2c7_platdata,
+	.name			= "i2c-gpio",
+	.id			= 7,
+	.dev.platform_data      = &i2c7_platdata,
 };
-// For FM radio
+
+/* For FM radio */
 static  struct  i2c_gpio_platform_data  i2c8_platdata = {
-        .sda_pin                = GPIO_FM_SDA_28V,
-        .scl_pin                = GPIO_FM_SCL_28V,
-        .udelay                 = 2,    /* 250KHz */
-        .sda_is_open_drain      = 0,
-        .scl_is_open_drain      = 0,
-        .scl_is_output_only     = 0,
+	.sda_pin                = GPIO_FM_SDA_28V,
+	.scl_pin                = GPIO_FM_SCL_28V,
+	.udelay                 = 2,    /* 250KHz */
+	.sda_is_open_drain      = 0,
+	.scl_is_open_drain      = 0,
+	.scl_is_output_only     = 0,
 };
 
 static struct platform_device s3c_device_i2c8 = {
-        .name                           = "i2c-gpio",
-        .id                                     = 8,
-        .dev.platform_data      = &i2c8_platdata,
+	.name			= "i2c-gpio",
+	.id			= 8,
+	.dev.platform_data	= &i2c8_platdata,
 };
 
 static  struct  i2c_gpio_platform_data  i2c9_platdata = {
-        .sda_pin                = FUEL_SDA_18V,
-        .scl_pin                = FUEL_SCL_18V,
-        .udelay                 = 2,    /* 250KHz */
-        .sda_is_open_drain      = 0,
-        .scl_is_open_drain      = 0,
-        .scl_is_output_only     = 0,
+	.sda_pin                = FUEL_SDA_18V,
+	.scl_pin                = FUEL_SCL_18V,
+	.udelay                 = 2,    /* 250KHz */
+	.sda_is_open_drain      = 0,
+	.scl_is_open_drain      = 0,
+	.scl_is_output_only     = 0,
 };
 
 static struct platform_device s3c_device_i2c9 = {
-        .name                           = "i2c-gpio",
-        .id                                     = 9,
-        .dev.platform_data      = &i2c9_platdata,
+	.name			= "i2c-gpio",
+	.id			= 9,
+	.dev.platform_data	= &i2c9_platdata,
 };
 
 static  struct  i2c_gpio_platform_data  i2c10_platdata = {
-        .sda_pin                = _3_TOUCH_SDA_28V,
-        .scl_pin                = _3_TOUCH_SCL_28V,
-        .udelay                 = 0,    /* 250KHz */
-        .sda_is_open_drain      = 0,
-        .scl_is_open_drain      = 0,
-        .scl_is_output_only     = 0,
+	.sda_pin                = _3_TOUCH_SDA_28V,
+	.scl_pin                = _3_TOUCH_SCL_28V,
+	.udelay                 = 0,    /* 250KHz */
+	.sda_is_open_drain      = 0,
+	.scl_is_open_drain      = 0,
+	.scl_is_output_only     = 0,
 };
+
 static struct platform_device s3c_device_i2c10 = {
-        .name                           = "i2c-gpio",
-        .id                                     = 10,
-        .dev.platform_data      = &i2c10_platdata,
+	.name			= "i2c-gpio",
+	.id			= 10,
+	.dev.platform_data	= &i2c10_platdata,
 };
 
 static  struct  i2c_gpio_platform_data  i2c11_platdata = {
-        .sda_pin                = GPIO_ALS_SDA_28V,
-        .scl_pin                = GPIO_ALS_SCL_28V,
-        .udelay                 = 2,    /* 250KHz */
-        .sda_is_open_drain      = 0,
-        .scl_is_open_drain      = 0,
-        .scl_is_output_only     = 0,
+	.sda_pin                = GPIO_ALS_SDA_28V,
+	.scl_pin                = GPIO_ALS_SCL_28V,
+	.udelay                 = 2,    /* 250KHz */
+	.sda_is_open_drain      = 0,
+	.scl_is_open_drain      = 0,
+	.scl_is_output_only     = 0,
 };
 
 static struct platform_device s3c_device_i2c11 = {
-        .name                           = "i2c-gpio",
-        .id                                     = 11,
-        .dev.platform_data      = &i2c11_platdata,
+	.name			= "i2c-gpio",
+	.id			= 11,
+	.dev.platform_data	= &i2c11_platdata,
 };
 
 static  struct  i2c_gpio_platform_data  i2c12_platdata = {
-        .sda_pin                = GPIO_MSENSE_SDA_28V,
-        .scl_pin                = GPIO_MSENSE_SCL_28V,
-        .udelay                 = 0,    /* 250KHz */
-        .sda_is_open_drain      = 0,
-        .scl_is_open_drain      = 0,
-        .scl_is_output_only     = 0,
+	.sda_pin                = GPIO_MSENSE_SDA_28V,
+	.scl_pin                = GPIO_MSENSE_SCL_28V,
+	.udelay                 = 0,    /* 250KHz */
+	.sda_is_open_drain      = 0,
+	.scl_is_open_drain      = 0,
+	.scl_is_output_only     = 0,
 };
 
 static struct platform_device s3c_device_i2c12 = {
-        .name                           = "i2c-gpio",
-        .id                                     = 12,
-        .dev.platform_data      = &i2c12_platdata,
+	.name			= "i2c-gpio",
+	.id			= 12,
+	.dev.platform_data	= &i2c12_platdata,
 };
-
 
 #ifdef CONFIG_S5PV210_ADCTS
 static struct s3c_adcts_plat_info s3c_adcts_cfgs __initdata = {
@@ -704,31 +676,31 @@ static struct s3c_adcts_plat_info s3c_adcts_cfgs __initdata = {
 			.delay = 0xFF,
 			.presc = 49,
 			.resol = S3C_ADCCON_RESSEL_12BIT,
-		},{ /* 1 */
+		}, { /* 1 */
 			.delay = 0xFF,
 			.presc = 49,
 			.resol = S3C_ADCCON_RESSEL_12BIT,
-		},{ /* 2 */
+		}, { /* 2 */
 			.delay = 0xFF,
 			.presc = 49,
 			.resol = S3C_ADCCON_RESSEL_12BIT,
-		},{ /* 3 */
+		}, { /* 3 */
 			.delay = 0xFF,
 			.presc = 49,
 			.resol = S3C_ADCCON_RESSEL_12BIT,
-		},{ /* 4 */
+		}, { /* 4 */
 			.delay = 0xFF,
 			.presc = 49,
 			.resol = S3C_ADCCON_RESSEL_12BIT,
-		},{ /* 5 */
+		}, { /* 5 */
 			.delay = 0xFF,
 			.presc = 49,
 			.resol = S3C_ADCCON_RESSEL_12BIT,
-		},{ /* 6 */
+		}, { /* 6 */
 			.delay = 0xFF,
 			.presc = 49,
 			.resol = S3C_ADCCON_RESSEL_12BIT,
-		},{ /* 7 */
+		}, { /* 7 */
 			.delay = 0xFF,
 			.presc = 49,
 			.resol = S3C_ADCCON_RESSEL_12BIT,
@@ -757,7 +729,7 @@ static struct s3c_ts_mach_info s3c_ts_platform __initdata = {
 };
 #endif
 
-#ifdef CONFIG_S5P_ADC 
+#ifdef CONFIG_S5P_ADC
 static struct s3c_adc_mach_info s3c_adc_platform __initdata = {
 	/* s5pc110 support 12-bit resolution */
 	.delay  = 10000,
@@ -775,91 +747,79 @@ static struct s3c_adc_mach_info s3c_adc_platform __initdata = {
 /*
  * Guide for Camera Configuration for Jupiter board
  * ITU CAM CH A: CE147
-*/
+ */
 static void ce147_ldo_en(bool onoff)
 {
 	int err;
 
-	//For Emul Rev0.1
-	// Because B4, B5 do not use this GPIO, this GPIO is enabled in all HW version
 	/* CAM_IO_EN - GPB(7) */
 	err = gpio_request(GPIO_GPB7, "GPB7");
-	if(err) {
+	if (err) {
 		printk(KERN_ERR "failed to request GPB7 for camera control\n");
 		return;
 	}
 
-	if(onoff == TRUE) { //power on 
-		// Turn CAM_ISP_1.2V on
+	if (onoff == TRUE) {
+		/* Turn CAM_ISP_1.2V on */
 		Set_MAX8998_PM_OUTPUT_Voltage(BUCK4, VCC_1p300);
-
 		Set_MAX8998_PM_REG(EN4, 1);
-
 		mdelay(1);
 
-		// Turn CAM_AF_2.8V on
+		/* Turn CAM_AF_2.8V on */
 		Set_MAX8998_PM_OUTPUT_Voltage(LDO11, VCC_2p800);
-
 		Set_MAX8998_PM_REG(ELDO11, 1);
 
-		// Turn CAM_SENSOR_1.2V on
+		/* Turn CAM_SENSOR_1.2V on */
 		Set_MAX8998_PM_OUTPUT_Voltage(LDO12, VCC_1p200);
-
 		Set_MAX8998_PM_REG(ELDO12, 1);
 
-		// Turn CAM_SENSOR_A2.8V on
+		/* Turn CAM_SENSOR_A2.8V on */
 		Set_MAX8998_PM_OUTPUT_Voltage(LDO13, VCC_2p800);
-
 		Set_MAX8998_PM_REG(ELDO13, 1);
 
-		// Turn CAM_ISP_1.8V on
+		/* Turn CAM_ISP_1.8V on */
 		Set_MAX8998_PM_OUTPUT_Voltage(LDO14, VCC_1p800);
-
 		Set_MAX8998_PM_REG(ELDO14, 1);
 
-		// Turn CAM_ISP_2.8V on
+		/* Turn CAM_ISP_2.8V on */
 		Set_MAX8998_PM_OUTPUT_Voltage(LDO15, VCC_2p800);
-
 		Set_MAX8998_PM_REG(ELDO15, 1);
 
-		// Turn CAM_SENSOR_1.8V on
+		/* Turn CAM_SENSOR_1.8V on */
 		Set_MAX8998_PM_OUTPUT_Voltage(LDO16, VCC_1p800);
-
 		Set_MAX8998_PM_REG(ELDO16, 1);
 
-		// Turn CAM_ISP_SYS_2.8V on
+		/* Turn CAM_ISP_SYS_2.8V on */
 		gpio_direction_output(GPIO_GPB7, 0);
-
 		gpio_set_value(GPIO_GPB7, 1);
 	}
-	
-	else { // power off
-		// Turn CAM_ISP_SYS_2.8V off
+
+	else {
+		/* Turn CAM_ISP_SYS_2.8V off */
 		gpio_direction_output(GPIO_GPB7, 1);
-				
 		gpio_set_value(GPIO_GPB7, 0);
 
-		// Turn CAM_AF_2.8V off
+		/* Turn CAM_AF_2.8V off */
 		Set_MAX8998_PM_REG(ELDO11, 0);
-		
-		// Turn CAM_SENSOR_1.2V off
+
+		/* Turn CAM_SENSOR_1.2V off */
 		Set_MAX8998_PM_REG(ELDO12, 0);
-		
-		// Turn CAM_SENSOR_A2.8V off
+
+		/* Turn CAM_SENSOR_A2.8V off */
 		Set_MAX8998_PM_REG(ELDO13, 0);
-		
-		// Turn CAM_ISP_1.8V off
+
+		/* Turn CAM_ISP_1.8V off */
 		Set_MAX8998_PM_REG(ELDO14, 0);
-		
-		// Turn CAM_ISP_2.8V off
+
+		/* Turn CAM_ISP_2.8V off */
 		Set_MAX8998_PM_REG(ELDO15, 0);
-		
-		// Turn CAM_SENSOR_1.8V off
+
+		/* Turn CAM_SENSOR_1.8V off */
 		Set_MAX8998_PM_REG(ELDO16, 0);
-		
+
 		mdelay(1);
-		
-		// Turn CAM_ISP_1.2V off
+
+		/* Turn CAM_ISP_1.2V off */
 		Set_MAX8998_PM_REG(EN4, 0);
 	}
 
@@ -867,23 +827,23 @@ static void ce147_ldo_en(bool onoff)
 }
 
 static int ce147_power_on(void)
-{	
+{
 	int err;
 
 	/* CAM_MEGA_EN - GPJ0(6) */
 	err = gpio_request(GPIO_CAM_MEGA_EN, "GPJ0");
-	if(err) {
+	if (err) {
 		printk(KERN_ERR "failed to request GPJ0 for camera control\n");
 		return err;
 	}
 
 	/* CAM_MEGA_nRST - GPJ1(5) */
 	err = gpio_request(GPIO_CAM_MEGA_nRST, "GPJ1");
-	if(err) {
+	if (err) {
 		printk(KERN_ERR "failed to request GPJ1 for camera control\n");
 		return err;
 	}
-		
+
 	/* CAM_VGA_nSTBY - GPB(0)  */
 	err = gpio_request(GPIO_CAM_VGA_nSTBY, "GPB0");
 	if (err) {
@@ -897,56 +857,41 @@ static int ce147_power_on(void)
 		printk(KERN_ERR "failed to request GPB2 for camera control\n");
 		return err;
 	}
-	
+
 	ce147_ldo_en(TRUE);
-
 	mdelay(1);
 
-	// CAM_VGA_nSTBY  HIGH		
+	/* CAM_VGA_nSTBY  HIGH */
 	gpio_direction_output(GPIO_CAM_VGA_nSTBY, 0);
-
 	gpio_set_value(GPIO_CAM_VGA_nSTBY, 1);
-
 	mdelay(1);
 
-	// Mclk enable
+	/* Mclk enable */
 	s3c_gpio_cfgpin(GPIO_CAM_MCLK, S5PV210_GPE1_3_CAM_A_CLKOUT);
-
 	mdelay(1);
 
-	// CAM_VGA_nRST  HIGH		
+	/* CAM_VGA_nRST  HIGH */
 	gpio_direction_output(GPIO_CAM_VGA_nRST, 0);
-
-	gpio_set_value(GPIO_CAM_VGA_nRST, 1);	
-
+	gpio_set_value(GPIO_CAM_VGA_nRST, 1);
 	mdelay(1);
 
-	// CAM_VGA_nSTBY  LOW	
+	/* CAM_VGA_nSTBY  LOW */
 	gpio_direction_output(GPIO_CAM_VGA_nSTBY, 1);
-
 	gpio_set_value(GPIO_CAM_VGA_nSTBY, 0);
-
 	mdelay(1);
 
-	// CAM_MEGA_EN HIGH
+	/* CAM_MEGA_EN HIGH */
 	gpio_direction_output(GPIO_CAM_MEGA_EN, 0);
-
 	gpio_set_value(GPIO_CAM_MEGA_EN, 1);
-
 	mdelay(1);
 
-	// CAM_MEGA_nRST HIGH
+	/* CAM_MEGA_nRST HIGH */
 	gpio_direction_output(GPIO_CAM_MEGA_nRST, 0);
-
 	gpio_set_value(GPIO_CAM_MEGA_nRST, 1);
-
 	gpio_free(GPIO_CAM_MEGA_EN);
-
 	gpio_free(GPIO_CAM_MEGA_nRST);
-
 	gpio_free(GPIO_CAM_VGA_nSTBY);
-
-	gpio_free(GPIO_CAM_VGA_nRST);	
+	gpio_free(GPIO_CAM_VGA_nRST);
 
 	return 0;
 }
@@ -954,17 +899,17 @@ static int ce147_power_on(void)
 static int ce147_power_off(void)
 {
 	int err;
-	
+
 	/* CAM_MEGA_EN - GPJ0(6) */
 	err = gpio_request(GPIO_CAM_MEGA_EN, "GPJ0");
-	if(err) {
+	if (err) {
 		printk(KERN_ERR "failed to request GPJ0 for camera control\n");
 		return err;
 	}
 
 	/* CAM_MEGA_nRST - GPJ1(5) */
 	err = gpio_request(GPIO_CAM_MEGA_nRST, "GPJ1");
-	if(err) {
+	if (err) {
 		printk(KERN_ERR "failed to request GPJ1 for camera control\n");
 		return err;
 	}
@@ -976,28 +921,28 @@ static int ce147_power_off(void)
 		return err;
 	}
 
-	// CAM_VGA_nRST  LOW		
+	/* CAM_VGA_nRST  LOW */
 	gpio_direction_output(GPIO_CAM_VGA_nRST, 1);
 	gpio_set_value(GPIO_CAM_VGA_nRST, 0);
 	mdelay(1);
 
-	// CAM_MEGA_nRST - GPJ1(5) LOW
+	/* CAM_MEGA_nRST - GPJ1(5) LOW */
 	gpio_direction_output(GPIO_CAM_MEGA_nRST, 1);
 	gpio_set_value(GPIO_CAM_MEGA_nRST, 0);
 	mdelay(1);
 
-	// Mclk disable
+	/* Mclk disable */
 	s3c_gpio_cfgpin(GPIO_CAM_MCLK, 0);
 	mdelay(1);
 
-	// CAM_MEGA_EN - GPJ0(6) LOW
+	/* CAM_MEGA_EN - GPJ0(6) LOW */
 	gpio_direction_output(GPIO_CAM_MEGA_EN, 1);
 	gpio_set_value(GPIO_CAM_MEGA_EN, 0);
 	mdelay(1);
 
 	ce147_ldo_en(FALSE);
 	mdelay(1);
-	
+
 	gpio_free(GPIO_CAM_MEGA_EN);
 	gpio_free(GPIO_CAM_MEGA_nRST);
 	gpio_free(GPIO_CAM_VGA_nRST);
@@ -1007,7 +952,7 @@ static int ce147_power_off(void)
 
 static int ce147_power_en(int onoff)
 {
-	if(onoff == 1) {
+	if (onoff == 1) {
 		ce147_power_on();
 	} else {
 		ce147_power_off();
@@ -1054,11 +999,11 @@ static struct s3c_platform_camera ce147 = {
 
 	/* Polarity */
 	.inv_pclk	= 0,
-	.inv_vsync 	= 1,
+	.inv_vsync	= 1,
 	.inv_href	= 0,
 	.inv_hsync	= 0,
 
-	.initialized 	= 0,
+	.initialized	= 0,
 	.cam_power	= ce147_power_en,
 };
 #endif
@@ -1086,58 +1031,58 @@ static int s5ka3dfx_power_on(void)
 
 	/* CAM_IO_EN - GPB(7) */
 	err = gpio_request(GPIO_GPB7, "GPB7");
-	if(err) {
+	if (err) {
 		printk(KERN_ERR "failed to request GPB7 for camera control\n");
 		return err;
 	}
 
-	// Turn CAM_ISP_SYS_2.8V on
+	/* Turn CAM_ISP_SYS_2.8V on */
 	gpio_direction_output(GPIO_GPB7, 0);
 	gpio_set_value(GPIO_GPB7, 1);
 
 	mdelay(1);
 
-	// Turn CAM_SENSOR_A2.8V on
+	/* Turn CAM_SENSOR_A2.8V on */
 	Set_MAX8998_PM_OUTPUT_Voltage(LDO13, VCC_2p800);
 	Set_MAX8998_PM_REG(ELDO13, 1);
 
 	mdelay(1);
 
-	// Turn CAM_ISP_HOST_2.8V on
+	/* Turn CAM_ISP_HOST_2.8V on */
 	Set_MAX8998_PM_OUTPUT_Voltage(LDO15, VCC_2p800);
 	Set_MAX8998_PM_REG(ELDO15, 1);
 
 	mdelay(1);
 
-	// Turn CAM_ISP_RAM_1.8V on
+	/* Turn CAM_ISP_RAM_1.8V on */
 	Set_MAX8998_PM_OUTPUT_Voltage(LDO14, VCC_1p800);
 	Set_MAX8998_PM_REG(ELDO14, 1);
 
 	mdelay(1);
-	
-	gpio_free(GPIO_GPB7);	
+
+	gpio_free(GPIO_GPB7);
 
 	mdelay(1);
 
-	// CAM_VGA_nSTBY  HIGH		
+	/* CAM_VGA_nSTBY  HIGH */
 	gpio_direction_output(GPIO_CAM_VGA_nSTBY, 0);
 	gpio_set_value(GPIO_CAM_VGA_nSTBY, 1);
 
 	mdelay(1);
 
-	// Mclk enable
+	/* Mclk enable */
 	s3c_gpio_cfgpin(GPIO_CAM_MCLK, S5PV210_GPE1_3_CAM_A_CLKOUT);
 
 	mdelay(1);
 
-	// CAM_VGA_nRST  HIGH		
+	/* CAM_VGA_nRST  HIGH */
 	gpio_direction_output(GPIO_CAM_VGA_nRST, 0);
-	gpio_set_value(GPIO_CAM_VGA_nRST, 1);		
+	gpio_set_value(GPIO_CAM_VGA_nRST, 1);
 
 	mdelay(4);
 
 	gpio_free(GPIO_CAM_VGA_nSTBY);
-	gpio_free(GPIO_CAM_VGA_nRST);	
+	gpio_free(GPIO_CAM_VGA_nRST);
 
 	return 0;
 }
@@ -1148,7 +1093,7 @@ static int s5ka3dfx_power_off(void)
 
 	printk(KERN_ERR "s5ka3dfx_power_off\n");
 
-	/* CAM_VGA_nSTBY - GPB(0)  */
+	/* CAM_VGA_nSTBY - GPB(0) */
 	err = gpio_request(GPIO_CAM_VGA_nSTBY, "GPB0");
 	if (err) {
 		printk(KERN_ERR "failed to request GPB for camera control\n");
@@ -1162,19 +1107,18 @@ static int s5ka3dfx_power_off(void)
 		return err;
 	}
 
-
-	// CAM_VGA_nRST  LOW		
+	/* CAM_VGA_nRST  LOW */
 	gpio_direction_output(GPIO_CAM_VGA_nRST, 1);
 	gpio_set_value(GPIO_CAM_VGA_nRST, 0);
 
 	mdelay(1);
 
-	// Mclk disable
+	/* Mclk disable */
 	s3c_gpio_cfgpin(GPIO_CAM_MCLK, 0);
 
 	mdelay(1);
 
-	// CAM_VGA_nSTBY  LOW		
+	/* CAM_VGA_nSTBY  LOW */
 	gpio_direction_output(GPIO_CAM_VGA_nSTBY, 1);
 	gpio_set_value(GPIO_CAM_VGA_nSTBY, 0);
 
@@ -1182,37 +1126,37 @@ static int s5ka3dfx_power_off(void)
 
 	/* CAM_IO_EN - GPB(7) */
 	err = gpio_request(GPIO_GPB7, "GPB7");
-	if(err) {
+	if (err) {
 		printk(KERN_ERR "failed to request GPB for camera control\n");
 		return err;
 	}
 
-	// Turn CAM_ISP_HOST_2.8V off
+	/* Turn CAM_ISP_HOST_2.8V off */
 	Set_MAX8998_PM_REG(ELDO15, 0);
 
 	mdelay(1);
 
-	// Turn CAM_SENSOR_A2.8V off
+	/* Turn CAM_SENSOR_A2.8V off */
 	Set_MAX8998_PM_REG(ELDO13, 0);
 
-	// Turn CAM_ISP_RAM_1.8V off
+	/* Turn CAM_ISP_RAM_1.8V off */
 	Set_MAX8998_PM_REG(ELDO14, 0);
 
-	// Turn CAM_ISP_SYS_2.8V off
+	/* Turn CAM_ISP_SYS_2.8V off */
 	gpio_direction_output(GPIO_GPB7, 1);
 	gpio_set_value(GPIO_GPB7, 0);
-	
+
 	gpio_free(GPIO_GPB7);
 
 	gpio_free(GPIO_CAM_VGA_nSTBY);
-	gpio_free(GPIO_CAM_VGA_nRST);	
+	gpio_free(GPIO_CAM_VGA_nRST);
 
 	return 0;
 }
 
 static int s5ka3dfx_power_en(int onoff)
 {
-	if(onoff){
+	if (onoff) {
 		s5ka3dfx_power_on();
 	} else {
 		s5ka3dfx_power_off();
@@ -1258,15 +1202,14 @@ static struct s3c_platform_camera s5ka3dfx = {
 
 	/* Polarity */
 	.inv_pclk	= 0,
-	.inv_vsync 	= 1,
+	.inv_vsync	= 1,
 	.inv_href	= 0,
 	.inv_hsync	= 0,
 
-	.initialized 	= 0,
+	.initialized	= 0,
 	.cam_power	= s5ka3dfx_power_en,
 };
 #endif
-
 
 /* Interface setting */
 static struct s3c_platform_fimc fimc_plat = {
@@ -1296,18 +1239,21 @@ static struct platform_pwm_backlight_data smdk_backlight_data = {
 };
 
 static struct platform_device smdk_backlight_device = {
-	.name      = "pwm-backlight",
-	.id        = -1,
-	.dev        = {
+	.name	= "pwm-backlight",
+	.id	= -1,
+	.dev	= {
 		.parent = &s3c_device_timer[3].dev,
 		.platform_data = &smdk_backlight_data,
 	},
 };
+
 static void __init smdk_backlight_register(void)
 {
 	int ret = platform_device_register(&smdk_backlight_device);
+
 	if (ret)
-		printk(KERN_ERR "smdk: failed to register backlight device: %d\n", ret);
+		printk(KERN_ERR
+			"smdk: failed to register backlight device: %d\n", ret);
 }
 #endif
 
@@ -1327,7 +1273,7 @@ static struct i2c_board_info i2c_devs4[] __initdata = {
 		I2C_BOARD_INFO("wm8580", 0x1b),
 	},
 #endif
-#ifdef CONFIG_SND_SOC_WM8994 
+#ifdef CONFIG_SND_SOC_WM8994
 	{
 		I2C_BOARD_INFO("wm8994", (0x34>>1)),
 	},
@@ -1341,39 +1287,36 @@ static struct i2c_board_info i2c_devs1[] __initdata = {
 
 /* i2c board & device info. */
 static struct qt602240_platform_data qt602240_p1_platform_data = {
-        .x_line = 19,
-        .y_line = 11,
-        .x_size = 1024,
-        .y_size = 1024,
-        .blen = 0x41,
-        .threshold = 0x30,
-        .orient = QT602240_VERTICAL_FLIP,
+	.x_line = 19,
+	.y_line = 11,
+	.x_size = 1024,
+	.y_size = 1024,
+	.blen = 0x41,
+	.threshold = 0x30,
+	.orient = QT602240_VERTICAL_FLIP,
 };
 
 /* I2C2 */
 static struct i2c_board_info i2c_devs2[] __initdata = {
-    {
-        I2C_BOARD_INFO("qt602240_ts", 0x4a),
-        .platform_data  = &qt602240_p1_platform_data,
-    },
+	{
+		I2C_BOARD_INFO("qt602240_ts", 0x4a),
+		.platform_data  = &qt602240_p1_platform_data,
+	},
 };
-
-
 
 /* I2C2 */
 static struct i2c_board_info i2c_devs10[] __initdata = {
-    {
-        I2C_BOARD_INFO("melfas_touchkey", 0x20),
-       // .platform_data  = &qt602240_p1_platform_data,
-    },
+	{
+		I2C_BOARD_INFO("melfas_touchkey", 0x20),
+		/* .platform_data  = &qt602240_p1_platform_data, */
+	},
 };
 
 static struct i2c_board_info i2c_devs7[] __initdata = {
-    {
-        I2C_BOARD_INFO("fsa9480", 0x4A >> 1),
-    },
+	{
+		I2C_BOARD_INFO("fsa9480", 0x4A >> 1),
+	},
 };
-
 
 static struct i2c_board_info i2c_devs6[] __initdata = {
 #ifdef CONFIG_REGULATOR_MAX8998
@@ -1381,8 +1324,7 @@ static struct i2c_board_info i2c_devs6[] __initdata = {
 		/* The address is 0xCC used since SRAD = 0 */
 		I2C_BOARD_INFO("max8998", (0xCC >> 1)),
 		.platform_data = &max8998_platform_data,
-	},
-	{
+	}, {
 		I2C_BOARD_INFO("rtc_max8998", (0x0D >> 1)),
 	},
 #endif
@@ -1420,32 +1362,32 @@ static struct android_pmem_platform_data pmem_pdata = {
 	.name = "pmem",
 	.no_allocator = 1,
 	.cached = 1,
-	.start = 0, // will be set during proving pmem driver.
-	.size = 0 // will be set during proving pmem driver.
+	.start = 0,
+	.size = 0,
 };
 
 static struct android_pmem_platform_data pmem_gpu1_pdata = {
-   .name = "pmem_gpu1",
-   .no_allocator = 1,
-   .cached = 1,
-   .buffered = 1,
-   .start = 0,
-   .size = 0,
+	.name = "pmem_gpu1",
+	.no_allocator = 1,
+	.cached = 1,
+	.buffered = 1,
+	.start = 0,
+	.size = 0,
 };
 
 static struct android_pmem_platform_data pmem_adsp_pdata = {
-   .name = "pmem_adsp",
-   .no_allocator = 1,
-   .cached = 1,
-   .buffered = 1,
-   .start = 0,
-   .size = 0,
+	.name = "pmem_adsp",
+	.no_allocator = 1,
+	.cached = 1,
+	.buffered = 1,
+	.start = 0,
+	.size = 0,
 };
 
 static struct platform_device pmem_device = {
-   .name = "android_pmem",
-   .id = 0,
-   .dev = { .platform_data = &pmem_pdata },
+	.name = "android_pmem",
+	.id = 0,
+	.dev = { .platform_data = &pmem_pdata },
 };
 
 static struct platform_device pmem_gpu1_device = {
@@ -1465,1097 +1407,951 @@ static void __init android_pmem_set_platdata(void)
 	pmem_pdata.start = (u32)s3c_get_media_memory_bank(S3C_MDEV_PMEM, 0);
 	pmem_pdata.size = (u32)s3c_get_media_memsize_bank(S3C_MDEV_PMEM, 0);
 
-	pmem_gpu1_pdata.start = (u32)s3c_get_media_memory_bank(S3C_MDEV_PMEM_GPU1, 0);
-	pmem_gpu1_pdata.size = (u32)s3c_get_media_memsize_bank(S3C_MDEV_PMEM_GPU1, 0);
+	pmem_gpu1_pdata.start =
+		(u32)s3c_get_media_memory_bank(S3C_MDEV_PMEM_GPU1, 0);
+	pmem_gpu1_pdata.size =
+		(u32)s3c_get_media_memsize_bank(S3C_MDEV_PMEM_GPU1, 0);
 
-	pmem_adsp_pdata.start = (u32)s3c_get_media_memory_bank(S3C_MDEV_PMEM_ADSP, 0);
-	pmem_adsp_pdata.size = (u32)s3c_get_media_memsize_bank(S3C_MDEV_PMEM_ADSP, 0);
+	pmem_adsp_pdata.start =
+		(u32)s3c_get_media_memory_bank(S3C_MDEV_PMEM_ADSP, 0);
+	pmem_adsp_pdata.size =
+		(u32)s3c_get_media_memsize_bank(S3C_MDEV_PMEM_ADSP, 0);
 }
 #endif
+
 struct platform_device sec_device_battery = {
 	.name	= "sec-fake-battery",
-	.id		= -1,
+	.id	= -1,
 };
 
 /*Adding gpio settings during bootup and sleep*/
-
-
 #define S3C_GPIO_SETPIN_ZERO         0
 #define S3C_GPIO_SETPIN_ONE          1
-#define S3C_GPIO_SETPIN_NONE	     2  // dont set the data pin.
+#define S3C_GPIO_SETPIN_NONE	     2
 
 /*
- *
  * GPIO Initialization table. It has the following format
- * { pin number, pin configuration, pin value, pullup/down config,
- * 		driver strength, slew rate, sleep mode pin conf, sleep mode pullup/down config }
- * 
- * The table can be modified with the appropriate value for each pin. 
+ * { pin number, pin configuration, pin value,
+ *   pullup/down config, driver strength, slew rate,
+ *   sleep mode pin conf, sleep mode pullup/down config }
+ *
+ * The table can be modified with the appropriate value for each pin.
  */
 static unsigned int jupiter_gpio_table[][8] = {
-	/* Off part */	
-	// GPA0 ~ GPA1 : is done by UART driver early, so not modifying.
-#if 0	
-	{S5PV210_GPA0(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN, 
-			S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPA0(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPA0(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPA0(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPA0(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPA0(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPA0(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPA0(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	/* Off part */
+	{ S5PV210_GPB(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPB(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPB(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPB(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPB(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPB(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPB(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPB(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
 
-	// uart2 rx and tx..  done by uboot. So not modifying
-	//{S5PV210_GPA1(0), 2, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-	//		 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	//{S5PV210_GPA1(1), 2, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-	//		 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_GPC0(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPC0(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPC0(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPC0(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPC0(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
 
-	{S5PV210_GPA1(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPA1(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-#endif
-	{S5PV210_GPB(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPB(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPB(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPB(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPB(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPB(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPB(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPB(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_GPC1(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPC1(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPC1(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPC1(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPC1(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
 
-	{S5PV210_GPC0(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPC0(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPC0(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPC0(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPC0(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_GPD0(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPD0(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPD0(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPD0(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
 
-	{S5PV210_GPC1(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPC1(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPC1(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPC1(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPC1(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_GPD1(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPD1(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPD1(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPD1(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPD1(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPD1(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
 
-	{S5PV210_GPD0(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPD0(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPD0(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPD0(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_GPE0(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPE0(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPE0(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPE0(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPE0(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPE0(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPE0(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPE0(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
 
-	{S5PV210_GPD1(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPD1(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPD1(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPD1(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPD1(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPD1(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_GPE1(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPE1(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPE1(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPE1(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPE1(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
 
-	{S5PV210_GPE0(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPE0(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPE0(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPE0(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPE0(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPE0(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPE0(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPE0(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_GPF3(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPF3(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
 
-	{S5PV210_GPE1(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPE1(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPE1(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPE1(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPE1(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-#if 0 // trb
-	{S5PV210_GPF0(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF0(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF0(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF0(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF0(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF0(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF0(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF0(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_GPG0(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPG0(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPG0(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPG0(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPG0(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPG0(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPG0(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
 
-	{S5PV210_GPF1(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF1(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF1(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF1(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF1(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF1(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF1(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF1(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_GPG1(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPG1(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPG1(2), S3C_GPIO_OUTPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPG1(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPG1(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPG1(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPG1(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
 
-	{S5PV210_GPF2(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF2(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF2(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF2(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF2(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF2(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF2(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF2(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_GPG2(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPG2(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPG2(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPG2(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPG2(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPG2(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPG2(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
 
-	{S5PV210_GPF3(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF3(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF3(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF3(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-#endif	// trb		 
-        {S5PV210_GPF3(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPF3(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-
-	{S5PV210_GPG0(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPG0(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPG0(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPG0(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPG0(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPG0(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPG0(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-
-	{S5PV210_GPG1(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPG1(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPG1(2), S3C_GPIO_OUTPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPG1(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPG1(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPG1(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPG1(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-
-	{S5PV210_GPG2(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPG2(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPG2(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPG2(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPG2(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPG2(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPG2(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-
-	{S5PV210_GPG3(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPG3(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPG3(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPG3(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPG3(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPG3(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPG3(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_GPG3(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPG3(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPG3(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPG3(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPG3(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPG3(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPG3(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
 
 	/* Alive part */
-        {S5PV210_GPH0(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH0(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH0(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH0(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH0(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH0(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH0(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH0(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
+	{ S5PV210_GPH0(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH0(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH0(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH0(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH0(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH0(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH0(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH0(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
 
-        {S5PV210_GPH1(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH1(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH1(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH1(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH1(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH1(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH1(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH1(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
+	{ S5PV210_GPH1(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH1(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH1(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH1(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH1(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH1(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH1(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH1(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
 
-        {S5PV210_GPH2(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH2(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH2(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH2(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH2(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH2(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH2(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH2(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
+	{ S5PV210_GPH2(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH2(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH2(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH2(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH2(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH2(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH2(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH2(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
 
-        {S5PV210_GPH3(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH3(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH3(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH3(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH3(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH3(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH3(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-        {S5PV210_GPH3(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, 0, 0}, 
-
+	{ S5PV210_GPH3(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH3(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH3(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH3(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH3(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH3(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH3(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
+	{ S5PV210_GPH3(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  0, 0 },
 
 	/* Alive part ending and off part start*/
-	{S5PV210_GPI(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPI(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPI(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPI(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPI(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPI(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPI(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_GPI(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPI(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPI(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPI(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPI(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPI(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPI(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
 
-	{S5PV210_GPJ0(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ0(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ0(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ0(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ0(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ0(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ0(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ0(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_GPJ0(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ0(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ0(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ0(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ0(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ0(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ0(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ0(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
 
-	{S5PV210_GPJ1(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ1(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ1(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ1(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ1(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ1(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_GPJ1(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ1(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ1(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ1(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ1(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ1(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
 
-	{S5PV210_GPJ2(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ2(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ2(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ2(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ2(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ2(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPJ2(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ2(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_GPJ2(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ2(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ2(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ2(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ2(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ2(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ2(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ2(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
 
-	{S5PV210_GPJ3(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ3(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ3(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ3(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ3(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ3(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ3(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ3(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_GPJ3(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ3(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ3(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ3(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ3(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ3(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ3(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ3(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
 
-	{S5PV210_GPJ4(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ4(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ4(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ4(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_GPJ4(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_GPJ4(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ4(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ4(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ4(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_GPJ4(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+
 	/* memory part */
-	{S5PV210_MP01(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP01(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP01(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP01(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP01(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP01(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP01(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP01(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
- 
-	{S5PV210_MP02(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP02(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP02(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP02(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_MP01(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP01(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP01(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP01(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP01(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP01(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP01(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP01(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
 
-	{S5PV210_MP03(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP03(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP03(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP03(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP03(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP03(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP03(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP03(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_MP02(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP02(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP02(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP02(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
 
-	{S5PV210_MP04(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP04(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP04(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP04(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP04(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP04(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP04(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP04(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_MP03(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP03(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP03(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP03(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP03(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP03(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP03(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP03(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
 
-	{S5PV210_MP05(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP05(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP05(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP05(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP05(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP05(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP05(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP05(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_MP04(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP04(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP04(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP04(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP04(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP04(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP04(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP04(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
 
-	{S5PV210_MP06(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP06(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP06(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP06(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP06(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP06(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP06(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP06(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_MP05(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP05(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP05(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP05(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP05(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP05(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP05(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP05(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
 
-	{S5PV210_MP07(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP07(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP07(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP07(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP07(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP07(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP07(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-        {S5PV210_MP07(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE, S3C_GPIO_PULL_DOWN,
-			 S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST, S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_MP06(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP06(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP06(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP06(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP06(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP06(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP06(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP06(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
 
+	{ S5PV210_MP07(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP07(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP07(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP07(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP07(4), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP07(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP07(6), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
+	{ S5PV210_MP07(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
 	/* Memory part ending and off part ending */
-
 };
-
 
 void s3c_config_gpio_table(int array_size, unsigned int (*gpio_table)[8])
 {
-        u32 i, gpio;
-        for (i = 0; i < array_size; i++) {
+	u32 i, gpio;
+
+	for (i = 0; i < array_size; i++) {
 		gpio = gpio_table[i][0];
 		/* Off part */
-		if((gpio <= S5PV210_GPG3(6)) ||
-		   ((gpio <= S5PV210_GPJ4(7)) && (gpio >= S5PV210_GPI(0)))) {
+		if ((gpio <= S5PV210_GPG3(6)) ||
+		    ((gpio <= S5PV210_GPJ4(7)) && (gpio >= S5PV210_GPI(0)))) {
+			s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(gpio_table[i][1]));
+			s3c_gpio_setpull(gpio, gpio_table[i][3]);
 
-        	        s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(gpio_table[i][1]));
-                	s3c_gpio_setpull(gpio, gpio_table[i][3]);
+			if (gpio_table[i][2] != S3C_GPIO_SETPIN_NONE)
+				gpio_set_value(gpio, gpio_table[i][2]);
 
-                	if (gpio_table[i][2] != S3C_GPIO_SETPIN_NONE)
-                    		gpio_set_value(gpio, gpio_table[i][2]);
+			s3c_gpio_set_drvstrength(gpio, gpio_table[i][4]);
+			s3c_gpio_set_slewrate(gpio, gpio_table[i][5]);
+		} else if ((gpio <= S5PV210_GPH3(7)) &&
+			   (gpio >= S5PV210_GPH0(0))) {
+			/* Alive part */
+			s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(gpio_table[i][1]));
+			s3c_gpio_setpull(gpio, gpio_table[i][3]);
 
-                	s3c_gpio_set_drvstrength(gpio, gpio_table[i][4]);
-                	s3c_gpio_set_slewrate(gpio, gpio_table[i][5]);
+			if (gpio_table[i][2] != S3C_GPIO_SETPIN_NONE)
+				gpio_set_value(gpio, gpio_table[i][2]);
 
-                	//s3c_gpio_slp_cfgpin(gpio, gpio_table[i][6]);
-                	//s3c_gpio_slp_setpull_updown(gpio, gpio_table[i][7]);
-			
+			s3c_gpio_set_drvstrength(gpio, gpio_table[i][4]);
+			s3c_gpio_set_slewrate(gpio, gpio_table[i][5]);
 		}
-#if 1
-		/* Alive part */
-		else if((gpio <= S5PV210_GPH3(7)) && (gpio >= S5PV210_GPH0(0))) {
-        	        s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(gpio_table[i][1]));
-                	s3c_gpio_setpull(gpio, gpio_table[i][3]);
-
-                	if (gpio_table[i][2] != S3C_GPIO_SETPIN_NONE)
-                    		gpio_set_value(gpio, gpio_table[i][2]);
-
-                	s3c_gpio_set_drvstrength(gpio, gpio_table[i][4]);
-                	s3c_gpio_set_slewrate(gpio, gpio_table[i][5]);
-		}
-#endif
-#if 0
-		/* Memory part */
-		else if((gpio >  S5PV210_GPJ4(4)) && (gpio <= S5PV210_MP07(7))) {
-        	        s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(gpio_table[i][1]));
-                	s3c_gpio_setpull(gpio, gpio_table[i][3]);
-
-                	if (gpio_table[i][2] != S3C_GPIO_SETPIN_NONE)
-                    		gpio_set_value(gpio, gpio_table[i][2]);
-
-                	s3c_gpio_set_drvstrength(gpio, gpio_table[i][4]);
-                	s3c_gpio_set_slewrate(gpio, gpio_table[i][5]);
-
-                	//s3c_gpio_slp_cfgpin(gpio, gpio_table[i][6]);
-                	//s3c_gpio_slp_setpull_updown(gpio, gpio_table[i][7]);
-
-		}
-#endif
 	}
-
 }
-
-
-
-
-
 
 #define S5PV210_PS_HOLD_CONTROL_REG (S3C_VA_SYS+0xE81C)
-
-static void herring_power_off (void) 
+static void herring_power_off(void)
 {
-
 	printk(KERN_DEBUG "herring_power_off\n");
 
-	/* temporary power off code */
-	/*PS_HOLD high  PS_HOLD_CONTROL, R/W, 0xE010_E81C*/
-	writel(readl(S5PV210_PS_HOLD_CONTROL_REG) & 0xFFFFFEFF, S5PV210_PS_HOLD_CONTROL_REG);
+	/* power off code */
+	/* PS_HOLD high  PS_HOLD_CONTROL, R/W, 0xE010_E81C */
+	writel(readl(S5PV210_PS_HOLD_CONTROL_REG) & 0xFFFFFEFF,
+		     S5PV210_PS_HOLD_CONTROL_REG);
 
-
-	while (1);
-
+	while (1)
+		;
 }
 
-
 /* this table only for B4 board */
- 
 static unsigned int jupiter_sleep_gpio_table[][3] = {
+	{ S5PV210_GPA0(0), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPA0(1), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPA0(2), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPA0(3), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPA0(4), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPA0(5), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPA0(6), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPA0(7), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
 
-	{S5PV210_GPA0(0),
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPA0(1),
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPA0(2),
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPA0(3),
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPA0(4), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPA0(5),
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPA0(6), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPA0(7),
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
+	{ S5PV210_GPA1(0), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPA1(1), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPA1(2), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPA1(3), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
 
-	{S5PV210_GPA1(0), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPA1(1),
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPA1(2), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPA1(3),
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
+	{ S5PV210_GPB(0), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPB(1), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPB(2), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPB(3), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPB(4), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPB(5), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPB(6), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPB(7), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
 
-	{S5PV210_GPB(0), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPB(1),
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPB(2),
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPB(3),
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPB(4), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPB(5), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPB(6), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPB(7),
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
+	{ S5PV210_GPC0(0), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPC0(1), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPC0(2), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPC0(3), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPC0(4), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPC1(0), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPC1(1), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPC1(2), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPC1(3), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPC1(4), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_DOWN},
 
-	{S5PV210_GPC0(0), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPC0(1), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPC0(2), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPC0(3), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPC0(4), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPC1(0), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPC1(1), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPC1(2), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPC1(3), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPC1(4), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_GPD0(0), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPD0(1), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPD0(2), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPD0(3), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
 
-	{S5PV210_GPD0(0), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
-	{S5PV210_GPD0(1), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPD0(2), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPD0(3), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_GPD1(0), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPD1(1), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPD1(2), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPD1(3), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPD1(4), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPD1(5), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
 
-	{S5PV210_GPD1(0), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPD1(1), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPD1(2), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPD1(3), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPD1(4), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPD1(5), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
+	{ S5PV210_GPE0(0), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPE0(1), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPE0(2), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPE0(3), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPE0(4), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPE0(5), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPE0(6), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPE0(7), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
 
-	{S5PV210_GPE0(0), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPE0(1), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPE0(2), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPE0(3), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPE0(4), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPE0(5), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPE0(6), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPE0(7),
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_GPE1(0), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPE1(1), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPE1(2), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPE1(3), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPE1(4), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPF0(0), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF0(1), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF0(2), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF0(3), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF0(4), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF0(5), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF0(6), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF0(7), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
 
-	{S5PV210_GPE1(0), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPE1(1), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPE1(2), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPE1(3), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPE1(4), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPF0(0), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF0(1), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF0(2), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF0(3), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF0(4), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF0(5), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF0(6), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF0(7), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
+	{ S5PV210_GPF1(0), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF1(1), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF1(2), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF1(3), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF1(4), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF1(5), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF1(6), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF1(7), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
 
-	{S5PV210_GPF1(0), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF1(1), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF1(2), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF1(3), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF1(4), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF1(5), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF1(6), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF1(7), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
+	{ S5PV210_GPF2(0), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF2(1), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF2(2), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF2(3), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF2(4), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF2(5), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF2(6), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF2(7), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
 
-	{S5PV210_GPF2(0), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF2(1), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF2(2), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF2(3), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF2(4), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF2(5), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF2(6), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF2(7), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
+	{ S5PV210_GPF3(0), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF3(1), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF3(2), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF3(3), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF3(4), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPF3(5), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
 
-	{S5PV210_GPF3(0), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF3(1), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF3(2), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF3(3), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPF3(4), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPF3(5), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_GPG0(0), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG0(1), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG0(2), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG0(3), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG0(4), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG0(5), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG0(6), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
 
+	{ S5PV210_GPG1(0), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG1(1), S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG1(2), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG1(3), S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG1(4), S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG1(5), S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG1(6), S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_NONE},
 
-	{S5PV210_GPG0(0), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPG0(1), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPG0(2), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPG0(3), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPG0(4), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPG0(5), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPG0(6), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
+	{ S5PV210_GPG2(0), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG2(1), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG2(2), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG2(3), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG2(4), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG2(5), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG2(6), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
 
-	{S5PV210_GPG1(0), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPG1(1), 
-		S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPG1(2), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
-	{S5PV210_GPG1(3), 
-		S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPG1(4), 
-		S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPG1(5), 
-		S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPG1(6), 
-		S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_NONE}, 
-
-	{S5PV210_GPG2(0), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPG2(1), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPG2(2), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPG2(3), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPG2(4), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPG2(5), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPG2(6), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-
-	{S5PV210_GPG3(0), 
-		S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPG3(1), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-//	{S5PV210_GPG3(2),   FIXME
-//		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
-	{S5PV210_GPG3(3), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPG3(4), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPG3(5), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-//	{S5PV210_GPG3(6),   FIXME
-//		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 	  
+	{ S5PV210_GPG3(0), S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG3(1), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG3(3), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG3(4), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG3(5), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
 
 	/* Alive part ending and off part start*/
-	{S5PV210_GPI(0), 
-		S3C_GPIO_SLP_PREV, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPI(1), 
-		S3C_GPIO_SLP_PREV, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPI(2), 
-		S3C_GPIO_SLP_PREV, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPI(3), 
-		S3C_GPIO_SLP_PREV, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPI(4), 
-		S3C_GPIO_SLP_PREV, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPI(5), 
-		S3C_GPIO_SLP_PREV, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPI(6), 
-		S3C_GPIO_SLP_PREV, S3C_GPIO_PULL_NONE}, 
+	{ S5PV210_GPI(0), S3C_GPIO_SLP_PREV, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPI(1), S3C_GPIO_SLP_PREV, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPI(2), S3C_GPIO_SLP_PREV, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPI(3), S3C_GPIO_SLP_PREV, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPI(4), S3C_GPIO_SLP_PREV, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPI(5), S3C_GPIO_SLP_PREV, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPI(6), S3C_GPIO_SLP_PREV, S3C_GPIO_PULL_NONE},
 
-	{S5PV210_GPI(0), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPI(1), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPI(2), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPI(3), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPI(4), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPI(5), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPI(6), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_GPI(0), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPI(1), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPI(2), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPI(3), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPI(4), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPI(5), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPI(6), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
 
+	{ S5PV210_GPJ0(0), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ0(1), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ0(2), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ0(3), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ0(4), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ0(5), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ0(6), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ0(7), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
 
-	{S5PV210_GPJ0(0), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ0(1), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ0(2), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ0(3), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ0(4), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ0(5), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPJ0(6), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ0(7), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
+	{ S5PV210_GPJ1(0), S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ1(1), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ1(2), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ1(3), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ1(4), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ1(5), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
 
-	{S5PV210_GPJ1(0), 
-		S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ1(1), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ1(2), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPJ1(3), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ1(4), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ1(5), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
+	{ S5PV210_GPJ2(0), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ2(1), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ2(2), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ2(3), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ2(4), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ2(5), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ2(6), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ2(7), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
 
-	{S5PV210_GPJ2(0), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPJ2(1), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_GPJ2(2), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ2(3), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ2(4), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ2(5), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ2(6), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ2(7), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
+	{ S5PV210_GPJ3(0), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ3(1), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ3(2), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ3(3), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ3(4), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ3(5), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ3(6), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ3(7), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
 
-
-	{S5PV210_GPJ3(0), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ3(1), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ3(2), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ3(3), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ3(4), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ3(5), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ3(6), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ3(7), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-
-	{S5PV210_GPJ4(0), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ4(1), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ4(2), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ4(3), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_GPJ4(4), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-
+	{ S5PV210_GPJ4(0), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ4(1), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ4(2), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ4(3), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ4(4), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
 
 	/* memory part */
+	{ S5PV210_MP01(0), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP01(1), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_MP01(2), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP01(3), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP01(4), S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_NONE},
+	{ S5PV210_MP01(5), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP01(6), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP01(7), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
 
-	{S5PV210_MP01(0), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP01(1), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_MP01(2), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP01(3), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP01(4), 
-		S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_MP01(5), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
-	{S5PV210_MP01(6), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP01(7), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_MP02(0), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP02(1), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP02(2), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_MP02(3), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
 
-	{S5PV210_MP02(0), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP02(1), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP02(2), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_MP02(3), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_MP03(0), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP03(1), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP03(2), S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_NONE},
+	{ S5PV210_MP03(3), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_MP03(4), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_MP03(5), S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_NONE},
+	{ S5PV210_MP03(6), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP03(7), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
 
-	{S5PV210_MP03(0), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP03(1), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP03(2), 
-		S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_NONE},
-	{S5PV210_MP03(3), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_MP03(4), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_MP03(5), 
-		S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_MP03(6), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP03(7), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_MP04(0), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP04(1), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_MP04(2), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP04(3), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_MP04(4), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP04(5), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP04(6), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_MP04(7), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
 
-	{S5PV210_MP04(0), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP04(1), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_MP04(2), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP04(3), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_MP04(4), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP04(5), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP04(6), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_MP04(7), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_MP05(0), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_MP05(1), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_MP05(2), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_MP05(3), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE},
+	{ S5PV210_MP05(4), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP05(5), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
+	{ S5PV210_MP05(6), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP05(7), S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE},
 
-	{S5PV210_MP05(0), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_MP05(1), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_MP05(2), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_MP05(3), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_MP05(4), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP05(5), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
-	{S5PV210_MP05(6), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP05(7), 
-		S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_NONE}, 
+	{ S5PV210_MP06(0), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP06(1), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP06(2), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP06(3), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP06(4), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP06(5), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP06(6), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP06(7), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
 
-	{S5PV210_MP06(0), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP06(1), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP06(2), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP06(3), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP06(4), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP06(5), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP06(6), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP06(7), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-
-	{S5PV210_MP07(0), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP07(1), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP07(2), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP07(3), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP07(4), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP07(5), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP07(6), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
-	{S5PV210_MP07(7), 
-		S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN}, 
+	{ S5PV210_MP07(0), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP07(1), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP07(2), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP07(3), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP07(4), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP07(5), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP07(6), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP07(7), S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN},
 
 	/* Memory part ending and off part ending */
 };
@@ -2571,17 +2367,11 @@ void s3c_config_sleep_gpio_table(int array_size, unsigned int (*gpio_table)[3])
 	}
 }
 
-
-// just for ref.. 	
-//
 void s3c_config_sleep_gpio(void)
 {
-
-	// setting the alive mode registers
-
+	/* setting the alive mode registers */
 	s3c_gpio_cfgpin(S5PV210_GPH0(1), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH0(1), S3C_GPIO_PULL_DOWN);
-	//gpio_set_value(S5PV210_GPH0(1), 0);
 
 	s3c_gpio_cfgpin(S5PV210_GPH0(2), S3C_GPIO_OUTPUT);
 	s3c_gpio_setpull(S5PV210_GPH0(2), S3C_GPIO_PULL_NONE);
@@ -2600,29 +2390,15 @@ void s3c_config_sleep_gpio(void)
 
 	s3c_gpio_cfgpin(S5PV210_GPH0(6), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH0(6), S3C_GPIO_PULL_NONE);
-	//gpio_set_value(S5PV210_GPH0(6), 0);
-	
-	//s3c_gpio_cfgpin(S5PV210_GPH0(7), S3C_GPIO_INPUT);
-	//s3c_gpio_setpull(S5PV210_GPH0(7), S3C_GPIO_PULL_NONE);
-	//gpio_set_value(S5PV210_GPH0(0), 0);
 
 	s3c_gpio_cfgpin(S5PV210_GPH1(0), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH1(0), S3C_GPIO_PULL_DOWN);
-	//gpio_set_value(S5PV210_GPH1(1), 0);
 
 	s3c_gpio_cfgpin(S5PV210_GPH1(1), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH1(1), S3C_GPIO_PULL_DOWN);
-	//gpio_set_value(S5PV210_GPH1(1), 0);
-	//
+
 	s3c_gpio_cfgpin(S5PV210_GPH1(2), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH1(2), S3C_GPIO_PULL_DOWN);
-	//gpio_set_value(S5PV210_GPH1(2), 0);
-
-#if 0	// kt.hur on 100104
-	s3c_gpio_cfgpin(S5PV210_GPH1(3), S3C_GPIO_INPUT);
-	s3c_gpio_setpull(S5PV210_GPH1(3), S3C_GPIO_PULL_NONE);
-	//gpio_set_value(S5PV210_GPH1(3), 0);
-#endif
 
 	s3c_gpio_cfgpin(S5PV210_GPH1(4), S3C_GPIO_OUTPUT);
 	s3c_gpio_setpull(S5PV210_GPH1(4), S3C_GPIO_PULL_NONE);
@@ -2630,21 +2406,17 @@ void s3c_config_sleep_gpio(void)
 
 	s3c_gpio_cfgpin(S5PV210_GPH1(5), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH1(5), S3C_GPIO_PULL_NONE);
-	//gpio_set_value(S5PV210_GPH1(5),0);
 
 	s3c_gpio_cfgpin(S5PV210_GPH1(6), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH1(6), S3C_GPIO_PULL_NONE);
-	//gpio_set_value(S5PV210_GPH1(6), 0);
 
 	s3c_gpio_cfgpin(S5PV210_GPH1(7), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH1(7), S3C_GPIO_PULL_NONE);
-	//gpio_set_value(S5PV210_GPH1(7), 0);
-
 
 	s3c_gpio_cfgpin(S5PV210_GPH2(0), S3C_GPIO_OUTPUT);
 	s3c_gpio_setpull(S5PV210_GPH2(0), S3C_GPIO_PULL_NONE);
 	gpio_set_value(S5PV210_GPH2(0), 0);
-	
+
 	s3c_gpio_cfgpin(S5PV210_GPH2(1), S3C_GPIO_OUTPUT);
 	s3c_gpio_setpull(S5PV210_GPH2(1), S3C_GPIO_PULL_NONE);
 	gpio_set_value(S5PV210_GPH2(1), 0);
@@ -2659,53 +2431,19 @@ void s3c_config_sleep_gpio(void)
 
 	s3c_gpio_cfgpin(S5PV210_GPH2(4), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH2(4), S3C_GPIO_PULL_NONE);
-	//gpio_set_value(S5PV210_GPH2(4), 0);
-
-#if 0    // bluetooth
-	s3c_gpio_cfgpin(S5PV210_GPH2(5), S3C_GPIO_INPUT);
-	s3c_gpio_setpull(S5PV210_GPH2(5), S3C_GPIO_PULL_NONE);
-	//gpio_set_value(S5PV210_GPH2(5), 0);
-#endif
-
-	//s3c_gpio_cfgpin(S5PV210_GPH2(6), S3C_GPIO_INPUT);
-	//s3c_gpio_setpull(S5PV210_GPH2(6), S3C_GPIO_PULL_NONE);
-	//gpio_set_value(S5PV210_GPH2(6), 0);
 
 	s3c_gpio_cfgpin(S5PV210_GPH2(7), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH2(7), S3C_GPIO_PULL_NONE);
-	//gpio_set_value(S5PV210_GPH2(7), 0);
-	
-
-#if 0 // keypad
-	s3c_gpio_cfgpin(S5PV210_GPH3(0), S3C_GPIO_INPUT);
-	s3c_gpio_setpull(S5PV210_GPH3(0), S3C_GPIO_PULL_UP);
-//	gpio_set_value(S5PV210_GPH3(0), 0);
-	
-	s3c_gpio_cfgpin(S5PV210_GPH3(1), S3C_GPIO_INPUT);
-	s3c_gpio_setpull(S5PV210_GPH3(1), S3C_GPIO_PULL_UP);
-//	gpio_set_value(S5PV210_GPH3(1), 0);
-
-	s3c_gpio_cfgpin(S5PV210_GPH3(2), S3C_GPIO_INPUT);
-	s3c_gpio_setpull(S5PV210_GPH3(2), S3C_GPIO_PULL_UP);
-//	gpio_set_value(S5PV210_GPH3(2), 0);
-
-	s3c_gpio_cfgpin(S5PV210_GPH3(3), S3C_GPIO_INPUT);
-	s3c_gpio_setpull(S5PV210_GPH3(3), S3C_GPIO_PULL_UP);
-//	gpio_set_value(S5PV210_GPH3(3), 0);
-
-#endif
 
 	s3c_gpio_cfgpin(S5PV210_GPH3(3), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH3(3), S3C_GPIO_PULL_NONE);
-	
+
 	s3c_gpio_cfgpin(S5PV210_GPH3(4), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH3(4), S3C_GPIO_PULL_NONE);
-	//gpio_set_value(S5PV210_GPH3(4), 0);
 
 	s3c_gpio_cfgpin(S5PV210_GPH3(5), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH3(5), S3C_GPIO_PULL_NONE);
-	//gpio_set_value(S5PV210_GPH3(5), 0);
-	
+
 	s3c_gpio_cfgpin(S5PV210_GPH3(6), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH3(6), S3C_GPIO_PULL_NONE);
 	gpio_set_value(S5PV210_GPH3(6), 0);
@@ -2713,16 +2451,10 @@ void s3c_config_sleep_gpio(void)
 	s3c_gpio_cfgpin(S5PV210_GPH3(7), S3C_GPIO_OUTPUT);
 	s3c_gpio_setpull(S5PV210_GPH3(7), S3C_GPIO_PULL_UP);
 	gpio_set_value(S5PV210_GPH3(7), 1);
-	
-    //s3c_config_sleep_gpio_table(ARRAY_SIZE(jupiter_sleep_gpio_table),
-    //                jupiter_sleep_gpio_table);
 }
-
 EXPORT_SYMBOL(s3c_config_sleep_gpio);
 
-
 static struct platform_device *herring_devices[] __initdata = {
-
 	&s5pc110_device_onenand,
 #ifdef CONFIG_RTC_DRV_S3C
 	&s5p_device_rtc,
@@ -2775,7 +2507,7 @@ static struct platform_device *herring_devices[] __initdata = {
 #endif
 #ifdef CONFIG_USB_ANDROID
 	&s3c_device_android_usb,
-#ifdef CONFIG_USB_ANDROID_MASS_STORAGE	
+#ifdef CONFIG_USB_ANDROID_MASS_STORAGE
 	&s3c_device_usb_mass_storage,
 #endif
 #endif
@@ -2814,69 +2546,68 @@ static struct platform_device *herring_devices[] __initdata = {
 #endif
 };
 
-unsigned int HWREV=0;
+unsigned int HWREV;
 EXPORT_SYMBOL(HWREV);
 
 static int read_hwversion(void)
 {
-        int err;
-        int hwver = -1;
-        int hwver_0 = -1;
-        int hwver_1 = -1;
-        int hwver_2 = -1;
+	int err;
+	int hwver = -1;
+	int hwver_0 = -1;
+	int hwver_1 = -1;
+	int hwver_2 = -1;
 
-        err = gpio_request(S5PV210_GPJ0(2), "HWREV_MODE0");
+	err = gpio_request(S5PV210_GPJ0(2), "HWREV_MODE0");
 
-        if (err) {
-                printk(KERN_ERR "failed to request GPJ0(2) for "
-                        "HWREV_MODE0\n");
-                return err;
-        }
-        err = gpio_request(S5PV210_GPJ0(3), "HWREV_MODE1");
+	if (err) {
+		printk(KERN_ERR "failed to request GPJ0(2) for "
+				"HWREV_MODE0\n");
+		return err;
+	}
+	err = gpio_request(S5PV210_GPJ0(3), "HWREV_MODE1");
 
-        if (err) {
-                printk(KERN_ERR "failed to request GPJ0(3) for "
-                        "HWREV_MODE1\n");
-                return err;
-        }
-        err = gpio_request(S5PV210_GPJ0(4), "HWREV_MODE2");
+	if (err) {
+		printk(KERN_ERR "failed to request GPJ0(3) for "
+				"HWREV_MODE1\n");
+		return err;
+	}
+	err = gpio_request(S5PV210_GPJ0(4), "HWREV_MODE2");
 
-        if (err) {
-                printk(KERN_ERR "failed to request GPJ0(4) for "
-                        "HWREV_MODE2\n");
-                return err;
-        }
+	if (err) {
+		printk(KERN_ERR "failed to request GPJ0(4) for "
+				"HWREV_MODE2\n");
+		return err;
+	}
 
-        gpio_direction_input(S5PV210_GPJ0(2));
-        gpio_direction_input(S5PV210_GPJ0(3));
-        gpio_direction_input(S5PV210_GPJ0(4));
+	gpio_direction_input(S5PV210_GPJ0(2));
+	gpio_direction_input(S5PV210_GPJ0(3));
+	gpio_direction_input(S5PV210_GPJ0(4));
 
-        hwver_0 = gpio_get_value(S5PV210_GPJ0(2));
-        hwver_1 = gpio_get_value(S5PV210_GPJ0(3));
-        hwver_2 = gpio_get_value(S5PV210_GPJ0(4));
+	hwver_0 = gpio_get_value(S5PV210_GPJ0(2));
+	hwver_1 = gpio_get_value(S5PV210_GPJ0(3));
+	hwver_2 = gpio_get_value(S5PV210_GPJ0(4));
 
-        gpio_free(S5PV210_GPJ0(2));
-        gpio_free(S5PV210_GPJ0(3));
-        gpio_free(S5PV210_GPJ0(4));
-	
-		if((hwver_0 == 0)&&(hwver_1 == 1)&&(hwver_2 == 0)){
-			hwver = 2;
-			printk("+++++++++[I9000 Rev0.1 board]++++++++ hwver_0: %d, hwver_1: %d, hwver_2: %d\n", hwver_0, hwver_1, hwver_2);
-		}
-		else if((hwver_0 == 1)&&(hwver_1 == 0)&&(hwver_2 == 1)){
-			hwver = 2;
-			printk("+++++++++[B5 board]++++++++ hwver_0: %d, hwver_1: %d, hwver_2: %d\n", hwver_0, hwver_1, hwver_2);
-		}
-		else if((hwver_0 == 0)&&(hwver_1 == 1)&&(hwver_2 == 1)){
-			hwver = 2;
-			printk("+++++++++[ARIES B5 board]++++++++ hwver_0: %d, hwver_1: %d, hwver_2: %d\n", hwver_0, hwver_1, hwver_2);
-		}
-		else{
-			hwver = 0;
-			//printk("+++++++++[B2, B3 board]++++++++ hwver_0: %d, hwver_1: %d, hwver_2: %d\n", hwver_0, hwver_1, hwver_2);
-		}
+	gpio_free(S5PV210_GPJ0(2));
+	gpio_free(S5PV210_GPJ0(3));
+	gpio_free(S5PV210_GPJ0(4));
 
-		return hwver;
+	if ((hwver_0 == 0) && (hwver_1 == 1) && (hwver_2 == 0)) {
+		hwver = 2;
+		printk("+++++++++[I9000 Rev0.1 board]++++++++ hwver_0: %d, \
+			hwver_1: %d, hwver_2: %d\n", hwver_0, hwver_1, hwver_2);
+	} else if ((hwver_0 == 1) && (hwver_1 == 0) && (hwver_2 == 1)) {
+		hwver = 2;
+		printk("+++++++++[B5 board]++++++++ hwver_0: %d, \
+			hwver_1: %d, hwver_2: %d\n", hwver_0, hwver_1, hwver_2);
+	} else if ((hwver_0 == 0) && (hwver_1 == 1) && (hwver_2 == 1)) {
+		hwver = 2;
+		printk("+++++++++[ARIES B5 board]++++++++ hwver_0: %d, \
+			hwver_1: %d, hwver_2: %d\n", hwver_0, hwver_1, hwver_2);
+	} else {
+		hwver = 0;
+	}
+
+	return hwver;
 }
 
 static void __init herring_map_io(void)
@@ -2893,10 +2624,9 @@ static void __init herring_map_io(void)
 }
 
 static void __init herring_fixup(struct machine_desc *desc,
-                                       struct tag *tags, char **cmdline,
-                                       struct meminfo *mi)
+		struct tag *tags, char **cmdline,
+		struct meminfo *mi)
 {
-
 	mi->bank[0].start = 0x30000000;
 	mi->bank[0].size = 80 * SZ_1M;
 	mi->bank[0].node = 0;
@@ -2909,7 +2639,6 @@ static void __init herring_fixup(struct machine_desc *desc,
 	mi->bank[2].size = 128 * SZ_1M;
 	mi->bank[2].node = 2;
 	mi->nr_banks = 3;
-
 }
 
 #ifdef CONFIG_S3C_SAMSUNG_PMEM
@@ -2928,34 +2657,32 @@ static struct s3c_platform_fb lte480wv_fb_data __initdata = {
 	.swap = FB_SWAP_WORD | FB_SWAP_HWORD,
 };
 #endif
-/* this function are used to detect s5pc110 chip version temporally */
 
+/* this function are used to detect s5pc110 chip version temporally */
 int s5pc110_version ;
 
 void _hw_version_check(void)
 {
-	void __iomem * phy_address ;
-	int temp; 
+	void __iomem *phy_address ;
+	int temp;
 
-	phy_address = ioremap (0x40,1);
+	phy_address = ioremap(0x40, 1);
 
 	temp = __raw_readl(phy_address);
 
-
 	if (temp == 0xE59F010C)
-	{
 		s5pc110_version = 0;
-	}
 	else
-	{
-		s5pc110_version=1 ;
-	}
-	printk("S5PC110 Hardware version : EVT%d \n",s5pc110_version);
-	
+		s5pc110_version = 1;
+
+	printk(KERN_INFO "S5PC110 Hardware version : EVT%d\n",
+				s5pc110_version);
+
 	iounmap(phy_address);
 }
 
-/* Temporally used
+/*
+ * Temporally used
  * return value 0 -> EVT 0
  * value 1 -> evt 1
  */
@@ -2969,69 +2696,66 @@ EXPORT_SYMBOL(hw_version_check);
 /* touch screen device init */
 static void __init qt_touch_init(void)
 {
-    int gpio, irq;
+	int gpio, irq;
 
-        /* qt602240 TSP */
-    qt602240_p1_platform_data.blen = 0x1;
-    qt602240_p1_platform_data.threshold = 0x13;
-    qt602240_p1_platform_data.orient = QT602240_VERTICAL_FLIP;
+	/* qt602240 TSP */
+	qt602240_p1_platform_data.blen = 0x1;
+	qt602240_p1_platform_data.threshold = 0x13;
+	qt602240_p1_platform_data.orient = QT602240_VERTICAL_FLIP;
 
-    gpio = S5PV210_GPG3(6);                     /* XMMC3DATA_3 */
-    gpio_request(gpio, "TOUCH_EN");
-    s3c_gpio_cfgpin(gpio, S3C_GPIO_OUTPUT);
-    gpio_direction_output(gpio, 1);
-    gpio_free(gpio);
+	gpio = S5PV210_GPG3(6);	/* XMMC3DATA_3 */
+	gpio_request(gpio, "TOUCH_EN");
+	s3c_gpio_cfgpin(gpio, S3C_GPIO_OUTPUT);
+	gpio_direction_output(gpio, 1);
+	gpio_free(gpio);
 
-    gpio = S5PV210_GPJ0(5);                             /* XMSMADDR_5 */
-    gpio_request(gpio, "TOUCH_INT");
-    s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(0xf));
-    s3c_gpio_setpull(gpio, S3C_GPIO_PULL_UP);
-    irq = gpio_to_irq(gpio);
-    gpio_free(gpio);
-    
-    i2c_devs2[1].irq = irq;
+	gpio = S5PV210_GPJ0(5);	/* XMSMADDR_5 */
+	gpio_request(gpio, "TOUCH_INT");
+	s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(0xf));
+	s3c_gpio_setpull(gpio, S3C_GPIO_PULL_UP);
+	irq = gpio_to_irq(gpio);
+	gpio_free(gpio);
+
+	i2c_devs2[1].irq = irq;
 }
 
-
-extern void set_pmic_gpio(void);
 static void jupiter_init_gpio(void)
 {
 	s3c_config_gpio_table(ARRAY_SIZE(jupiter_gpio_table),
 			jupiter_gpio_table);
 	s3c_config_sleep_gpio_table(ARRAY_SIZE(jupiter_sleep_gpio_table),
 			jupiter_sleep_gpio_table);
-
 }
 
 static void __init herring_machine_init(void)
 {
 	platform_add_devices(herring_devices, ARRAY_SIZE(herring_devices));
+
 	/* Find out S5PC110 chip version */
 	_hw_version_check();
 
-	pm_power_off = herring_power_off ; 
-
+	pm_power_off = herring_power_off ;
 
 	s3c_gpio_cfgpin(GPIO_HWREV_MODE0, S3C_GPIO_INPUT);
-	s3c_gpio_setpull( GPIO_HWREV_MODE0, S3C_GPIO_PULL_NONE); 
+	s3c_gpio_setpull(GPIO_HWREV_MODE0, S3C_GPIO_PULL_NONE);
 	s3c_gpio_cfgpin(GPIO_HWREV_MODE1, S3C_GPIO_INPUT);
-	s3c_gpio_setpull( GPIO_HWREV_MODE1, S3C_GPIO_PULL_NONE);  
+	s3c_gpio_setpull(GPIO_HWREV_MODE1, S3C_GPIO_PULL_NONE);
 	s3c_gpio_cfgpin(GPIO_HWREV_MODE2, S3C_GPIO_INPUT);
-	s3c_gpio_setpull( GPIO_HWREV_MODE2, S3C_GPIO_PULL_NONE); 
+	s3c_gpio_setpull(GPIO_HWREV_MODE2, S3C_GPIO_PULL_NONE);
 	HWREV = gpio_get_value(GPIO_HWREV_MODE0);
-	HWREV = HWREV | (gpio_get_value(GPIO_HWREV_MODE1) <<1);
-	HWREV = HWREV | (gpio_get_value(GPIO_HWREV_MODE2) <<2);
+	HWREV = HWREV | (gpio_get_value(GPIO_HWREV_MODE1) << 1);
+	HWREV = HWREV | (gpio_get_value(GPIO_HWREV_MODE2) << 2);
 	s3c_gpio_cfgpin(GPIO_HWREV_MODE3, S3C_GPIO_INPUT);
-	s3c_gpio_setpull( GPIO_HWREV_MODE3, S3C_GPIO_PULL_NONE); 
-	HWREV = HWREV | (gpio_get_value(GPIO_HWREV_MODE3) <<3);
-	printk("HWREV is 0x%x\n", HWREV);
+	s3c_gpio_setpull(GPIO_HWREV_MODE3, S3C_GPIO_PULL_NONE);
+	HWREV = HWREV | (gpio_get_value(GPIO_HWREV_MODE3) << 3);
+	printk(KERN_INFO "HWREV is 0x%x\n", HWREV);
 
 	/*initialise the gpio's*/
 	jupiter_init_gpio();
 
 	/* OneNAND */
 #ifdef CONFIG_MTD_ONENAND
-	//s3c_device_onenand.dev.platform_data = &s5p_onenand_data;
+	/* s3c_device_onenand.dev.platform_data = &s5p_onenand_data; */
 #endif
 
 	qt_touch_init();
@@ -3063,8 +2787,10 @@ static void __init herring_machine_init(void)
 	i2c_register_board_info(2, i2c_devs2, ARRAY_SIZE(i2c_devs2));
 	i2c_register_board_info(4, i2c_devs4, ARRAY_SIZE(i2c_devs4));
 	i2c_register_board_info(6, i2c_devs6, ARRAY_SIZE(i2c_devs6));
-	i2c_register_board_info(10, i2c_devs10, ARRAY_SIZE(i2c_devs10)); /* for touchkey */
-	i2c_register_board_info(7, i2c_devs7, ARRAY_SIZE(i2c_devs7)); /* for fsa9480 */
+	/* Touch Key */
+	i2c_register_board_info(10, i2c_devs10, ARRAY_SIZE(i2c_devs10));
+	/* FSA9480 */
+	i2c_register_board_info(7, i2c_devs7, ARRAY_SIZE(i2c_devs7));
 
 #ifdef CONFIG_FB_S3C_LTE480WV
 	s3cfb_set_platdata(&lte480wv_fb_data);
@@ -3079,8 +2805,8 @@ static void __init herring_machine_init(void)
 #endif
 
 #ifdef CONFIG_FB_S3C_TL2796
-        spi_register_board_info(spi_board_info, ARRAY_SIZE(spi_board_info));
-        s3cfb_set_platdata(&tl2796_data);
+	spi_register_board_info(spi_board_info, ARRAY_SIZE(spi_board_info));
+	s3cfb_set_platdata(&tl2796_data);
 #endif
 
 #if defined(CONFIG_S5PV210_ADCTS)
@@ -3093,7 +2819,6 @@ static void __init herring_machine_init(void)
 
 #if defined(CONFIG_PM)
 	s3c_pm_init();
-//	s5pc11x_pm_init();
 #endif
 
 #ifdef CONFIG_VIDEO_FIMC
@@ -3136,32 +2861,32 @@ static void __init herring_machine_init(void)
 /* Initializes OTG Phy. */
 void otg_phy_init(void)
 {
-	__raw_writel(__raw_readl(S5P_USB_PHY_CONTROL)
-		|(0x1<<0), S5P_USB_PHY_CONTROL); /*USB PHY0 Enable */
+	__raw_writel(__raw_readl(S5P_USB_PHY_CONTROL) | (0x1<<0),
+			S5P_USB_PHY_CONTROL); /* USB PHY0 Enable */
 	__raw_writel((__raw_readl(S3C_USBOTG_PHYPWR)
-		&~(0x3<<3)&~(0x1<<0))|(0x1<<5), S3C_USBOTG_PHYPWR);
-	__raw_writel((__raw_readl(S3C_USBOTG_PHYCLK)
-		&~(0x5<<2))|(0x3<<0), S3C_USBOTG_PHYCLK);
-	__raw_writel((__raw_readl(S3C_USBOTG_RSTCON)
-		&~(0x3<<1))|(0x1<<0), S3C_USBOTG_RSTCON);
+			& ~(0x3<<3) & ~(0x1<<0)) | (0x1<<5),
+			S3C_USBOTG_PHYPWR);
+	__raw_writel((__raw_readl(S3C_USBOTG_PHYCLK) & ~(0x5<<2)) | (0x3<<0),
+			S3C_USBOTG_PHYCLK);
+	__raw_writel((__raw_readl(S3C_USBOTG_RSTCON) & ~(0x3<<1)) | (0x1<<0),
+			S3C_USBOTG_RSTCON);
 	udelay(10);
-	__raw_writel(__raw_readl(S3C_USBOTG_RSTCON)
-		&~(0x7<<0), S3C_USBOTG_RSTCON);
+	__raw_writel(__raw_readl(S3C_USBOTG_RSTCON) & ~(0x7<<0),
+			S3C_USBOTG_RSTCON);
 	udelay(10);
 }
 EXPORT_SYMBOL(otg_phy_init);
 
 /* USB Control request data struct must be located here for DMA transfer */
 struct usb_ctrlrequest usb_ctrl __attribute__((aligned(64)));
-EXPORT_SYMBOL(usb_ctrl);
 
 /* OTG PHY Power Off */
 void otg_phy_off(void)
 {
-	__raw_writel(__raw_readl(S3C_USBOTG_PHYPWR)
-		|(0x3<<3), S3C_USBOTG_PHYPWR);
-	__raw_writel(__raw_readl(S5P_USB_PHY_CONTROL)
-		&~(1<<0), S5P_USB_PHY_CONTROL);
+	__raw_writel(__raw_readl(S3C_USBOTG_PHYPWR) | (0x3<<3),
+			S3C_USBOTG_PHYPWR);
+	__raw_writel(__raw_readl(S5P_USB_PHY_CONTROL) & ~(1<<0),
+			S5P_USB_PHY_CONTROL);
 }
 EXPORT_SYMBOL(otg_phy_off);
 
@@ -3175,25 +2900,26 @@ void usb_host_phy_init(void)
 	if (readl(S5P_USB_PHY_CONTROL) & (0x1<<1))
 		return;
 
-	__raw_writel(__raw_readl(S5P_USB_PHY_CONTROL)
-		|(0x1<<1), S5P_USB_PHY_CONTROL);
+	__raw_writel(__raw_readl(S5P_USB_PHY_CONTROL) | (0x1<<1),
+			S5P_USB_PHY_CONTROL);
 	__raw_writel((__raw_readl(S3C_USBOTG_PHYPWR)
-		&~(0x1<<7)&~(0x1<<6))|(0x1<<8)|(0x1<<5), S3C_USBOTG_PHYPWR);
-	__raw_writel((__raw_readl(S3C_USBOTG_PHYCLK)
-		&~(0x1<<7))|(0x3<<0), S3C_USBOTG_PHYCLK);
-	__raw_writel((__raw_readl(S3C_USBOTG_RSTCON))
-		|(0x1<<4)|(0x1<<3), S3C_USBOTG_RSTCON);
-	__raw_writel(__raw_readl(S3C_USBOTG_RSTCON)
-		&~(0x1<<4)&~(0x1<<3), S3C_USBOTG_RSTCON);
+			& ~(0x1<<7) & ~(0x1<<6)) | (0x1<<8) | (0x1<<5),
+			S3C_USBOTG_PHYPWR);
+	__raw_writel((__raw_readl(S3C_USBOTG_PHYCLK) & ~(0x1<<7)) | (0x3<<0),
+			S3C_USBOTG_PHYCLK);
+	__raw_writel((__raw_readl(S3C_USBOTG_RSTCON)) | (0x1<<4) | (0x1<<3),
+			S3C_USBOTG_RSTCON);
+	__raw_writel(__raw_readl(S3C_USBOTG_RSTCON) & ~(0x1<<4) & ~(0x1<<3),
+			S3C_USBOTG_RSTCON);
 }
 EXPORT_SYMBOL(usb_host_phy_init);
 
 void usb_host_phy_off(void)
 {
-	__raw_writel(__raw_readl(S3C_USBOTG_PHYPWR)
-		|(0x1<<7)|(0x1<<6), S3C_USBOTG_PHYPWR);
-	__raw_writel(__raw_readl(S5P_USB_PHY_CONTROL)
-		&~(1<<1), S5P_USB_PHY_CONTROL);
+	__raw_writel(__raw_readl(S3C_USBOTG_PHYPWR) | (0x1<<7)|(0x1<<6),
+			S3C_USBOTG_PHYPWR);
+	__raw_writel(__raw_readl(S5P_USB_PHY_CONTROL) & ~(1<<1),
+			S5P_USB_PHY_CONTROL);
 }
 EXPORT_SYMBOL(usb_host_phy_off);
 #endif
@@ -3270,13 +2996,11 @@ MACHINE_START(SMDKC110, "SMDKC110")
 #else
 	.timer		= &s3c24xx_timer,
 #endif
-
 MACHINE_END
 
 void s3c_setup_uart_cfg_gpio(unsigned char port)
 {
-	switch(port)
-	{
+	switch (port) {
 	case 0:
 		s3c_gpio_cfgpin(GPIO_BT_RXD, S3C_GPIO_SFN(GPIO_BT_RXD_AF));
 		s3c_gpio_setpull(GPIO_BT_RXD, S3C_GPIO_PULL_NONE);
@@ -3321,5 +3045,4 @@ void s3c_setup_uart_cfg_gpio(unsigned char port)
 		break;
 	}
 }
-
 EXPORT_SYMBOL(s3c_setup_uart_cfg_gpio);

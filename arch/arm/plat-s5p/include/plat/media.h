@@ -42,6 +42,7 @@ struct s3c_media_device {
 extern struct meminfo meminfo;
 extern dma_addr_t s3c_get_media_memory_bank(int dev_id, int bank);
 extern size_t s3c_get_media_memsize_bank(int dev_id, int bank);
+extern void s5pv210_reserve_bootmem(void);
 
 #endif
 

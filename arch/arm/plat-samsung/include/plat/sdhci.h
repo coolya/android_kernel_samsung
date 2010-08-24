@@ -67,6 +67,7 @@ struct s3c_sdhci_platdata {
  * The call will copy the platform data, so the board definitions can
  * make the structure itself __initdata.
  */
+extern void s3c_sdhci_set_platdata(void);
 extern void s3c_sdhci0_set_platdata(struct s3c_sdhci_platdata *pd);
 extern void s3c_sdhci1_set_platdata(struct s3c_sdhci_platdata *pd);
 extern void s3c_sdhci2_set_platdata(struct s3c_sdhci_platdata *pd);
