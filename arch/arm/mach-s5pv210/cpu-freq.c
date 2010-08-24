@@ -30,7 +30,6 @@
 #include <mach/regs-gpio.h>
 
 #define DBG(fmt...)
-//#define DBG printk
 
 static struct clk *mpu_clk;
 static struct regulator *arm_regulator;
@@ -41,24 +40,16 @@ struct s5pv210_cpufreq_freqs s5pv210_freqs;
 static enum perf_level bootup_level;
 
 unsigned int S5PV210_FREQ_TAB = 1;
-static spinlock_t cpufreq_lock;
 
-static char cpufreq_governor_name[CPUFREQ_NAME_LEN] = "conservative";// default governor
-static char userspace_governor[CPUFREQ_NAME_LEN] = "userspace";
-static char conservative_governor[CPUFREQ_NAME_LEN] = "conservative";
-static char ondemand_governor[CPUFREQ_NAME_LEN] = "ondemand";
-
-/* Based on MAX8698C 
+/* Based on MAX8698C
  * RAMP time : 10mV/us
  **/
 #define PMIC_RAMP_UP	10
-
 static unsigned long previous_arm_volt;
 
 /* If you don't need to wait exact ramp up delay
  * you can use fixed delay time
  **/
-//#define USE_FIXED_RAMP_UP_DELAY
 
 /* frequency */
 static struct cpufreq_frequency_table s5pv210_freq_table_max[] = {
@@ -194,7 +185,6 @@ static struct s5pv210_dvs_conf smdkc110_dvs_confs[] = {
 #endif
 };
 
-
 static u32 clkdiv_val[][11] = {
 /*{ APLL, A2M, HCLK_MSYS, PCLK_MSYS,
  *	HCLK_DSYS, PCLK_DSYS, HCLK_PSYS, PCLK_PSYS,
@@ -219,165 +209,65 @@ static u32 clkdiv_val[][11] = {
 static struct s5pv210_domain_freq s5pv210_clk_info[] = {
 	{
 #if USE_1DOT2GHZ
-		.apll_out 	= 1200000,
-		.armclk 	= 1200000,
-		.hclk_msys 	= 200000,
-		.pclk_msys 	= 100000,
-		.hclk_dsys 	= 166000,
-		.pclk_dsys 	= 83000,
+		.apll_out	= 1200000,
+		.armclk		= 1200000,
+		.hclk_msys	= 200000,
+		.pclk_msys	= 100000,
+		.hclk_dsys	= 166000,
+		.pclk_dsys	= 83000,
 		.hclk_psys	= 133000,
 		.pclk_psys	= 66000,
 	}, {
 #endif
-		.apll_out 	= 1000000,
-		.armclk 	= 1000000,
-		.hclk_msys 	= 200000,
-		.pclk_msys 	= 100000,
-		.hclk_dsys 	= 166000,
-		.pclk_dsys 	= 83000,
+		.apll_out	= 1000000,
+		.armclk		= 1000000,
+		.hclk_msys	= 200000,
+		.pclk_msys	= 100000,
+		.hclk_dsys	= 166000,
+		.pclk_dsys	= 83000,
 		.hclk_psys	= 133000,
 		.pclk_psys	= 66000,
 	}, {
-		.apll_out 	= 800000,
-		.armclk 	= 800000,
-		.hclk_msys 	= 200000,
-		.pclk_msys 	= 100000,
-		.hclk_dsys 	= 166000,
-		.pclk_dsys 	= 83000,
+		.apll_out	= 800000,
+		.armclk		= 800000,
+		.hclk_msys	= 200000,
+		.pclk_msys	= 100000,
+		.hclk_dsys	= 166000,
+		.pclk_dsys	= 83000,
 		.hclk_psys	= 133000,
 		.pclk_psys	= 66000,
 	}, {
-		.apll_out 	= 800000,
-		.armclk 	= 400000,
-		.hclk_msys 	= 200000,
-		.pclk_msys 	= 100000,
-		.hclk_dsys 	= 166000,
-		.pclk_dsys 	= 83000,
+		.apll_out	= 800000,
+		.armclk		= 400000,
+		.hclk_msys	= 200000,
+		.pclk_msys	= 100000,
+		.hclk_dsys	= 166000,
+		.pclk_dsys	= 83000,
 		.hclk_psys	= 133000,
 		.pclk_psys	= 66000,
 	}, {
-		.apll_out 	= 800000,
-		.armclk 	= 200000,
-		.hclk_msys 	= 200000,
-		.pclk_msys 	= 100000,
-		.hclk_dsys 	= 166000,
-		.pclk_dsys 	= 83000,
+		.apll_out	= 800000,
+		.armclk		= 200000,
+		.hclk_msys	= 200000,
+		.pclk_msys	= 100000,
+		.hclk_dsys	= 166000,
+		.pclk_dsys	= 83000,
 		.hclk_psys	= 133000,
 		.pclk_psys	= 66000,
 	}, {
-		.apll_out 	= 800000,
-		.armclk 	= 100000,
-		.hclk_msys 	= 100000,
-		.pclk_msys 	= 100000,
-		.hclk_dsys 	= 83000,
-		.pclk_dsys 	= 83000,
+		.apll_out	= 800000,
+		.armclk		= 100000,
+		.hclk_msys	= 100000,
+		.pclk_msys	= 100000,
+		.hclk_dsys	= 83000,
+		.pclk_dsys	= 83000,
 		.hclk_psys	= 66000,
 		.pclk_psys	= 66000,
 	},
 };
 
-int is_userspace_gov(void)
-{
-        int ret = 0;
-        if(!strnicmp(cpufreq_governor_name, userspace_governor, CPUFREQ_NAME_LEN)) {
-                ret = 1;
-        }
-        return ret;
-}
-
-int is_conservative_gov(void)
-{
-        int ret = 0;
-        if(!strnicmp(cpufreq_governor_name, conservative_governor, CPUFREQ_NAME_LEN)) {
-                ret = 1;
-        }
-        return ret;
-}
-
-int is_ondemand_gov(void)
-{
-        int ret = 0;
-        if(!strnicmp(cpufreq_governor_name, ondemand_governor, CPUFREQ_NAME_LEN)) {
-                ret = 1;
-        }
-        return ret;
-}
-
-/*return performance level */
-static int get_dvfs_perf_level(enum freq_level_states freq_level, unsigned int *perf_level)
-{
-	unsigned int freq=0, index = 0;
-	struct cpufreq_frequency_table *freq_tab = s5pv210_freq_table[S5PV210_FREQ_TAB];
-	switch(freq_level)
-	{
-	case LEV_1200MHZ:
-		freq = 1200 * 1000;
-		break;
-	case LEV_1000MHZ:
-		freq = 1000 * 1000;
-		break;
-	case LEV_800MHZ:
-		freq = 800 * 1000;
-		break;
-	case LEV_400MHZ:
-		freq = 400 * 1000;
-		break;
-	case LEV_200MHZ:
-		freq = 200 * 1000;
-		break;
-	case LEV_100MHZ:
-		freq = 100 * 1000;
-		break;
-	default:
-		printk(KERN_ERR "Invalid freq level\n");
-		return -EINVAL;
-	}
-	while((freq_tab[index].frequency != CPUFREQ_TABLE_END) &&
-		(freq_tab[index].frequency != freq)) {
-		index++;
-	}
-	if(freq_tab[index].frequency == CPUFREQ_TABLE_END)
-	{
-		printk(KERN_ERR "Invalid freq table\n");
-		return -EINVAL;	
-	}
-
-	*perf_level = freq_tab[index].index;
-	return 0;
-}
-
-
-// jump to 400mhz
-int dvfs_change_quick = 0;
-static void set_dvfs_perf_level(unsigned int perf_level) 
-{
-	//spin_lock(&cpufreq_lock); check if lock is needed
-	//desired frequency level
-	dvfs_change_quick = s5pv210_freq_table[S5PV210_FREQ_TAB][perf_level].frequency;
-	//spin_unlock(&cpufreq_lock); check if lock is needed
-}
-
-//Jump to the given frequency level 
-void set_dvfs_target_level(enum freq_level_states freq_level) 
-{
-	unsigned int ret = 0, perf_level=0;
-
-	if(!is_conservative_gov())
-		return;
-
-	ret = get_dvfs_perf_level(freq_level, &perf_level);
-	if(ret)
-		return;
-
-	set_dvfs_perf_level(perf_level);
-	return;
-}
-
-
 void s5pv210_set_cpufreq_level(unsigned int mode)
 {
-	unsigned int index = 0;
-	struct cpufreq_frequency_table *freq_tab;
 	switch (mode) {
 	case MAXIMUM_TABLE:
 		S5PV210_FREQ_TAB = 0;
@@ -395,29 +285,22 @@ void s5pv210_set_cpufreq_level(unsigned int mode)
 		S5PV210_FREQ_TAB = 4;
 		break;
 	default:
-		printk(KERN_ERR "Can't find corresponding cpufreq table %d \n", mode);
+		printk(KERN_ERR
+			"Can't find corresponding cpufreq table %d\n",	mode);
 		S5PV210_FREQ_TAB = 1;
 		break;
 	}
 
-	if(!is_conservative_gov())
-		return;
-
-	freq_tab = s5pv210_freq_table[S5PV210_FREQ_TAB];
-	/*jump to the lower level*/
-	while(freq_tab[index].frequency != CPUFREQ_TABLE_END)
-		index++;
-	set_dvfs_perf_level(index-1);
 	return;
 }
 
 int s5pv210_verify_speed(struct cpufreq_policy *policy)
 {
-
 	if (policy->cpu)
 		return -EINVAL;
 
-	return cpufreq_frequency_table_verify(policy, s5pv210_freq_table[S5PV210_FREQ_TAB]);
+	return cpufreq_frequency_table_verify(policy,
+			s5pv210_freq_table[S5PV210_FREQ_TAB]);
 }
 
 unsigned int s5pv210_getspeed(unsigned int cpu)
@@ -432,8 +315,6 @@ unsigned int s5pv210_getspeed(unsigned int cpu)
 	return rate;
 }
 
-extern bool gbTransitionLogEnable;
-extern void print_clocks(void);
 #ifdef CONFIG_PM
 static int no_cpufreq_access;
 /*
@@ -455,7 +336,6 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	int ramp_req_delay, ramp_real_delay;
 	struct timeval start, end;
 
-	//DBG("%s: called for target freq=%d\n",__func__,target_freq);
 #ifdef CONFIG_PM
 	if ((relation & ENABLE_FURTHER_CPUFREQ) &&
 			(relation & DISABLE_FURTHER_CPUFREQ)) {
@@ -482,33 +362,21 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 #endif
 	s5pv210_freqs.freqs.old = s5pv210_getspeed(0);
 
-	if(policy != NULL) {
-		if(policy -> governor) {
-			if (strnicmp(cpufreq_governor_name, policy->governor->name, CPUFREQ_NAME_LEN)) {
-				strcpy(cpufreq_governor_name, policy->governor->name);
-			}
-		}
-	}
-
-	if (cpufreq_frequency_table_target(policy, s5pv210_freq_table[S5PV210_FREQ_TAB],
+	if (cpufreq_frequency_table_target(policy,
+		s5pv210_freq_table[S5PV210_FREQ_TAB],
 		target_freq, relation, &index)) {
 		ret = -EINVAL;
 		goto out;
 	}
-	
 
 	arm_clk = s5pv210_freq_table[S5PV210_FREQ_TAB][index].frequency;
 	index = s5pv210_freq_table[S5PV210_FREQ_TAB][index].index;
-
-	//DBG("%s: called for target freq=%d\n",__func__,arm_clk);
 
 	s5pv210_freqs.freqs.new = arm_clk;
 	s5pv210_freqs.freqs.cpu = 0;
 
 	if (s5pv210_freqs.freqs.new == s5pv210_freqs.freqs.old)
 		return 0;
-
-	DBG("%s: called for target freq=%d old freq=%d\n",__func__,arm_clk,s5pv210_freqs.freqs.old);
 
 	arm_volt = smdkc110_dvs_confs[index].arm_volt;
 	int_volt = smdkc110_dvs_confs[index].int_volt;
@@ -521,14 +389,13 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 
 	if (s5pv210_freqs.freqs.new > s5pv210_freqs.freqs.old) {
 		/* Voltage up */
-
-		DBG("Voltage increase \n");
 		regulator_set_voltage(arm_regulator, arm_volt,
 				arm_volt);
 		regulator_set_voltage(internal_regulator, int_volt,
 				int_volt);
 #if defined(USE_FIXED_RAMP_UP_DELAY)
-		ramp_req_delay = (((arm_volt - previous_arm_volt) / 1000) / PMIC_RAMP_UP);
+		ramp_req_delay = (((arm_volt - previous_arm_volt) / 1000)
+				   / PMIC_RAMP_UP);
 		udelay(ramp_req_delay);
 #else
 		do_gettimeofday(&start);
@@ -548,7 +415,6 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		 * temporary clock while changing divider.
 		 * expected clock is 83Mhz : 7.8usec/(1/83Mhz) = 0x287
 		 **/
-		DBG("Bus speed changing...\n");
 		if (pll_changing)
 			__raw_writel(0x287, S5P_VA_DMC1 + 0x30);
 		else
@@ -564,13 +430,12 @@ static int s5pv210_target(struct cpufreq_policy *policy,
  * in below code.
  */
 	if (pll_changing) {
-		DBG("Pll speed changing...\n");
-		/* 1. Temporary Change divider for MFC and G3D 
+		/* 1. Temporary Change divider for MFC and G3D
 		 * SCLKA2M(200/1=200)->(200/4=50)Mhz
 		 **/
 		reg = __raw_readl(S5P_CLK_DIV2);
 		reg &= ~(S5P_CLKDIV2_G3D_MASK | S5P_CLKDIV2_MFC_MASK);
-		reg |= 	(3 << S5P_CLKDIV2_G3D_SHIFT) |
+		reg |=	(3 << S5P_CLKDIV2_G3D_SHIFT) |
 			(3 << S5P_CLKDIV2_MFC_SHIFT);
 		__raw_writel(reg, S5P_CLK_DIV2);
 
@@ -578,13 +443,13 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		do {
 			reg = __raw_readl(S5P_CLK_DIV_STAT0);
 		} while (reg & ((1 << 16) | (1 << 17)));
-		
-		/* 2. Change SCLKA2M(200Mhz)to SCLKMPLL in MFC_MUX, G3D MUX 
+
+		/* 2. Change SCLKA2M(200Mhz)to SCLKMPLL in MFC_MUX, G3D MUX
 		 * (200/4=50)->(667/4=166)Mhz
 		 **/
 		reg = __raw_readl(S5P_CLK_SRC2);
 		reg &= ~(S5P_CLKSRC2_G3D_MASK | S5P_CLKSRC2_MFC_MASK);
-		reg |= 	(1 << S5P_CLKSRC2_G3D_SHIFT) |
+		reg |=	(1 << S5P_CLKSRC2_G3D_SHIFT) |
 			(1 << S5P_CLKSRC2_MFC_SHIFT);
 		__raw_writel(reg, S5P_CLK_SRC2);
 
@@ -633,11 +498,11 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 #endif
 	}
 
-	/* ARM MCS value changed */
+	/* ARM MCS value changed except for 200 and 100MHz */
 #if USE_1DOT2GHZ
-	if (index < L4) { // not 200 , 100MHZ
+	if (index < L4) {
 #else
-	if (index < L3) { // not 200 , 100MHZ
+	if (index < L3) {
 #endif
 		reg = __raw_readl(S5P_ARM_MCS_CON);
 		reg &= ~0x3;
@@ -647,24 +512,23 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 
 #if !defined(USE_FIXED_RAMP_UP_DELAY)
 	if (s5pv210_freqs.freqs.new > s5pv210_freqs.freqs.old) {
-
-
 		do_gettimeofday(&end);
 
 		/* Based on 10mV/usec ramp up speed
 		 * Requried ramp up delay time (usec) for this voltage change
 		 **/
-		ramp_req_delay = (((arm_volt - previous_arm_volt) / 1000) / PMIC_RAMP_UP);
+		ramp_req_delay = (((arm_volt - previous_arm_volt) / 1000)
+				   / PMIC_RAMP_UP);
 
 		ramp_real_delay = ramp_req_delay -
 			((end.tv_sec - start.tv_sec) * USEC_PER_SEC +
 			(end.tv_usec - start.tv_usec));
 
-		if (ramp_real_delay > 0) {
+		if (ramp_real_delay > 0)
 			udelay(ramp_real_delay);
-		} else {
-			DBG(KERN_INFO "Ramp up delay already consumed [%d]\n", ramp_real_delay);
-		}
+		else
+			DBG(KERN_INFO "Ramp up delay already consumed [%d]\n",
+					ramp_real_delay);
 	}
 #endif
 	/* 5. Change divider */
@@ -690,11 +554,11 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		reg = __raw_readl(S5P_CLK_DIV_STAT0);
 	} while (reg & 0xff);
 
-	/* ARM MCS value changed */
+	/* ARM MCS value changed except for 200 and 100MHz */
 #if USE_1DOT2GHZ
-	if (index >= L4) {// for 100, 200MHZ
+	if (index >= L4) {
 #else
-	if (index >= L3) {// for 100, 200MHZ
+	if (index >= L3) {
 #endif
 		reg = __raw_readl(S5P_ARM_MCS_CON);
 		reg &= ~0x3;
@@ -715,13 +579,13 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 			__raw_writel(APLL_VAL_1200, S5P_APLL_CON);
 		else if (index == L1)
 			__raw_writel(APLL_VAL_1000, S5P_APLL_CON);
-		else //L2
+		else
 			__raw_writel(APLL_VAL_800, S5P_APLL_CON);
-		
+
 #else
 		if (index == L0)
 			__raw_writel(APLL_VAL_1000, S5P_APLL_CON);
-		else // L1
+		else
 			__raw_writel(APLL_VAL_800, S5P_APLL_CON);
 #endif
 
@@ -730,12 +594,12 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		} while (!(reg & (0x1 << 29)));
 
 		/* 9. Change souce clock from SCLKMPLL(667Mhz)
-		 * to SCLKA2M(200Mhz) in MFC_MUX and G3D MUX 
+		 * to SCLKA2M(200Mhz) in MFC_MUX and G3D MUX
 		 * (667/4=166)->(200/4=50)Mhz
 		 **/
 		reg = __raw_readl(S5P_CLK_SRC2);
 		reg &= ~(S5P_CLKSRC2_G3D_MASK | S5P_CLKSRC2_MFC_MASK);
-		reg |= 	(0 << S5P_CLKSRC2_G3D_SHIFT) |
+		reg |=	(0 << S5P_CLKSRC2_G3D_SHIFT) |
 			(0 << S5P_CLKSRC2_MFC_SHIFT);
 		__raw_writel(reg, S5P_CLK_SRC2);
 
@@ -743,12 +607,12 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 			reg = __raw_readl(S5P_CLK_MUX_STAT1);
 		} while (reg & ((1 << 7) | (1 << 3)));
 
-		/* 10. Change divider for MFC and G3D 
+		/* 10. Change divider for MFC and G3D
 		 * (200/4=50)->(200/1=200)Mhz
 		 **/
 		reg = __raw_readl(S5P_CLK_DIV2);
 		reg &= ~(S5P_CLKDIV2_G3D_MASK | S5P_CLKDIV2_MFC_MASK);
-		reg |= 	(clkdiv_val[index][10] << S5P_CLKDIV2_G3D_SHIFT) |
+		reg |=	(clkdiv_val[index][10] << S5P_CLKDIV2_G3D_SHIFT) |
 			(clkdiv_val[index][9] << S5P_CLKDIV2_MFC_SHIFT);
 		__raw_writel(reg, S5P_CLK_DIV2);
 
@@ -756,7 +620,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		do {
 			reg = __raw_readl(S5P_CLK_DIV_STAT0);
 		} while (reg & ((1 << 16) | (1 << 17)));
-	
+
 		/* 11. Change MPLL to APLL in MSYS_MUX */
 		reg = __raw_readl(S5P_CLK_SRC0);
 		reg &= ~(S5P_CLKSRC0_MUX200_MASK);
@@ -795,7 +659,6 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		} while (reg & (1 << 15));
 		__raw_writel(0x618, S5P_VA_DMC0 + 0x30);
 #endif
-				DBG("PLL change done...\n");
 	}
 
 
@@ -847,19 +710,10 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 
 	cpufreq_notify_transition(&s5pv210_freqs.freqs, CPUFREQ_POSTCHANGE);
 
-	memcpy(&s5pv210_freqs.old, &s5pv210_freqs.new, sizeof(struct s5pv210_domain_freq));
+	memcpy(&s5pv210_freqs.old, &s5pv210_freqs.new,
+			sizeof(struct s5pv210_domain_freq));
 
 	mpu_clk->rate = s5pv210_freqs.freqs.new * KHZ_T;
-
-	//printk(KERN_INFO "Perf changed[L%d]\n", index);
-#ifdef CONFIG_CPU_FREQ_LOG
-	if(gbTransitionLogEnable == true)
-	{
-		DBG("Perf changed[L%d]\n",index);
-		printk("[DVFS Transition]...\n");
-		print_clocks();
-	}
-#endif
 
 	previous_arm_volt = smdkc110_dvs_confs[index].arm_volt;
 out:
@@ -867,55 +721,23 @@ out:
 }
 
 #ifdef CONFIG_PM
-static int previous_frequency;
-
 static int s5pv210_cpufreq_suspend(struct cpufreq_policy *policy,
 			pm_message_t pmsg)
 {
 	int ret = 0;
-	pr_info("cpufreq: Entering suspend.\n");
 
-	previous_frequency = cpufreq_get(0);
-	ret = __cpufreq_driver_target(cpufreq_cpu_get(0), SLEEP_FREQ,
-			DISABLE_FURTHER_CPUFREQ);
 	return ret;
 }
 
 static int s5pv210_cpufreq_resume(struct cpufreq_policy *policy)
 {
 	int ret = 0;
-	u32 rate;
-	int level = CPUFREQ_TABLE_END;
-	int i = 0;
-	struct cpufreq_frequency_table *freq_tab = s5pv210_freq_table[S5PV210_FREQ_TAB];
-
-	pr_info("cpufreq: Waking up from a suspend.\n");
-
-	__cpufreq_driver_target(cpufreq_cpu_get(0), previous_frequency,
-			ENABLE_FURTHER_CPUFREQ);
-
-	/* Clock information update with wakeup value */
-	rate = clk_get_rate(mpu_clk);
-
-	while (freq_tab[i].frequency != CPUFREQ_TABLE_END) {
-		if (freq_tab[i].frequency * 1000 == rate) {
-			level = freq_tab[i].index;
-			break;
-		}
-		i++;
-	}
-
-	if (level == CPUFREQ_TABLE_END) { /* Not found */
-		pr_err("[%s:%d] clock speed does not match: "
-				"%d. Using L1 of 800MHz.\n",
-				__FILE__, __LINE__, rate);
-		level = L1;
-	}
 
 	/* Clock inforamtion update with wakeup value */
 	memcpy(&s5pv210_freqs.old, &s5pv210_clk_info[bootup_level],
 			sizeof(struct s5pv210_domain_freq));
 	previous_arm_volt = smdkc110_dvs_confs[bootup_level].arm_volt;
+
 	return ret;
 }
 #endif
@@ -923,13 +745,7 @@ static int s5pv210_cpufreq_resume(struct cpufreq_policy *policy)
 static int __init s5pv210_cpu_init(struct cpufreq_policy *policy)
 {
 	u32 rate;
-	DBG("%s: called. \n");
-#ifdef CLK_OUT_PROBING
-	//reg = __raw_readl(S5P_CLK_OUT);
-	//reg &= ~(0x1f << 12 | 0xf << 20);
-	//reg |= (0xf << 12 | 0x1 << 20);
-	//__raw_writel(reg, S5P_CLK_OUT);
-#endif
+
 	mpu_clk = clk_get(NULL, MPU_CLK);
 	if (IS_ERR(mpu_clk))
 		return PTR_ERR(mpu_clk);
@@ -944,7 +760,6 @@ static int __init s5pv210_cpu_init(struct cpufreq_policy *policy)
 		printk(KERN_ERR "failed to get resource %s\n", "vddint");
 		return PTR_ERR(internal_regulator);
 	}
-
 #endif
 
 	S5PV210_FREQ_TAB = 1;
@@ -953,7 +768,8 @@ static int __init s5pv210_cpu_init(struct cpufreq_policy *policy)
 		return -EINVAL;
 	policy->cur = policy->min = policy->max = s5pv210_getspeed(0);
 
-	cpufreq_frequency_table_get_attr(s5pv210_freq_table[S5PV210_FREQ_TAB], policy->cpu);
+	cpufreq_frequency_table_get_attr(s5pv210_freq_table[S5PV210_FREQ_TAB],
+					 policy->cpu);
 
 	policy->cpuinfo.transition_latency = 40000;
 
@@ -973,21 +789,17 @@ static int __init s5pv210_cpu_init(struct cpufreq_policy *policy)
 	default:
 		printk(KERN_ERR "[%s] cannot find matching clock"
 				"[%s] rate [%d]\n"
-				, __FUNCTION__, MPU_CLK, rate);
+				, __func__, MPU_CLK, rate);
 		bootup_level = L1;
 		break;
 	}
-
-	printk("S5PV210_FREQ_TAB=%d bootup_level=%d\n",S5PV210_FREQ_TAB,bootup_level);
-
 	memcpy(&s5pv210_freqs.old, &s5pv210_clk_info[bootup_level],
 			sizeof(struct s5pv210_domain_freq));
-	
+
 	previous_arm_volt = smdkc110_dvs_confs[bootup_level].arm_volt;
 
-	spin_lock_init(&cpufreq_lock);
-
-	return cpufreq_frequency_table_cpuinfo(policy, s5pv210_freq_table[S5PV210_FREQ_TAB]);
+	return cpufreq_frequency_table_cpuinfo(policy,
+			s5pv210_freq_table[S5PV210_FREQ_TAB]);
 }
 
 static struct cpufreq_driver s5pv210_driver = {

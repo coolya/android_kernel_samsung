@@ -20,21 +20,21 @@
 #endif
 
 enum S5PV210_CPUFREQ_MODE {
-    MAXIMUM_TABLE = 0,
-    NORMAL_TABLE,
-    RESTRICT_TABLE_1,
-    RESTRICT_TABLE_2,
-    SUSPEND_TABLE,
+	MAXIMUM_TABLE = 0,
+	NORMAL_TABLE,
+	RESTRICT_TABLE_1,
+	RESTRICT_TABLE_2,
+	SUSPEND_TABLE,
 };
 
 /*
  * APLL M,P,S value for target frequency
  **/
-#define APLL_VAL_1664	(1<<31)|(417<<16)|(3<<8)|(0)
-#define APLL_VAL_1332	(1<<31)|(444<<16)|(4<<8)|(0)
-#define APLL_VAL_1200	(1<<31)|(150<<16)|(3<<8)|(1)
-#define APLL_VAL_1000	(1<<31)|(125<<16)|(3<<8)|(1)
-#define APLL_VAL_800	(1<<31)|(100<<16)|(3<<8)|(1)
+#define APLL_VAL_1664	((1<<31)|(417<<16)|(3<<8)|(0))
+#define APLL_VAL_1332	((1<<31)|(444<<16)|(4<<8)|(0))
+#define APLL_VAL_1200	((1<<31)|(150<<16)|(3<<8)|(1))
+#define APLL_VAL_1000	((1<<31)|(125<<16)|(3<<8)|(1))
+#define APLL_VAL_800	((1<<31)|(100<<16)|(3<<8)|(1))
 
 enum perf_level {
 	L0,
@@ -86,7 +86,3 @@ struct s5pv210_dvs_conf {
 };
 
 extern void s5pv210_set_cpufreq_level(unsigned int flag);
-extern int is_userspace_gov(void);
-extern int is_conservative_gov(void);
-extern int is_ondemand_gov(void);
-extern void set_dvfs_target_level(enum freq_level_states freq_level);
