@@ -155,6 +155,11 @@ static struct regulator_init_data max8998_buck1_data = {
                 .max_uV         = 1500000,
                 .always_on      = 1,
                 .valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
+		.state_mem	= {
+			.uV	= 1200000,
+			.mode	= REGULATOR_MODE_NORMAL,
+			.enabled = 0,
+		},
         },
         .num_consumer_supplies  = ARRAY_SIZE(buck1_consumers),
         .consumer_supplies      =buck1_consumers,
@@ -173,6 +178,11 @@ static struct regulator_init_data max8998_buck2_data = {
                 .max_uV         = 1500000,
                 .always_on      = 1,
                 .valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
+		.state_mem	= {
+			.uV	= 1100000,
+			.mode	= REGULATOR_MODE_NORMAL,
+			.enabled = 0,
+		},
         },
         .num_consumer_supplies  = ARRAY_SIZE(buck2_consumers),
         .consumer_supplies      =buck2_consumers,
