@@ -55,23 +55,22 @@
 
 #include <asm/irq.h>
 #include <mach/hardware.h>
-#include <asm/uaccess.h>
+#include <linux/uaccess.h>
 
 #include <mach/regs-adc.h>
 #include <mach/adc.h>
 #include <mach/irqs.h>
 
-#define ADC_MINOR 	131
-#define ADC_INPUT_PIN   _IOW('S', 0x0c, unsigned long)
+#define ADC_MINOR	131
+#define ADC_INPUT_PIN	_IOW('S', 0x0c, unsigned long)
 
 #define ADC_WITH_TOUCHSCREEN
 
 static struct clk	*adc_clock;
 
-static void __iomem 	*base_addr;
+static void __iomem	*base_addr;
 static int adc_port;
 struct s3c_adc_mach_info *plat_data;
-
 
 #ifdef ADC_WITH_TOUCHSCREEN
 static DEFINE_MUTEX(adc_mutex);
@@ -109,7 +108,8 @@ unsigned int s3c_adc_convert(void)
 
 	udelay(10);
 
-	writel(readl(base_addr + S3C_ADCCON) | S3C_ADCCON_ENABLE_START, base_addr + S3C_ADCCON);
+	writel(readl(base_addr + S3C_ADCCON) | S3C_ADCCON_ENABLE_START,
+		base_addr + S3C_ADCCON);
 
 	do {
 		data0 = readl(base_addr + S3C_ADCCON);
@@ -127,15 +127,15 @@ unsigned int s3c_adc_convert(void)
 
 
 int s3c_adc_get_adc_data(int channel)
-{	
+{
 	int adc_value = 0;
 	int cur_adc_port = 0;
 
 #ifdef ADC_WITH_TOUCHSCREEN
-        mutex_lock(&adc_mutex);
+	mutex_lock(&adc_mutex);
 	s3c_adc_save_SFR_on_ADC();
 #else
-        mutex_lock(&adc_mutex);
+	mutex_lock(&adc_mutex);
 #endif
 
 	cur_adc_port = adc_port;
@@ -152,13 +152,11 @@ int s3c_adc_get_adc_data(int channel)
 	mutex_unlock(&adc_mutex);
 #endif
 
-	pr_debug("%s : Converted Value: %03d\n", __FUNCTION__, adc_value);
+	pr_debug("%s : Converted Value: %03d\n", __func__, adc_value);
 
 	return adc_value;
 }
-
 EXPORT_SYMBOL(s3c_adc_get_adc_data);
-
 
 int s3c_adc_get(struct s3c_adc_request *req)
 {
@@ -289,7 +287,9 @@ static int __init s3c_adc_probe(struct platform_device *pdev)
 	plat_data = s3c_adc_get_platdata(&pdev->dev);
 
 	if ((plat_data->presc & 0xff) > 0)
-		writel(S3C_ADCCON_PRSCEN | S3C_ADCCON_PRSCVL(plat_data->presc & 0xff), base_addr + S3C_ADCCON);
+		writel(S3C_ADCCON_PRSCEN |
+		       S3C_ADCCON_PRSCVL(plat_data->presc & 0xff),
+		       base_addr + S3C_ADCCON);
 	else
 		writel(0, base_addr + S3C_ADCCON);
 
@@ -298,7 +298,8 @@ static int __init s3c_adc_probe(struct platform_device *pdev)
 		writel(plat_data->delay & 0xffff, base_addr + S3C_ADCDLY);
 
 	if (plat_data->resolution == 12)
-		writel(readl(base_addr + S3C_ADCCON) | S3C_ADCCON_RESSEL_12BIT, base_addr + S3C_ADCCON);
+		writel(readl(base_addr + S3C_ADCCON) |
+		       S3C_ADCCON_RESSEL_12BIT, base_addr + S3C_ADCCON);
 
 	ret = misc_register(&s3c_adc_miscdev);
 	if (ret) {
@@ -371,7 +372,8 @@ static struct platform_driver s3c_adc_driver = {
 	},
 };
 
-static char banner[] __initdata = KERN_INFO "S5PV210 ADC driver, (c) 2010 Samsung Electronics\n";
+static char banner[] __initdata = KERN_INFO \
+	"S5PV210 ADC driver, (c) 2010 Samsung Electronics\n";
 
 int __init s3c_adc_init(void)
 {
