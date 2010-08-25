@@ -37,6 +37,9 @@
 #include <mach/gpio.h>
 #include <mach/gpio-herring.h>
 #include <mach/adc.h>
+#include <mach/param.h>
+#include <linux/notifier.h>
+#include <linux/reboot.h>
 
 #ifdef CONFIG_ANDROID_PMEM
 #include <linux/android_pmem.h>
@@ -71,6 +74,37 @@ EXPORT_SYMBOL(sec_set_param_value);
         
 void (*sec_get_param_value)(int idx, void *value);
 EXPORT_SYMBOL(sec_get_param_value);
+
+#define MAGIC_CDDE_RECOVERY     0x00000004
+#define MAGIC_CDDE_NORMAL       0x00000000
+
+static int herring_notifier_call(struct notifier_block *this,
+					unsigned long code, void *_cmd)
+{
+	int mode = REBOOT_MODE_NONE;
+	unsigned int temp;
+
+	if ((code == SYS_RESTART) && _cmd) {
+		if (!strcmp((char *)_cmd, "recovery"))
+			mode = REBOOT_MODE_RECOVERY;
+	}
+	if (mode == REBOOT_MODE_RECOVERY) {
+		temp = __raw_readl(S5P_INFORM6);
+		temp |= MAGIC_CDDE_RECOVERY;
+		__raw_writel(temp, S5P_INFORM6);
+	} else {
+		temp = __raw_readl(S5P_INFORM6);
+		temp |= MAGIC_CDDE_NORMAL;
+		__raw_writel(temp, S5P_INFORM6);
+	}
+
+	return NOTIFY_DONE;
+}
+
+
+static struct notifier_block herring_reboot_notifier = {
+	.notifier_call = herring_notifier_call,
+};
 
 static void jupiter_switch_init(void)
 {
@@ -3093,6 +3127,8 @@ static void __init herring_machine_init(void)
 #if defined(CONFIG_BACKLIGHT_PWM)
 	smdk_backlight_register();
 #endif
+	register_reboot_notifier(&herring_reboot_notifier);
+
 	jupiter_switch_init();
 }
 
