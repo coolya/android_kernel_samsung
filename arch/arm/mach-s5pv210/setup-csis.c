@@ -1,7 +1,7 @@
 /* linux/arch/arm/plat-s5p/setup-csis.c
  *
  * Copyright (c) 2009 Samsung Electronics Co., Ltd.
- * 		http://www.samsung.com/
+ *		http://www.samsung.com/
  *
  * S5P - Base MIPI-CSI2 gpio configuration
  *
