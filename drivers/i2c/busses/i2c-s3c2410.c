@@ -472,7 +472,7 @@ static int s3c24xx_i2c_set_master(struct s3c24xx_i2c *i2c)
 	}
 
 	writel(iicstat & ~S3C2410_IICSTAT_TXRXEN, i2c->regs + S3C2410_IICSTAT);
-	if(!(readl(i2c->regs + S3C2410_IICSTAT) & S3C2410_IICSTAT_BUSBUSY))
+	if (!(readl(i2c->regs + S3C2410_IICSTAT) & S3C2410_IICSTAT_BUSBUSY))
 		return 0;
 
 	return -ETIMEDOUT;
