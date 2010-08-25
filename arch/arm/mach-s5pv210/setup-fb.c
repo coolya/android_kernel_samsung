@@ -84,9 +84,6 @@ int s3cfb_clk_on(struct platform_device *pdev, struct clk **s3cfb_clk)
 
 	clk_set_parent(sclk, mout_mpll);
 
-	//rate = clk_round_rate(sclk, 166750000);
-	//dev_dbg(&pdev->dev, "set fimd sclk rate to %d\n", rate);
-
 	if (!rate)
 		rate = 166750000;
 
@@ -161,8 +158,7 @@ int s3cfb_backlight_onoff(struct platform_device *pdev, int onoff)
 		/* 2009.12.28 by icarus : added for PWM backlight */
 		s3c_gpio_cfgpin(S5PV210_GPD0(3), S5PV210_GPD_0_3_TOUT_3);
 
-	}
-	else {
+	} else {
 		gpio_direction_output(S5PV210_GPD0(3), 0);
 	}
 	gpio_free(S5PV210_GPD0(3));
