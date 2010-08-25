@@ -35,7 +35,7 @@ char *s5pv210_hsmmc_clksrcs[4] = {
 	[0] = "hsmmc",		/* HCLK */
 	[1] = "hsmmc",		/* HCLK */
 	[2] = "sclk_mmc",	/* mmc_bus */
-	[3] = NULL, 		/*reserved */
+	[3] = NULL,		/*reserved */
 };
 
 void s5pv210_setup_sdhci0_cfg_gpio(struct platform_device *dev, int width)
@@ -57,7 +57,7 @@ void s5pv210_setup_sdhci0_cfg_gpio(struct platform_device *dev, int width)
 	case 4:
 		/* Set all the necessary GPIO function and pull up/down */
 		for (gpio = S5PV210_GPG0(0); gpio <= S5PV210_GPG0(6); gpio++) {
-			if(gpio != S5PV210_GPG0(2)) {
+			if (gpio != S5PV210_GPG0(2)) {
 				s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(2));
 				s3c_gpio_setpull(gpio, S3C_GPIO_PULL_NONE);
 			}
@@ -86,7 +86,7 @@ void s5pv210_setup_sdhci1_cfg_gpio(struct platform_device *dev, int width)
 	case 4:
 		/* Set all the necessary GPIO function and pull up/down */
 		for (gpio = S5PV210_GPG1(0); gpio <= S5PV210_GPG1(6); gpio++) {
-			if(gpio != S5PV210_GPG1(2)) {
+			if (gpio != S5PV210_GPG1(2)) {
 				s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(2));
 				s3c_gpio_setpull(gpio, S3C_GPIO_PULL_NONE);
 			}
@@ -117,7 +117,7 @@ void s5pv210_setup_sdhci2_cfg_gpio(struct platform_device *dev, int width)
 	case 4:
 		/* Set all the necessary GPIO function and pull up/down */
 		for (gpio = S5PV210_GPG2(0); gpio <= S5PV210_GPG2(6); gpio++) {
-			if(gpio != S5PV210_GPG2(2)) {
+			if (gpio != S5PV210_GPG2(2)) {
 				s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(2));
 				s3c_gpio_setpull(gpio, S3C_GPIO_PULL_NONE);
 			}
@@ -140,7 +140,7 @@ void s5pv210_setup_sdhci3_cfg_gpio(struct platform_device *dev, int width)
 	case 4:
 		/* Set all the necessary GPIO function and pull up/down */
 		for (gpio = S5PV210_GPG3(0); gpio <= S5PV210_GPG3(6); gpio++) {
-			if(gpio != S5PV210_GPG3(2)) {
+			if (gpio != S5PV210_GPG3(2)) {
 				s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(2));
 				s3c_gpio_setpull(gpio, S3C_GPIO_PULL_UP);
 			}
@@ -153,9 +153,11 @@ void s5pv210_setup_sdhci3_cfg_gpio(struct platform_device *dev, int width)
 }
 
 #define S3C_SDHCI_CTRL3_FCSELTX_INVERT  (0)
-#define S3C_SDHCI_CTRL3_FCSELTX_BASIC   (S3C_SDHCI_CTRL3_FCSEL3 | S3C_SDHCI_CTRL3_FCSEL2)
+#define S3C_SDHCI_CTRL3_FCSELTX_BASIC \
+	(S3C_SDHCI_CTRL3_FCSEL3 | S3C_SDHCI_CTRL3_FCSEL2)
 #define S3C_SDHCI_CTRL3_FCSELRX_INVERT  (0)
-#define S3C_SDHCI_CTRL3_FCSELRX_BASIC   (S3C_SDHCI_CTRL3_FCSEL1 | S3C_SDHCI_CTRL3_FCSEL0)
+#define S3C_SDHCI_CTRL3_FCSELRX_BASIC \
+	(S3C_SDHCI_CTRL3_FCSEL1 | S3C_SDHCI_CTRL3_FCSEL0)
 
 void s5pv210_setup_sdhci_cfg_card(struct platform_device *dev,
 				    void __iomem *r,
@@ -173,13 +175,15 @@ void s5pv210_setup_sdhci_cfg_card(struct platform_device *dev,
 		  S3C_SDHCI_CTRL2_ENCLKOUTHOLD);
 
 	if (ios->clock <= (400 * 1000)) {
-		ctrl2 &= ~(S3C_SDHCI_CTRL2_ENFBCLKTX | S3C_SDHCI_CTRL2_ENFBCLKRX);
+		ctrl2 &= ~(S3C_SDHCI_CTRL2_ENFBCLKTX |
+			   S3C_SDHCI_CTRL2_ENFBCLKRX);
 		ctrl3 = 0;
 	} else {
 		u32 range_start;
 		u32 range_end;
 
-		ctrl2 |= S3C_SDHCI_CTRL2_ENFBCLKTX | S3C_SDHCI_CTRL2_ENFBCLKRX;
+		ctrl2 |= S3C_SDHCI_CTRL2_ENFBCLKTX |
+			 S3C_SDHCI_CTRL2_ENFBCLKRX;
 
 		if (card->type == MMC_TYPE_MMC)  /* MMC */
 			range_start = 20 * 1000 * 1000;
@@ -200,44 +204,41 @@ void s5pv210_setup_sdhci_cfg_card(struct platform_device *dev,
 	writel(ctrl3, r + S3C_SDHCI_CONTROL3);
 }
 
-void s5pv210_adjust_sdhci_cfg_card(struct s3c_sdhci_platdata *pdata, void __iomem *r, int rw)
+void s5pv210_adjust_sdhci_cfg_card(struct s3c_sdhci_platdata *pdata,
+				   void __iomem *r, int rw)
 {
 	u32 ctrl2, ctrl3;
 
 	ctrl2 = readl(r + S3C_SDHCI_CONTROL2);
 	ctrl3 = readl(r + S3C_SDHCI_CONTROL3);
 
-	if(rw == 0) {
+	if (rw == 0) {
 		pdata->rx_cfg++;
-		if(pdata->rx_cfg == 1) {
+		if (pdata->rx_cfg == 1) {
 			ctrl2 |= S3C_SDHCI_CTRL2_ENFBCLKRX;
 			ctrl3 |= S3C_SDHCI_CTRL3_FCSELRX_BASIC;
-		}
-		else if(pdata->rx_cfg == 2) {
+		} else if (pdata->rx_cfg == 2) {
 			ctrl2 |= S3C_SDHCI_CTRL2_ENFBCLKRX;
 			ctrl3 &= ~S3C_SDHCI_CTRL3_FCSELRX_BASIC;
-		}
-		else if(pdata->rx_cfg == 3) {
-			ctrl2 &= ~(S3C_SDHCI_CTRL2_ENFBCLKTX | S3C_SDHCI_CTRL2_ENFBCLKRX);
+		} else if (pdata->rx_cfg == 3) {
+			ctrl2 &= ~(S3C_SDHCI_CTRL2_ENFBCLKTX |
+				   S3C_SDHCI_CTRL2_ENFBCLKRX);
 			pdata->rx_cfg = 0;
 		}
-	}
-	else if(rw == 1) {
+	} else if (rw == 1) {
 		pdata->tx_cfg++;
-		if(pdata->tx_cfg == 1) {
-			if(ctrl2 & S3C_SDHCI_CTRL2_ENFBCLKRX) {
+		if (pdata->tx_cfg == 1) {
+			if (ctrl2 & S3C_SDHCI_CTRL2_ENFBCLKRX) {
 				ctrl2 |= S3C_SDHCI_CTRL2_ENFBCLKTX;
 				ctrl3 |= S3C_SDHCI_CTRL3_FCSELTX_BASIC;
-			}
-			else
+			} else {
 				ctrl2 &= ~S3C_SDHCI_CTRL2_ENFBCLKTX;
-		}
-		else if(pdata->tx_cfg == 2) {
+			}
+		} else if (pdata->tx_cfg == 2) {
 			ctrl2 &= ~S3C_SDHCI_CTRL2_ENFBCLKTX;
 			pdata->tx_cfg = 0;
 		}
-	}
-	else {
+	} else {
 		printk(KERN_ERR "%s, unknown value rw:%d\n", __func__, rw);
 		return;
 	}
@@ -265,34 +266,30 @@ unsigned int universal_sdhci2_detect_ext_cd(void)
 	unsigned int card_status = 0;
 
 #ifdef CONFIG_MMC_DEBUG
-	printk(" Universal :SD Detect function \n");
-	printk("eint conf %x  eint filter conf %x",readl(S5PV210_EINT3CON),
-			readl(S5PV210_EINT3FLTCON1));
-	printk("eint pend %x  eint mask %x",readl(S5PC11X_EINT3PEND),
-			readl(S5PC11X_EINT3MASK));
+	printk(KERN_DEBUG "Universal :SD Detect function\n");
+	printk(KERN_DEBUG "eint conf %x  eint filter conf %x",
+		readl(S5PV210_EINT3CON), readl(S5PV210_EINT3FLTCON1));
+	printk(KERN_DEBUG "eint pend %x  eint mask %x",
+		readl(S5PC11X_EINT3PEND), readl(S5PC11X_EINT3MASK));
 #endif
 #if defined(CONFIG_MACH_S5PC110_CRESPO)
 	card_status = gpio_get_value(S5PV210_GPH3(4));
-	printk(KERN_DEBUG " Universal : Card status  %d\n",card_status?0:1);
+	printk(KERN_DEBUG "Universal : Card status %d\n", card_status ? 0 : 1);
 	return card_status ? 0 : 1;
 
 #else
 	card_status = gpio_get_value(S5PV210_GPH3(4));
-	printk(KERN_DEBUG " Universal : Card status  %d\n",card_status?1:0);
-	if(((HWREV >= 7) || (HWREV == 0x3)) && (HWREV !=8))
-	{
+	printk(KERN_DEBUG "Universal : Card status %d\n", card_status ? 1 : 0);
+	if (((HWREV >= 7) || (HWREV == 0x3)) && (HWREV != 8))
 		return card_status ? 0 : 1;
-	}
 	else
-	{
 		return card_status ? 1 : 0;
-	}
 #endif
 }
 
 void universal_sdhci2_cfg_ext_cd(void)
 {
-	printk(" Universal :SD Detect configuration \n");
+	printk(KERN_DEBUG "Universal :SD Detect configuration\n");
 	s3c_gpio_setpull(S5PV210_GPH3(4), S3C_GPIO_PULL_NONE);
 	set_irq_type(IRQ_EINT(28), IRQ_TYPE_EDGE_BOTH);
 }
@@ -316,7 +313,7 @@ static struct s3c_sdhci_platdata hsmmc2_platdata = {
 #endif
 #if defined(CONFIG_MACH_S5PC110_CRESPO)
 	.ext_cd = IRQ_EINT(28),
-	.cfg_ext_cd =universal_sdhci2_cfg_ext_cd,
+	.cfg_ext_cd = universal_sdhci2_cfg_ext_cd,
 	.detect_ext_cd = universal_sdhci2_detect_ext_cd,
 #endif
 };
