@@ -32,12 +32,12 @@ void s3c_fimc0_cfg_gpio(struct platform_device *pdev)
 	int i = 0;
 
 	/* CAM A port(b0010) : PCLK, VSYNC, HREF, DATA[0-4] */
-	for (i=0; i < 8; i++) {
+	for (i = 0; i < 8; i++) {
 		s3c_gpio_cfgpin(S5PV210_GPE0(i), S3C_GPIO_SFN(2));
 		s3c_gpio_setpull(S5PV210_GPE0(i), S3C_GPIO_PULL_NONE);
 	}
 	/* CAM A port(b0010) : DATA[5-7], CLKOUT(MIPI CAM also), FIELD */
-	for (i=0; i < 4; i++) {
+	for (i = 0; i < 4; i++) {
 		s3c_gpio_cfgpin(S5PV210_GPE1(i), S3C_GPIO_SFN(2));
 		s3c_gpio_setpull(S5PV210_GPE1(i), S3C_GPIO_PULL_NONE);
 	}
@@ -47,12 +47,12 @@ void s3c_fimc0_cfg_gpio(struct platform_device *pdev)
 	s3c_gpio_setpull(S5PV210_GPE1(4), S3C_GPIO_PULL_NONE);
 
 	/* CAM B port(b0011) : DATA[0-7] */
-	for (i=0; i < 8; i++) {
+	for (i = 0; i < 8; i++) {
 		s3c_gpio_cfgpin(S5PV210_GPJ0(i), S3C_GPIO_SFN(3));
 		s3c_gpio_setpull(S5PV210_GPJ0(i), S3C_GPIO_PULL_NONE);
 	}
 	/* CAM B port(b0011) : PCLK, VSYNC, HREF, FIELD, CLCKOUT */
-	for (i=0; i < 5; i++) {
+	for (i = 0; i < 5; i++) {
 		s3c_gpio_cfgpin(S5PV210_GPJ1(i), S3C_GPIO_SFN(3));
 		s3c_gpio_setpull(S5PV210_GPJ1(i), S3C_GPIO_PULL_NONE);
 	}
