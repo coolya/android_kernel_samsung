@@ -610,9 +610,8 @@ static int s3cfb_ioctl(struct fb_info *fb, unsigned int cmd, unsigned long arg)
 	struct s3cfb_window *win = fb->par;
 	struct s3cfb_lcd *lcd = fbdev->lcd;
 
-	/* added by jamie (2009.08.18) */
 	struct fb_fix_screeninfo *fix = &fb->fix;
-	s3cfb_next_info_t next_fb_info;
+	struct s3cfb_next_info next_fb_info;
 
 	int ret = 0;
 
@@ -696,7 +695,6 @@ static int s3cfb_ioctl(struct fb_info *fb, unsigned int cmd, unsigned long arg)
 		}
 		break;
 
-	/* added by jamie (2009.08.18) */
 	case S3CFB_GET_CURR_FB_INFO:
 		next_fb_info.phy_start_addr = fix->smem_start;
 		next_fb_info.xres = var->xres;
@@ -708,8 +706,9 @@ static int s3cfb_ioctl(struct fb_info *fb, unsigned int cmd, unsigned long arg)
 		next_fb_info.lcd_offset_x = 0;
 		next_fb_info.lcd_offset_y = 0;
 
-		if (copy_to_user((void *)arg, (s3cfb_next_info_t *) &next_fb_info,
-					sizeof(s3cfb_next_info_t)))
+		if (copy_to_user((void *)arg,
+				 (struct s3cfb_next_info *) &next_fb_info,
+				 sizeof(struct s3cfb_next_info)))
 			return -EFAULT;
 		break;
 	}
@@ -1111,6 +1110,7 @@ static int s3cfb_sysfs_store_win_power(struct device *dev,
 	char temp[4] = { 0, };
 	const char *p = buf;
 	int id, to;
+	int ret = 0;
 
 	while (*p != '\0') {
 		if (!isspace(*p))
@@ -1121,8 +1121,15 @@ static int s3cfb_sysfs_store_win_power(struct device *dev,
 	if (strlen(temp) != 2)
 		return -EINVAL;
 
-	id = simple_strtoul(temp, NULL, 10) / 10;
-	to = simple_strtoul(temp, NULL, 10) % 10;
+	ret = strict_strtoul(temp, 10, (unsigned long *)&id);
+	if (ret < 0)
+		return -EINVAL;
+	id = (id / 10);
+
+	ret = strict_strtoul(temp, 10, (unsigned long *)&to);
+	if (ret < 0)
+		return -EINVAL;
+	to = (to % 10);
 
 	if (id < 0 || id > pdata->nr_wins)
 		return -EINVAL;
@@ -1140,61 +1147,6 @@ static int s3cfb_sysfs_store_win_power(struct device *dev,
 
 static DEVICE_ATTR(win_power, 0644,
 		   s3cfb_sysfs_show_win_power, s3cfb_sysfs_store_win_power);
-
-#ifdef CONFIG_CPU_FREQ
-/*
- * CPU clock speed change handler.  We need to adjust the LCD timing
- * parameters when the CPU clock is adjusted by the power management
- * subsystem.
- */
-static int
-s3cfb_freq_transition(struct notifier_block *nb, unsigned long val,
-			 void *data)
-{
-	struct s3cfb_global *fbdev;
-	struct s3c_cpufreq_freqs *f;
-
-	fbdev = container_of(nb, struct s3cfb_global, freq_transition);
-	f = to_s3c_cpufreq(data);
-#if defined(CONFIG_CPU_S5PC110)
-	printk(KERN_INFO "f->new.hclk_msys =%d, f->old.hclk_msys=%d\n",
-					f->new.hclk_msys, f->old.hclk_msys);
-
-	if (f->new.hclk_msys == f->old.hclk_msys)
-		return 0;
-#endif
-	switch (val) {
-	case CPUFREQ_PRECHANGE:
-		/* printk(KERN_DEBUG "s3cfb cpufreq prechange\n"); */
-		break;
-
-	case CPUFREQ_POSTCHANGE:
-		/* printk(KERN_DEBUG "s3cfb cpufreq postchange\n"); */
-		break;
-	}
-	return 0;
-}
-
-static int
-s3cfb_freq_policy(struct notifier_block *nb, unsigned long val,
-		     void *data)
-{
-	struct s3cfb_global *fbdev;
-	struct cpufreq_policy *policy;
-
-	fbdev = container_of(nb, struct s3cfb_global, freq_policy);
-	policy = data;
-
-	switch (val) {
-	case CPUFREQ_ADJUST:
-	case CPUFREQ_INCOMPATIBLE:
-		break;
-	case CPUFREQ_NOTIFY:
-		break;
-	}
-	return 0;
-}
-#endif
 
 static int s3cfb_probe(struct platform_device *pdev)
 {
@@ -1377,25 +1329,16 @@ static int s3cfb_remove(struct platform_device *pdev)
 
 	return 0;
 }
-#if defined(CONFIG_FB_S3C_TL2796)
-extern void tl2796_ldi_init(void);
-extern void tl2796_ldi_enable(void);
-extern void tl2796_ldi_disable(void);
-#endif
 
 #ifdef CONFIG_PM
 #ifdef CONFIG_HAS_EARLYSUSPEND
-
-#if defined(CONFIG_FB_S3C_TL2796)
-extern void lcd_cfg_gpio_early_suspend(void);
-#endif
 
 void s3cfb_early_suspend(struct early_suspend *h)
 {
 	struct s3cfb_global *info = container_of(h, struct s3cfb_global,
 								early_suspend);
 
-	printk("s3cfb_early_suspend is called\n");
+	pr_debug("s3cfb_early_suspend is called\n");
 
 #if defined(CONFIG_FB_S3C_TL2796)
 	tl2796_ldi_disable();
@@ -1410,10 +1353,6 @@ void s3cfb_early_suspend(struct early_suspend *h)
 	return ;
 }
 
-#if defined(CONFIG_FB_S3C_TL2796)
-extern void lcd_cfg_gpio_late_resume(void);
-#endif
-
 void s3cfb_late_resume(struct early_suspend *h)
 {
 	struct s3cfb_global *info = container_of(h, struct s3cfb_global,
@@ -1424,7 +1363,7 @@ void s3cfb_late_resume(struct early_suspend *h)
 	int i;
 	struct platform_device *pdev = to_platform_device(info->dev);
 
-	printk("s3cfb_late_resume is called\n");
+	pr_debug("s3cfb_late_resume is called\n");
 
 #if defined(CONFIG_FB_S3C_TL2796)
 	lcd_cfg_gpio_late_resume();

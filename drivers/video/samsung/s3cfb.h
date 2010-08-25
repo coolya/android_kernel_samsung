@@ -92,7 +92,7 @@ enum s3cfb_mem_owner_t {
  * @value:		alpha value (for plane blending)
 */
 struct s3cfb_alpha {
-	enum 		s3cfb_alpha_t mode;
+	enum		s3cfb_alpha_t mode;
 	int		channel;
 	unsigned int	value;
 };
@@ -108,12 +108,12 @@ struct s3cfb_alpha {
  *
 */
 struct s3cfb_chroma {
-	int 		enabled;
-	int 		blended;
+	int		enabled;
+	int		blended;
 	unsigned int	key;
 	unsigned int	comp_key;
 	unsigned int	alpha;
-	enum 		s3cfb_chroma_dir_t dir;
+	enum		s3cfb_chroma_dir_t dir;
 };
 
 /*
@@ -167,15 +167,15 @@ struct s3cfb_lcd_timing {
 struct s3cfb_lcd {
 	int	width;
 	int	height;
-	int p_width;
-	int p_height;
+	int	p_width;
+	int	p_height;
 	int	bpp;
 	int	freq;
-	struct 	s3cfb_lcd_timing timing;
-	struct 	s3cfb_lcd_polarity polarity;
+	struct	s3cfb_lcd_timing timing;
+	struct	s3cfb_lcd_polarity polarity;
 
-	void 	(*init_ldi)(void);
-	void 	(*deinit_ldi)(void);
+	void	(*init_ldi)(void);
+	void	(*deinit_ldi)(void);
 };
 
 /*
@@ -198,8 +198,8 @@ struct s3cfb_window {
 	atomic_t		in_use;
 	int			x;
 	int			y;
-	enum 			s3cfb_data_path_t path;
-	enum 			s3cfb_mem_owner_t owner;
+	enum			s3cfb_data_path_t path;
+	enum			s3cfb_mem_owner_t owner;
 	int			local_channel;
 	int			dma_burst;
 	unsigned int		pseudo_pal[16];
@@ -233,13 +233,13 @@ struct s3cfb_global {
 	int			enabled;
 	int			dsi;
 	int			interlace;
-	enum s3cfb_output_t 	output;
+	enum s3cfb_output_t	output;
 	enum s3cfb_rgb_mode_t	rgb_mode;
-	struct s3cfb_lcd 	*lcd;
+	struct s3cfb_lcd	*lcd;
 
 #ifdef CONFIG_HAS_WAKELOCK
-        struct early_suspend    early_suspend;
-        struct wake_lock        idle_lock;
+	struct early_suspend	early_suspend;
+	struct wake_lock	idle_lock;
 #endif
 
 #ifdef CONFIG_CPU_FREQ
@@ -260,22 +260,20 @@ struct s3cfb_user_window {
 };
 
 struct s3cfb_user_plane_alpha {
-	int 		channel;
+	int		channel;
 	unsigned char	red;
 	unsigned char	green;
 	unsigned char	blue;
 };
 
 struct s3cfb_user_chroma {
-	int 		enabled;
+	int		enabled;
 	unsigned char	red;
 	unsigned char	green;
 	unsigned char	blue;
 };
 
-#if 1
-// added by jamie (2009.08.18)
-typedef struct {
+struct s3cfb_next_info {
 	unsigned int phy_start_addr;
 	unsigned int xres;		/* visible resolution*/
 	unsigned int yres;
@@ -285,8 +283,7 @@ typedef struct {
 	unsigned int yoffset;		/* resolution */
 	unsigned int lcd_offset_x;
 	unsigned int lcd_offset_y;
-} s3cfb_next_info_t;
-#endif
+};
 
 /*
  * C U S T O M  I O C T L S
@@ -303,10 +300,7 @@ typedef struct {
 #define S3CFB_GET_LCD_WIDTH		_IOR('F', 302, int)
 #define S3CFB_GET_LCD_HEIGHT		_IOR('F', 303, int)
 #define S3CFB_SET_WRITEBACK		_IOW('F', 304, u32)
-#if 1
-// added by jamie (2009.08.18)
-#define S3CFB_GET_CURR_FB_INFO		_IOR ('F', 305, s3cfb_next_info_t)
-#endif
+#define S3CFB_GET_CURR_FB_INFO		_IOR('F', 305, struct s3cfb_next_info)
 #define S3CFB_SET_WIN_ON		_IOW('F', 306, u32)
 #define S3CFB_SET_WIN_OFF		_IOW('F', 307, u32)
 #define S3CFB_SET_WIN_PATH		_IOW('F', 308, \
@@ -356,6 +350,14 @@ extern int s3cfb_set_chroma_key(struct s3cfb_global *ctrl, int id);
 extern void s3cfb_early_suspend(struct early_suspend *h);
 extern void s3cfb_late_resume(struct early_suspend *h);
 #endif
+#endif
+
+#if defined(CONFIG_FB_S3C_TL2796)
+extern void tl2796_ldi_init(void);
+extern void tl2796_ldi_enable(void);
+extern void tl2796_ldi_disable(void);
+extern void lcd_cfg_gpio_early_suspend(void);
+extern void lcd_cfg_gpio_late_resume(void);
 #endif
 
 #endif /* _S3CFB_H */
