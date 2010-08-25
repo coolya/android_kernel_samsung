@@ -154,7 +154,8 @@ static int s5pv210_pm_resume(struct sys_device *dev)
 		S5P_OTHERS_RET_MMC | S5P_OTHERS_RET_UART);
 	__raw_writel(tmp , S5P_OTHERS);
 
-	s3c_pm_do_restore_core(s5pv210_core_save, ARRAY_SIZE(s5pv210_core_save));
+	s3c_pm_do_restore_core(s5pv210_core_save,
+			       ARRAY_SIZE(s5pv210_core_save));
 
 	return 0;
 }
