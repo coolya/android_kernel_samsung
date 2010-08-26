@@ -292,7 +292,7 @@ static void bitbang_work(struct work_struct *work)
 		cs_change = 1;
 		status = 0;
 
-		list_for_each_entry (t, &m->transfers, transfer_list) {
+		list_for_each_entry(t, &m->transfers, transfer_list) {
 
 			/* override speed or wordsize? */
 			if (t->speed_hz || t->bits_per_word)
@@ -452,7 +452,8 @@ int spi_bitbang_start(struct spi_bitbang *bitbang)
 	INIT_LIST_HEAD(&bitbang->queue);
 
 	if (!bitbang->master->mode_bits)
-		bitbang->master->mode_bits = SPI_CPOL | SPI_CPHA | bitbang->flags;
+		bitbang->master->mode_bits = SPI_CPOL | SPI_CPHA
+						      | bitbang->flags;
 
 	if (!bitbang->master->transfer)
 		bitbang->master->transfer = spi_bitbang_transfer;

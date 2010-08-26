@@ -88,7 +88,7 @@ struct spi_gpio {
 
 /*----------------------------------------------------------------------*/
 
-static inline const struct spi_gpio_platform_data * __pure
+static inline const struct spi_gpio_platform_data *__pure
 spi_to_pdata(const struct spi_device *spi)
 {
 	const struct spi_bitbang	*bang;
@@ -114,7 +114,7 @@ static inline void setmosi(const struct spi_device *spi, int is_on)
 
 static inline int getmiso(const struct spi_device *spi)
 {
-	if(gpio_is_valid(SPI_MISO_GPIO))
+	if (gpio_is_valid(SPI_MISO_GPIO))
 		return !!gpio_get_value(SPI_MISO_GPIO);
 	else
 		return 0;
@@ -245,9 +245,9 @@ spi_gpio_request(struct spi_gpio_platform_data *pdata, const char *label)
 	if (value)
 		goto done;
 
-	if(gpio_is_valid(SPI_MISO_GPIO)) {
+	if (gpio_is_valid(SPI_MISO_GPIO)) {
 		value = spi_gpio_alloc(SPI_MISO_GPIO, label, true);
-		if(value)
+		if (value)
 			goto free_mosi;
 	}
 
@@ -312,7 +312,7 @@ static int __init spi_gpio_probe(struct platform_device *pdev)
 	if (status < 0) {
 		spi_master_put(spi_gpio->bitbang.master);
 gpio_free:
-		if(gpio_is_valid(SPI_MISO_GPIO))
+		if (gpio_is_valid(SPI_MISO_GPIO))
 			gpio_free(SPI_MISO_GPIO);
 		gpio_free(SPI_MOSI_GPIO);
 		gpio_free(SPI_SCK_GPIO);
@@ -337,7 +337,7 @@ static int __exit spi_gpio_remove(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, NULL);
 
-	if(gpio_is_valid(SPI_MISO_GPIO))
+	if (gpio_is_valid(SPI_MISO_GPIO))
 		gpio_free(SPI_MISO_GPIO);
 	gpio_free(SPI_MOSI_GPIO);
 	gpio_free(SPI_SCK_GPIO);
