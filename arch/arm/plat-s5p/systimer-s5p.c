@@ -43,7 +43,7 @@ static unsigned long timer_usec_ticks;
 static unsigned long timer_icnt;
 
 #define TICK_MAX		(0xffffffff)
-#define TIMER_USEC_SHIFT 	16
+#define TIMER_USEC_SHIFT	16
 
 static unsigned int systimer_write_done(unsigned int value)
 {
