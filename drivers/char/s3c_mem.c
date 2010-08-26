@@ -21,7 +21,7 @@
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/uaccess.h>
-#include <linux/errno.h> 	/* error codes */
+#include <linux/errno.h>	/* error codes */
 #include <asm/div64.h>
 #include <linux/mm.h>
 #include <linux/tty.h>
