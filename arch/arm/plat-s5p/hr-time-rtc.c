@@ -96,21 +96,24 @@ static unsigned int s5p_systimer_write(unsigned int *reg_offset,
 
 	if (reg_offset == S5P_SYSTIMER_TCON) {
 		while (!(__raw_readl(S5P_SYSTIMER_INT_CSTAT) &
-				S5P_SYSTIMER_INT_TCON));
+			S5P_SYSTIMER_INT_TCON))
+			;
 		temp_regs = __raw_readl(S5P_SYSTIMER_INT_CSTAT);
 		temp_regs |= S5P_SYSTIMER_INT_TCON;
 		__raw_writel(temp_regs, S5P_SYSTIMER_INT_CSTAT);
 
 	} else if (reg_offset == S5P_SYSTIMER_ICNTB) {
 		while (!(__raw_readl(S5P_SYSTIMER_INT_CSTAT) &
-				S5P_SYSTIMER_INT_ICNTB));
+			S5P_SYSTIMER_INT_ICNTB))
+			;
 		temp_regs = __raw_readl(S5P_SYSTIMER_INT_CSTAT);
 		temp_regs |= S5P_SYSTIMER_INT_ICNTB;
 		__raw_writel(temp_regs, S5P_SYSTIMER_INT_CSTAT);
 
 	} else if (reg_offset == S5P_SYSTIMER_TICNTB) {
 		while (!(__raw_readl(S5P_SYSTIMER_INT_CSTAT) &
-				S5P_SYSTIMER_INT_TICNTB));
+			S5P_SYSTIMER_INT_TICNTB))
+			;
 		temp_regs = __raw_readl(S5P_SYSTIMER_INT_CSTAT);
 		temp_regs |= S5P_SYSTIMER_INT_TICNTB;
 		__raw_writel(temp_regs, S5P_SYSTIMER_INT_CSTAT);
@@ -119,25 +122,16 @@ static unsigned int s5p_systimer_write(unsigned int *reg_offset,
 	return 0;
 }
 
-#if 0 //Commenting unused API
-static void s5p_rtc_set_tick(int enabled)
-{
-	unsigned int tmp;
-
-	tmp = __raw_readl(rtc_base + S3C2410_RTCCON) & ~S3C_RTCCON_TICEN;
-	if (enabled)
-		tmp |= S3C_RTCCON_TICEN;
-	__raw_writel(tmp, rtc_base + S3C2410_RTCCON);
-}
-#endif
-
 unsigned int get_rtc_cnt(void)
 {
-        unsigned int ticcnt, current_cnt;
-        ticcnt = __raw_readl(rtc_base + S3C2410_TICNT);
-        current_cnt = __raw_readl(rtc_base + S3C2410_CURTICCNT);
-        return (ticcnt - current_cnt);
-}   
+	unsigned int ticcnt, current_cnt, rtccnt;
+
+	ticcnt = __raw_readl(rtc_base + S3C2410_TICNT);
+	current_cnt = __raw_readl(rtc_base + S3C2410_CURTICCNT);
+	rtccnt = ticcnt - current_cnt;
+
+	return rtccnt;
+}
 
 static void s5p_tick_timer_setup(void);
 
@@ -165,7 +159,6 @@ static inline void s5p_tick_timer_stop(void)
 		~(S3C_RTCCON_TICEN);
 
 	__raw_writel(tmp, rtc_base + S3C2410_RTCCON);
-
 }
 
 static void s5p_sched_timer_start(unsigned long load_val,
@@ -174,7 +167,6 @@ static void s5p_sched_timer_start(unsigned long load_val,
 	unsigned long tcon;
 	unsigned long tcnt;
 	unsigned long tcfg;
-
 
 	tcnt = TICK_MAX;  /* default value for tcnt */
 
@@ -216,7 +208,7 @@ static void s5p_sched_timer_start(unsigned long load_val,
 #else
 	/* set timer con */
 	tcon =  S5P_SYSTIMER_INT_AUTO | S5P_SYSTIMER_START |
-			S5P_SYSTIMER_AUTO_RELOAD;
+		S5P_SYSTIMER_AUTO_RELOAD;
 	s5p_systimer_write(S5P_SYSTIMER_TCON, tcon);
 
 	tcon |= S5P_SYSTIMER_INT_START;
@@ -224,8 +216,8 @@ static void s5p_sched_timer_start(unsigned long load_val,
 
 	/* Interrupt Start and Enable */
 	s5p_systimer_write(S5P_SYSTIMER_INT_CSTAT,
-				(S5P_SYSTIMER_INT_ICNTEIE |
-					S5P_SYSTIMER_INT_INTENABLE));
+			   (S5P_SYSTIMER_INT_ICNTEIE |
+			    S5P_SYSTIMER_INT_INTENABLE));
 #endif
 	sched_timer_running = 1;
 }
@@ -318,13 +310,16 @@ static void  s5p_init_dynamic_tick_timer(unsigned long rate)
 	clockevent_tick_timer.cpumask = cpumask_of(0);
 	clockevents_register_device(&clockevent_tick_timer);
 
-	printk(KERN_INFO "mult[%lu]\n", (long unsigned int)clockevent_tick_timer.mult);
-	printk(KERN_INFO "max_delta_ns[%lu]\n", (long unsigned int)clockevent_tick_timer.max_delta_ns);
-	printk(KERN_INFO "min_delta_ns[%lu]\n", (long unsigned int)clockevent_tick_timer.min_delta_ns);
-	printk(KERN_INFO "rate[%lu]\n", (long unsigned int)rate);
+	printk(KERN_INFO "mult[%lu]\n",
+			(long unsigned int)clockevent_tick_timer.mult);
+	printk(KERN_INFO "max_delta_ns[%lu]\n",
+			(long unsigned int)clockevent_tick_timer.max_delta_ns);
+	printk(KERN_INFO "min_delta_ns[%lu]\n",
+			(long unsigned int)clockevent_tick_timer.min_delta_ns);
+	printk(KERN_INFO "rate[%lu]\n",
+			(long unsigned int)rate);
 	printk(KERN_INFO "HZ[%d]\n", HZ);
 }
-
 
 /*
  * ---------------------------------------------------------------------------
@@ -333,7 +328,7 @@ static void  s5p_init_dynamic_tick_timer(unsigned long rate)
  */
 irqreturn_t s5p_sched_timer_interrupt(int irq, void *dev_id)
 {
-	volatile unsigned int temp_cstat;
+	unsigned int temp_cstat;
 
 	temp_cstat = s5p_systimer_read(S5P_SYSTIMER_INT_CSTAT);
 	temp_cstat |= S5P_SYSTIMER_INT_INTCNT;
@@ -388,7 +383,6 @@ static void s5p_init_clocksource(unsigned long rate)
  * Returns current time from boot in nsecs. It's OK for this to wrap
  * around for now, as it's just a relative time stamp.
  */
-#if 1
 unsigned long long sched_clock(void)
 {
 	unsigned long irq_flags;
@@ -404,13 +398,15 @@ unsigned long long sched_clock(void)
 
 		if (overflow_cnt) {
 			increment = (overflow_cnt - 1) *
-					(clocksource_cyc2ns(clocksource_s5p.read(&clocksource_s5p),
-					clocksource_s5p.mult, clocksource_s5p.shift));
-			elapsed_ticks = (clocksource_s5p.mask - last_ticks) + ticks;
+			(clocksource_cyc2ns(clocksource_s5p.read(&clocksource_s5p),
+				clocksource_s5p.mult, clocksource_s5p.shift));
+			elapsed_ticks =
+				(clocksource_s5p.mask - last_ticks) + ticks;
 		} else {
 			if (unlikely(last_ticks > ticks)) {
 				pending_irq = 1;
-				elapsed_ticks = (clocksource_s5p.mask - last_ticks) + ticks;
+				elapsed_ticks =
+				(clocksource_s5p.mask - last_ticks) + ticks;
 				s5p_sched_timer_overflows++;
 			} else {
 				elapsed_ticks = (ticks - last_ticks);
@@ -418,7 +414,8 @@ unsigned long long sched_clock(void)
 		}
 
 		time_stamp += (clocksource_cyc2ns(elapsed_ticks,
-					clocksource_s5p.mult, clocksource_s5p.shift) + increment);
+					clocksource_s5p.mult,
+					clocksource_s5p.shift) + increment);
 
 		old_overflows = s5p_sched_timer_overflows;
 		last_ticks = ticks;
@@ -427,7 +424,7 @@ unsigned long long sched_clock(void)
 
 	return time_stamp;
 }
-#endif
+
 /*
  *  Event/Sched Timer initialization
  */
