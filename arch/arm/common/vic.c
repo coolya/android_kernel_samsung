@@ -227,6 +227,14 @@ static void vic_unmask_irq(unsigned int irq)
 	writel(1 << irq, base + VIC_INT_ENABLE);
 }
 
+static int vic_retrigger_irq(unsigned int irq)
+{
+	void __iomem *base = get_irq_chip_data(irq);
+	irq &= 31;
+	writel(1 << irq, base + VIC_INT_SOFT);
+	return 1;
+}
+
 #if defined(CONFIG_PM)
 static struct vic_device *vic_from_irq(unsigned int irq)
 {
@@ -270,6 +278,7 @@ static struct irq_chip vic_chip = {
 	.ack		= vic_ack_irq,
 	.mask		= vic_mask_irq,
 	.unmask		= vic_unmask_irq,
+	.retrigger	= vic_retrigger_irq,
 	.set_wake	= vic_set_wake,
 };
 
