@@ -1330,6 +1330,11 @@ static struct i2c_board_info i2c_devs6[] __initdata = {
 #endif
 };
 
+static struct i2c_board_info i2c_devs9[] __initdata = {
+	{
+		I2C_BOARD_INFO("max1704x", (0x6D >> 1)),
+	},
+};
 
 #ifdef CONFIG_DM9000
 static void __init smdkv210_dm9000_set(void)
@@ -2502,6 +2507,7 @@ static struct platform_device *herring_devices[] __initdata = {
 	&s3c_device_i2c4,
 	&s3c_device_i2c6,
 	&s3c_device_i2c7,
+	&s3c_device_i2c9,  /* max1704x:fuel_guage */
 #ifdef CONFIG_USB_GADGET
 	&s3c_device_usbgadget,
 #endif
@@ -2791,6 +2797,7 @@ static void __init herring_machine_init(void)
 	i2c_register_board_info(10, i2c_devs10, ARRAY_SIZE(i2c_devs10));
 	/* FSA9480 */
 	i2c_register_board_info(7, i2c_devs7, ARRAY_SIZE(i2c_devs7));
+	i2c_register_board_info(9, i2c_devs9, ARRAY_SIZE(i2c_devs9));
 
 #ifdef CONFIG_FB_S3C_LTE480WV
 	s3cfb_set_platdata(&lte480wv_fb_data);
