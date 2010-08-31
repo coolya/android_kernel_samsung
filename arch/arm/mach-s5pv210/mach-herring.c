@@ -1429,6 +1429,16 @@ struct platform_device sec_device_battery = {
 	.id	= -1,
 };
 
+static struct platform_device sec_device_rfkill = {
+	.name	= "bt_rfkill",
+	.id	= -1,
+};
+
+static struct platform_device sec_device_btsleep = {
+	.name	= "bt_sleep",
+	.id	= -1,
+};
+
 /*Adding gpio settings during bootup and sleep*/
 #define S3C_GPIO_SETPIN_ZERO         0
 #define S3C_GPIO_SETPIN_ONE          1
@@ -2550,6 +2560,8 @@ static struct platform_device *herring_devices[] __initdata = {
 #ifdef CONFIG_TOUCHSCREEN_QT602240
 	&s3c_device_qtts,
 #endif
+	&sec_device_rfkill,
+	&sec_device_btsleep,
 };
 
 unsigned int HWREV;
