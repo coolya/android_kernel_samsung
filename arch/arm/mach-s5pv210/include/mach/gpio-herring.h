@@ -601,6 +601,7 @@
 #define GPIO_JACK_INT_N			S5PV210_GPH2(7)
 #define	GPIO_JACK_INT_N_AF		0xFF
 
+#define _3_GPIO_TOUCH_CE		S5PV210_GPJ3(3)
 #endif
 /* end of __GPIO_HERRING_H_ */
 
