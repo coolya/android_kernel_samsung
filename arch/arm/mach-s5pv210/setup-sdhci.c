@@ -27,8 +27,6 @@
 #include <mach/regs-gpio.h>
 #include <mach/gpio.h>
 
-extern unsigned int HWREV;
-
 /* clock sources for the mmc bus clock, order as for the ctrl2[5..4] */
 
 char *s5pv210_hsmmc_clksrcs[4] = {
@@ -272,19 +270,10 @@ unsigned int universal_sdhci2_detect_ext_cd(void)
 	printk(KERN_DEBUG "eint pend %x  eint mask %x",
 		readl(S5PC11X_EINT3PEND), readl(S5PC11X_EINT3MASK));
 #endif
-#if defined(CONFIG_MACH_S5PC110_CRESPO)
 	card_status = gpio_get_value(S5PV210_GPH3(4));
 	printk(KERN_DEBUG "Universal : Card status %d\n", card_status ? 0 : 1);
 	return card_status ? 0 : 1;
 
-#else
-	card_status = gpio_get_value(S5PV210_GPH3(4));
-	printk(KERN_DEBUG "Universal : Card status %d\n", card_status ? 1 : 0);
-	if (((HWREV >= 7) || (HWREV == 0x3)) && (HWREV != 8))
-		return card_status ? 0 : 1;
-	else
-		return card_status ? 1 : 0;
-#endif
 }
 
 void universal_sdhci2_cfg_ext_cd(void)
