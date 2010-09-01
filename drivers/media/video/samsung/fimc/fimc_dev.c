@@ -29,6 +29,7 @@
 #include <linux/platform_device.h>
 #include <plat/clock.h>
 #include <plat/media.h>
+#include <mach/media.h>
 #include <plat/fimc.h>
 #include <mach/pd.h>
 #ifdef CONFIG_CPU_FREQ
@@ -427,7 +428,7 @@ struct fimc_control *fimc_register_controller(struct platform_device *pdev)
 	int id, mdev_id;
 
 	id = pdev->id;
-	mdev_id = S3C_MDEV_FIMC0 + id;
+	mdev_id = S5P_MDEV_FIMC0 + id;
 	pdata = to_fimc_plat(&pdev->dev);
 
 	ctrl = get_fimc_ctrl(id);
@@ -437,8 +438,8 @@ struct fimc_control *fimc_register_controller(struct platform_device *pdev)
 	ctrl->vd->minor = id;
 
 	/* alloc from bank1 as default */
-	ctrl->mem.base = s3c_get_media_memory_bank(mdev_id, 1);
-	ctrl->mem.size = s3c_get_media_memsize_bank(mdev_id, 1);
+	ctrl->mem.base = s5p_get_media_memory_bank(mdev_id, 1);
+	ctrl->mem.size = s5p_get_media_memsize_bank(mdev_id, 1);
 	ctrl->mem.curr = ctrl->mem.base;
 
 	ctrl->status = FIMC_STREAMOFF;

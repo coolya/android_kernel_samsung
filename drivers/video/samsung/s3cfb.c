@@ -31,6 +31,7 @@
 #include <plat/clock.h>
 #include <plat/cpu-freq.h>
 #include <plat/media.h>
+#include <mach/media.h>
 
 #ifdef CONFIG_HAS_WAKELOCK
 #include <linux/wakelock.h>
@@ -230,8 +231,8 @@ static int s3cfb_map_default_video_memory(struct fb_info *fb)
 	if (win->owner == DMA_MEM_OTHER)
 		return 0;
 
-	fix->smem_start = s3c_get_media_memory_bank(S3C_MDEV_FIMD, 1);
-	reserved_size = s3c_get_media_memsize_bank(S3C_MDEV_FIMD, 1);
+	fix->smem_start = s5p_get_media_memory_bank(S5P_MDEV_FIMD, 1);
+	reserved_size = s5p_get_media_memsize_bank(S5P_MDEV_FIMD, 1);
 	fb->screen_base = ioremap_wc(fix->smem_start, reserved_size);
 
 	if (!fb->screen_base)

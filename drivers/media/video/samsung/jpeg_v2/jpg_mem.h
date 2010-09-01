@@ -20,7 +20,8 @@
 
 #define JPG_REG_BASE_ADDR    	(0xFB600000)
 
-#define jpg_data_base_addr	(UINT32)s3c_get_media_memory_bank(S3C_MDEV_JPEG, 0)
+#define jpg_data_base_addr		\
+			(unsigned int)s5p_get_media_memory_bank(S5P_MDEV_JPEG, 0)
 
 #define MAX_JPG_WIDTH       	2560
 #define MAX_JPG_HEIGHT       	1920

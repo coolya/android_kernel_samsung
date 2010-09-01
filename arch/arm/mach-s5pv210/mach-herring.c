@@ -44,6 +44,7 @@
 #ifdef CONFIG_ANDROID_PMEM
 #include <linux/android_pmem.h>
 #include <plat/media.h>
+#include <mach/media.h>
 #endif
 
 #include <plat/regs-serial.h>
@@ -1409,18 +1410,18 @@ static struct platform_device pmem_adsp_device = {
 
 static void __init android_pmem_set_platdata(void)
 {
-	pmem_pdata.start = (u32)s3c_get_media_memory_bank(S3C_MDEV_PMEM, 0);
-	pmem_pdata.size = (u32)s3c_get_media_memsize_bank(S3C_MDEV_PMEM, 0);
+	pmem_pdata.start = (u32)s5p_get_media_memory_bank(S5P_MDEV_PMEM, 0);
+	pmem_pdata.size = (u32)s5p_get_media_memsize_bank(S5P_MDEV_PMEM, 0);
 
 	pmem_gpu1_pdata.start =
-		(u32)s3c_get_media_memory_bank(S3C_MDEV_PMEM_GPU1, 0);
+		(u32)s5p_get_media_memory_bank(S5P_MDEV_PMEM_GPU1, 0);
 	pmem_gpu1_pdata.size =
-		(u32)s3c_get_media_memsize_bank(S3C_MDEV_PMEM_GPU1, 0);
+		(u32)s5p_get_media_memsize_bank(S5P_MDEV_PMEM_GPU1, 0);
 
 	pmem_adsp_pdata.start =
-		(u32)s3c_get_media_memory_bank(S3C_MDEV_PMEM_ADSP, 0);
+		(u32)s5p_get_media_memory_bank(S5P_MDEV_PMEM_ADSP, 0);
 	pmem_adsp_pdata.size =
-		(u32)s3c_get_media_memsize_bank(S3C_MDEV_PMEM_ADSP, 0);
+		(u32)s5p_get_media_memsize_bank(S5P_MDEV_PMEM_ADSP, 0);
 }
 #endif
 
@@ -2634,7 +2635,7 @@ static void __init herring_map_io(void)
 	s3c24xx_init_clocks(24000000);
 	s5pv210_gpiolib_init();
 	s3c24xx_init_uarts(herring_uartcfgs, ARRAY_SIZE(herring_uartcfgs));
-	s5pv210_reserve_bootmem();
+	s5p_reserve_bootmem();
 
 #ifdef CONFIG_MTD_ONENAND
 	s5pc110_device_onenand.name = "s5pc110-onenand";
@@ -2658,14 +2659,6 @@ static void __init herring_fixup(struct machine_desc *desc,
 	mi->bank[2].node = 2;
 	mi->nr_banks = 3;
 }
-
-#ifdef CONFIG_S3C_SAMSUNG_PMEM
-static void __init s3c_pmem_set_platdata(void)
-{
-	pmem_pdata.start = s3c_get_media_memory_bank(S3C_MDEV_PMEM, 1);
-	pmem_pdata.size = s3c_get_media_memsize_bank(S3C_MDEV_PMEM, 1);
-}
-#endif
 
 #ifdef CONFIG_FB_S3C_LTE480WV
 static struct s3c_platform_fb lte480wv_fb_data __initdata = {
