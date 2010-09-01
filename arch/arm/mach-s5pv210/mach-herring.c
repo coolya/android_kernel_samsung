@@ -1336,6 +1336,12 @@ static struct i2c_board_info i2c_devs9[] __initdata = {
 	},
 };
 
+static struct i2c_board_info i2c_devs12[] __initdata = {
+	{
+		I2C_BOARD_INFO("ak8973b", 0x1c),
+	},
+};
+
 #ifdef CONFIG_DM9000
 static void __init smdkv210_dm9000_set(void)
 {
@@ -2494,6 +2500,7 @@ static struct platform_device *herring_devices[] __initdata = {
 	&s3c_device_i2c6,
 	&s3c_device_i2c7,
 	&s3c_device_i2c9,  /* max1704x:fuel_guage */
+	&s3c_device_i2c12, /* magnetic sensor */
 #ifdef CONFIG_USB_GADGET
 	&s3c_device_usbgadget,
 #endif
@@ -2776,6 +2783,8 @@ static void __init herring_machine_init(void)
 	/* FSA9480 */
 	i2c_register_board_info(7, i2c_devs7, ARRAY_SIZE(i2c_devs7));
 	i2c_register_board_info(9, i2c_devs9, ARRAY_SIZE(i2c_devs9));
+	/* magnetic sensor */
+	i2c_register_board_info(12, i2c_devs12, ARRAY_SIZE(i2c_devs12));
 
 #ifdef CONFIG_FB_S3C_LTE480WV
 	s3cfb_set_platdata(&lte480wv_fb_data);
