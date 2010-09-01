@@ -332,8 +332,6 @@ const unsigned short GAMMA19_SETTINGS[][30] = {
 	
 #define MAX_BL_LEVEL	16
 
-extern unsigned int HWREV;
-
 static int locked = 0;
 
 typedef enum {
@@ -623,9 +621,6 @@ static int __init ams701ka_probe(struct spi_device *spi)
 #if 0 //def CONFIG_HAS_EARLYSUSPEND
 static void ams701ka_suspend(struct early_suspend *h)
 {
-	if(HWREV >= 0x5)
-		return;
-	
 	printk("AMS701KA SUSPEND!!!!!!!!\n");
 
 	ams701ka_panel_send_sequence(SEQ_STANDBY_ON);
@@ -635,9 +630,6 @@ static void ams701ka_suspend(struct early_suspend *h)
 
 static void ams701ka_resume(struct early_suspend *h)
 {
-	if(HWREV >= 0x5)
-		return;
-
 	mdelay(200);
 	printk("AMS701KA RESUME START!!!!!!!!!!!\n");
 #if 0
