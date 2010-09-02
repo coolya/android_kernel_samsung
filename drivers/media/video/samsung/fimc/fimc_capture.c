@@ -1195,6 +1195,21 @@ int fimc_s_ctrl_capture(void *fh, struct v4l2_control *c)
 	return ret;
 }
 
+int fimc_s_ext_ctrls_capture(void *fh, struct v4l2_ext_controls *c)
+{
+	struct fimc_control *ctrl = ((struct fimc_prv_data *)fh)->ctrl;
+	int ret = 0;
+
+	mutex_lock(&ctrl->v4l2_lock);
+
+	/* try on subdev */
+	ret = subdev_call(ctrl, core, s_ext_ctrls, c);
+
+	mutex_unlock(&ctrl->v4l2_lock);
+
+	return ret;
+}
+
 int fimc_cropcap_capture(void *fh, struct v4l2_cropcap *a)
 {
 	struct fimc_control *ctrl = ((struct fimc_prv_data *)fh)->ctrl;
