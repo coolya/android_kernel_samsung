@@ -27,6 +27,7 @@
 #define OFFS_CON	(0x00)
 #define OFFS_DAT	(0x04)
 #define OFFS_UP		(0x08)
+#define OFFS_DRV	(0x0C)
 
 static void s3c_gpio_pm_1bit_save(struct s3c_gpio_chip *chip)
 {
@@ -198,6 +199,7 @@ static void s3c_gpio_pm_4bit_save(struct s3c_gpio_chip *chip)
 	chip->pm_save[1] = __raw_readl(chip->base + OFFS_CON);
 	chip->pm_save[2] = __raw_readl(chip->base + OFFS_DAT);
 	chip->pm_save[3] = __raw_readl(chip->base + OFFS_UP);
+	chip->pm_save[4] = __raw_readl(chip->base + OFFS_DRV);
 
 	if (chip->chip.ngpio > 8)
 		chip->pm_save[0] = __raw_readl(chip->base - 4);
@@ -284,6 +286,7 @@ static void s3c_gpio_pm_4bit_resume(struct s3c_gpio_chip *chip)
 
 	__raw_writel(chip->pm_save[2], base + OFFS_DAT);
 	__raw_writel(chip->pm_save[3], base + OFFS_UP);
+	__raw_writel(chip->pm_save[4], base + OFFS_DRV);
 
 	if (chip->chip.ngpio > 8) {
 		S3C_PMDBG("%s: CON4 %08x,%08x => %08x,%08x, DAT %08x => %08x\n",
