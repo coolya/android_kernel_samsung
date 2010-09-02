@@ -76,8 +76,8 @@ EXPORT_SYMBOL(sec_set_param_value);
 void (*sec_get_param_value)(int idx, void *value);
 EXPORT_SYMBOL(sec_get_param_value);
 
-#define MAGIC_CDDE_RECOVERY     0x00000004
-#define MAGIC_CDDE_NORMAL       0x00000000
+#define KERNEL_REBOOT_MASK      0xFFFFFFFF
+#define REBOOT_MODE_FAST_BOOT		7
 
 static int herring_notifier_call(struct notifier_block *this,
 					unsigned long code, void *_cmd)
@@ -88,16 +88,15 @@ static int herring_notifier_call(struct notifier_block *this,
 	if ((code == SYS_RESTART) && _cmd) {
 		if (!strcmp((char *)_cmd, "recovery"))
 			mode = REBOOT_MODE_RECOVERY;
+		else if (!strcmp((char *)_cmd, "bootloader"))
+			mode = REBOOT_MODE_FAST_BOOT;
+		else
+			mode = REBOOT_MODE_NONE;
 	}
-	if (mode == REBOOT_MODE_RECOVERY) {
-		temp = __raw_readl(S5P_INFORM6);
-		temp |= MAGIC_CDDE_RECOVERY;
-		__raw_writel(temp, S5P_INFORM6);
-	} else {
-		temp = __raw_readl(S5P_INFORM6);
-		temp |= MAGIC_CDDE_NORMAL;
-		__raw_writel(temp, S5P_INFORM6);
-	}
+	temp = __raw_readl(S5P_INFORM6);
+	temp |= KERNEL_REBOOT_MASK;
+	temp &= mode;
+	__raw_writel(temp, S5P_INFORM6);
 
 	return NOTIFY_DONE;
 }
