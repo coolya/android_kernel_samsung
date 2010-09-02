@@ -2383,11 +2383,8 @@ void s3c_config_sleep_gpio(void)
 {
 	/* setting the alive mode registers */
 	s3c_gpio_cfgpin(S5PV210_GPH0(1), S3C_GPIO_INPUT);
-	s3c_gpio_setpull(S5PV210_GPH0(1), S3C_GPIO_PULL_DOWN);
+	s3c_gpio_setpull(S5PV210_GPH0(1), S3C_GPIO_PULL_NONE);
 
-	s3c_gpio_cfgpin(S5PV210_GPH0(2), S3C_GPIO_OUTPUT);
-	s3c_gpio_setpull(S5PV210_GPH0(2), S3C_GPIO_PULL_NONE);
-	gpio_set_value(S5PV210_GPH0(2), 0);
 	s3c_gpio_cfgpin(S5PV210_GPH0(3), S3C_GPIO_OUTPUT);
 	s3c_gpio_setpull(S5PV210_GPH0(3), S3C_GPIO_PULL_NONE);
 	gpio_set_value(S5PV210_GPH0(3), 0);
@@ -2400,34 +2397,31 @@ void s3c_config_sleep_gpio(void)
 	s3c_gpio_setpull(S5PV210_GPH0(5), S3C_GPIO_PULL_NONE);
 	gpio_set_value(S5PV210_GPH0(5), 0);
 
-	s3c_gpio_cfgpin(S5PV210_GPH0(6), S3C_GPIO_INPUT);
-	s3c_gpio_setpull(S5PV210_GPH0(6), S3C_GPIO_PULL_NONE);
-
 	s3c_gpio_cfgpin(S5PV210_GPH1(0), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH1(0), S3C_GPIO_PULL_DOWN);
 
-	s3c_gpio_cfgpin(S5PV210_GPH1(1), S3C_GPIO_INPUT);
-	s3c_gpio_setpull(S5PV210_GPH1(1), S3C_GPIO_PULL_DOWN);
+	s3c_gpio_cfgpin(S5PV210_GPH1(1), S3C_GPIO_OUTPUT);
+	s3c_gpio_setpull(S5PV210_GPH1(1), S3C_GPIO_PULL_NONE);
+	gpio_set_value(S5PV210_GPH1(1), 0);
 
 	s3c_gpio_cfgpin(S5PV210_GPH1(2), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH1(2), S3C_GPIO_PULL_DOWN);
 
-	s3c_gpio_cfgpin(S5PV210_GPH1(4), S3C_GPIO_OUTPUT);
-	s3c_gpio_setpull(S5PV210_GPH1(4), S3C_GPIO_PULL_NONE);
-	gpio_set_value(S5PV210_GPH1(4), 0);
+	s3c_gpio_cfgpin(S5PV210_GPH1(4), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH1(4), S3C_GPIO_PULL_DOWN);
 
-	s3c_gpio_cfgpin(S5PV210_GPH1(5), S3C_GPIO_INPUT);
+	s3c_gpio_cfgpin(S5PV210_GPH1(5), S3C_GPIO_OUTPUT);
 	s3c_gpio_setpull(S5PV210_GPH1(5), S3C_GPIO_PULL_NONE);
+	gpio_set_value(S5PV210_GPH1(5), 0);
 
 	s3c_gpio_cfgpin(S5PV210_GPH1(6), S3C_GPIO_INPUT);
-	s3c_gpio_setpull(S5PV210_GPH1(6), S3C_GPIO_PULL_NONE);
+	s3c_gpio_setpull(S5PV210_GPH1(6), S3C_GPIO_PULL_DOWN);
 
 	s3c_gpio_cfgpin(S5PV210_GPH1(7), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH1(7), S3C_GPIO_PULL_NONE);
 
-	s3c_gpio_cfgpin(S5PV210_GPH2(0), S3C_GPIO_OUTPUT);
-	s3c_gpio_setpull(S5PV210_GPH2(0), S3C_GPIO_PULL_NONE);
-	gpio_set_value(S5PV210_GPH2(0), 0);
+	s3c_gpio_cfgpin(S5PV210_GPH2(0), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH2(0), S3C_GPIO_PULL_DOWN);
 
 	s3c_gpio_cfgpin(S5PV210_GPH2(1), S3C_GPIO_OUTPUT);
 	s3c_gpio_setpull(S5PV210_GPH2(1), S3C_GPIO_PULL_NONE);
@@ -2441,28 +2435,14 @@ void s3c_config_sleep_gpio(void)
 	s3c_gpio_setpull(S5PV210_GPH2(3), S3C_GPIO_PULL_NONE);
 	gpio_set_value(S5PV210_GPH2(3), 0);
 
-	s3c_gpio_cfgpin(S5PV210_GPH2(4), S3C_GPIO_INPUT);
-	s3c_gpio_setpull(S5PV210_GPH2(4), S3C_GPIO_PULL_NONE);
-
-	s3c_gpio_cfgpin(S5PV210_GPH2(7), S3C_GPIO_INPUT);
-	s3c_gpio_setpull(S5PV210_GPH2(7), S3C_GPIO_PULL_NONE);
+	s3c_gpio_cfgpin(S5PV210_GPH3(0), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH3(0), S3C_GPIO_PULL_UP);
 
 	s3c_gpio_cfgpin(S5PV210_GPH3(3), S3C_GPIO_INPUT);
-	s3c_gpio_setpull(S5PV210_GPH3(3), S3C_GPIO_PULL_NONE);
+	s3c_gpio_setpull(S5PV210_GPH3(3), S3C_GPIO_PULL_DOWN);
 
 	s3c_gpio_cfgpin(S5PV210_GPH3(4), S3C_GPIO_INPUT);
-	s3c_gpio_setpull(S5PV210_GPH3(4), S3C_GPIO_PULL_NONE);
-
-	s3c_gpio_cfgpin(S5PV210_GPH3(5), S3C_GPIO_INPUT);
-	s3c_gpio_setpull(S5PV210_GPH3(5), S3C_GPIO_PULL_NONE);
-
-	s3c_gpio_cfgpin(S5PV210_GPH3(6), S3C_GPIO_INPUT);
-	s3c_gpio_setpull(S5PV210_GPH3(6), S3C_GPIO_PULL_NONE);
-	gpio_set_value(S5PV210_GPH3(6), 0);
-
-	s3c_gpio_cfgpin(S5PV210_GPH3(7), S3C_GPIO_OUTPUT);
-	s3c_gpio_setpull(S5PV210_GPH3(7), S3C_GPIO_PULL_UP);
-	gpio_set_value(S5PV210_GPH3(7), 1);
+	s3c_gpio_setpull(S5PV210_GPH3(4), S3C_GPIO_PULL_DOWN);
 }
 EXPORT_SYMBOL(s3c_config_sleep_gpio);
 
