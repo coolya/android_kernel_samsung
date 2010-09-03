@@ -1426,7 +1426,7 @@ static void __init android_pmem_set_platdata(void)
 #endif
 
 struct platform_device sec_device_battery = {
-	.name	= "sec-fake-battery",
+	.name	= "sec-battery",
 	.id	= -1,
 };
 
@@ -2518,9 +2518,7 @@ static struct platform_device *herring_devices[] __initdata = {
 	&s3c_device_hsmmc3,
 #endif
 
-#ifdef CONFIG_BATTERY_S3C
 	&sec_device_battery,
-#endif
 //	&s3c_device_i2c10, /* For touchkey */
 #ifdef CONFIG_ANDROID_PMEM
 	&pmem_device,
