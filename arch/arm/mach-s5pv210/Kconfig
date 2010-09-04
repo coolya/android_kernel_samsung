@@ -47,6 +47,13 @@ config S5PV210_SETUP_SDHCI_GPIO
 	help
 	  Common setup code for SDHCI gpio.
 
+config S5PV210_POWER_DOMAIN
+	bool
+	depends on REGULATOR
+	default y
+	help
+	  Enable S5PV210 power domain support.
+
 # machine support
 
 config MACH_AQUILA
@@ -126,6 +133,7 @@ config MACH_S5PC110_CRESPO
 	select S3C_DEV_HSMMC2
 	select S3C_DEV_HSMMC3 if !S5PV210_SD_CH2_8BIT
 	select S5PV210_SETUP_SDHCI
+	select S5PV210_POWER_DOMAIN
 	help
 	  Machine support for Samsung CRESPO
 	  S5PC110(MCP) is one of package option of S5PV210

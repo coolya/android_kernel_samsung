@@ -1,7 +1,7 @@
 # arch/arm/mach-s5pv210/Makefile
 #
 # Copyright (c) 2010 Samsung Electronics Co., Ltd.
-# 		http://www.samsung.com/
+#		http://www.samsung.com/
 #
 # Licensed under GPLv2
 
@@ -15,6 +15,8 @@ obj-				:=
 obj-$(CONFIG_CPU_S5PV210)	+= cpu.o init.o clock.o dma.o gpiolib.o bootmem-smdkv210.o
 obj-$(CONFIG_CPU_S5PV210)	+= setup-i2c0.o setup-i2c1.o setup-i2c2.o
 obj-$(CONFIG_PM)	+= pm.o sleep.o
+
+obj-$(CONFIG_S5PV210_POWER_DOMAIN)	+= power-domain.o
 
 # machine support
 
