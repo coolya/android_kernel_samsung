@@ -122,3 +122,5 @@ extern struct platform_device s3c_device_camif;
 extern struct platform_device s3c_device_ac97;
 
 #endif
+
+void __init s3c_usb_set_serial(void);

@@ -114,6 +114,12 @@ static struct android_usb_platform_data android_usb_pdata = {
 	.functions		= usb_functions_all,
 };
 
+void __init s3c_usb_set_serial(void)
+{
+	sprintf(device_serial, "%08X%08X", system_serial_high,
+			system_serial_low);
+}
+
 struct platform_device s3c_device_android_usb = {
 	.name	= "android_usb",
 	.id	= -1,

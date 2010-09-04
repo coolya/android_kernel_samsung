@@ -2740,6 +2740,7 @@ static void jupiter_init_gpio(void)
 
 static void __init herring_machine_init(void)
 {
+	s3c_usb_set_serial();
 	platform_add_devices(herring_devices, ARRAY_SIZE(herring_devices));
 
 	/* Find out S5PC110 chip version */
