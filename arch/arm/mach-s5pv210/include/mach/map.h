@@ -58,6 +58,9 @@
 
 #define S5P_SZ_UART		SZ_256
 
+#define S5P_SZ_UART_FULL	SZ_1K
+#define S3C_VA_UARTx(uart) (S3C_VA_UART + ((uart * S5P_SZ_UART_FULL)))
+
 #define S5PV210_PA_SROMC	(0xE8000000)
 /* DMA */
 /* Old */
