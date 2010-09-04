@@ -140,6 +140,11 @@
 
 #define S5P_EINT(x)    ((x) + S5P_IRQ_EINT_BASE)
 
+/* GPIO interrupt */
+#define S5P_GPIOINT_GROUP_NR   22
+#define S5P_GPIOINT_BASE       (IRQ_EINT(31) + 1)
+#define S5P_IRQ_GPIOINT(x)     (S5P_GPIOINT_BASE + (x))
+
 
 /* Compatibility */
 #define IRQ_LCD_FIFO		IRQ_LCD0
@@ -207,9 +212,17 @@
 
 #define IRQ_EINT_GROUP(group, no)	(IRQ_EINT_GROUP##group##_BASE + (no))
 
-/* Set the default NR_IRQS */
-//#define NR_IRQS			(IRQ_EINT(31) + 1)
-#define NR_IRQS		(IRQ_EINT_GROUP22_BASE + IRQ_EINT_GROUP22_NR + 1)
+/*
+ * Set the default NR_IRQS
+ * GPIO groups is 27. Each GPIO group can have max 8 GPIO interrupts.
+ *
+ * We should include gpios of all gpio groups from GPIO_A0 until GPIO_J4 to
+ * NR_IRQS because 22 gpio groups having gpio interrupts aren't in order and
+ * are mixed with no interrupt gpio groups, then it can give simple irq
+ * computation of gpio interrupts.
+ */
+#define NR_IRQS (S5P_IRQ_GPIOINT(27 * 8) + 1)
+
 
 #define HALL_SENSOR_IRQ		IRQ_EINT3
 
