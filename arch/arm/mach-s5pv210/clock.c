@@ -179,6 +179,11 @@ static int s5pv210_clk_ip4_ctrl(struct clk *clk, int enable)
 	return s5p_gatectrl(S5P_CLKGATE_IP4, clk, enable);
 }
 
+static int s5pv210_clk_ip5_ctrl(struct clk *clk, int enable)
+{
+	return s5p_gatectrl(S5P_CLKGATE_IP5, clk, enable);
+}
+
 static int s5pv210_clk_mask0_ctrl(struct clk *clk, int enable)
 {
 	return s5p_gatectrl(S5P_CLK_SRC_MASK0, clk, enable);
@@ -213,6 +218,21 @@ static struct clk clk_sclk_usbphy0 = {
 static struct clk clk_sclk_usbphy1 = {
 	.name		= "sclk_usbphy1",
 	.id		= -1,
+};
+
+static struct clk clk_i2scdclk0 = {
+	.name		= "i2scdclk",
+	.id		= 0,
+};
+
+static struct clk clk_i2scdclk1 = {
+	.name		= "i2scdclk",
+	.id		= 1,
+};
+
+static struct clk clk_i2scdclk2 = {
+	.name		= "i2scdclk",
+	.id		= 2,
 };
 
 static struct clk clk_pcmcdclk0 = {
@@ -365,6 +385,12 @@ static struct clk init_clocks_disable[] = {
 		.enable		= s5pv210_clk_ip1_ctrl,
 		.ctrlbit	= (1<<0),
 	}, {
+		.name		= "dsim",
+		.id		= -1,
+		.parent		= &clk_hclk_dsys.clk,
+		.enable		= s5pv210_clk_ip1_ctrl,
+		.ctrlbit	= (1<<2),
+	}, {
 		.name		= "cfcon",
 		.id		= 0,
 		.parent		= &clk_hclk_psys.clk,
@@ -502,6 +528,54 @@ static struct clk init_clocks_disable[] = {
 		.parent		= &clk_pclk_psys.clk,
 		.enable		= s5pv210_clk_ip3_ctrl,
 		.ctrlbit	= S5P_CLKGATE_IP3_PCM0,
+	}, {
+		.name		= "jpeg",
+		.id		= -1,
+		.parent		= &clk_hclk_dsys.clk,
+		.enable	= s5pv210_clk_ip5_ctrl,
+		.ctrlbit	= (1 << 29),
+	}, {
+		.name		= "i2c-hdmiphy",
+		.id		= -1,
+		.parent		= &clk_pclk_psys.clk,
+		.enable		= s5pv210_clk_ip3_ctrl,
+		.ctrlbit	= (1 << 11),
+	}, {
+		.name		= "hdmi",
+		.id		= -1,
+		.parent		= &clk_hclk_dsys.clk,
+		.enable		= s5pv210_clk_ip1_ctrl,
+		.ctrlbit	= (1 << 11),
+	}, {
+		.name		= "tvenc",
+		.id		= -1,
+		.parent		= &clk_hclk_dsys.clk,
+		.enable		= s5pv210_clk_ip1_ctrl,
+		.ctrlbit	= (1 << 10),
+	}, {
+		.name		= "mixer",
+		.id		= -1,
+		.parent		= &clk_hclk_dsys.clk,
+		.enable		= s5pv210_clk_ip1_ctrl,
+		.ctrlbit	= (1 << 9),
+	}, {
+		.name		= "vp",
+		.id		= -1,
+		.parent		= &clk_hclk_dsys.clk,
+		.enable		= s5pv210_clk_ip1_ctrl,
+		.ctrlbit	= (1 << 8),
+	}, {
+		.name		= "rotator",
+		.id		= -1,
+		.parent		= &clk_hclk_dsys.clk,
+		.enable		= s5pv210_clk_ip0_ctrl,
+		.ctrlbit	= (1 << 29),
+	}, {
+		.name		= "fimg2d",
+		.id		= -1,
+		.parent		= &clk_hclk_dsys.clk,
+		.enable		= s5pv210_clk_ip0_ctrl,
+		.ctrlbit	= (1 << 12),
 	},
 };
 
@@ -547,7 +621,7 @@ static struct clk init_clocks[] = {
 		.ctrlbit	= (1 << 20),
 	}, {
 		.name		= "mfc",
-		.id		= 4,
+		.id		= -1,
 		.parent		= &clk_hclk_msys.clk,
 		.enable		= s5pv210_clk_ip0_ctrl,
 		.ctrlbit	= (1<<16),
@@ -1060,7 +1134,7 @@ static struct clksrc_clk clksrcs[] = {
 		.reg_div = { .reg = S5P_CLK_DIV2, .shift = 4, .size = 4 },
 	}, {
 		.clk		= {
-			.name		= "sclk_g2d",
+			.name		= "sclk_fimg2d",
 			.id		= -1,
 			.enable		= s5pv210_clk_ip0_ctrl,
 			.ctrlbit	= (1 << 12),
@@ -1153,6 +1227,18 @@ static struct clksrc_clk clksrcs[] = {
 	},
 };
 
+/* MOUT CSIS */
+static struct clksrc_clk clk_mout_csis = {
+	.clk		= {
+		.name		= "mout_csis",
+		.id		= -1,
+		.enable		= s5pv210_clk_mask0_ctrl,
+		.ctrlbit	= (1 << 6),
+	},
+	.sources	= &clkset_group1,
+	.reg_src	= { .reg = S5P_CLK_SRC1, .shift = 24, .size = 4 },
+};
+
 /* Clock initialisation code */
 static struct clksrc_clk *sysclks[] = {
 	&clk_mout_apll,
@@ -1171,6 +1257,7 @@ static struct clksrc_clk *sysclks[] = {
 	&clk_sclk_dac,
 	&clk_sclk_pixel,
 	&clk_sclk_hdmi,
+	&clk_mout_csis,
 	&clk_sclk_audio0,
 	&clk_sclk_audio1,
 	&clk_sclk_audio2,
@@ -1186,6 +1273,8 @@ static int s5pv210_epll_enable(struct clk *clk, int enable)
 
 	if (enable)
 		__raw_writel(epll_con | ctrlbit, S5P_EPLL_CON);
+	else
+		__raw_writel(epll_con, S5P_EPLL_CON);
 
 	return 0;
 }
@@ -1224,6 +1313,10 @@ static int s5pv210_epll_set_rate(struct clk *clk, unsigned long rate)
 {
 	unsigned int epll_con, epll_con_k;
 	unsigned int i;
+
+	/* Return if nothing changed */
+	if (clk->rate == rate)
+		return 0;
 
 	epll_con = __raw_readl(S5P_EPLL_CON);
 	epll_con_k = __raw_readl(S5P_EPLL_CON_K);
@@ -1395,6 +1488,9 @@ static struct clk *clks[] __initdata = {
 	&clk_sclk_hdmiphy,
 	&clk_sclk_usbphy0,
 	&clk_sclk_usbphy1,
+	&clk_i2scdclk0,
+	&clk_i2scdclk1,
+	&clk_i2scdclk2,
 	&clk_pcmcdclk0,
 	&clk_pcmcdclk1,
 	&clk_pcmcdclk2,

@@ -78,7 +78,7 @@ static struct sleep_save core_save[] = {
 
 	/* Clock Blcok and Bus gate */
 	SAVE_ITEM(S5P_CLKGATE_BLOCK),
-	SAVE_ITEM(S5P_CLKGATE_BUS0),
+	SAVE_ITEM(S5P_CLKGATE_IP5),
 
 	/* Clock ETC */
 	SAVE_ITEM(S5P_CLK_OUT),
