@@ -266,9 +266,9 @@ unsigned int universal_sdhci2_detect_ext_cd(void)
 #ifdef CONFIG_MMC_DEBUG
 	printk(KERN_DEBUG "Universal :SD Detect function\n");
 	printk(KERN_DEBUG "eint conf %x  eint filter conf %x",
-		readl(S5PV210_EINT3CON), readl(S5PV210_EINT3FLTCON1));
+		readl(S5P_EINT_CON(3)), readl(S5P_EINT_FLTCON(3, 1)));
 	printk(KERN_DEBUG "eint pend %x  eint mask %x",
-		readl(S5PC11X_EINT3PEND), readl(S5PC11X_EINT3MASK));
+		readl(S5P_EINT_PEND(3)), readl(S5P_EINT_MASK(3)));
 #endif
 	card_status = gpio_get_value(S5PV210_GPH3(4));
 	printk(KERN_DEBUG "Universal : Card status %d\n", card_status ? 0 : 1);
