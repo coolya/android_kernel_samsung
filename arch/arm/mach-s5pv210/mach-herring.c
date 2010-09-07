@@ -1342,6 +1342,12 @@ static struct i2c_board_info i2c_devs9[] __initdata = {
 	},
 };
 
+static struct i2c_board_info i2c_devs11[] __initdata = {
+	{
+		I2C_BOARD_INFO("gp2a", (0x88 >> 1)),
+	},
+};
+
 static struct i2c_board_info i2c_devs12[] __initdata = {
 	{
 		I2C_BOARD_INFO("ak8973b", 0x1c),
@@ -1439,6 +1445,11 @@ static void __init android_pmem_set_platdata(void)
 struct platform_device sec_device_battery = {
 	.name	= "sec-battery",
 	.id	= -1,
+};
+
+static struct platform_device opt_gp2a = {
+	.name = "gp2a-opt",
+	.id = -1,
 };
 
 static struct platform_device sec_device_rfkill = {
@@ -2507,6 +2518,7 @@ static struct platform_device *herring_devices[] __initdata = {
 	&s3c_device_i2c6,
 	&s3c_device_i2c7,
 	&s3c_device_i2c9,  /* max1704x:fuel_guage */
+	&s3c_device_i2c11, /* optical sensor */
 	&s3c_device_i2c12, /* magnetic sensor */
 #ifdef CONFIG_USB_GADGET
 	&s3c_device_usbgadget,
@@ -2548,6 +2560,7 @@ static struct platform_device *herring_devices[] __initdata = {
 #ifdef CONFIG_TOUCHSCREEN_QT602240
 	&s3c_device_qtts,
 #endif
+	&opt_gp2a,
 	&sec_device_rfkill,
 	&sec_device_btsleep,
 };
@@ -2792,6 +2805,8 @@ static void __init herring_machine_init(void)
 	/* FSA9480 */
 	i2c_register_board_info(7, i2c_devs7, ARRAY_SIZE(i2c_devs7));
 	i2c_register_board_info(9, i2c_devs9, ARRAY_SIZE(i2c_devs9));
+	/* optical sensor */
+	i2c_register_board_info(11, i2c_devs11, ARRAY_SIZE(i2c_devs11));
 	/* magnetic sensor */
 	i2c_register_board_info(12, i2c_devs12, ARRAY_SIZE(i2c_devs12));
 
