@@ -32,9 +32,6 @@
 #include <mach/media.h>
 #include <plat/fimc.h>
 #include <mach/pd.h>
-#ifdef CONFIG_CPU_FREQ
-#include <mach/cpu-freq-v210.h>
-#endif
 #include <linux/videodev2_samsung.h>
 
 #include "fimc.h"
@@ -938,11 +935,6 @@ static int fimc_open(struct file *filp)
 			fimc_clk_en(ctrl, false);
 	}
 
-#ifdef CONFIG_CPU_FREQ
-	if (0 == ctrl->id)
-		s5pv210_set_cpufreq_level(RESTRICT_TABLE_1);
-#endif 
-
 	mutex_unlock(&ctrl->lock);
 
 	fimc_info1("%s opened.\n", ctrl->name);
@@ -1072,10 +1064,6 @@ static int fimc_release(struct file *filp)
 			filp->private_data = NULL;
 		}
 	}
-#ifdef CONFIG_CPU_FREQ
-	if (0 == ctrl->id)
-		s5pv210_set_cpufreq_level(NORMAL_TABLE);
-#endif
 
 	fimc_info1("%s released.\n", ctrl->name);
 
