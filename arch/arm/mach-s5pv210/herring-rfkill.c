@@ -169,6 +169,23 @@ static int __init herring_rfkill_probe(struct platform_device *pdev)
 #ifdef BT_SLEEP_ENABLER
 	wake_lock_init(&bt_wake_lock, WAKE_LOCK_SUSPEND, "bt-rfkill");
 #endif
+	ret = gpio_request(GPIO_WLAN_BT_EN, "GPB");
+	if(ret < 0) {
+		pr_err("[BT] Failed to request GPIO_WLAN_BT_EN!\n");
+		goto err_req_gpio_wlan_bt_en;
+	}
+
+	ret = gpio_request(GPIO_BT_nRST, "GPB");
+	if(ret < 0) {
+		pr_err("[BT] Failed to request GPIO_BT_nRST!\n");
+		goto err_req_gpio_bt_nrst;
+	}
+
+	ret = gpio_request(GPIO_BT_WAKE, "GPH2");
+	if(ret < 0) {
+		pr_err("[BT] Failed to request GPIO_BT_WAKE!\n");
+		goto err_req_gpio_bt_wake;
+	}
 
 	/* BT Host Wake IRQ */
 	irq = IRQ_BT_HOST_WAKE;
@@ -213,6 +230,15 @@ static int __init herring_rfkill_probe(struct platform_device *pdev)
 	free_irq(irq, NULL);
 
  err_req_irq:
+	gpio_free(GPIO_BT_WAKE);
+
+ err_req_gpio_bt_wake:
+	gpio_free(GPIO_BT_nRST);
+
+ err_req_gpio_bt_nrst:
+	gpio_free(GPIO_WLAN_BT_EN);
+
+ err_req_gpio_wlan_bt_en:
 	return ret;
 }
 
