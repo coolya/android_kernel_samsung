@@ -36,6 +36,7 @@
 #include <mach/regs-clock.h>
 #include <mach/gpio.h>
 #include <mach/gpio-herring.h>
+#include <mach/fsa9480_i2c.h>
 #include <mach/adc.h>
 #include <mach/param.h>
 #include <linux/notifier.h>
@@ -1053,9 +1054,16 @@ static struct i2c_board_info i2c_devs5[] __initdata = {
 	},
 };
 
+static struct fsa9480_i2c_platform_data fsa9480_pdata = {
+	.usb_sel = GPIO_USB_SEL,
+	.uart_sel = GPIO_UART_SEL,
+	.jack_nint = GPIO_JACK_nINT,
+};
+
 static struct i2c_board_info i2c_devs7[] __initdata = {
 	{
 		I2C_BOARD_INFO("fsa9480", 0x4A >> 1),
+		.platform_data = &fsa9480_pdata,
 	},
 };
 
@@ -2473,6 +2481,17 @@ static void jupiter_init_gpio(void)
 			jupiter_sleep_gpio_table);
 }
 
+static void __init fsa9480_gpio_init(void)
+{
+	s3c_gpio_cfgpin(GPIO_USB_SEL, S3C_GPIO_OUTPUT);
+	s3c_gpio_setpull(GPIO_USB_SEL, S3C_GPIO_PULL_NONE);
+	s3c_gpio_cfgpin(GPIO_UART_SEL, S3C_GPIO_OUTPUT);
+	s3c_gpio_setpull(GPIO_UART_SEL, S3C_GPIO_PULL_NONE);
+
+	s3c_gpio_cfgpin(GPIO_JACK_nINT, S3C_GPIO_SFN(0xf));
+	s3c_gpio_setpull(GPIO_JACK_nINT, S3C_GPIO_PULL_NONE);
+}
+
 static void __init herring_machine_init(void)
 {
 	s3c_usb_set_serial();
@@ -2539,6 +2558,7 @@ static void __init herring_machine_init(void)
 	/* Touch Key */
 	i2c_register_board_info(10, i2c_devs10, ARRAY_SIZE(i2c_devs10));
 	/* FSA9480 */
+	fsa9480_gpio_init();
 	i2c_register_board_info(7, i2c_devs7, ARRAY_SIZE(i2c_devs7));
 	i2c_register_board_info(9, i2c_devs9, ARRAY_SIZE(i2c_devs9));
 	/* optical sensor */
