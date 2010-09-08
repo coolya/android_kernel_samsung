@@ -41,6 +41,7 @@
 
 #include <linux/version.h>
 #include <plat/media.h>
+#include <mach/media.h>
 
 #include <linux/time.h>
 #include <linux/clk.h>
