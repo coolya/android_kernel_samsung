@@ -107,6 +107,37 @@ static struct notifier_block herring_reboot_notifier = {
 	.notifier_call = herring_notifier_call,
 };
 
+static void gps_gpio_init(void)
+{
+	struct device *gps_dev;
+
+	gps_dev = device_create(sec_class, NULL, 0, NULL, "gps");
+	if (IS_ERR(gps_dev)) {
+		pr_err("Failed to create device(gps)!\n");
+		goto err;
+	}
+
+	gpio_request(GPIO_GPS_nRST, "GPS_nRST");	/* XMMC3CLK */
+	s3c_gpio_setpull(GPIO_GPS_nRST, S3C_GPIO_PULL_NONE);
+	s3c_gpio_cfgpin(GPIO_GPS_nRST, S3C_GPIO_OUTPUT);
+	gpio_direction_output(GPIO_GPS_nRST, 1);
+
+	gpio_request(GPIO_GPS_PWR_EN, "GPS_PWR_EN");	/* XMMC3CLK */
+	s3c_gpio_setpull(GPIO_GPS_PWR_EN, S3C_GPIO_PULL_NONE);
+	s3c_gpio_cfgpin(GPIO_GPS_PWR_EN, S3C_GPIO_OUTPUT);
+	gpio_direction_output(GPIO_GPS_PWR_EN, 0);
+
+	s3c_gpio_setpull(GPIO_GPS_RXD, S3C_GPIO_PULL_UP);
+	gpio_export(GPIO_GPS_nRST, 1);
+	gpio_export(GPIO_GPS_PWR_EN, 1);
+
+	gpio_export_link(gps_dev, "GPS_nRST", GPIO_GPS_nRST);
+	gpio_export_link(gps_dev, "GPS_PWR_EN", GPIO_GPS_PWR_EN);
+
+ err:
+	return;
+}
+
 static void jupiter_switch_init(void)
 {
 	sec_class = class_create(THIS_MODULE, "sec");
@@ -2629,6 +2660,8 @@ static void __init herring_machine_init(void)
 	register_reboot_notifier(&herring_reboot_notifier);
 
 	jupiter_switch_init();
+
+	gps_gpio_init();
 }
 
 #ifdef CONFIG_USB_SUPPORT
