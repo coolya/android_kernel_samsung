@@ -1286,66 +1286,6 @@ static struct clk_ops s5pv210_apll_ops = {
 	.get_rate = s5pv210_apll_get_rate,
 };
 
-#ifdef CONFIG_CPU_FREQ_LOG
-void print_clocks(void)
-{
-	struct clk *xtal_clk;
-	unsigned long xtal;
-	unsigned long armclk;
-	unsigned long hclk200;
-	unsigned long hclk166;
-	unsigned long hclk133;
-	unsigned long pclk100;
-	unsigned long pclk83;
-	unsigned long pclk66;
-	unsigned long apll;
-	unsigned long mpll;
-	unsigned long epll;
-	u32 clkdiv0, clkdiv1;
-
-	clkdiv0 = __raw_readl(S5P_CLK_DIV0);
-	clkdiv1 = __raw_readl(S5P_CLK_DIV1);
-
-	xtal_clk = clk_get(NULL, "xtal");
-	BUG_ON(IS_ERR(xtal_clk));
-
-	xtal = clk_get_rate(xtal_clk);
-	clk_put(xtal_clk);
-
-	apll = s5p_get_pll45xx(xtal, __raw_readl(S5P_APLL_CON), pll_4508);
-	mpll = s5p_get_pll45xx(xtal, __raw_readl(S5P_MPLL_CON), pll_4502);
-	epll = s5p_get_pll45xx(xtal, __raw_readl(S5P_EPLL_CON),
-			__raw_readl(S5P_EPLL_CON_K));
-
-	armclk = apll / GET_DIV(clkdiv0, S5P_CLKDIV0_APLL);
-
-	if (__raw_readl(S5P_CLK_SRC0)&(1<<S5P_CLKSRC0_MUX200_SHIFT))
-		hclk200 = mpll / GET_DIV(clkdiv0, S5P_CLKDIV0_HCLK200);
-	else
-		hclk200 = armclk / GET_DIV(clkdiv0, S5P_CLKDIV0_HCLK200);
-	if (__raw_readl(S5P_CLK_SRC0)&(1<<S5P_CLKSRC0_MUX166_SHIFT)) {
-		hclk166 = apll / GET_DIV(clkdiv0, S5P_CLKDIV0_A2M);
-		hclk166 = hclk166 / GET_DIV(clkdiv0, S5P_CLKDIV0_HCLK166);
-	} else {
-		hclk166 = mpll / GET_DIV(clkdiv0, S5P_CLKDIV0_HCLK166);
-	}
-	if (__raw_readl(S5P_CLK_SRC0)&(1<<S5P_CLKSRC0_MUX133_SHIFT)) {
-		hclk133 = apll / GET_DIV(clkdiv0, S5P_CLKDIV0_A2M);
-		hclk133 = hclk133 / GET_DIV(clkdiv0, S5P_CLKDIV0_HCLK133);
-	} else {
-		hclk133 = mpll / GET_DIV(clkdiv0, S5P_CLKDIV0_HCLK133);
-	}
-
-	pclk100 = hclk200 / GET_DIV(clkdiv0, S5P_CLKDIV0_PCLK100);
-	pclk83 = hclk166 / GET_DIV(clkdiv0, S5P_CLKDIV0_PCLK83);
-	pclk66 = hclk133 / GET_DIV(clkdiv0, S5P_CLKDIV0_PCLK66);
-
-	printk(KERN_INFO "S5PC110: ARMCLK=%ld, HCLKM=%ld, HCLKD=%ld, \
-			 HCLKP=%ld, PCLKM=%ld, PCLKD=%ld, PCLKP=%ld\n",
-	       armclk, hclk200, hclk166, hclk133, pclk100, pclk83, pclk66);
-}
-#endif
-
 void __init_or_cpufreq s5pv210_setup_clocks(void)
 {
 	struct clk *xtal_clk;
