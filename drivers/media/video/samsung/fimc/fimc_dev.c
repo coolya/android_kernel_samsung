@@ -1065,6 +1065,21 @@ static int fimc_release(struct file *filp)
 		}
 	}
 
+	/*
+	 * it remain afterimage when I play movie using overlay and exit
+	 */
+	if (ctrl->fb.is_enable == 1) {
+		fimc_warn("WIN_OFF for FIMC%d\n", ctrl->id);
+		ret = s3cfb_direct_ioctl(ctrl->id, S3CFB_SET_WIN_OFF,
+						(unsigned long)NULL);
+		if (ret < 0) {
+			fimc_err("direct_ioctl(S3CFB_SET_WIN_OFF) fail\n");
+			return -EINVAL;
+		}
+
+		ctrl->fb.is_enable = 0;
+	}
+
 	fimc_info1("%s released.\n", ctrl->name);
 
 	return 0;

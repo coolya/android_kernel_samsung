@@ -35,9 +35,9 @@
 #define FIMC_SUBDEVS		3
 #define FIMC_MAXCAMS		5 /* added 1 because of WriteBack */
 #define FIMC_PHYBUFS		4
-#define FIMC_OUTBUFS		3
+#define FIMC_OUTBUFS		2
 #define FIMC_INQUEUES		10
-#define FIMC_MAX_CTXS		1
+#define FIMC_MAX_CTXS		2
 #define FIMC_TPID		3
 #define FIMC_CAPBUFS		16
 #define FIMC_ONESHOT_TIMEOUT	200

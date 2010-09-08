@@ -423,18 +423,12 @@ static int s3cfb_set_par(struct fb_info *fb)
 
 	dev_dbg(fbdev->dev, "[fb%d] set_par\n", win->id);
 
-	if ((win->id != pdata->default_win) && fb->fix.smem_start)
-		s3cfb_unmap_video_memory(fb);
-
 	/* modify the fix info */
 	if (win->id != pdata->default_win) {
 		fb->fix.line_length = fb->var.xres_virtual *
 						fb->var.bits_per_pixel / 8;
 		fb->fix.smem_len = fb->fix.line_length * fb->var.yres_virtual;
 	}
-
-	if (win->id != pdata->default_win)
-		s3cfb_map_video_memory(fb);
 
 	s3cfb_set_win_params(win->id);
 
@@ -1064,20 +1058,25 @@ err_alloc:
 int s3cfb_register_framebuffer(void)
 {
 	struct s3c_platform_fb *pdata = to_fb_plat(fbdev->dev);
-	int ret, i;
+	int ret, i, j;
 
-	for (i = 0; i < pdata->nr_wins; i++) {
-		ret = register_framebuffer(fbdev->fb[i]);
+	/*
+	 * on registering framebuffer,
+	 * framebuffer of default window is registered at first.
+	 */
+	for (i = pdata->default_win; i < pdata->nr_wins + pdata->default_win; i++) {
+		j = i % pdata->nr_wins;
+		ret = register_framebuffer(fbdev->fb[j]);
 		if (ret) {
 			dev_err(fbdev->dev, "failed to register "
 				"framebuffer device\n");
 			return -EINVAL;
 		}
 #ifndef CONFIG_FRAMEBUFFER_CONSOLE
-		if (i == pdata->default_win) {
-			s3cfb_check_var(&fbdev->fb[i]->var, fbdev->fb[i]);
-			s3cfb_set_par(fbdev->fb[i]);
-			s3cfb_draw_logo(fbdev->fb[i]);
+		if (j == pdata->default_win) {
+			s3cfb_check_var(&fbdev->fb[j]->var, fbdev->fb[j]);
+			s3cfb_set_par(fbdev->fb[j]);
+			s3cfb_draw_logo(fbdev->fb[j]);
 		}
 #endif
 	}
@@ -1360,7 +1359,7 @@ void s3cfb_late_resume(struct early_suspend *h)
 	struct s3c_platform_fb *pdata = to_fb_plat(info->dev);
 	struct fb_info *fb;
 	struct s3cfb_window *win;
-	int i;
+	int i, j;
 	struct platform_device *pdev = to_platform_device(info->dev);
 
 	pr_debug("s3cfb_late_resume is called\n");
@@ -1391,8 +1390,9 @@ void s3cfb_late_resume(struct early_suspend *h)
 
 	s3cfb_display_on(info);
 
-	for (i = 0; i < pdata->nr_wins; i++) {
-		fb = info->fb[i];
+	for (i = pdata->default_win; i < pdata->nr_wins + pdata->default_win; i++) {
+		j = i % pdata->nr_wins;
+		fb = info->fb[j];
 		win = fb->par;
 		if ((win->path == DATA_PATH_DMA) && (win->enabled)) {
 			s3cfb_set_par(fb);
