@@ -986,9 +986,6 @@ static struct s3c_platform_fimc fimc_plat = {
 	.clk_rate	= 166750000,
 	.default_cam	= CAMERA_PAR_A,
 	.camera		= {
-#ifdef CONFIG_VIDEO_CE147
-		&ce147,
-#endif
 #ifdef CONFIG_VIDEO_S5KA3DFX
 		&s5ka3dfx,
 #endif
