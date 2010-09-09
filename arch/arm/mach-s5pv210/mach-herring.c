@@ -205,6 +205,58 @@ static struct platform_device s3c_device_qtts = {
 #endif
 
 #if defined(CONFIG_REGULATOR_MAX8998)
+static struct regulator_consumer_supply ldo3_consumer[] = {
+	{	.supply	= "vdd_otg_d", },
+};
+
+static struct regulator_consumer_supply ldo7_consumer[] = {
+	{	.supply	= "vlcd", },
+};
+
+static struct regulator_consumer_supply ldo8_consumer[] = {
+	{	.supply	= "vdd_otg_a", },
+};
+
+static struct regulator_consumer_supply ldo11_consumer[] = {
+	{	.supply	= "cam_af", },
+};
+
+static struct regulator_consumer_supply ldo12_consumer[] = {
+	{	.supply	= "cam_sensor", },
+};
+
+static struct regulator_consumer_supply ldo13_consumer[] = {
+	{	.supply	= "vga_vddio", },
+};
+
+static struct regulator_consumer_supply ldo14_consumer[] = {
+	{	.supply	= "vga_dvdd", },
+};
+
+static struct regulator_consumer_supply ldo15_consumer[] = {
+	{	.supply	= "cam_isp_host", },
+};
+
+static struct regulator_consumer_supply ldo16_consumer[] = {
+	{	.supply	= "vga_avdd", },
+};
+
+static struct regulator_consumer_supply ldo17_consumer[] = {
+	{	.supply	= "vcc_lcd", },
+};
+
+static struct regulator_consumer_supply buck1_consumer[] = {
+	{	.supply	= "vddarm", },
+};
+
+static struct regulator_consumer_supply buck2_consumer[] = {
+	{	.supply	= "vddint", },
+};
+
+static struct regulator_consumer_supply buck4_consumer[] = {
+	{	.supply	= "cam_isp_core", },
+};
+
 static struct regulator_init_data herring_ldo2_data = {
 	.constraints	= {
 		.name		= "VALIVE_1.2V",
@@ -229,6 +281,8 @@ static struct regulator_init_data herring_ldo3_data = {
 			.disabled = 1,
 		},
 	},
+	.num_consumer_supplies	= ARRAY_SIZE(ldo3_consumer),
+	.consumer_supplies	= ldo3_consumer,
 };
 
 static struct regulator_init_data herring_ldo4_data = {
@@ -262,6 +316,8 @@ static struct regulator_init_data herring_ldo7_data = {
 			.disabled = 1,
 		},
 	},
+	.num_consumer_supplies	= ARRAY_SIZE(ldo7_consumer),
+	.consumer_supplies	= ldo7_consumer,
 };
 
 static struct regulator_init_data herring_ldo8_data = {
@@ -274,6 +330,8 @@ static struct regulator_init_data herring_ldo8_data = {
 			.disabled = 1,
 		},
 	},
+	.num_consumer_supplies	= ARRAY_SIZE(ldo8_consumer),
+	.consumer_supplies	= ldo8_consumer,
 };
 
 static struct regulator_init_data herring_ldo9_data = {
@@ -308,6 +366,8 @@ static struct regulator_init_data herring_ldo11_data = {
 			.disabled = 1,
 		},
 	},
+	.num_consumer_supplies	= ARRAY_SIZE(ldo11_consumer),
+	.consumer_supplies	= ldo11_consumer,
 };
 
 static struct regulator_init_data herring_ldo12_data = {
@@ -320,6 +380,8 @@ static struct regulator_init_data herring_ldo12_data = {
 			.disabled = 1,
 		},
 	},
+	.num_consumer_supplies	= ARRAY_SIZE(ldo12_consumer),
+	.consumer_supplies	= ldo12_consumer,
 };
 
 static struct regulator_init_data herring_ldo13_data = {
@@ -332,6 +394,8 @@ static struct regulator_init_data herring_ldo13_data = {
 			.disabled = 1,
 		},
 	},
+	.num_consumer_supplies	= ARRAY_SIZE(ldo13_consumer),
+	.consumer_supplies	= ldo13_consumer,
 };
 
 static struct regulator_init_data herring_ldo14_data = {
@@ -344,6 +408,8 @@ static struct regulator_init_data herring_ldo14_data = {
 			.disabled = 1,
 		},
 	},
+	.num_consumer_supplies	= ARRAY_SIZE(ldo14_consumer),
+	.consumer_supplies	= ldo14_consumer,
 };
 
 static struct regulator_init_data herring_ldo15_data = {
@@ -356,6 +422,8 @@ static struct regulator_init_data herring_ldo15_data = {
 			.disabled = 1,
 		},
 	},
+	.num_consumer_supplies	= ARRAY_SIZE(ldo15_consumer),
+	.consumer_supplies	= ldo15_consumer,
 };
 
 static struct regulator_init_data herring_ldo16_data = {
@@ -368,6 +436,8 @@ static struct regulator_init_data herring_ldo16_data = {
 			.disabled = 1,
 		},
 	},
+	.num_consumer_supplies	= ARRAY_SIZE(ldo16_consumer),
+	.consumer_supplies	= ldo16_consumer,
 };
 
 static struct regulator_init_data herring_ldo17_data = {
@@ -380,14 +450,8 @@ static struct regulator_init_data herring_ldo17_data = {
 			.disabled = 1,
 		},
 	},
-};
-
-static struct regulator_consumer_supply buck1_consumer[] = {
-	{	.supply	= "vddarm", },
-};
-
-static struct regulator_consumer_supply buck2_consumer[] = {
-	{	.supply	= "vddint", },
+	.num_consumer_supplies	= ARRAY_SIZE(ldo17_consumer),
+	.consumer_supplies	= ldo17_consumer,
 };
 
 static struct regulator_init_data herring_buck1_data = {
@@ -450,6 +514,8 @@ static struct regulator_init_data herring_buck4_data = {
 			.disabled = 1,
 		},
 	},
+	.num_consumer_supplies	= ARRAY_SIZE(buck4_consumer),
+	.consumer_supplies	= buck4_consumer,
 };
 
 static struct max8998_subdev_data herring_regulators[] = {
