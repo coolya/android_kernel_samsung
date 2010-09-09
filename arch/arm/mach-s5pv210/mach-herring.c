@@ -1125,6 +1125,19 @@ static struct i2c_board_info i2c_devs12[] __initdata = {
 	},
 };
 
+static struct resource ram_console_resource[] = {
+	{
+		.flags = IORESOURCE_MEM,
+	}
+};
+
+static struct platform_device ram_console_device = {
+	.name = "ram_console",
+	.id = -1,
+	.num_resources = ARRAY_SIZE(ram_console_resource),
+	.resource = ram_console_resource,
+};
+
 #ifdef CONFIG_DM9000
 static void __init smdkv210_dm9000_set(void)
 {
@@ -2334,6 +2347,7 @@ static struct platform_device *herring_devices[] __initdata = {
 	&opt_gp2a,
 	&sec_device_rfkill,
 	&sec_device_btsleep,
+	&ram_console_device,
 };
 
 unsigned int HWREV;
@@ -2413,6 +2427,9 @@ static void __init herring_map_io(void)
 #endif
 }
 
+static unsigned int ram_console_start;
+static unsigned int ram_console_size;
+
 static void __init herring_fixup(struct machine_desc *desc,
 		struct tag *tags, char **cmdline,
 		struct meminfo *mi)
@@ -2426,9 +2443,13 @@ static void __init herring_fixup(struct machine_desc *desc,
 	mi->bank[1].node = 1;
 
 	mi->bank[2].start = 0x50000000;
-	mi->bank[2].size = 128 * SZ_1M;
+	/* 1M for ram_console buffer */
+	mi->bank[2].size = 127 * SZ_1M;
 	mi->bank[2].node = 2;
 	mi->nr_banks = 3;
+
+	ram_console_start = mi->bank[2].start + mi->bank[2].size;
+	ram_console_size = SZ_1M;
 }
 
 #ifdef CONFIG_FB_S3C_LTE480WV
@@ -2520,8 +2541,15 @@ static void __init fsa9480_gpio_init(void)
 	s3c_gpio_setpull(GPIO_JACK_nINT, S3C_GPIO_PULL_NONE);
 }
 
+static void __init setup_ram_console_mem(void)
+{
+	ram_console_resource[0].start = ram_console_start;
+	ram_console_resource[0].end = ram_console_start + ram_console_size - 1;
+}
+
 static void __init herring_machine_init(void)
 {
+	setup_ram_console_mem();
 	s3c_usb_set_serial();
 	platform_add_devices(herring_devices, ARRAY_SIZE(herring_devices));
 
