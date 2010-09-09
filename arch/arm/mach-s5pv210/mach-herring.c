@@ -16,6 +16,7 @@
 #include <linux/videodev2.h>
 #include <linux/i2c.h>
 #include <linux/i2c-gpio.h>
+#include <linux/regulator/consumer.h>
 #include <linux/regulator/max8998.h>
 #include <linux/i2c/qt602240_ts.h>
 #include <linux/clk.h>
@@ -203,127 +204,283 @@ static struct platform_device s3c_device_qtts = {
 };
 #endif
 
-/* PMIC */
-static struct regulator_consumer_supply buck1_consumers[] = {
-	{
-		.supply         = "vddarm",
-	},
-};
-
-static struct regulator_init_data max8998_buck1_data = {
-	.constraints    = {
-		.name           = "VCC_ARM",
-		.min_uV         =  750000,
-		.max_uV         = 1500000,
-		.always_on      = 1,
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
+#if defined(CONFIG_REGULATOR_MAX8998)
+static struct regulator_init_data herring_ldo2_data = {
+	.constraints	= {
+		.name		= "VALIVE_1.2V",
+		.min_uV		= 1200000,
+		.max_uV		= 1200000,
+		.apply_uV	= 1,
+		.always_on	= 1,
 		.state_mem	= {
-			.uV	= 1200000,
-			.mode	= REGULATOR_MODE_NORMAL,
-			.enabled = 0,
+			.enabled = 1,
 		},
 	},
-	.num_consumer_supplies	= ARRAY_SIZE(buck1_consumers),
-	.consumer_supplies	= buck1_consumers,
 };
 
-static struct regulator_consumer_supply buck2_consumers[] = {
-	{
-		.supply         = "vddint",
+static struct regulator_init_data herring_ldo3_data = {
+	.constraints	= {
+		.name		= "VUSB_1.1V",
+		.min_uV		= 1100000,
+		.max_uV		= 1100000,
+		.apply_uV	= 1,
+		.always_on	= 1,
+		.state_mem	= {
+			.disabled = 1,
+		},
 	},
 };
 
-static struct regulator_init_data max8998_buck2_data = {
-	.constraints    = {
-		.name           = "VCC_INTERNAL",
-		.min_uV         =  750000,
-		.max_uV         = 1500000,
-		.always_on      = 1,
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
+static struct regulator_init_data herring_ldo4_data = {
+	.constraints	= {
+		.name		= "VADC_3.3V",
+		.min_uV		= 3300000,
+		.max_uV		= 3300000,
+		.apply_uV	= 1,
+	},
+};
+
+static struct regulator_init_data herring_ldo5_data = {
+	.constraints	= {
+		.name		= "VTF_2.8V",
+		.min_uV		= 2800000,
+		.max_uV		= 2800000,
+		.apply_uV	= 1,
+		.state_mem	= {
+			.disabled = 1,
+		},
+	},
+};
+
+static struct regulator_init_data herring_ldo7_data = {
+	.constraints	= {
+		.name		= "VLCD_1.8V",
+		.min_uV		= 1800000,
+		.max_uV		= 1800000,
+		.apply_uV	= 1,
+		.state_mem	= {
+			.disabled = 1,
+		},
+	},
+};
+
+static struct regulator_init_data herring_ldo8_data = {
+	.constraints	= {
+		.name		= "VUSB_3.3V",
+		.min_uV		= 3300000,
+		.max_uV		= 3300000,
+		.apply_uV	= 1,
+		.state_mem	= {
+			.disabled = 1,
+		},
+	},
+};
+
+static struct regulator_init_data herring_ldo9_data = {
+	.constraints	= {
+		.name		= "VCC_2.8V_PDA",
+		.min_uV		= 2800000,
+		.max_uV		= 2800000,
+		.apply_uV	= 1,
+		.always_on	= 1,
+	},
+};
+
+static struct regulator_init_data herring_ldo10_data = {
+	.constraints	= {
+		.name		= "VPLL_1.2V",
+		.min_uV		= 1200000,
+		.max_uV		= 1200000,
+		.apply_uV	= 1,
+		.state_mem	= {
+			.disabled = 1,
+		},
+	},
+};
+
+static struct regulator_init_data herring_ldo11_data = {
+	.constraints	= {
+		.name		= "CAM_AF_3.0V",
+		.min_uV		= 3000000,
+		.max_uV		= 3000000,
+		.apply_uV	= 1,
+		.state_mem	= {
+			.disabled = 1,
+		},
+	},
+};
+
+static struct regulator_init_data herring_ldo12_data = {
+	.constraints	= {
+		.name		= "CAM_SENSOR_CORE_1.2V",
+		.min_uV		= 1200000,
+		.max_uV		= 1200000,
+		.apply_uV	= 1,
+		.state_mem	= {
+			.disabled = 1,
+		},
+	},
+};
+
+static struct regulator_init_data herring_ldo13_data = {
+	.constraints	= {
+		.name		= "VGA_VDDIO_2.8V",
+		.min_uV		= 2800000,
+		.max_uV		= 2800000,
+		.apply_uV	= 1,
+		.state_mem	= {
+			.disabled = 1,
+		},
+	},
+};
+
+static struct regulator_init_data herring_ldo14_data = {
+	.constraints	= {
+		.name		= "VGA_DVDD_1.8V",
+		.min_uV		= 1800000,
+		.max_uV		= 1800000,
+		.apply_uV	= 1,
+		.state_mem	= {
+			.disabled = 1,
+		},
+	},
+};
+
+static struct regulator_init_data herring_ldo15_data = {
+	.constraints	= {
+		.name		= "CAM_ISP_HOST_2.8V",
+		.min_uV		= 3300000,
+		.max_uV		= 3300000,
+		.apply_uV	= 1,
+		.state_mem	= {
+			.disabled = 1,
+		},
+	},
+};
+
+static struct regulator_init_data herring_ldo16_data = {
+	.constraints	= {
+		.name		= "VGA_AVDD_2.8V",
+		.min_uV		= 2800000,
+		.max_uV		= 2800000,
+		.apply_uV	= 1,
+		.state_mem	= {
+			.disabled = 1,
+		},
+	},
+};
+
+static struct regulator_init_data herring_ldo17_data = {
+	.constraints	= {
+		.name		= "VCC_3.0V_LCD",
+		.min_uV		= 3000000,
+		.max_uV		= 3000000,
+		.apply_uV	= 1,
+		.state_mem	= {
+			.disabled = 1,
+		},
+	},
+};
+
+static struct regulator_consumer_supply buck1_consumer[] = {
+	{	.supply	= "vddarm", },
+};
+
+static struct regulator_consumer_supply buck2_consumer[] = {
+	{	.supply	= "vddint", },
+};
+
+static struct regulator_init_data herring_buck1_data = {
+	.constraints	= {
+		.name		= "VDD_ARM",
+		.min_uV		= 750000,
+		.max_uV		= 1500000,
+		.apply_uV	= 1,
+		.valid_ops_mask	= REGULATOR_CHANGE_VOLTAGE |
+				  REGULATOR_CHANGE_STATUS,
+		.state_mem	= {
+			.uV	= 1250000,
+			.mode	= REGULATOR_MODE_NORMAL,
+			.disabled = 1,
+		},
+	},
+	.num_consumer_supplies	= ARRAY_SIZE(buck1_consumer),
+	.consumer_supplies	= buck1_consumer,
+};
+
+
+static struct regulator_init_data herring_buck2_data = {
+	.constraints	= {
+		.name		= "VDD_INT",
+		.min_uV		= 750000,
+		.max_uV		= 1500000,
+		.apply_uV	= 1,
+		.valid_ops_mask	= REGULATOR_CHANGE_VOLTAGE |
+				  REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
 			.uV	= 1100000,
 			.mode	= REGULATOR_MODE_NORMAL,
-			.enabled = 0,
+			.disabled = 1,
 		},
 	},
-	.num_consumer_supplies  = ARRAY_SIZE(buck2_consumers),
-	.consumer_supplies      = buck2_consumers,
+	.num_consumer_supplies	= ARRAY_SIZE(buck2_consumer),
+	.consumer_supplies	= buck2_consumer,
 };
 
-static struct regulator_init_data max8998_ldo4_data = {
-	.constraints    = {
-		.name           = "VCC_DAC",
-		.min_uV         = 3300000,
-		.max_uV         = 3300000,
-		.always_on      = 1,
-		.apply_uV       = 1,
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
+static struct regulator_init_data herring_buck3_data = {
+	.constraints	= {
+		.name		= "VCC_1.8V",
+		.min_uV		= 1800000,
+		.max_uV		= 1800000,
+		.apply_uV	= 1,
+		.always_on	= 1,
+		.state_mem	= {
+			.enabled = 1,
+		},
 	},
 };
 
-static struct regulator_init_data max8998_ldo7_data = {
-	.constraints    = {
-		.name           = "VCC_LCD",
-		.min_uV         = 1600000,
-		.max_uV         = 3600000,
-		.always_on      = 1,
-		/* .apply_uV     = 1, */
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
+static struct regulator_init_data herring_buck4_data = {
+	.constraints	= {
+		.name		= "CAM_ISP_CORE_1.2V",
+		.min_uV		= 1200000,
+		.max_uV		= 1200000,
+		.apply_uV	= 1,
+		.state_mem	= {
+			.disabled = 1,
+		},
 	},
 };
 
-static struct regulator_init_data max8998_ldo17_data = {
-	.constraints    = {
-		.name           = "PM_LVDS_VDD",
-		.min_uV         = 1600000,
-		.max_uV         = 3600000,
-		.always_on      = 1,
-		/* .apply_uV     = 1, */
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
-	},
+static struct max8998_subdev_data herring_regulators[] = {
+	{ MAX8998_LDO2,  &herring_ldo2_data },
+	{ MAX8998_LDO3,  &herring_ldo3_data },
+	{ MAX8998_LDO4,  &herring_ldo4_data },
+	{ MAX8998_LDO5,  &herring_ldo5_data },
+	{ MAX8998_LDO7,  &herring_ldo7_data },
+	{ MAX8998_LDO8,  &herring_ldo8_data },
+	{ MAX8998_LDO9,  &herring_ldo9_data },
+	{ MAX8998_LDO10, &herring_ldo10_data },
+	{ MAX8998_LDO11, &herring_ldo11_data },
+	{ MAX8998_LDO12, &herring_ldo12_data },
+	{ MAX8998_LDO13, &herring_ldo13_data },
+	{ MAX8998_LDO14, &herring_ldo14_data },
+	{ MAX8998_LDO15, &herring_ldo15_data },
+	{ MAX8998_LDO16, &herring_ldo16_data },
+	{ MAX8998_LDO17, &herring_ldo17_data },
+	{ MAX8998_BUCK1, &herring_buck1_data },
+	{ MAX8998_BUCK2, &herring_buck2_data },
+	{ MAX8998_BUCK3, &herring_buck3_data },
+	{ MAX8998_BUCK4, &herring_buck4_data },
 };
 
-static struct max8998_subdev_data universal_regulators[] = {
-	{ MAX8998_BUCK1, &max8998_buck1_data },
-	{ MAX8998_BUCK2, &max8998_buck2_data },
-	/* { MAX8998_BUCK4, &max8998_buck4_data }, */
-	{ MAX8998_LDO4, &max8998_ldo4_data },
-	/* { MAX8998_LDO11, &max8998_ldo11_data }, */
-	/* { MAX8998_LDO12, &max8998_ldo12_data }, */
-	/* { MAX8998_LDO13, &max8998_ldo13_data }, */
-	/* { MAX8998_LDO14, &max8998_ldo14_data }, */
-	/* { MAX8998_LDO15, &max8998_ldo15_data }, */
-	{ MAX8998_LDO7, &max8998_ldo7_data },
-	{ MAX8998_LDO17, &max8998_ldo17_data },
-};
+static struct max8998_platform_data herring_platform_data = {
+	.num_regulators = ARRAY_SIZE(herring_regulators),
+	.regulators     = herring_regulators,
 
-#if USE_1DOT2GHZ
-static struct max8998_platform_data max8998_platform_data = {
-	.num_regulators = ARRAY_SIZE(universal_regulators),
-	.regulators     = universal_regulators,
-
-	.set1           = S5PV210_GPH0(3),
-	.set2           = S5PV210_GPH0(4),
-	.set3           = S5PV210_GPH0(5),
-	.dvsarm1	= 0x16,  /* 1.30V */
-	.dvsarm2        = 0x14,  /* 1.25v */
-	.dvsarm3        = 0x12,  /* 1.20V */
-	.dvsarm4        = 0x0c,  /* 1.05V */
-	.dvsarm5        = 0x08,  /* 0.95V */
-
-	.dvsint1        = 0x10,  /* 1.15v */
-	.dvsint2        = 0x0e,  /* 1.10v */
-	.dvsint3        = 0x0a,  /* 1.00V */
-
-};
-#else
-static struct max8998_platform_data max8998_platform_data = {
-	.num_regulators = ARRAY_SIZE(universal_regulators),
-	.regulators     = universal_regulators,
-
-	.set1           = S5PV210_GPH0(3),
-	.set2           = S5PV210_GPH0(4),
-	.set3           = S5PV210_GPH0(5),
+	.set1           = GPIO_BUCK_1_EN_A,
+	.set2           = GPIO_BUCK_1_EN_B,
+	.set3           = GPIO_BUCK_2_EN,
 	.dvsarm1        = 0x14,  /* 1.25v */
 	.dvsarm2        = 0x12,  /* 1.20V */
 	.dvsarm3        = 0x0c,  /* 1.05V */
@@ -334,18 +491,12 @@ static struct max8998_platform_data max8998_platform_data = {
 	.dvsint2        = 0x0a,  /* 1.00V */
 	.dvsint3	= 0x00,
 };
+
 #endif
 
 struct platform_device sec_device_dpram = {
 	.name	= "dpram-device",
 	.id	= -1,
-};
-struct platform_device s3c_device_8998consumer = {
-	.name	= "max8998-consumer",
-	.id	= 0,
-	.dev = {
-		.platform_data = &max8998_platform_data
-	},
 };
 
 static void tl2796_cfg_gpio(struct platform_device *pdev)
@@ -595,7 +746,7 @@ static struct platform_device s3c_device_i2c5 = {
 	.dev.platform_data	= &i2c5_platdata,
 };
 
-static  struct  i2c_gpio_platform_data  i2c6_platdata = {
+static struct i2c_gpio_platform_data i2c6_platdata = {
 	.sda_pin                = GPIO_AP_PMIC_SDA,
 	.scl_pin                = GPIO_AP_PMIC_SCL,
 	.udelay                 = 2,    /* 250KHz */
@@ -1100,7 +1251,7 @@ static struct i2c_board_info i2c_devs6[] __initdata = {
 	{
 		/* The address is 0xCC used since SRAD = 0 */
 		I2C_BOARD_INFO("max8998", (0xCC >> 1)),
-		.platform_data = &max8998_platform_data,
+		.platform_data = &herring_platform_data,
 	}, {
 		I2C_BOARD_INFO("rtc_max8998", (0x0D >> 1)),
 	},
@@ -2262,9 +2413,6 @@ static struct platform_device *herring_devices[] __initdata = {
 	&s5pv210_device_ac97,
 	&s3c_device_wdt,
 
-#ifdef CONFIG_REGULATOR_MAX8998
-	&s3c_device_8998consumer,
-#endif
 #ifdef CONFIG_FB_S3C
 	&s3c_device_fb,
 #endif
