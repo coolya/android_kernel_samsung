@@ -13,6 +13,7 @@
 #include <linux/init.h>
 #include <linux/serial_core.h>
 #include <linux/gpio.h>
+#include <linux/gpio_event.h>
 #include <linux/videodev2.h>
 #include <linux/i2c.h>
 #include <linux/i2c-gpio.h>
@@ -27,6 +28,7 @@
 #include <linux/pwm_backlight.h>
 #include <linux/clk.h>
 #include <linux/usb/ch9.h>
+#include <linux/irq.h>
 
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
@@ -989,6 +991,51 @@ static struct s3c_ts_mach_info s3c_ts_platform __initdata = {
 };
 #endif
 
+static struct gpio_event_direct_entry herring_keypad_key_map[] = {
+	{
+		.gpio	= S5PV210_GPH2(6),
+		.code	= KEY_POWER,
+	},
+	{
+		.gpio	= S5PV210_GPH3(1),
+		.code	= KEY_VOLUMEDOWN,
+	},
+	{
+		.gpio	= S5PV210_GPH3(2),
+		.code	= KEY_VOLUMEUP,
+	}
+};
+
+static struct gpio_event_input_info herring_keypad_key_info = {
+	.info.func = gpio_event_input_func,
+	.info.no_suspend = false,
+	.type = EV_KEY,
+	.keymap = herring_keypad_key_map,
+	.keymap_size = ARRAY_SIZE(herring_keypad_key_map)
+};
+
+static struct gpio_event_info *herring_input_info[] = {
+	&herring_keypad_key_info.info,
+};
+
+
+static struct gpio_event_platform_data herring_input_data = {
+	.names = {
+		"herring-keypad",
+		NULL,
+	},
+	.info = herring_input_info,
+	.info_count = ARRAY_SIZE(herring_input_info),
+};
+
+static struct platform_device herring_input_device = {
+	.name = GPIO_EVENT_DEV_NAME,
+	.id = 0,
+	.dev = {
+		.platform_data = &herring_input_data,
+	},
+};
+
 #ifdef CONFIG_S5P_ADC
 static struct s3c_adc_mach_info s3c_adc_platform __initdata = {
 	/* s5pc110 support 12-bit resolution */
@@ -1768,7 +1815,7 @@ static unsigned int jupiter_gpio_table[][8] = {
 	{ S5PV210_GPH2(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
 	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
 	  0, 0 },
-	{ S5PV210_GPH2(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
+	{ S5PV210_GPH2(1), S3C_GPIO_OUTPUT, S3C_GPIO_SETPIN_NONE,
 	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
 	  0, 0 },
 	{ S5PV210_GPH2(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
@@ -1783,8 +1830,8 @@ static unsigned int jupiter_gpio_table[][8] = {
 	{ S5PV210_GPH2(5), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
 	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
 	  0, 0 },
-	{ S5PV210_GPH2(6), S3C_GPIO_SFN(0xF), S3C_GPIO_SETPIN_NONE,
-	  S3C_GPIO_PULL_NONE, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	{ S5PV210_GPH2(6), S3C_GPIO_SFN(0xf), S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_UP, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
 	  0, 0 },
 	{ S5PV210_GPH2(7), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
 	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
@@ -1793,11 +1840,11 @@ static unsigned int jupiter_gpio_table[][8] = {
 	{ S5PV210_GPH3(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
 	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
 	  0, 0 },
-	{ S5PV210_GPH3(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
-	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	{ S5PV210_GPH3(1), S3C_GPIO_SFN(0xf), S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_UP, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
 	  0, 0 },
-	{ S5PV210_GPH3(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
-	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	{ S5PV210_GPH3(2), S3C_GPIO_SFN(0xf), S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_UP, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
 	  0, 0 },
 	{ S5PV210_GPH3(3), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
 	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
@@ -2457,10 +2504,6 @@ void s3c_config_sleep_gpio(void)
 	s3c_gpio_cfgpin(S5PV210_GPH2(0), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH2(0), S3C_GPIO_PULL_DOWN);
 
-	s3c_gpio_cfgpin(S5PV210_GPH2(1), S3C_GPIO_OUTPUT);
-	s3c_gpio_setpull(S5PV210_GPH2(1), S3C_GPIO_PULL_NONE);
-	gpio_set_value(S5PV210_GPH2(1), 0);
-
 	s3c_gpio_cfgpin(S5PV210_GPH2(2), S3C_GPIO_OUTPUT);
 	s3c_gpio_setpull(S5PV210_GPH2(2), S3C_GPIO_PULL_NONE);
 	gpio_set_value(S5PV210_GPH2(2), 0);
@@ -2605,7 +2648,8 @@ static struct platform_device *herring_devices[] __initdata = {
 #ifdef CONFIG_RTC_DRV_S3C
 	&s5p_device_rtc,
 #endif
-	&s3c_device_keypad,
+	&herring_input_device,
+
 	&s5pv210_device_iis0,
 	&s5pv210_device_ac97,
 	&s3c_device_wdt,
