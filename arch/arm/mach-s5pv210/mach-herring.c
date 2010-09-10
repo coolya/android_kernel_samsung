@@ -42,6 +42,7 @@
 #include <mach/param.h>
 #include <linux/notifier.h>
 #include <linux/reboot.h>
+#include <linux/wlan_plat.h>
 
 #ifdef CONFIG_ANDROID_PMEM
 #include <linux/android_pmem.h>
@@ -2473,6 +2474,126 @@ void s3c_config_sleep_gpio(void)
 }
 EXPORT_SYMBOL(s3c_config_sleep_gpio);
 
+static unsigned int wlan_sdio_on_table[][4] = {
+	{GPIO_WLAN_SDIO_CLK, GPIO_WLAN_SDIO_CLK_AF, GPIO_LEVEL_NONE,
+		S3C_GPIO_PULL_NONE},
+	{GPIO_WLAN_SDIO_CMD, GPIO_WLAN_SDIO_CMD_AF, GPIO_LEVEL_NONE,
+		S3C_GPIO_PULL_NONE},
+	{GPIO_WLAN_SDIO_D0, GPIO_WLAN_SDIO_D0_AF, GPIO_LEVEL_NONE,
+		S3C_GPIO_PULL_NONE},
+	{GPIO_WLAN_SDIO_D1, GPIO_WLAN_SDIO_D1_AF, GPIO_LEVEL_NONE,
+		S3C_GPIO_PULL_NONE},
+	{GPIO_WLAN_SDIO_D2, GPIO_WLAN_SDIO_D2_AF, GPIO_LEVEL_NONE,
+		S3C_GPIO_PULL_NONE},
+	{GPIO_WLAN_SDIO_D3, GPIO_WLAN_SDIO_D3_AF, GPIO_LEVEL_NONE,
+		S3C_GPIO_PULL_NONE},
+};
+
+static unsigned int wlan_sdio_off_table[][4] = {
+	{GPIO_WLAN_SDIO_CLK, 1, GPIO_LEVEL_LOW, S3C_GPIO_PULL_NONE},
+	{GPIO_WLAN_SDIO_CMD, 0, GPIO_LEVEL_NONE, S3C_GPIO_PULL_NONE},
+	{GPIO_WLAN_SDIO_D0, 0, GPIO_LEVEL_NONE, S3C_GPIO_PULL_NONE},
+	{GPIO_WLAN_SDIO_D1, 0, GPIO_LEVEL_NONE, S3C_GPIO_PULL_NONE},
+	{GPIO_WLAN_SDIO_D2, 0, GPIO_LEVEL_NONE, S3C_GPIO_PULL_NONE},
+	{GPIO_WLAN_SDIO_D3, 0, GPIO_LEVEL_NONE, S3C_GPIO_PULL_NONE},
+};
+
+static int wlan_power_en(int onoff)
+{
+	u32 i;
+	u32 sdio;
+
+	if (onoff) {
+		s3c_gpio_cfgpin(GPIO_WLAN_BT_EN, S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(GPIO_WLAN_BT_EN, S3C_GPIO_PULL_NONE);
+		gpio_set_value(GPIO_WLAN_BT_EN, GPIO_LEVEL_LOW);
+
+		s3c_gpio_cfgpin(GPIO_WLAN_nRST,
+				S3C_GPIO_SFN(GPIO_WLAN_nRST_AF));
+		s3c_gpio_setpull(GPIO_WLAN_nRST, S3C_GPIO_PULL_NONE);
+		gpio_set_value(GPIO_WLAN_nRST, GPIO_LEVEL_LOW);
+
+		s3c_gpio_cfgpin(GPIO_WLAN_HOST_WAKE,
+				S3C_GPIO_SFN(GPIO_WLAN_HOST_WAKE_AF));
+		s3c_gpio_setpull(GPIO_WLAN_HOST_WAKE, S3C_GPIO_PULL_DOWN);
+
+		s3c_gpio_cfgpin(GPIO_WLAN_WAKE,
+				S3C_GPIO_SFN(GPIO_WLAN_WAKE_AF));
+		s3c_gpio_setpull(GPIO_WLAN_WAKE, S3C_GPIO_PULL_NONE);
+		gpio_set_value(GPIO_WLAN_WAKE, GPIO_LEVEL_LOW);
+
+		for (i = 0; i < ARRAY_SIZE(wlan_sdio_on_table); i++) {
+			sdio = wlan_sdio_on_table[i][0];
+			s3c_gpio_cfgpin(sdio,
+					S3C_GPIO_SFN(wlan_sdio_on_table[i][1]));
+			s3c_gpio_setpull(sdio, wlan_sdio_on_table[i][3]);
+			if (wlan_sdio_on_table[i][2] != GPIO_LEVEL_NONE)
+				gpio_set_value(sdio, wlan_sdio_on_table[i][2]);
+		}
+		udelay(5);
+
+		gpio_set_value(GPIO_WLAN_BT_EN, GPIO_LEVEL_HIGH);
+		s3c_gpio_slp_cfgpin(GPIO_WLAN_BT_EN, S3C_GPIO_SLP_OUT1);
+		gpio_set_value(GPIO_WLAN_nRST, GPIO_LEVEL_HIGH);
+		s3c_gpio_slp_cfgpin(GPIO_WLAN_nRST, S3C_GPIO_SLP_OUT1);
+	} else {
+		if (gpio_get_value(GPIO_BT_nRST) == 0) {
+			gpio_set_value(GPIO_WLAN_BT_EN, GPIO_LEVEL_LOW);
+			s3c_gpio_slp_cfgpin(GPIO_WLAN_BT_EN, S3C_GPIO_SLP_OUT0);
+		}
+		gpio_set_value(GPIO_WLAN_nRST, GPIO_LEVEL_LOW);
+		s3c_gpio_slp_cfgpin(GPIO_WLAN_nRST, S3C_GPIO_SLP_OUT0);
+
+		for (i = 0; i < ARRAY_SIZE(wlan_sdio_off_table); i++) {
+			sdio = wlan_sdio_off_table[i][0];
+			s3c_gpio_cfgpin(sdio,
+				S3C_GPIO_SFN(wlan_sdio_off_table[i][1]));
+			s3c_gpio_setpull(sdio, wlan_sdio_off_table[i][3]);
+			if (wlan_sdio_off_table[i][2] != GPIO_LEVEL_NONE)
+				gpio_set_value(sdio, wlan_sdio_off_table[i][2]);
+		}
+	}
+	return 0;
+}
+
+static int wlan_reset_en(int onoff)
+{
+	gpio_set_value(GPIO_WLAN_nRST,
+			onoff ? GPIO_LEVEL_HIGH : GPIO_LEVEL_LOW);
+	return 0;
+}
+
+static int wlan_carddetect_en(int val)
+{
+	sdhci_s3c_force_presence_change(&s3c_device_hsmmc3);
+	return 0;
+}
+
+static struct resource wifi_resources[] = {
+	[0] = {
+		.name	= "bcm4329_wlan_irq",
+		.start	= IRQ_EINT(20),
+		.end	= IRQ_EINT(20),
+		.flags	= IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHLEVEL,
+	},
+};
+
+static struct wifi_platform_data wifi_pdata = {
+	.set_power		= wlan_power_en,
+	.set_reset		= wlan_reset_en,
+	.set_carddetect		= wlan_carddetect_en,
+};
+
+static struct platform_device sec_device_wifi = {
+	.name			= "bcm4329_wlan",
+	.id			= 1,
+	.num_resources		= ARRAY_SIZE(wifi_resources),
+	.resource		= wifi_resources,
+	.dev			= {
+		.platform_data = &wifi_pdata,
+	},
+};
+
 static struct platform_device *herring_devices[] __initdata = {
 	&s5pc110_device_onenand,
 #ifdef CONFIG_RTC_DRV_S3C
@@ -2575,6 +2696,7 @@ static struct platform_device *herring_devices[] __initdata = {
 	&sec_device_rfkill,
 	&sec_device_btsleep,
 	&ram_console_device,
+	&sec_device_wifi,
 };
 
 unsigned int HWREV;
