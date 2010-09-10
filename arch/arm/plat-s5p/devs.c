@@ -535,7 +535,6 @@ void __init s3c_csis_set_platdata(struct s3c_platform_csis *pd)
 }
 #endif
 
-#ifdef CONFIG_VIDEO_JPEG_V2
 /* JPEG controller  */
 static struct resource s3c_jpeg_resource[] = {
 	[0] = {
@@ -556,9 +555,7 @@ struct platform_device s3c_device_jpeg = {
 	.num_resources    = ARRAY_SIZE(s3c_jpeg_resource),
 	.resource         = s3c_jpeg_resource,
 };
-#endif /* CONFIG_VIDEO_JPEG_V2 */
 
-#ifdef CONFIG_VIDEO_ROTATOR
 /* rotator interface */
 static struct resource s5p_rotator_resource[] = {
 	[0] = {
@@ -579,9 +576,7 @@ struct platform_device s5p_device_rotator = {
 	.num_resources	= ARRAY_SIZE(s5p_rotator_resource),
 	.resource	= s5p_rotator_resource
 };
-#endif
 
-#ifdef CONFIG_VIDEO_TV20
 /* TVOUT interface */
 static struct resource s5p_tvout_resources[] = {
 	[0] = {
@@ -659,7 +654,6 @@ struct platform_device s5p_device_hpd = {
 	.name           = "s5p-hpd",
 	.id             = -1,
 };
-#endif
 
 #ifdef CONFIG_USB_SUPPORT
 #ifdef CONFIG_USB_ARCH_HAS_EHCI
