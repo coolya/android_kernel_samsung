@@ -212,7 +212,6 @@ static struct platform_device s3c_device_qtts = {
 };
 #endif
 
-#if defined(CONFIG_REGULATOR_MAX8998)
 static struct regulator_consumer_supply ldo3_consumer[] = {
 	{	.supply	= "vdd_otg_d", },
 };
@@ -284,7 +283,7 @@ static struct regulator_init_data herring_ldo3_data = {
 		.min_uV		= 1100000,
 		.max_uV		= 1100000,
 		.apply_uV	= 1,
-		.always_on	= 1,
+		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
 			.disabled = 1,
 		},
@@ -299,15 +298,8 @@ static struct regulator_init_data herring_ldo4_data = {
 		.min_uV		= 3300000,
 		.max_uV		= 3300000,
 		.apply_uV	= 1,
-	},
-};
-
-static struct regulator_init_data herring_ldo5_data = {
-	.constraints	= {
-		.name		= "VTF_2.8V",
-		.min_uV		= 2800000,
-		.max_uV		= 2800000,
-		.apply_uV	= 1,
+		.always_on	= 1,
+		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
 			.disabled = 1,
 		},
@@ -320,6 +312,7 @@ static struct regulator_init_data herring_ldo7_data = {
 		.min_uV		= 1800000,
 		.max_uV		= 1800000,
 		.apply_uV	= 1,
+		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
 			.disabled = 1,
 		},
@@ -334,6 +327,7 @@ static struct regulator_init_data herring_ldo8_data = {
 		.min_uV		= 3300000,
 		.max_uV		= 3300000,
 		.apply_uV	= 1,
+		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
 			.disabled = 1,
 		},
@@ -352,25 +346,13 @@ static struct regulator_init_data herring_ldo9_data = {
 	},
 };
 
-static struct regulator_init_data herring_ldo10_data = {
-	.constraints	= {
-		.name		= "VPLL_1.2V",
-		.min_uV		= 1200000,
-		.max_uV		= 1200000,
-		.apply_uV	= 1,
-		.state_mem	= {
-			.disabled = 1,
-		},
-	},
-};
-
 static struct regulator_init_data herring_ldo11_data = {
 	.constraints	= {
 		.name		= "CAM_AF_3.0V",
 		.min_uV		= 3000000,
 		.max_uV		= 3000000,
 		.apply_uV	= 1,
-		.valid_ops_mask	= REGULATOR_CHANGE_STATUS,
+		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
 			.disabled = 1,
 		},
@@ -385,6 +367,7 @@ static struct regulator_init_data herring_ldo12_data = {
 		.min_uV		= 1200000,
 		.max_uV		= 1200000,
 		.apply_uV	= 1,
+		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
 			.disabled = 1,
 		},
@@ -399,7 +382,7 @@ static struct regulator_init_data herring_ldo13_data = {
 		.min_uV		= 2800000,
 		.max_uV		= 2800000,
 		.apply_uV	= 1,
-		.valid_ops_mask	= REGULATOR_CHANGE_STATUS,
+		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
 			.disabled = 1,
 		},
@@ -414,7 +397,7 @@ static struct regulator_init_data herring_ldo14_data = {
 		.min_uV		= 1800000,
 		.max_uV		= 1800000,
 		.apply_uV	= 1,
-		.valid_ops_mask	= REGULATOR_CHANGE_STATUS,
+		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
 			.disabled = 1,
 		},
@@ -429,7 +412,7 @@ static struct regulator_init_data herring_ldo15_data = {
 		.min_uV		= 3300000,
 		.max_uV		= 3300000,
 		.apply_uV	= 1,
-		.valid_ops_mask	= REGULATOR_CHANGE_STATUS,
+		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
 			.disabled = 1,
 		},
@@ -444,7 +427,7 @@ static struct regulator_init_data herring_ldo16_data = {
 		.min_uV		= 2800000,
 		.max_uV		= 2800000,
 		.apply_uV	= 1,
-		.valid_ops_mask	= REGULATOR_CHANGE_STATUS,
+		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
 			.disabled = 1,
 		},
@@ -459,6 +442,7 @@ static struct regulator_init_data herring_ldo17_data = {
 		.min_uV		= 3000000,
 		.max_uV		= 3000000,
 		.apply_uV	= 1,
+		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
 			.disabled = 1,
 		},
@@ -511,9 +495,6 @@ static struct regulator_init_data herring_buck3_data = {
 		.max_uV		= 1800000,
 		.apply_uV	= 1,
 		.always_on	= 1,
-		.state_mem	= {
-			.enabled = 1,
-		},
 	},
 };
 
@@ -523,7 +504,7 @@ static struct regulator_init_data herring_buck4_data = {
 		.min_uV		= 1200000,
 		.max_uV		= 1200000,
 		.apply_uV	= 1,
-		.valid_ops_mask	= REGULATOR_CHANGE_STATUS,
+		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
 			.disabled = 1,
 		},
@@ -536,11 +517,9 @@ static struct max8998_regulator_data herring_regulators[] = {
 	{ MAX8998_LDO2,  &herring_ldo2_data },
 	{ MAX8998_LDO3,  &herring_ldo3_data },
 	{ MAX8998_LDO4,  &herring_ldo4_data },
-	{ MAX8998_LDO5,  &herring_ldo5_data },
 	{ MAX8998_LDO7,  &herring_ldo7_data },
 	{ MAX8998_LDO8,  &herring_ldo8_data },
 	{ MAX8998_LDO9,  &herring_ldo9_data },
-	{ MAX8998_LDO10, &herring_ldo10_data },
 	{ MAX8998_LDO11, &herring_ldo11_data },
 	{ MAX8998_LDO12, &herring_ldo12_data },
 	{ MAX8998_LDO13, &herring_ldo13_data },
@@ -558,8 +537,6 @@ static struct max8998_platform_data herring_platform_data = {
 	.num_regulators = ARRAY_SIZE(herring_regulators),
 	.regulators     = herring_regulators,
 };
-
-#endif
 
 struct platform_device sec_device_dpram = {
 	.name	= "dpram-device",
