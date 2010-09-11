@@ -34,7 +34,7 @@ config FB_S3C_TRACE_UNDERRUN
 config FB_S3C_DEFAULT_WINDOW
 	int "Default Window (0-4)"
 	depends on FB_S3C
-	default "0"
+	default "2"
 	---help---
 	  This indicates the default window number, and which is used as console framebuffer
 
