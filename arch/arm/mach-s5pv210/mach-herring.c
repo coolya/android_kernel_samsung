@@ -18,7 +18,7 @@
 #include <linux/i2c.h>
 #include <linux/i2c-gpio.h>
 #include <linux/regulator/consumer.h>
-#include <linux/regulator/max8998.h>
+#include <linux/mfd/max8998.h>
 #include <linux/i2c/qt602240_ts.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
@@ -531,7 +531,7 @@ static struct regulator_init_data herring_buck4_data = {
 	.consumer_supplies	= buck4_consumer,
 };
 
-static struct max8998_subdev_data herring_regulators[] = {
+static struct max8998_regulator_data herring_regulators[] = {
 	{ MAX8998_LDO2,  &herring_ldo2_data },
 	{ MAX8998_LDO3,  &herring_ldo3_data },
 	{ MAX8998_LDO4,  &herring_ldo4_data },
@@ -556,19 +556,6 @@ static struct max8998_subdev_data herring_regulators[] = {
 static struct max8998_platform_data herring_platform_data = {
 	.num_regulators = ARRAY_SIZE(herring_regulators),
 	.regulators     = herring_regulators,
-
-	.set1           = GPIO_BUCK_1_EN_A,
-	.set2           = GPIO_BUCK_1_EN_B,
-	.set3           = GPIO_BUCK_2_EN,
-	.dvsarm1        = 0x14,  /* 1.25v */
-	.dvsarm2        = 0x12,  /* 1.20V */
-	.dvsarm3        = 0x0c,  /* 1.05V */
-	.dvsarm4        = 0x08,  /* 0.95V */
-	.dvsarm5        = 0x00,
-
-	.dvsint1        = 0x0e,  /* 1.10v */
-	.dvsint2        = 0x0a,  /* 1.00V */
-	.dvsint3	= 0x00,
 };
 
 #endif
