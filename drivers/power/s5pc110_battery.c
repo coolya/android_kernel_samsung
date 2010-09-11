@@ -29,7 +29,6 @@
 #include <mach/hardware.h>
 #include <mach/battery.h>
 #include <mach/gpio-herring.h>
-#include <mach/max8998_function.h>
 #include <plat/gpio-cfg.h>
 
 #include "s5pc110_battery.h"
@@ -205,14 +204,9 @@ struct adc_sample_info {
 };
 static struct adc_sample_info adc_sample[ENDOFADC];
 
-extern charging_device_type current_device_type;
-
 static int get_usb_power_state(void)
 {
-	if (current_device_type == PM_CHARGER_USB_INSERT)
-		return 1;
-	else
-		return 0;
+	return 0;
 }
 
 static inline int s3c_adc_get_adc_data_ex(int channel)
@@ -802,20 +796,10 @@ static void s3c_set_time_for_charging(int mode)
 
 static void s3c_set_chg_en(int enable)
 {
-	int chg_en_val = maxim_chg_status();
+	int chg_en_val = 0;
 
 	if (enable) {
 		if (chg_en_val) {
-			if (current_device_type == PM_CHARGER_TA)
-				maxim_charging_control(PM_CHARGER_TA, TRUE);
-			else if (current_device_type == PM_CHARGER_USB_INSERT)
-				maxim_charging_control(PM_CHARGER_USB_INSERT,
-							TRUE);
-			else {
-				maxim_charging_control(PM_CHARGER_DEFAULT,
-							FALSE);
-				pr_err("%s: unknown charger!!\n", __func__);
-			}
 			s3c_set_time_for_charging(1);
 #ifdef __BATTERY_COMPENSATION__
 			s3c_bat_set_compesation(1, OFFSET_TA_ATTACHED,
@@ -823,7 +807,6 @@ static void s3c_set_chg_en(int enable)
 #endif /* __BATTERY_COMPENSATION__ */
 		}
 	} else {
-		maxim_charging_control(PM_CHARGER_DEFAULT, FALSE);
 		s3c_set_time_for_charging(0);
 		s3c_bat_info.bat_info.batt_is_recharging = 0;
 #ifdef __BATTERY_COMPENSATION__
@@ -1731,8 +1714,6 @@ static int s3c_cable_status_update(int status)
 		/* give userspace some time to see the uevent and update
 		 * LED state or whatnot...
 		 */
-		if (!maxim_chg_status())
-			wake_lock_timeout(&vbus_wake_lock, HZ / 2);
 	}
 	/* if the power source changes, all power supplies may change state */
 	power_supply_changed(&s3c_power_supplies[CHARGER_BATTERY]);
@@ -1811,29 +1792,23 @@ static void s3c_cable_check_status(void)
 
 	mutex_lock(&work_lock);
 
-	if (maxim_chg_status()) {
-		if (s3c_get_bat_health() != POWER_SUPPLY_HEALTH_GOOD) {
-			dev_info(dev, "%s: Unhealth battery state\n", __func__);
-			status = CHARGER_DISCHARGE;
-			s3c_set_chg_en(0);
-			goto __end__;
-		}
-
-		if (get_usb_power_state())
-			status = CHARGER_USB;
-		else
-			status = CHARGER_AC;
-
-		s3c_set_chg_en(1);
-		dev_info(dev, "%s: status : %s\n", __func__,
-				(status == CHARGER_USB) ? "USB" : "AC");
-	} else {
-		status = CHARGER_BATTERY;
+	if (s3c_get_bat_health() != POWER_SUPPLY_HEALTH_GOOD) {
+		dev_info(dev, "%s: Unhealth battery state\n", __func__);
+		status = CHARGER_DISCHARGE;
 		s3c_set_chg_en(0);
+		goto __end__;
 	}
+
+	if (get_usb_power_state())
+		status = CHARGER_USB;
+	else
+		status = CHARGER_AC;
+
+	s3c_set_chg_en(1);
+	dev_info(dev, "%s: status : %s\n", __func__,
+			(status == CHARGER_USB) ? "USB" : "AC");
+
 __end__:
-	dev_info(dev, "%s: charging_enable_status %s\n", __func__,
-		maxim_charging_enable_status() ? "enabled" : "disabled");
 	s3c_cable_status_update(status);
 	mutex_unlock(&work_lock);
 }
@@ -2048,9 +2023,6 @@ static int __devinit s3c_bat_probe(struct platform_device *pdev)
 	bat_temper_state = 0;
 	s3c_test_create_attrs(s3c_power_supplies[CHARGER_AC].dev);
 #endif /* __TEST_DEVICE_DRIVER__ */
-
-	/* Request IRQ */
-	MAX8998_IRQ_init();
 
 	if (s3c_bat_info.polling) {
 		dev_dbg(dev, "%s: will poll for status\n", __func__);

@@ -18,7 +18,6 @@
 #include <linux/delay.h>
 #include <linux/serial_core.h>
 #include <linux/io.h>
-#include <linux/regulator/max8998.h>
 
 #include <asm/cacheflush.h>
 #include <mach/hardware.h>
@@ -369,16 +368,6 @@ static int s3c_pm_prepare_late(suspend_state_t state)
 	//printk("\n%s called .\n",__func__);
 	pmic_controling_list = 0;
 
-	for (i=MAX8998_LDO3; i<=MAX8998_LDO17;i++) {
-		if (i!=MAX8998_LDO9 && i!=MAX8998_LDO3 && i!=MAX8998_LDO4) {
-			if (max8998_ldo_is_enabled_direct(i)) {
-				pmic_controling_list |= (0x1 << i);
-				max8998_ldo_disable_direct(i);
-			}
-		}
-	}
-	max8998_ldo_disable_direct(MAX8998_BUCK2);
-	max8998_ldo_disable_direct(MAX8998_BUCK1);
 	return 0;
 }
 
@@ -387,16 +376,8 @@ static int s3c_pm_wake(suspend_state_t state)
 	int i, saved_control;
 	//printk("\n%s called .\n",__func__);
 
-	max8998_ldo_enable_direct(MAX8998_BUCK1);
-	max8998_ldo_enable_direct(MAX8998_BUCK2);
-	
 	saved_control = pmic_controling_list;
 	
-	for (i=MAX8998_LDO3;i<=MAX8998_LDO17;i++) {
-		if ((saved_control  >> i) & 0x1) 
-			max8998_ldo_enable_direct(i);
-	}
-
 	return 0;
 }
 
