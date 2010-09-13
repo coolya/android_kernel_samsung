@@ -45,6 +45,7 @@
 #include <linux/notifier.h>
 #include <linux/reboot.h>
 #include <linux/wlan_plat.h>
+#include <linux/mfd/wm8994/wm8994_pdata.h>
 
 #ifdef CONFIG_ANDROID_PMEM
 #include <linux/android_pmem.h>
@@ -1037,6 +1038,12 @@ static struct s3c_adc_mach_info s3c_adc_platform __initdata = {
  * Guide for Camera Configuration for Aries
 */
 
+static struct wm8994_platform_data wm8994_pdata = {
+	.ldo = GPIO_CODEC_LDO_EN,
+	.ear_sel = GPIO_EAR_SEL,
+	.micbias = GPIO_MICBIAS_EN,
+};
+
 /* External camera module setting */
 #ifdef CONFIG_VIDEO_S5KA3DFX
 
@@ -1294,16 +1301,10 @@ static struct i2c_board_info i2c_devs0[] __initdata = {
 };
 
 static struct i2c_board_info i2c_devs4[] __initdata = {
-#ifdef CONFIG_SND_SOC_WM8580
-	{
-		I2C_BOARD_INFO("wm8580", 0x1b),
-	},
-#endif
-#ifdef CONFIG_SND_SOC_WM8994
 	{
 		I2C_BOARD_INFO("wm8994", (0x34>>1)),
+		.platform_data = &wm8994_pdata,
 	},
-#endif
 };
 
 
@@ -2933,6 +2934,26 @@ static void __init setup_ram_console_mem(void)
 	ram_console_resource[0].end = ram_console_start + ram_console_size - 1;
 }
 
+static void __init sound_init(void)
+{
+	u32 reg;
+
+	reg = __raw_readl(S5P_OTHERS);
+	reg &= ~(0x3 << 8);
+	reg |= 3 << 8;
+	__raw_writel(reg, S5P_OTHERS);
+
+	reg = __raw_readl(S5P_CLK_OUT);
+	reg &= ~(0x1f << 12);
+	reg |= 19 << 12;
+	__raw_writel(reg, S5P_CLK_OUT);
+
+	reg = __raw_readl(S5P_CLK_OUT);
+	reg &= ~0x1;
+	reg |= 0x1;
+	__raw_writel(reg, S5P_CLK_OUT);
+
+}
 static void __init herring_machine_init(void)
 {
 	setup_ram_console_mem();
@@ -2993,7 +3014,11 @@ static void __init herring_machine_init(void)
 	i2c_register_board_info(0, i2c_devs0, ARRAY_SIZE(i2c_devs0));
 	i2c_register_board_info(1, i2c_devs1, ARRAY_SIZE(i2c_devs1));
 	i2c_register_board_info(2, i2c_devs2, ARRAY_SIZE(i2c_devs2));
+
+	/* wm8994 codec */
+	sound_init();
 	i2c_register_board_info(4, i2c_devs4, ARRAY_SIZE(i2c_devs4));
+
 	/* accel sensor */
 	i2c_register_board_info(5, i2c_devs5, ARRAY_SIZE(i2c_devs5));
 	i2c_register_board_info(6, i2c_devs6, ARRAY_SIZE(i2c_devs6));
