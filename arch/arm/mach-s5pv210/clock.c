@@ -32,6 +32,8 @@
 #include <plat/s5pv210.h>
 #include <mach/regs-audss.h>
 
+static int s5pv210_usbosc_enable(struct clk *clk, int enable);
+
 static struct clksrc_clk clk_mout_apll = {
 	.clk	= {
 		.name		= "mout_apll",
@@ -576,6 +578,11 @@ static struct clk init_clocks_disable[] = {
 		.parent		= &clk_hclk_dsys.clk,
 		.enable		= s5pv210_clk_ip0_ctrl,
 		.ctrlbit	= (1 << 12),
+	}, {
+		.name		= "usb_osc",
+		.id		= -1,
+		.enable		= s5pv210_usbosc_enable,
+		.ctrlbit	= (1 << 1),
 	},
 };
 
@@ -1265,6 +1272,19 @@ static struct clksrc_clk *sysclks[] = {
 	&clk_mout_i2s_a,
 	&clk_dout_audio_bus_clk_i2s,
 };
+
+static int s5pv210_usbosc_enable(struct clk *clk, int enable)
+{
+	unsigned int ctrlbit = clk->ctrlbit;
+	unsigned int usbosc_con = __raw_readl(S5P_SLEEP_CFG) & ~ctrlbit;
+
+	if (enable)
+		usbosc_con |= ctrlbit;
+
+	writel(usbosc_con, S5P_SLEEP_CFG);
+
+	return 0;
+}
 
 static int s5pv210_epll_enable(struct clk *clk, int enable)
 {
