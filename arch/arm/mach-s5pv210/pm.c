@@ -131,10 +131,6 @@ static void s5pv210_pm_prepare(void)
 	/* ensure at least INFORM0 has the resume address */
 	__raw_writel(virt_to_phys(s3c_cpu_resume), S5P_INFORM0);
 
-	tmp = __raw_readl(S5P_SLEEP_CFG);
-	tmp &= ~(S5P_SLEEP_CFG_OSC_EN | S5P_SLEEP_CFG_USBOSC_EN);
-	__raw_writel(tmp, S5P_SLEEP_CFG);
-
 	/* WFI for SLEEP mode configuration by SYSCON */
 	tmp = __raw_readl(S5P_PWR_CFG);
 	tmp &= S5P_CFG_WFI_CLEAN;
