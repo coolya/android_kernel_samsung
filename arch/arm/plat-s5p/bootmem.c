@@ -19,17 +19,18 @@
 #include <plat/media.h>
 #include <mach/media.h>
 
+static struct s5p_media_device *media_devs;
+static int nr_media_devs;
+
 static struct s5p_media_device *s5p_get_media_device(int dev_id, int bank)
 {
 	struct s5p_media_device *mdev = NULL;
-	int i = 0, found = 0, nr_devs;
-
-	nr_devs = nr_media_devs;
+	int i = 0, found = 0;
 
 	if (dev_id < 0)
 		return NULL;
 
-	while (!found && (i < nr_devs)) {
+	while (!found && (i < nr_media_devs)) {
 		mdev = &media_devs[i];
 		if (mdev->id == dev_id && mdev->bank == bank)
 			found = 1;
@@ -76,14 +77,15 @@ size_t s5p_get_media_memsize_bank(int dev_id, int bank)
 }
 EXPORT_SYMBOL(s5p_get_media_memsize_bank);
 
-void s5p_reserve_bootmem(void)
+void s5p_reserve_bootmem(struct s5p_media_device *mdevs, int nr_mdevs)
 {
 	struct s5p_media_device *mdev;
-	int i, nr_devs;
+	int i;
 
-	nr_devs = nr_media_devs;
+	media_devs = mdevs;
+	nr_media_devs = nr_mdevs;
 
-	for (i = 0; i < nr_devs; i++) {
+	for (i = 0; i < nr_media_devs; i++) {
 		mdev = &media_devs[i];
 		if (mdev->memsize <= 0)
 			continue;

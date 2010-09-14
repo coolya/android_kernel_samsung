@@ -27,7 +27,7 @@ struct s5p_media_device {
 extern struct meminfo meminfo;
 extern dma_addr_t s5p_get_media_memory_bank(int dev_id, int bank);
 extern size_t s5p_get_media_memsize_bank(int dev_id, int bank);
-extern void s5p_reserve_bootmem(void);
+extern void s5p_reserve_bootmem(struct s5p_media_device *mdevs, int nr_mdevs);
 
 #endif
 

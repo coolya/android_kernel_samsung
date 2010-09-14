@@ -27,8 +27,5 @@
 #define S5P_MDEV_FIMD       10
 #define S5P_MDEV_MAX        11
 
-extern struct s5p_media_device media_devs[];
-extern int nr_media_devs;
-
 #endif
 
