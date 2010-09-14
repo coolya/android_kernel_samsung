@@ -28,6 +28,8 @@
 #include <linux/pwm_backlight.h>
 #include <linux/clk.h>
 #include <linux/usb/ch9.h>
+#include <linux/input/cypress-touchkey.h>
+#include <linux/input.h>
 #include <linux/irq.h>
 
 #include <asm/mach/arch.h>
@@ -110,7 +112,6 @@ static int herring_notifier_call(struct notifier_block *this,
 
 	return NOTIFY_DONE;
 }
-
 
 static struct notifier_block herring_reboot_notifier = {
 	.notifier_call = herring_notifier_call,
@@ -980,6 +981,37 @@ static struct platform_device s3c_device_i2c12 = {
 	.dev.platform_data	= &i2c12_platdata,
 };
 
+static void touch_keypad_gpio_init(void)
+{
+	int ret = 0;
+
+	ret = gpio_request(_3_GPIO_TOUCH_EN, "TOUCH_EN");
+	if (ret)
+		printk(KERN_ERR "Failed to request gpio touch_en.\n");
+}
+
+static void touch_keypad_onoff(int onoff)
+{
+	gpio_direction_output(_3_GPIO_TOUCH_EN, onoff);
+
+	if (onoff == TOUCHKEY_OFF)
+		msleep(30);
+}
+
+static const int touch_keypad_code[5] = {
+	0,
+	KEY_MENU,
+	KEY_HOME,
+	KEY_BACK,
+	KEY_SEARCH
+};
+
+static struct touchkey_platform_data touchkey_data = {
+	.keycode_cnt = 5,
+	.keycode = &touch_keypad_code,
+	.touchkey_onoff = &touch_keypad_onoff,
+};
+
 #ifdef CONFIG_S5PV210_ADCTS
 static struct s3c_adcts_plat_info s3c_adcts_cfgs __initdata = {
 	.channel = {
@@ -1395,8 +1427,9 @@ static struct i2c_board_info i2c_devs2[] __initdata = {
 /* I2C2 */
 static struct i2c_board_info i2c_devs10[] __initdata = {
 	{
-		I2C_BOARD_INFO("melfas_touchkey", 0x20),
-		/* .platform_data  = &qt602240_p1_platform_data, */
+		I2C_BOARD_INFO("cypress_touchkey", 0x20),
+		.platform_data  = &touchkey_data,
+		.irq = (IRQ_EINT_GROUP22_BASE + 1),
 	},
 };
 
@@ -2031,8 +2064,8 @@ static unsigned int jupiter_gpio_table[][8] = {
 	{ S5PV210_GPJ4(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
 	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
 	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
-	{ S5PV210_GPJ4(1), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
-	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
+	{ S5PV210_GPJ4(1), S3C_GPIO_SFN(0xff), S3C_GPIO_SETPIN_NONE,
+	  S3C_GPIO_PULL_NONE, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
 	  S3C_GPIO_SLP_INPUT, S3C_GPIO_PULL_DOWN },
 	{ S5PV210_GPJ4(2), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
 	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
@@ -2766,7 +2799,7 @@ static struct platform_device *herring_devices[] __initdata = {
 #endif
 
 	&sec_device_battery,
-//	&s3c_device_i2c10, /* For touchkey */
+	&s3c_device_i2c10,
 
 #ifdef CONFIG_S5PV210_POWER_DOMAIN
 	&s5pv210_pd_audio,
@@ -3083,6 +3116,7 @@ static void __init herring_machine_init(void)
 	i2c_register_board_info(5, i2c_devs5, ARRAY_SIZE(i2c_devs5));
 	i2c_register_board_info(6, i2c_devs6, ARRAY_SIZE(i2c_devs6));
 	/* Touch Key */
+	touch_keypad_gpio_init();
 	i2c_register_board_info(10, i2c_devs10, ARRAY_SIZE(i2c_devs10));
 	/* FSA9480 */
 	fsa9480_gpio_init();
