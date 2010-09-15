@@ -130,7 +130,7 @@ select_route universal_wm8994_voicecall_paths[] = {
 };
 
 select_mic_route universal_wm8994_mic_paths[] = {
-	wm8994_record_main_mic, wm8994_record_headset_mic,
+	wm8994_record_main_mic, wm8994_record_headset_mic, wm8994_record_bluetooth,
 };
 
 select_clock_control universal_clock_controls = wm8994_configure_clock;
