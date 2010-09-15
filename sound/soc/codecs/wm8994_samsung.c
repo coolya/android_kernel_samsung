@@ -1088,7 +1088,7 @@ static int wm8994_startup(struct snd_pcm_substream *substream,
 		/* For initialize codec */
 		wm8994_write(codec, WM8994_POWER_MANAGEMENT_1,
 				0x3 << WM8994_VMID_SEL_SHIFT | WM8994_BIAS_ENA);
-		msleep(30);
+		msleep(50);
 		wm8994_write(codec, WM8994_POWER_MANAGEMENT_1,
 				WM8994_VMID_SEL_NORMAL | WM8994_BIAS_ENA);
 		wm8994_write(codec, WM8994_OVERSAMPLING, 0x0000);
@@ -1237,7 +1237,7 @@ static int wm8994_init(struct wm8994_priv *wm8994_private)
 
 	wm8994_write(codec, WM8994_POWER_MANAGEMENT_1,
 			0x3 << WM8994_VMID_SEL_SHIFT | WM8994_BIAS_ENA);
-	msleep(10);
+	msleep(50);
 	wm8994_write(codec, WM8994_POWER_MANAGEMENT_1,
 			WM8994_VMID_SEL_NORMAL | WM8994_BIAS_ENA);
 
@@ -1338,7 +1338,6 @@ static int wm8994_i2c_probe(struct i2c_client *i2c,
 	s3c_gpio_slp_cfgpin(pdata->micbias, S3C_GPIO_SLP_PREV);
 
 	wm8994_ldo_control(pdata, 1);
-	msleep(10);
 
 	codec->hw_write = (hw_write_t) i2c_master_send;
 	i2c_set_clientdata(i2c, wm8994_priv);
