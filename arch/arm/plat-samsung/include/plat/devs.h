@@ -23,6 +23,11 @@ extern struct s3c24xx_uart_resources s5p_uart_resources[];
 extern struct platform_device *s3c24xx_uart_devs[];
 extern struct platform_device *s3c24xx_uart_src[];
 
+extern struct platform_device s3c24xx_uart_device0;
+extern struct platform_device s3c24xx_uart_device1;
+extern struct platform_device s3c24xx_uart_device2;
+extern struct platform_device s3c24xx_uart_device3;
+
 extern struct platform_device s3c_device_timer[];
 
 extern struct platform_device s3c64xx_device_iis0;

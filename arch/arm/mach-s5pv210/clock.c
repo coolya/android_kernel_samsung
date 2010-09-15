@@ -19,6 +19,8 @@
 #include <linux/clk.h>
 #include <linux/sysdev.h>
 #include <linux/io.h>
+#include <linux/device.h>
+#include <linux/platform_device.h>
 
 #include <mach/map.h>
 
@@ -30,6 +32,7 @@
 #include <plat/s5p-clock.h>
 #include <plat/clock-clksrc.h>
 #include <plat/s5pv210.h>
+#include <plat/devs.h>
 #include <mach/regs-audss.h>
 
 static int s5pv210_usbosc_enable(struct clk *clk, int enable);
@@ -977,6 +980,7 @@ static struct clksrc_clk clksrcs[] = {
 			.id		= 0,
 			.enable		= s5pv210_clk_mask0_ctrl,
 			.ctrlbit	= (1 << 12),
+			.dev		= &s3c24xx_uart_device0.dev,
 		},
 		.sources = &clkset_uart,
 		.reg_src = { .reg = S5P_CLK_SRC4, .shift = 16, .size = 4 },
@@ -987,6 +991,7 @@ static struct clksrc_clk clksrcs[] = {
 			.id		= 1,
 			.enable		= s5pv210_clk_mask0_ctrl,
 			.ctrlbit	= (1 << 13),
+			.dev		= &s3c24xx_uart_device1.dev,
 		},
 		.sources = &clkset_uart,
 		.reg_src = { .reg = S5P_CLK_SRC4, .shift = 20, .size = 4 },
@@ -997,6 +1002,7 @@ static struct clksrc_clk clksrcs[] = {
 			.id		= 2,
 			.enable		= s5pv210_clk_mask0_ctrl,
 			.ctrlbit	= (1 << 14),
+			.dev		= &s3c24xx_uart_device2.dev,
 		},
 		.sources = &clkset_uart,
 		.reg_src = { .reg = S5P_CLK_SRC4, .shift = 24, .size = 4 },
@@ -1007,6 +1013,7 @@ static struct clksrc_clk clksrcs[] = {
 			.id		= 3,
 			.enable		= s5pv210_clk_mask0_ctrl,
 			.ctrlbit	= (1 << 15),
+			.dev		= &s3c24xx_uart_device3.dev,
 		},
 		.sources = &clkset_uart,
 		.reg_src = { .reg = S5P_CLK_SRC4, .shift = 28, .size = 4 },
