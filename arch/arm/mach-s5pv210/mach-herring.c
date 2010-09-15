@@ -649,7 +649,7 @@ static struct max8998_regulator_data herring_regulators[] = {
 	{ MAX8998_BUCK4, &herring_buck4_data },
 };
 
-static struct max8998_platform_data herring_platform_data = {
+static struct max8998_platform_data max8998_pdata = {
 	.num_regulators = ARRAY_SIZE(herring_regulators),
 	.regulators     = herring_regulators,
 };
@@ -1510,7 +1510,8 @@ static struct i2c_board_info i2c_devs6[] __initdata = {
 	{
 		/* The address is 0xCC used since SRAD = 0 */
 		I2C_BOARD_INFO("max8998", (0xCC >> 1)),
-		.platform_data = &herring_platform_data,
+		.platform_data	= &max8998_pdata,
+		.irq		= IRQ_EINT7,
 	}, {
 		I2C_BOARD_INFO("rtc_max8998", (0x0D >> 1)),
 	},
