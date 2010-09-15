@@ -519,7 +519,7 @@ static void fimc_mmap_open(struct vm_area_struct *vma)
 {
 	struct fimc_global *dev = fimc_dev;
 	int pri_data	= (int)vma->vm_private_data;
-	u32 id		= pri_data / 0x10;
+	u32 id		= pri_data / 0x100;
 	u32 ctx		= (pri_data - (id * 0x100)) / 0x10;
 	u32 idx		= pri_data % 0x10;
 
@@ -620,11 +620,11 @@ static inline int fimc_mmap_out(struct file *filp, struct vm_area_struct *vma)
 	struct fimc_control *ctrl = prv_data->ctrl;
 	int ctx_id = prv_data->ctx_id;
 	int idx = ctrl->out->ctx[ctx_id].overlay.req_idx;
-	int ret = 0;
+	int ret = -1;
 
 	if (idx >= 0)
 		ret = fimc_mmap_out_dst(filp, vma, idx);
-	else
+	else if (idx == FIMC_MMAP_IDX)
 		ret = fimc_mmap_out_src(filp, vma);
 
 	return ret;

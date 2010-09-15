@@ -35,9 +35,9 @@
 #define FIMC_SUBDEVS		3
 #define FIMC_MAXCAMS		5 /* added 1 because of WriteBack */
 #define FIMC_PHYBUFS		4
-#define FIMC_OUTBUFS		2
+#define FIMC_OUTBUFS		3
 #define FIMC_INQUEUES		10
-#define FIMC_MAX_CTXS		2
+#define FIMC_MAX_CTXS		1
 #define FIMC_TPID		3
 #define FIMC_CAPBUFS		16
 #define FIMC_ONESHOT_TIMEOUT	200
@@ -57,6 +57,9 @@
 
 #define FIMC_FHD_WIDTH		1920
 #define FIMC_FHD_HEIGHT		1080
+
+#define FIMC_MMAP_IDX		-1
+#define FIMC_USERPTR_IDX	-2
 
 #define FIMC_HCLK		0
 #define FIMC_SCLK		1
@@ -272,6 +275,7 @@ enum s3cfb_mem_owner_t {
 	DMA_MEM_FIMD	= 1,
 	DMA_MEM_OTHER	= 2,
 };
+
 #define S3CFB_WIN_OFF_ALL	_IO('F', 202)
 #define S3CFB_WIN_POSITION	_IOW('F', 203, struct s3cfb_user_window)
 #define S3CFB_GET_LCD_WIDTH	_IOR('F', 302, int)

@@ -837,7 +837,7 @@ int fimc43_hwset_scaler(struct fimc_control *ctrl, struct fimc_scaler *sc)
 	cfg_ext &= ~S3C_CIEXTEN_MAINHORRATIO_EXT_MASK;
 	cfg_ext &= ~S3C_CIEXTEN_MAINVERRATIO_EXT_MASK;
 
-	cfg_ext |= S3C_CIEXTEN_MAINHORRATIO_EXT(sc->main_vratio);
+	cfg_ext |= S3C_CIEXTEN_MAINHORRATIO_EXT(sc->main_hratio);
 	cfg_ext |= S3C_CIEXTEN_MAINVERRATIO_EXT(sc->main_vratio);
 
 	writel(cfg_ext, ctrl->regs + S3C_CIEXTEN);
@@ -878,7 +878,7 @@ int fimc50_hwset_scaler(struct fimc_control *ctrl, struct fimc_scaler *sc)
 	cfg_ext &= ~S3C_CIEXTEN_MAINHORRATIO_EXT_MASK;
 	cfg_ext &= ~S3C_CIEXTEN_MAINVERRATIO_EXT_MASK;
 
-	cfg_ext |= S3C_CIEXTEN_MAINHORRATIO_EXT(sc->main_vratio);
+	cfg_ext |= S3C_CIEXTEN_MAINHORRATIO_EXT(sc->main_hratio);
 	cfg_ext |= S3C_CIEXTEN_MAINVERRATIO_EXT(sc->main_vratio);
 
 	writel(cfg_ext, ctrl->regs + S3C_CIEXTEN);

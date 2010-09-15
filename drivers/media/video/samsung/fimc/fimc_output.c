@@ -191,24 +191,20 @@ int fimc_outdev_stop_streaming(struct fimc_control *ctrl, struct fimc_ctx *ctx)
 			ctx->status = FIMC_STREAMOFF;
 		else
 			ctx->status = FIMC_READY_OFF;
-
-		fimc_outdev_stop_dma(ctrl, ctx);
 		break;
 	case FIMC_OVLY_NONE_SINGLE_BUF:		/* fall through */
 	case FIMC_OVLY_NONE_MULTI_BUF:
-		ret = wait_event_timeout(ctrl->wq,
-					(ctx->status == FIMC_STREAMOFF || ctx->status == FIMC_STREAMON_IDLE),
-					FIMC_ONESHOT_TIMEOUT);
-		if (ret == 0) {
-			fimc_dump_context(ctrl, ctx);
-			fimc_err("fail %s: %d\n", __func__, ctx->ctx_num);
-		}
-
 		if (ctx->status == FIMC_STREAMON_IDLE)
 			ctx->status = FIMC_STREAMOFF;
 		else
 			ctx->status = FIMC_READY_OFF;
-
+		ret = wait_event_timeout(ctrl->wq,
+				(ctx->status == FIMC_STREAMOFF),
+				FIMC_ONESHOT_TIMEOUT);
+		if (ret == 0) {
+			fimc_dump_context(ctrl, ctx);
+			fimc_err("fail %s: %d\n", __func__, ctx->ctx_num);
+		}
 
 		break;
 	default:
@@ -288,13 +284,6 @@ int fimc_outdev_resume_dma(struct fimc_control *ctrl, struct fimc_ctx *ctx)
 			(unsigned long)ctx->dst[idx].base[FIMC_ADDR_Y]);
 	if (ret < 0) {
 		fimc_err("direct_ioctl(S3CFB_SET_WIN_ADDR) fail\n");
-		return -EINVAL;
-	}
-
-	ret = s3cfb_direct_ioctl(ctrl->id, S3CFB_SET_WIN_ON,
-							(unsigned long)NULL);
-	if (ret < 0) {
-		fimc_err("direct_ioctl(S3CFB_SET_WIN_ON) fail\n");
 		return -EINVAL;
 	}
 
@@ -1447,7 +1436,7 @@ int fimc_start_fifo(struct fimc_control *ctrl, struct fimc_ctx *ctx)
 		ret = s3cfb_direct_ioctl(id,
 					S3CFB_SET_WIN_PATH, DATA_PATH_IPC);
 	if (ret < 0) {
-		fimc_err("direct_ioctl(S3CFB_SET_WIN_MEM) fail\n");
+		fimc_err("direct_ioctl(S3CFB_SET_WIN_PATH) fail\n");
 		return -EINVAL;
 	}
 
@@ -1584,8 +1573,12 @@ int fimc_reqbufs_output(void *fh, struct v4l2_requestbuffers *b)
 		/* initialize source buffers */
 		if (b->memory == V4L2_MEMORY_MMAP) {
 			ret = fimc_outdev_set_src_buf(ctrl, ctx);
+			ctx->overlay.req_idx = FIMC_MMAP_IDX;
 			if (ret)
 				return ret;
+		} else if (b->memory == V4L2_MEMORY_USERPTR) {
+			if (mode == FIMC_OVLY_DMA_AUTO)
+				ctx->overlay.req_idx = FIMC_USERPTR_IDX;
 		}
 		ctx->is_requested = 1;
 	}
@@ -1610,7 +1603,7 @@ int fimc_querybuf_output(void *fh, struct v4l2_buffer *b)
 		return -EBUSY;
 	}
 
-	if (b->index > ctx->buf_num) {
+	if (b->index >= ctx->buf_num) {
 		fimc_err("The index is out of bounds. You requested %d buffers."
 			"But requested index is %d\n", ctx->buf_num, b->index);
 		return -EINVAL;
@@ -2381,7 +2374,7 @@ int fimc_qbuf_output(void *fh, struct v4l2_buffer *b)
 	ctx = &ctrl->out->ctx[ctx_id];
 	fimc_info2("ctx(%d) queued idx = %d\n", ctx->ctx_num, b->index);
 
-	if (b->index > ctx->buf_num) {
+	if (b->index >= ctx->buf_num) {
 		fimc_err("The index is out of bounds. "
 			"You requested %d buffers. "
 			"But you set the index as %d\n",
@@ -2532,16 +2525,6 @@ int fimc_g_fmt_vid_out(struct file *filp, void *fh, struct v4l2_format *f)
 		ctrl->out->idxs.active.idx = -1;
 		ctrl->out->idxs.next.ctx = -1;
 		ctrl->out->idxs.next.idx = -1;
-	} else { 
-		ctx = &ctrl->out->ctx[ctx_id];
-		ctx->ctx_num = ctx_id;
-		ctx->overlay.mode = FIMC_OVLY_NOT_FIXED;
-		ctx->status = FIMC_STREAMOFF;
-
-		for (j = 0; j < FIMC_OUTBUFS; j++) {
-			ctx->inq[j] = -1;
-			ctx->outq[j] = -1;
-		}
 	}
 
 	f->fmt.pix = ctrl->out->ctx[ctx_id].pix;
