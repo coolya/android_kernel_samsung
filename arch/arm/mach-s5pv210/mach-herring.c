@@ -77,6 +77,7 @@
 #ifdef CONFIG_CPU_FREQ
 #include <mach/cpu-freq-v210.h>
 #endif
+#include <linux/gp2a.h>
 
 struct class *sec_class;
 EXPORT_SYMBOL(sec_class);
@@ -1493,9 +1494,28 @@ static struct i2c_board_info i2c_devs9[] __initdata = {
 	},
 };
 
+static int gp2a_power(bool on)
+{
+	/* this controls the power supply rail to the gp2a IC */
+	gpio_direction_output(GPIO_PS_ON, on);
+	return 0;
+}
+
+static int gp2a_light_adc_value(void)
+{
+	return s3c_adc_get_adc_data(9);
+}
+
+static struct gp2a_platform_data gp2a_pdata = {
+	.power = gp2a_power,
+	.p_out = GPIO_PS_VOUT,
+	.light_adc_value = gp2a_light_adc_value
+};
+
 static struct i2c_board_info i2c_devs11[] __initdata = {
 	{
 		I2C_BOARD_INFO("gp2a", (0x88 >> 1)),
+		.platform_data = &gp2a_pdata,
 	},
 };
 
@@ -1609,11 +1629,6 @@ static void __init android_pmem_set_platdata(void)
 struct platform_device sec_device_battery = {
 	.name	= "sec-battery",
 	.id	= -1,
-};
-
-static struct platform_device opt_gp2a = {
-	.name = "gp2a-opt",
-	.id = -1,
 };
 
 static struct platform_device sec_device_rfkill = {
@@ -2847,7 +2862,6 @@ static struct platform_device *herring_devices[] __initdata = {
 #ifdef CONFIG_TOUCHSCREEN_QT602240
 	&s3c_device_qtts,
 #endif
-	&opt_gp2a,
 	&sec_device_rfkill,
 	&sec_device_btsleep,
 	&ram_console_device,
