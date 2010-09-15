@@ -976,7 +976,7 @@ static struct clksrc_clk clksrcs[] = {
 		.reg_div = { .reg = S5P_CLK_DIV6, .shift = 12, .size = 3 },
 	}, {
 		.clk	= {
-			.name		= "uclk1",
+			.name		= "sclk",
 			.id		= 0,
 			.enable		= s5pv210_clk_mask0_ctrl,
 			.ctrlbit	= (1 << 12),
@@ -987,7 +987,7 @@ static struct clksrc_clk clksrcs[] = {
 		.reg_div = { .reg = S5P_CLK_DIV4, .shift = 16, .size = 4 },
 	}, {
 		.clk		= {
-			.name		= "uclk1",
+			.name		= "sclk",
 			.id		= 1,
 			.enable		= s5pv210_clk_mask0_ctrl,
 			.ctrlbit	= (1 << 13),
@@ -998,7 +998,7 @@ static struct clksrc_clk clksrcs[] = {
 		.reg_div = { .reg = S5P_CLK_DIV4, .shift = 20, .size = 4 },
 	}, {
 		.clk		= {
-			.name		= "uclk1",
+			.name		= "sclk",
 			.id		= 2,
 			.enable		= s5pv210_clk_mask0_ctrl,
 			.ctrlbit	= (1 << 14),
@@ -1009,7 +1009,7 @@ static struct clksrc_clk clksrcs[] = {
 		.reg_div = { .reg = S5P_CLK_DIV4, .shift = 24, .size = 4 },
 	}, {
 		.clk		= {
-			.name		= "uclk1",
+			.name		= "sclk",
 			.id		= 3,
 			.enable		= s5pv210_clk_mask0_ctrl,
 			.ctrlbit	= (1 << 15),
@@ -1497,7 +1497,7 @@ void __init_or_cpufreq s5pv210_setup_clocks(void)
 		} else if (!strcmp(pclkSrc->clk.name, "sclk_g2d")) {
 			clk_set_parent(&pclkSrc->clk, &clk_mout_mpll.clk);
 			clk_set_rate(&pclkSrc->clk, 250*MHZ);
-		} else if (!strcmp(pclkSrc->clk.name, "uclk1")) {
+		} else if (!strcmp(pclkSrc->clk.name, "sclk")) {
 			clk_set_parent(&pclkSrc->clk, &clk_mout_mpll.clk);
 
 			if (pclkSrc->clk.id == 0)
