@@ -85,12 +85,6 @@ config FB_S3C_HT101HD1
 	  This enables support for HT101HD1 WXVGA(1366*768) LCD panel
 endchoice
 
-config VIDEO_SAMSUNG_MEMSIZE_FIMD
-	int "Memory size in kbytes for FIMD"
-	depends on FB_S3C
-	default "3072"
-
-
 config FB_S3C_TL2796
         bool "TL2796"
         depends on FB_S3C && (MACH_SMDKC110 || MACH_S5PC110_CRESPO || MACH_S5PC110_P1)
