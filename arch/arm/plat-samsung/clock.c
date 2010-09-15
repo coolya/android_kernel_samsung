@@ -69,8 +69,7 @@ static int clk_null_enable(struct clk *clk, int enable)
 
 struct clk *clk_get(struct device *dev, const char *id)
 {
-	struct clk *p;
-	struct clk *clk = ERR_PTR(-ENOENT);
+	struct clk *clk;
 	int idno;
 
 	if (dev == NULL || dev->bus != &platform_bus_type)
@@ -80,28 +79,24 @@ struct clk *clk_get(struct device *dev, const char *id)
 
 	spin_lock(&clocks_lock);
 
-	list_for_each_entry(p, &clocks, list) {
-		if (p->id == idno &&
-		    strcmp(id, p->name) == 0 &&
-		    try_module_get(p->owner)) {
-			clk = p;
-			break;
-		}
-	}
+	list_for_each_entry(clk, &clocks, list)
+		if (!strcmp(id, clk->name) && clk->dev == dev)
+			goto found_it;
 
-	/* check for the case where a device was supplied, but the
-	 * clock that was being searched for is not device specific */
+	list_for_each_entry(clk, &clocks, list)
+		if (clk->id == idno && strcmp(id, clk->name) == 0)
+			goto found_it;
 
-	if (IS_ERR(clk)) {
-		list_for_each_entry(p, &clocks, list) {
-			if (p->id == -1 && strcmp(id, p->name) == 0 &&
-			    try_module_get(p->owner)) {
-				clk = p;
-				break;
-			}
-		}
-	}
+	list_for_each_entry(clk, &clocks, list)
+		if (clk->id == -1 && !strcmp(id, clk->name) && clk->dev == NULL)
+			goto found_it;
 
+	clk = ERR_PTR(-ENOENT);
+	spin_unlock(&clocks_lock);
+	return clk;
+found_it:
+	if (!try_module_get(clk->owner))
+		clk = ERR_PTR(-ENOENT);
 	spin_unlock(&clocks_lock);
 	return clk;
 }
