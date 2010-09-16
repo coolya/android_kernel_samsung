@@ -2718,19 +2718,7 @@ static unsigned int wlan_sdio_off_table[][4] = {
 
 static int wlan_power_en(int onoff)
 {
-	u32 i;
-	u32 sdio;
-
 	if (onoff) {
-		s3c_gpio_cfgpin(GPIO_WLAN_BT_EN, S3C_GPIO_OUTPUT);
-		s3c_gpio_setpull(GPIO_WLAN_BT_EN, S3C_GPIO_PULL_NONE);
-		gpio_set_value(GPIO_WLAN_BT_EN, GPIO_LEVEL_LOW);
-
-		s3c_gpio_cfgpin(GPIO_WLAN_nRST,
-				S3C_GPIO_SFN(GPIO_WLAN_nRST_AF));
-		s3c_gpio_setpull(GPIO_WLAN_nRST, S3C_GPIO_PULL_NONE);
-		gpio_set_value(GPIO_WLAN_nRST, GPIO_LEVEL_LOW);
-
 		s3c_gpio_cfgpin(GPIO_WLAN_HOST_WAKE,
 				S3C_GPIO_SFN(GPIO_WLAN_HOST_WAKE_AF));
 		s3c_gpio_setpull(GPIO_WLAN_HOST_WAKE, S3C_GPIO_PULL_DOWN);
@@ -2740,36 +2728,14 @@ static int wlan_power_en(int onoff)
 		s3c_gpio_setpull(GPIO_WLAN_WAKE, S3C_GPIO_PULL_NONE);
 		gpio_set_value(GPIO_WLAN_WAKE, GPIO_LEVEL_LOW);
 
-		for (i = 0; i < ARRAY_SIZE(wlan_sdio_on_table); i++) {
-			sdio = wlan_sdio_on_table[i][0];
-			s3c_gpio_cfgpin(sdio,
-					S3C_GPIO_SFN(wlan_sdio_on_table[i][1]));
-			s3c_gpio_setpull(sdio, wlan_sdio_on_table[i][3]);
-			if (wlan_sdio_on_table[i][2] != GPIO_LEVEL_NONE)
-				gpio_set_value(sdio, wlan_sdio_on_table[i][2]);
-		}
-		udelay(5);
-
-		gpio_set_value(GPIO_WLAN_BT_EN, GPIO_LEVEL_HIGH);
-		s3c_gpio_slp_cfgpin(GPIO_WLAN_BT_EN, S3C_GPIO_SLP_OUT1);
+		s3c_gpio_cfgpin(GPIO_WLAN_nRST,
+				S3C_GPIO_SFN(GPIO_WLAN_nRST_AF));
+		s3c_gpio_setpull(GPIO_WLAN_nRST, S3C_GPIO_PULL_NONE);
 		gpio_set_value(GPIO_WLAN_nRST, GPIO_LEVEL_HIGH);
 		s3c_gpio_slp_cfgpin(GPIO_WLAN_nRST, S3C_GPIO_SLP_OUT1);
 	} else {
-		if (gpio_get_value(GPIO_BT_nRST) == 0) {
-			gpio_set_value(GPIO_WLAN_BT_EN, GPIO_LEVEL_LOW);
-			s3c_gpio_slp_cfgpin(GPIO_WLAN_BT_EN, S3C_GPIO_SLP_OUT0);
-		}
 		gpio_set_value(GPIO_WLAN_nRST, GPIO_LEVEL_LOW);
 		s3c_gpio_slp_cfgpin(GPIO_WLAN_nRST, S3C_GPIO_SLP_OUT0);
-
-		for (i = 0; i < ARRAY_SIZE(wlan_sdio_off_table); i++) {
-			sdio = wlan_sdio_off_table[i][0];
-			s3c_gpio_cfgpin(sdio,
-				S3C_GPIO_SFN(wlan_sdio_off_table[i][1]));
-			s3c_gpio_setpull(sdio, wlan_sdio_off_table[i][3]);
-			if (wlan_sdio_off_table[i][2] != GPIO_LEVEL_NONE)
-				gpio_set_value(sdio, wlan_sdio_off_table[i][2]);
-		}
 	}
 	return 0;
 }
@@ -2781,8 +2747,42 @@ static int wlan_reset_en(int onoff)
 	return 0;
 }
 
-static int wlan_carddetect_en(int val)
+static int wlan_carddetect_en(int onoff)
 {
+	u32 i;
+	u32 sdio;
+
+	if (onoff) {
+		s3c_gpio_cfgpin(GPIO_WLAN_BT_EN, S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(GPIO_WLAN_BT_EN, S3C_GPIO_PULL_NONE);
+		gpio_set_value(GPIO_WLAN_BT_EN, GPIO_LEVEL_HIGH);
+		s3c_gpio_slp_cfgpin(GPIO_WLAN_BT_EN, S3C_GPIO_SLP_OUT1);
+
+		for (i = 0; i < ARRAY_SIZE(wlan_sdio_on_table); i++) {
+			sdio = wlan_sdio_on_table[i][0];
+			s3c_gpio_cfgpin(sdio,
+					S3C_GPIO_SFN(wlan_sdio_on_table[i][1]));
+			s3c_gpio_setpull(sdio, wlan_sdio_on_table[i][3]);
+			if (wlan_sdio_on_table[i][2] != GPIO_LEVEL_NONE)
+				gpio_set_value(sdio, wlan_sdio_on_table[i][2]);
+		}
+	} else {
+		if (gpio_get_value(GPIO_BT_nRST) == 0) {
+			gpio_set_value(GPIO_WLAN_BT_EN, GPIO_LEVEL_LOW);
+			s3c_gpio_slp_cfgpin(GPIO_WLAN_BT_EN, S3C_GPIO_SLP_OUT0);
+		}
+
+		for (i = 0; i < ARRAY_SIZE(wlan_sdio_off_table); i++) {
+			sdio = wlan_sdio_off_table[i][0];
+			s3c_gpio_cfgpin(sdio,
+				S3C_GPIO_SFN(wlan_sdio_off_table[i][1]));
+			s3c_gpio_setpull(sdio, wlan_sdio_off_table[i][3]);
+			if (wlan_sdio_off_table[i][2] != GPIO_LEVEL_NONE)
+				gpio_set_value(sdio, wlan_sdio_off_table[i][2]);
+		}
+	}
+	udelay(5);
+
 	sdhci_s3c_force_presence_change(&s3c_device_hsmmc3);
 	return 0;
 }
