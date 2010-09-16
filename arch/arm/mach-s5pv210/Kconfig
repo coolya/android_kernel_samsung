@@ -179,4 +179,9 @@ config S5PV210_SETUP_CSIS
 	default y
 	help
 	  Common setup code for MIPI-CSIS
+
+config WIFI_CONTROL_FUNC
+       bool "Enable WiFi control function abstraction"
+       help
+         Enables Power/Reset/Carddetect function abstraction
 endif
