@@ -359,36 +359,7 @@ static void s3c_pm_finish(void)
 	s3c_pm_check_cleanup();
 }
 
-#ifdef CONFIG_REGULATOR
-
-static int pmic_controling_list;// a global variable to store ldo's status
-static int s3c_pm_prepare_late(suspend_state_t state)
-{
-	int i ;
-	//printk("\n%s called .\n",__func__);
-	pmic_controling_list = 0;
-
-	return 0;
-}
-
-static int s3c_pm_wake(suspend_state_t state)
-{
-	int i, saved_control;
-	//printk("\n%s called .\n",__func__);
-
-	saved_control = pmic_controling_list;
-	
-	return 0;
-}
-
-#endif
-
 static struct platform_suspend_ops s3c_pm_ops = {
-#ifdef CONFIG_REGULATOR
-	//.begin		= s3c_pm_begin,
-	.prepare_late	= s3c_pm_prepare_late,
-	.wake		= s3c_pm_wake,
-#endif
 	.enter		= s3c_pm_enter,
 	.prepare	= s3c_pm_prepare,
 	.finish		= s3c_pm_finish,
