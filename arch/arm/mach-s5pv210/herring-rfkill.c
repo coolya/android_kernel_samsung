@@ -36,14 +36,10 @@
 #include <plat/gpio-cfg.h>
 #include <plat/irqs.h>
 #include <mach/rfkill-herring.h>
-#define BT_SLEEP_ENABLER
 
 #define IRQ_BT_HOST_WAKE      IRQ_EINT(21)
 
 static struct wake_lock rfkill_wake_lock;
-#ifdef BT_SLEEP_ENABLER
-static struct wake_lock bt_wake_lock;
-#endif
 
 #ifndef	GPIO_LEVEL_LOW
 #define GPIO_LEVEL_LOW		0
@@ -166,23 +162,21 @@ static int __init herring_rfkill_probe(struct platform_device *pdev)
 
 	/* Initialize wake locks */
 	wake_lock_init(&rfkill_wake_lock, WAKE_LOCK_SUSPEND, "board-rfkill");
-#ifdef BT_SLEEP_ENABLER
-	wake_lock_init(&bt_wake_lock, WAKE_LOCK_SUSPEND, "bt-rfkill");
-#endif
+
 	ret = gpio_request(GPIO_WLAN_BT_EN, "GPB");
-	if(ret < 0) {
+	if (ret < 0) {
 		pr_err("[BT] Failed to request GPIO_WLAN_BT_EN!\n");
 		goto err_req_gpio_wlan_bt_en;
 	}
 
 	ret = gpio_request(GPIO_BT_nRST, "GPB");
-	if(ret < 0) {
+	if (ret < 0) {
 		pr_err("[BT] Failed to request GPIO_BT_nRST!\n");
 		goto err_req_gpio_bt_nrst;
 	}
 
 	ret = gpio_request(GPIO_BT_WAKE, "GPH2");
-	if(ret < 0) {
+	if (ret < 0) {
 		pr_err("[BT] Failed to request GPIO_BT_WAKE!\n");
 		goto err_req_gpio_bt_wake;
 	}
@@ -250,101 +244,10 @@ static struct platform_driver herring_device_rfkill = {
 	},
 };
 
-#ifdef BT_SLEEP_ENABLER
-static struct rfkill *bt_sleep;
-
-static int bluetooth_set_sleep(void *data, enum rfkill_user_states state)
-{
-	switch (state) {
-
-	case RFKILL_USER_STATE_UNBLOCKED:
-		pr_debug("[BT] In the unblocked state of the sleep\n");
-		if (gpio_is_valid(GPIO_BT_WAKE))
-			gpio_direction_output(GPIO_BT_WAKE, GPIO_LEVEL_LOW);
-
-		s3c_gpio_setpull(GPIO_BT_WAKE, S3C_GPIO_PULL_NONE);
-		gpio_set_value(GPIO_BT_WAKE, GPIO_LEVEL_LOW);
-
-		pr_debug("[BT] GPIO_BT_WAKE = %d\n",
-				gpio_get_value(GPIO_BT_WAKE));
-		pr_debug("[BT] wake_unlock(bt_wake_lock)\n");
-		wake_unlock(&bt_wake_lock);
-		break;
-
-	case RFKILL_USER_STATE_SOFT_BLOCKED:
-		pr_debug("[BT] In the soft blocked state of the sleep\n");
-		if (gpio_is_valid(GPIO_BT_WAKE))
-			gpio_direction_output(GPIO_BT_WAKE, GPIO_LEVEL_HIGH);
-
-		s3c_gpio_setpull(GPIO_BT_WAKE, S3C_GPIO_PULL_NONE);
-		gpio_set_value(GPIO_BT_WAKE, GPIO_LEVEL_HIGH);
-
-		pr_debug("[BT] GPIO_BT_WAKE = %d\n",
-				gpio_get_value(GPIO_BT_WAKE));
-		pr_debug("[BT] wake_lock(bt_wake_lock)\n");
-		wake_lock(&bt_wake_lock);
-		break;
-
-	default:
-		pr_err("[BT] bad bluetooth rfkill state %d\n", state);
-	}
-	return 0;
-}
-
-static int btsleep_rfkill_set_block(void *data, bool blocked)
-{
-	unsigned int ret = 0;
-
-	ret = bluetooth_set_sleep(data, blocked ?
-			RFKILL_USER_STATE_SOFT_BLOCKED :
-			RFKILL_USER_STATE_UNBLOCKED);
-
-	return ret;
-}
-
-static const struct rfkill_ops btsleep_rfkill_ops = {
-	.set_block = btsleep_rfkill_set_block,
-};
-
-static int __init herring_btsleep_probe(struct platform_device *pdev)
-{
-	int rc = 0;
-
-	bt_sleep = rfkill_alloc(bt_name, &pdev->dev, RFKILL_TYPE_BLUETOOTH,
-			&btsleep_rfkill_ops, NULL);
-	if (!bt_sleep) {
-		pr_err("[BT] bt_sleep : rfkill_alloc is failed\n");
-		return -ENOMEM;
-	}
-
-	rfkill_set_sw_state(bt_sleep, 1);
-
-	rc = rfkill_register(bt_sleep);
-	if (rc)
-		rfkill_destroy(bt_sleep);
-
-	bluetooth_set_sleep(NULL, RFKILL_USER_STATE_UNBLOCKED);
-
-	return rc;
-}
-
-static struct platform_driver herring_device_btsleep = {
-	.probe = herring_btsleep_probe,
-	.driver = {
-		.name = "bt_sleep",
-		.owner = THIS_MODULE,
-	},
-};
-#endif
-
 static int __init herring_rfkill_init(void)
 {
 	int rc = 0;
 	rc = platform_driver_register(&herring_device_rfkill);
-
-#ifdef BT_SLEEP_ENABLER
-	platform_driver_register(&herring_device_btsleep);
-#endif
 
 	return rc;
 }
