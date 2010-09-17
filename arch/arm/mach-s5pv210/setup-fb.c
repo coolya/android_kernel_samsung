@@ -24,7 +24,6 @@
 #include <mach/regs-gpio.h>
 #include <linux/io.h>
 #include <mach/map.h>
-#include <mach/pd.h>
 
 struct platform_device; /* don't need the contents */
 
@@ -68,7 +67,6 @@ int s3cfb_clk_on(struct platform_device *pdev, struct clk **s3cfb_clk)
 	struct clk *mout_mpll = NULL;
 	struct clk *lcd = NULL;
 	u32 rate = 0;
-	int ret;
 
 	sclk = clk_get(&pdev->dev, "sclk_fimd");
 	if (IS_ERR(sclk)) {
@@ -91,12 +89,6 @@ int s3cfb_clk_on(struct platform_device *pdev, struct clk **s3cfb_clk)
 	dev_dbg(&pdev->dev, "set fimd sclk rate to %d\n", rate);
 
 	clk_put(mout_mpll);
-
-	ret = s5pv210_pd_enable("fimd_pd");
-	if (ret < 0) {
-		dev_err(&pdev->dev, "failed to enable fimd power domain\n");
-		goto err_clk2;
-	}
 
 	clk_enable(sclk);
 
@@ -123,15 +115,10 @@ err_clk1:
 
 int s3cfb_clk_off(struct platform_device *pdev, struct clk **clk)
 {
-	int ret;
-
 	clk_disable(*clk);
 	clk_put(*clk);
 
 	*clk = NULL;
-	ret = s5pv210_pd_disable("fimd_pd");
-	if (ret < 0)
-		dev_err(&pdev->dev, "failed to disable fimd power domain\n");
 
 	return 0;
 }

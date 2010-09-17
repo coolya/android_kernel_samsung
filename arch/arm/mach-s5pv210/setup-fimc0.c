@@ -22,7 +22,6 @@
 #include <plat/map-s5p.h>
 #include <mach/regs-gpio.h>
 #include <mach/map.h>
-#include <mach/pd.h>
 #include <plat/regs-fimc.h>
 
 struct platform_device; /* don't need the contents */
@@ -66,7 +65,6 @@ int s3c_fimc_clk_on(struct platform_device *pdev, struct clk *clk)
 	struct clk *sclk_fimc_lclk = NULL;
 	struct clk *mout_fimc_lclk = NULL;
 	struct clk *mout_mpll = NULL;
-	int ret;
 
 	mout_mpll = clk_get(&pdev->dev, "mout_mpll");
 	if (IS_ERR(mout_mpll)) {
@@ -99,12 +97,6 @@ int s3c_fimc_clk_on(struct platform_device *pdev, struct clk *clk)
 	clk_put(mout_mpll);
 	clk_put(mout_fimc_lclk);
 
-	ret = s5pv210_pd_enable("fimc_pd");
-	if (ret < 0) {
-		dev_err(&pdev->dev, "failed to enable fimc power domain\n");
-		goto err_clk3;
-	}
-
 	clk_enable(clk);
 
 	return 0;
@@ -121,15 +113,10 @@ err_clk1:
 
 int s3c_fimc_clk_off(struct platform_device *pdev, struct clk *clk)
 {
-	int ret;
-
 	clk_disable(clk);
 	clk_put(clk);
 
 	clk = NULL;
-	ret = s5pv210_pd_disable("fimc_pd");
-	if (ret < 0)
-		dev_err(&pdev->dev, "failed to disable fimc power domain\n");
 
 	return 0;
 }
