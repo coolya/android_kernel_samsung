@@ -41,10 +41,6 @@ static struct regulator *internal_regulator;
 
 struct s3c_cpufreq_freqs s3c_freqs;
 
-/* Based on MAX8698C
- * RAMP time : 10mV/us
- **/
-#define PMIC_RAMP_UP	10
 static unsigned long previous_arm_volt;
 
 static unsigned int backup_dmc0_reg;
@@ -338,8 +334,6 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 	unsigned int index, reg, arm_volt, int_volt;
 	unsigned int pll_changing = 0;
 	unsigned int bus_speed_changing = 0;
-	int ramp_req_delay, ramp_real_delay;
-	struct timeval start, end;
 
 	cpufreq_debug_printk(CPUFREQ_DEBUG_DRIVER, KERN_INFO,
 			"cpufreq: Entering for %dkHz\n", target_freq);
@@ -402,13 +396,6 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 					arm_volt, arm_volt_max);
 			regulator_set_voltage(internal_regulator,
 					int_volt, int_volt_max);
-#if defined(USE_FIXED_RAMP_UP_DELAY)
-		ramp_req_delay = (((arm_volt - previous_arm_volt) / 1000)
-				   / PMIC_RAMP_UP);
-		udelay(ramp_req_delay);
-#else
-		do_gettimeofday(&start);
-#endif
 		}
 	}
 	cpufreq_notify_transition(&s3c_freqs.freqs, CPUFREQ_PRECHANGE);
@@ -495,29 +482,6 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 		__raw_writel(reg, S5P_ARM_MCS_CON);
 	}
 
-#if !defined(USE_FIXED_RAMP_UP_DELAY)
-	if (s3c_freqs.freqs.new > s3c_freqs.freqs.old) {
-		do_gettimeofday(&end);
-
-		/* Based on 10mV/usec ramp up speed
-		 * Requried ramp up delay time (usec) for this voltage change
-		 **/
-		ramp_req_delay = (((arm_volt - previous_arm_volt) / 1000)
-				   / PMIC_RAMP_UP);
-
-		ramp_real_delay = ramp_req_delay -
-			((end.tv_sec - start.tv_sec) * USEC_PER_SEC +
-			(end.tv_usec - start.tv_usec));
-
-		if (ramp_real_delay > 0)
-			udelay(ramp_real_delay);
-		else
-			cpufreq_debug_printk(CPUFREQ_DEBUG_DRIVER, KERN_INFO,
-					"Ramp up delay already consumed [%d]\n",
-					ramp_real_delay);
-	}
-#endif
-	/* 5. Change divider */
 	reg = __raw_readl(S5P_CLK_DIV0);
 
 	reg &= ~(S5P_CLKDIV0_APLL_MASK | S5P_CLKDIV0_A2M_MASK
