@@ -25,6 +25,7 @@ obj-$(CONFIG_MACH_SMDKV210)	+= mach-smdkv210.o
 obj-$(CONFIG_MACH_SMDKC110)	+= mach-smdkc110.o
 obj-$(CONFIG_MACH_GONI)		+= mach-goni.o
 obj-$(CONFIG_MACH_S5PC110_CRESPO)	+= mach-herring.o herring-rfkill.o
+obj-$(CONFIG_MACH_S5PC110_CRESPO)	+= herring-vibrator.o
 
 obj-$(CONFIG_CRESPO_LEGACY_MODEM)	+= dev-herring-phone.o
 
