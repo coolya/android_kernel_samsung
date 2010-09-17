@@ -3240,64 +3240,6 @@ void usb_host_phy_off(void)
 EXPORT_SYMBOL(usb_host_phy_off);
 #endif
 
-#if defined(CONFIG_KEYPAD_S3C) || defined(CONFIG_KEYPAD_S3C_MODULE)
-#if defined(CONFIG_KEYPAD_S3C_MSM)
-void s3c_setup_keypad_cfg_gpio(void)
-{
-	unsigned int gpio;
-	unsigned int end;
-
-	/* gpio setting for KP_COL0 */
-	s3c_gpio_cfgpin(S5PV210_GPJ1(5), S3C_GPIO_SFN(3));
-	s3c_gpio_setpull(S5PV210_GPJ1(5), S3C_GPIO_PULL_NONE);
-
-	/* gpio setting for KP_COL1 ~ KP_COL7 and KP_ROW0 */
-	end = S5PV210_GPJ2(8);
-	for (gpio = S5PV210_GPJ2(0); gpio < end; gpio++) {
-		s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(3));
-		s3c_gpio_setpull(gpio, S3C_GPIO_PULL_NONE);
-	}
-
-	/* gpio setting for KP_ROW1 ~ KP_ROW8 */
-	end = S5PV210_GPJ3(8);
-	for (gpio = S5PV210_GPJ3(0); gpio < end; gpio++) {
-		s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(3));
-		s3c_gpio_setpull(gpio, S3C_GPIO_PULL_NONE);
-	}
-
-	/* gpio setting for KP_ROW9 ~ KP_ROW13 */
-	end = S5PV210_GPJ4(5);
-	for (gpio = S5PV210_GPJ4(0); gpio < end; gpio++) {
-		s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(3));
-		s3c_gpio_setpull(gpio, S3C_GPIO_PULL_NONE);
-	}
-}
-#else
-void s3c_setup_keypad_cfg_gpio(int rows, int columns)
-{
-	unsigned int gpio;
-	unsigned int end;
-
-	end = S5PV210_GPH3(rows);
-
-	/* Set all the necessary GPH2 pins to special-function 0 */
-	for (gpio = S5PV210_GPH3(0); gpio < end; gpio++) {
-		s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(3));
-		s3c_gpio_setpull(gpio, S3C_GPIO_PULL_UP);
-	}
-
-	end = S5PV210_GPH2(columns);
-
-	/* Set all the necessary GPK pins to special-function 0 */
-	for (gpio = S5PV210_GPH2(0); gpio < end; gpio++) {
-		s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(3));
-		s3c_gpio_setpull(gpio, S3C_GPIO_PULL_NONE);
-	}
-}
-#endif /* if defined(CONFIG_KEYPAD_S3C_MSM)*/
-EXPORT_SYMBOL(s3c_setup_keypad_cfg_gpio);
-#endif
-
 MACHINE_START(SMDKC110, "SMDKC110")
 	/* Maintainer: Kukjin Kim <kgene.kim@samsung.com> */
 	.phys_io	= S3C_PA_UART & 0xfff00000,
