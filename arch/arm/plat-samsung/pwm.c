@@ -46,6 +46,7 @@ struct pwm_device {
 #define pwm_dbg(_pwm, msg...) dev_dbg(&(_pwm)->pdev->dev, msg)
 
 static struct clk *clk_scaler[2];
+static DEFINE_SPINLOCK(pwm_spin_lock);
 
 /* Standard setup for a timer block. */
 
@@ -141,7 +142,7 @@ int pwm_enable(struct pwm_device *pwm)
 	unsigned long flags;
 	unsigned long tcon;
 
-	local_irq_save(flags);
+	spin_lock_irqsave(&pwm_spin_lock, flags);
 
 	if (!pwm->running) {
 		clk_enable(pwm->clk);
@@ -154,7 +155,7 @@ int pwm_enable(struct pwm_device *pwm)
 		pwm->running = 1;
 	}
 
-	local_irq_restore(flags);
+	spin_unlock_irqrestore(&pwm_spin_lock, flags);
 
 	return 0;
 }
@@ -166,7 +167,7 @@ void pwm_disable(struct pwm_device *pwm)
 	unsigned long flags;
 	unsigned long tcon;
 
-	local_irq_save(flags);
+	spin_lock_irqsave(&pwm_spin_lock, flags);
 
 	if (pwm->running) {
 		tcon = __raw_readl(S3C2410_TCON);
@@ -175,11 +176,11 @@ void pwm_disable(struct pwm_device *pwm)
 
 		clk_disable(pwm->clk);
 		clk_disable(pwm->clk_div);
+
 		pwm->running = 0;
 	}
 
-	local_irq_restore(flags);
-
+	spin_unlock_irqrestore(&pwm_spin_lock, flags);
 }
 
 EXPORT_SYMBOL(pwm_disable);
@@ -271,7 +272,7 @@ int pwm_config(struct pwm_device *pwm, int duty_ns, int period_ns)
 
 	/* Update the PWM register block. */
 
-	local_irq_save(flags);
+	spin_lock_irqsave(&pwm_spin_lock, flags);
 
 	__raw_writel(tcmp, S3C2410_TCMPB(pwm->pwm_id));
 	__raw_writel(tcnt, S3C2410_TCNTB(pwm->pwm_id));
@@ -284,7 +285,7 @@ int pwm_config(struct pwm_device *pwm, int duty_ns, int period_ns)
 	tcon &= ~pwm_tcon_manulupdate(pwm);
 	__raw_writel(tcon, S3C2410_TCON);
 
-	local_irq_restore(flags);
+	spin_unlock_irqrestore(&pwm_spin_lock, flags);
 
 	return 0;
 }
@@ -343,14 +344,13 @@ static int s3c_pwm_probe(struct platform_device *pdev)
 		goto err_clk_tin;
 	}
 
-	local_irq_save(flags);
+	spin_lock_irqsave(&pwm_spin_lock, flags);
 
 	tcon = __raw_readl(S3C2410_TCON);
 	tcon |= pwm_tcon_invert(pwm);
 	__raw_writel(tcon, S3C2410_TCON);
 
-	local_irq_restore(flags);
-
+	spin_unlock_irqrestore(&pwm_spin_lock, flags);
 
 	ret = pwm_register(pwm);
 	if (ret) {
