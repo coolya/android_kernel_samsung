@@ -1125,10 +1125,10 @@ static struct wm8994_platform_data wm8994_pdata = {
 };
 
 /* External camera module setting */
-struct regulator *s5ka3dfx_vga_avdd;
-struct regulator *s5ka3dfx_vga_vddio;
-struct regulator *s5ka3dfx_cam_isp_host;
-struct regulator *s5ka3dfx_vga_dvdd;
+static struct regulator *s5ka3dfx_vga_avdd;
+static struct regulator *s5ka3dfx_vga_vddio;
+static struct regulator *s5ka3dfx_cam_isp_host;
+static struct regulator *s5ka3dfx_vga_dvdd;
 
 static int s5ka3dfx_request_gpio(void)
 {
@@ -1154,34 +1154,34 @@ static int s5ka3dfx_request_gpio(void)
 
 static int s5ka3dfx_power_init(void)
 {
-	if (!s5ka3dfx_vga_avdd)
+	if (IS_ERR_OR_NULL(s5ka3dfx_vga_avdd))
 		s5ka3dfx_vga_avdd = regulator_get(NULL, "vga_avdd");
 
-	if (!s5ka3dfx_vga_avdd) {
+	if (IS_ERR_OR_NULL(s5ka3dfx_vga_avdd)) {
 		pr_err("Failed to get regulator vga_avdd\n");
 		return -EINVAL;
 	}
 
-	if (!s5ka3dfx_vga_vddio)
+	if (IS_ERR_OR_NULL(s5ka3dfx_vga_vddio))
 		s5ka3dfx_vga_vddio = regulator_get(NULL, "vga_vddio");
 
-	if (!s5ka3dfx_vga_vddio) {
+	if (IS_ERR_OR_NULL(s5ka3dfx_vga_vddio)) {
 		pr_err("Failed to get regulator vga_vddio\n");
 		return -EINVAL;
 	}
 
-	if (!s5ka3dfx_cam_isp_host)
+	if (IS_ERR_OR_NULL(s5ka3dfx_cam_isp_host))
 		s5ka3dfx_cam_isp_host = regulator_get(NULL, "cam_isp_host");
 
-	if (!s5ka3dfx_cam_isp_host) {
+	if (IS_ERR_OR_NULL(s5ka3dfx_cam_isp_host)) {
 		pr_err("Failed to get regulator cam_isp_host\n");
 		return -EINVAL;
 	}
 
-	if (!s5ka3dfx_vga_dvdd)
+	if (IS_ERR_OR_NULL(s5ka3dfx_vga_dvdd))
 		s5ka3dfx_vga_dvdd = regulator_get(NULL, "vga_dvdd");
 
-	if (!s5ka3dfx_vga_dvdd) {
+	if (IS_ERR_OR_NULL(s5ka3dfx_vga_dvdd)) {
 		pr_err("Failed to get regulator vga_dvdd\n");
 		return -EINVAL;
 	}
@@ -3119,7 +3119,7 @@ static void __init herring_machine_init(void)
 #endif
 
 	s5ka3dfx_request_gpio();
-	s5ka3dfx_power_init();
+
 
 #ifdef CONFIG_VIDEO_FIMC
 	/* fimc */
