@@ -19,13 +19,13 @@
 #include <linux/interrupt.h>
 #include <linux/platform_device.h>
 #include <linux/videodev2.h>
+#include <linux/slab.h>
 
 #include <linux/io.h>
 #include <linux/memory.h>
 #include <plat/clock.h>
 #include <plat/regs-csis.h>
 #include <plat/csis.h>
-#include <mach/pd.h>
 #include "csis.h"
 
 static struct s3c_csis_info *s3c_csis;
@@ -270,13 +270,6 @@ static int s3c_csis_clk_on(struct platform_device *pdev)
 	struct clk *parent, *mout_csis;
 	int ret;
 
-	/* power domain enable for mipi-csis */
-	ret = s5pv210_pd_enable("csis_pd");
-	if (ret < 0) {
-		err("failed to enable csis power domain\n");
-		return -EINVAL;
-	}
-
 	pdata = to_csis_plat(&pdev->dev);
 
 	/* mout_mpll */
@@ -321,13 +314,6 @@ static int s3c_csis_clk_off(struct platform_device *pdev)
 
 	/* clock disable for csis */
 	clk_disable(s3c_csis->clock);
-
-	/* power domain disable for mipi-csis */
-	ret = s5pv210_pd_disable("csis_pd");
-	if (ret < 0) {
-		err("failed to enable csis power domain\n");
-		return -EINVAL;
-	}
 
 	return 0;
 }

@@ -31,7 +31,6 @@
 #include <plat/media.h>
 #include <mach/media.h>
 #include <plat/fimc.h>
-#include <mach/pd.h>
 #include <linux/videodev2_samsung.h>
 
 #include "fimc.h"
@@ -901,10 +900,6 @@ static int fimc_open(struct file *filp)
 	}
 	prv_data->ctrl = ctrl;
 	filp->private_data = prv_data;
-
-	ret = s5pv210_pd_enable("fimc_pd");
-	if (ret < 0) 
-		fimc_err("failed to enable fimcn power domain\n");
 
 	if (in_use == 1) {
 		fimc_clk_en(ctrl, true);

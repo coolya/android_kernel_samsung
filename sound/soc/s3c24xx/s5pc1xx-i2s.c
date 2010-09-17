@@ -25,7 +25,6 @@
 #include <plat/audio.h>
 
 #include <mach/dma.h>
-#include <mach/pd.h>
 
 #include <mach/map.h>
 #define S3C_VA_AUDSS    S3C_ADDR(0x01600000)    /* Audio SubSystem */
@@ -107,7 +106,6 @@ void s5p_i2s_set_clk_enabled(struct snd_soc_dai *dai, bool state)
 			pr_debug("already audio clock is enabled! \n");
 			return;
 		}*/
-		s5pv210_pd_enable(i2s_pd_name[dai->id]);
 
 		//clk_enable(i2s->sclk_audio);
 		if (dai->id == 0) {	/* I2S V5.1? */
@@ -128,8 +126,6 @@ void s5p_i2s_set_clk_enabled(struct snd_soc_dai *dai, bool state)
 			clk_disable(i2s->iis_ipclk);
 		}
 		//clk_disable(i2s->sclk_audio);
-
-		s5pv210_pd_disable(i2s_pd_name[dai->id]);
 
 		audio_clk_gated = 1;
 	}
@@ -511,7 +507,6 @@ static void s5p_i2s_wr_shutdown(struct snd_pcm_substream *substream, struct snd_
 		reg_saved_ok = true;
 		s5p_i2s_set_clk_enabled(dai, 0);
 		pr_debug("I2S Audio Clock disabled and Registers stored...\n");
-		pr_debug("Inside.%s...CLkGATE_IP3=0x%x..\n",__func__,__raw_readl(S5P_CLKGATE_IP3));
 	}
 
 	return;
@@ -654,8 +649,6 @@ static __devinit int s3c64xx_iis_dev_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "id %d out of range\n", pdev->id);
 		return -EINVAL;
 	}
-
-	s5pv210_pd_enable(i2s_pd_name[pdev->id]);	/* Enable Power domain */
 
 	i2s = &s3c64xx_i2s[pdev->id];
 	i2s->dev = &pdev->dev;
