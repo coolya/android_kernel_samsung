@@ -20,6 +20,7 @@
 #include <linux/regulator/consumer.h>
 #include <linux/mfd/max8998.h>
 #include <linux/i2c/qt602240_ts.h>
+#include <linux/i2c/ak8973.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/usb/ch9.h>
@@ -1490,9 +1491,16 @@ static struct i2c_board_info i2c_devs11[] __initdata = {
 	},
 };
 
+static struct akm8973_platform_data akm8973_pdata = {
+	.reset_line = GPIO_MSENSE_nRST,
+	.reset_asserted = GPIO_LEVEL_LOW,
+	.gpio_data_ready_int = GPIO_MSENSE_IRQ,
+};
+
 static struct i2c_board_info i2c_devs12[] __initdata = {
 	{
-		I2C_BOARD_INFO("ak8973b", 0x1c),
+		I2C_BOARD_INFO("ak8973", 0x1c),
+		.platform_data = &akm8973_pdata,
 	},
 };
 
