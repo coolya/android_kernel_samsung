@@ -259,8 +259,6 @@ static int s3c_pm_enter(suspend_state_t state)
 	 * require a full power-cycle)
 	*/
 
-	s3c_irqwake_intmask = 0xFFDD; // key
-
 	if (!any_allowed(s3c_irqwake_intmask, s3c_irqwake_intallow) &&
 	    !any_allowed(s3c_irqwake_eintmask, s3c_irqwake_eintallow)) {
 		printk(KERN_ERR "%s: No wake-up sources!\n", __func__);
@@ -281,7 +279,6 @@ static int s3c_pm_enter(suspend_state_t state)
 	s3c_pm_save_core();
 
 
-	s3c_irqwake_eintmask &= (~(1<<22|1<<29)); //eint22 ,29 as wake up source
 	/* set the irq configuration for wake */
 
 	s3c_pm_configure_extint();
