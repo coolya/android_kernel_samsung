@@ -79,6 +79,8 @@
 #endif
 #include <linux/gp2a.h>
 
+#include <../../../drivers/video/samsung/s3cfb.h>
+
 struct class *sec_class;
 EXPORT_SYMBOL(sec_class);
 
@@ -206,6 +208,32 @@ static struct s3c2410_uartcfg herring_uartcfgs[] __initdata = {
 		.ucon		= S5PV210_UCON_DEFAULT,
 		.ulcon		= S5PV210_ULCON_DEFAULT,
 		.ufcon		= S5PV210_UFCON_DEFAULT,
+	},
+};
+
+static struct s3cfb_lcd s6e63m0 = {
+	.width = 480,
+	.height = 800,
+	.p_width = 52,
+	.p_height = 86,
+	.bpp = 24,
+	.freq = 60,
+
+	.timing = {
+		.h_fp = 16,
+		.h_bp = 16,
+		.h_sw = 2,
+		.v_fp = 28,
+		.v_fpe = 1,
+		.v_bp = 1,
+		.v_bpe = 1,
+		.v_sw = 2,
+	},
+	.polarity = {
+		.rise_vclk = 1,
+		.inv_hsync = 1,
+		.inv_vsync = 1,
+		.inv_vden = 1,
 	},
 };
 
@@ -810,6 +838,7 @@ static struct s3c_platform_fb tl2796_data __initdata = {
 	.default_win	= CONFIG_FB_S3C_DEFAULT_WINDOW,
 	.swap		= FB_SWAP_HWORD | FB_SWAP_WORD,
 
+	.lcd = &s6e63m0,
 	.cfg_gpio	= tl2796_cfg_gpio,
 	.backlight_on	= tl2796_backlight_on,
 	.reset_lcd	= tl2796_reset_lcd,

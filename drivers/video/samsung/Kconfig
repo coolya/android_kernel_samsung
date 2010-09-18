@@ -87,7 +87,7 @@ endchoice
 
 config FB_S3C_TL2796
         bool "TL2796"
-        depends on FB_S3C && (MACH_SMDKC110 || MACH_S5PC110_CRESPO || MACH_S5PC110_P1)
+        depends on FB_S3C
         select SPI
         select SPI_GPIO
         select SPI_BITBANG

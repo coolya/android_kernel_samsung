@@ -1162,16 +1162,12 @@ static int s3cfb_probe(struct platform_device *pdev)
 	}
 
 	fbdev->dev = &pdev->dev;
-#if defined(CONFIG_MACH_S5PC110_CRESPO)
-	s3cfb_set_lcd_info(fbdev);
-#endif
 
 	/* gpio */
 	pdata = to_fb_plat(&pdev->dev);
 
-#if defined(CONFIG_MACH_S5PC110_P1)
 	fbdev->lcd = (struct s3cfb_lcd *)pdata->lcd;
-#endif
+
 	if (pdata->cfg_gpio)
 		pdata->cfg_gpio(pdev);
 

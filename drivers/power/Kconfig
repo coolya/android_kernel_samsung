@@ -144,7 +144,7 @@ config BATTERY_S3C
 
 config BATTERY_S5PC110
 	tristate "Battery driver for CRESPO(S5PC110)"
-	depends on ARCH_S5PV210  && MACH_S5PC110_CRESPO
+	depends on ARCH_S5PV210
 	help
 	  Say Y to enable support for batteries with s5pc110 chip.	  
 
