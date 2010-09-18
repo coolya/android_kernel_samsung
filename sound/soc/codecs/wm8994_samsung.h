@@ -34,6 +34,38 @@ extern struct snd_soc_dai wm8994_dai;
 
 #define AUDIO_COMMON_DEBUG	0
 
+/* Codec Output Path BIT */
+#define PLAYBACK_MODE	0x01
+#define VOICECALL_MODE	(0x01 << 1)
+#define RECORDING_MODE	(0x01 << 2)
+#define FMRADIO_MODE	(0x01 << 3)
+
+#define COMMON_SET_BIT		(0x01 << 0)
+#define PLAYBACK_RCV		(0x01 << 1)
+#define PLAYBACK_SPK		(0x01 << 2)
+#define PLAYBACK_HP		(0x01 << 3)
+#define PLAYBACK_BT		(0x01 << 4)
+#define PLAYBACK_SPK_HP		(0x01 << 5)
+#define PLAYBACK_RING_SPK	(0x01 << 6)
+#define PLAYBACK_RING_HP	(0x01 << 7)
+#define PLAYBACK_RING_SPK_HP	(0x01 << 8)
+
+#define VOICECALL_RCV		(0x01 << 1)
+#define VOICECALL_SPK		(0x01 << 2)
+#define VOICECALL_HP		(0x01 << 3)
+#define VOICECALL_BT		(0x01 << 4)
+
+#define RECORDING_MAIN		(0x01 << 1)
+#define RECORDING_HP		(0x01 << 2)
+#define RECORDING_BT		(0x01 << 3)
+#define RECORDING_REC_MAIN	(0x01 << 4)
+#define RECORDING_REC_HP	(0x01 << 5)
+#define RECORDING_REC_BT	(0x01 << 6)
+
+#define PLAYBACK_GAIN_NUM 41
+#define VOICECALL_GAIN_NUM 26
+#define RECORDING_GAIN_NUM 16
+
 /*
  * Definitions of enum type
  */
@@ -41,11 +73,11 @@ enum audio_path	{
 	OFF, RCV, SPK, HP, BT, SPK_HP,
 	RING_SPK, RING_HP, RING_SPK_HP
 };
-enum mic_path		{ MAIN, SUB, BT_REC, MIC_OFF};
-enum call_state		{ DISCONNECT, CONNECT};
-enum power_state	{ CODEC_OFF, CODEC_ON };
-enum mic_state		{ MIC_NO_USE, MIC_USE};
-enum ringtone_state	{ DEACTIVE, ACTIVE};
+enum mic_path		{MAIN, SUB, BT_REC, MIC_OFF};
+enum call_state		{DISCONNECT, CONNECT};
+enum power_state	{CODEC_OFF, CODEC_ON };
+enum mic_state		{MIC_NO_USE, MIC_USE};
+enum ringtone_state	{DEACTIVE, ACTIVE};
 enum recognition	{REC_OFF, REC_ON};
 
 typedef void (*select_route)(struct snd_soc_codec *);
@@ -84,6 +116,13 @@ struct wm8994_priv {
 	struct clk *codec_clk;
 };
 
+struct gain_info_t {
+	int mode;
+	int reg;
+	int mask;
+	int gain;
+};
+
 #if AUDIO_COMMON_DEBUG
 #define DEBUG_LOG(format, ...)\
 	printk(KERN_INFO "[ "SUBJECT " (%s,%d) ] " format "\n", \
@@ -116,4 +155,5 @@ void wm8994_set_voicecall_receiver(struct snd_soc_codec *codec);
 void wm8994_set_voicecall_headset(struct snd_soc_codec *codec);
 void wm8994_set_voicecall_speaker(struct snd_soc_codec *codec);
 void wm8994_set_voicecall_bluetooth(struct snd_soc_codec *codec);
+int wm8994_set_codec_gain(struct snd_soc_codec *codec, u16 mode, u16 device);
 #endif
