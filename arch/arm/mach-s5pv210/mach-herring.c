@@ -3285,6 +3285,17 @@ MACHINE_START(SMDKC110, "SMDKC110")
 #endif
 MACHINE_END
 
+MACHINE_START(HERRING, "herring")
+        .phys_io        = S3C_PA_UART & 0xfff00000,
+        .io_pg_offst    = (((u32)S3C_VA_UART) >> 18) & 0xfffc,
+        .boot_params    = S5P_PA_SDRAM + 0x100,
+        .fixup          = herring_fixup,
+        .init_irq       = s5pv210_init_irq,
+        .map_io         = herring_map_io,
+        .init_machine   = herring_machine_init,
+        .timer          = &s5p_systimer,
+MACHINE_END
+
 void s3c_setup_uart_cfg_gpio(unsigned char port)
 {
 	switch (port) {

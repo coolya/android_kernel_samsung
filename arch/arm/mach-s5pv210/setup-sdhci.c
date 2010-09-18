@@ -26,6 +26,7 @@
 #include <plat/gpio-cfg.h>
 #include <mach/regs-gpio.h>
 #include <mach/gpio.h>
+#include <asm/mach-types.h>
 
 /* clock sources for the mmc bus clock, order as for the ctrl2[5..4] */
 
@@ -66,11 +67,11 @@ void s5pv210_setup_sdhci0_cfg_gpio(struct platform_device *dev, int width)
 		printk(KERN_ERR "Wrong SD/MMC bus width : %d\n", width);
 	}
 
-#if defined(CONFIG_MACH_S5PC110_CRESPO)
-	s3c_gpio_cfgpin(S5PV210_GPJ2(7), S3C_GPIO_OUTPUT);
-	s3c_gpio_setpull(S5PV210_GPJ2(7), S3C_GPIO_PULL_NONE);
-	gpio_set_value(S5PV210_GPJ2(7), 1);
-#endif
+	if (machine_is_herring()) {
+		s3c_gpio_cfgpin(S5PV210_GPJ2(7), S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(S5PV210_GPJ2(7), S3C_GPIO_PULL_NONE);
+		gpio_set_value(S5PV210_GPJ2(7), 1);
+	}
 }
 
 void s5pv210_setup_sdhci1_cfg_gpio(struct platform_device *dev, int width)
@@ -258,7 +259,6 @@ static int sdhci0_get_ro(struct mmc_host *mmc)
 }
 #endif
 
-#if defined(CONFIG_MACH_S5PC110_CRESPO)
 unsigned int universal_sdhci2_detect_ext_cd(void)
 {
 	unsigned int card_status = 0;
@@ -282,7 +282,6 @@ void universal_sdhci2_cfg_ext_cd(void)
 	s3c_gpio_setpull(S5PV210_GPH3(4), S3C_GPIO_PULL_NONE);
 	set_irq_type(IRQ_EINT(28), IRQ_TYPE_EDGE_BOTH);
 }
-#endif
 
 static struct s3c_sdhci_platdata hsmmc0_platdata = {
 #if defined(CONFIG_S5PV210_SD_CH0_8BIT)
@@ -300,11 +299,7 @@ static struct s3c_sdhci_platdata hsmmc2_platdata = {
 	.max_width	= 8,
 	.host_caps	= MMC_CAP_8_BIT_DATA,
 #endif
-#if defined(CONFIG_MACH_S5PC110_CRESPO)
-	.ext_cd = IRQ_EINT(28),
-	.cfg_ext_cd = universal_sdhci2_cfg_ext_cd,
-	.detect_ext_cd = universal_sdhci2_detect_ext_cd,
-#endif
+
 };
 
 void s3c_sdhci_set_platdata(void)
@@ -313,6 +308,13 @@ void s3c_sdhci_set_platdata(void)
 	s3c_sdhci0_set_platdata(&hsmmc0_platdata);
 #endif
 #if defined(CONFIG_S3C_DEV_HSMMC2)
+
+	if (machine_is_herring()) {
+		hsmmc2_platform.ext_cd = IRQ_EINT(28);
+		hsmmc2_platform.cfg_ext_cd = universal_sdhci2_cfg_ext_cd;
+		hsmmc2_platform.detect_ext_cd = universal_sdhci2_detect_ext_cd;
+	}
+
 	s3c_sdhci2_set_platdata(&hsmmc2_platdata);
 #endif
 };
