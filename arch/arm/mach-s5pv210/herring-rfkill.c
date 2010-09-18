@@ -184,13 +184,19 @@ static int __init herring_rfkill_probe(struct platform_device *pdev)
 	/* BT Host Wake IRQ */
 	irq = IRQ_BT_HOST_WAKE;
 
-	set_irq_type(irq, IRQ_TYPE_EDGE_RISING);
-	ret = request_irq(irq, bt_host_wake_irq_handler, 0,
+	ret = request_irq(irq, bt_host_wake_irq_handler, IRQF_TRIGGER_RISING,
 			"bt_host_wake_irq_handler", NULL);
 
 	if (ret < 0) {
 		pr_err("[BT] Request_irq failed\n");
 		goto err_req_irq;
+	}
+
+	ret = set_irq_wake(irq, 1);
+
+	if (ret < 0) {
+		pr_err("[BT] set wakeup src failed\n");
+		goto err_set_irq_wake;
 	}
 
 	bt_rfk = rfkill_alloc(bt_name, &pdev->dev, RFKILL_TYPE_BLUETOOTH,
@@ -221,6 +227,9 @@ static int __init herring_rfkill_probe(struct platform_device *pdev)
 	rfkill_destroy(bt_rfk);
 
  err_alloc:
+	set_irq_wake(irq, 0);
+
+ err_set_irq_wake:
 	free_irq(irq, NULL);
 
  err_req_irq:
