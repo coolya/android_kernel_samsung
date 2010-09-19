@@ -240,7 +240,7 @@ static struct s3c_adc_mach_info *s3c_adc_get_platdata(struct device *dev)
  * The functions for inserting/removing us as a module.
  */
 
-static int __init s3c_adc_probe(struct platform_device *pdev)
+static int __devinit s3c_adc_probe(struct platform_device *pdev)
 {
 	struct resource	*res;
 	struct device *dev;
