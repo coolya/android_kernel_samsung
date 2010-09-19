@@ -27,6 +27,7 @@
 #include <linux/memory.h>
 #include <linux/ctype.h>
 #include <linux/platform_device.h>
+#include <linux/regulator/consumer.h>
 #include <plat/clock.h>
 #include <plat/media.h>
 #include <mach/media.h>
@@ -109,17 +110,26 @@ void fimc_clk_en(struct fimc_control *ctrl, bool on)
 	pdata = to_fimc_plat(ctrl->dev);
 	lclk = clk_get(&pdev->dev, pdata->lclk_name);
 
-	if(on){
-		if(!lclk->usage){
-			if(!ctrl->out)
-				fimc_info1("(%d) Clock %s(%d) enabled.\n", ctrl->id, ctrl->clk->name, ctrl->clk->id);
+	if (on) {
+		if (!lclk->usage) {
+			if (!ctrl->out)
+				fimc_info1("(%d) Clock %s(%d) enabled.\n",
+					ctrl->id, ctrl->clk->name,
+					ctrl->clk->id);
+
+			/* Turn on fimc power domain regulator */
+			regulator_enable(ctrl->regulator);
 			clk_enable(lclk);
 		}
 	} else {
-		while(lclk->usage > 0){
-			if(!ctrl->out)
-				fimc_info1("(%d) Clock %s(%d) disabled.\n", ctrl->id, ctrl->clk->name, ctrl->clk->id);
+		while (lclk->usage > 0) {
+			if (!ctrl->out)
+				fimc_info1("(%d) Clock %s(%d) disabled.\n",
+					ctrl->id, ctrl->clk->name,
+					ctrl->clk->id);
 			clk_disable(lclk);
+			/* Turn off fimc power domain regulator */
+			regulator_disable(ctrl->regulator);
 		}
 	}	
 
@@ -1296,6 +1306,14 @@ static int __devinit fimc_probe(struct platform_device *pdev)
 	pdata = to_fimc_plat(&pdev->dev);
 	if (pdata->cfg_gpio)
 		pdata->cfg_gpio(pdev);
+
+	/* Get fimc power domain regulator */
+	ctrl->regulator = regulator_get(&pdev->dev, "pd");
+	if (IS_ERR(ctrl->regulator)) {
+		fimc_err("%s: failed to get resource %s\n",
+				__func__, "s3c-fimc");
+		return PTR_ERR(ctrl->regulator);
+	}
 
 	/* fimc source clock */
 	srclk = clk_get(&pdev->dev, pdata->srclk_name);

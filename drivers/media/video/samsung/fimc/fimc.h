@@ -334,6 +334,7 @@ struct fimc_control {
 	atomic_t			in_use;
 	void __iomem			*regs;		/* register i/o */
 	struct clk			*clk;		/* interface clock */
+        struct regulator                *regulator;     /* pd regulator */
 	struct fimc_meminfo		mem;		/* for reserved mem */
 
 	/* kernel helpers */

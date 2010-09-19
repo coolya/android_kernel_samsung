@@ -37,6 +37,7 @@
 #include <linux/string.h>
 #include <linux/mm.h>
 #include <linux/platform_device.h>
+#include <linux/regulator/consumer.h>
 
 #include <linux/version.h>
 #include <plat/media.h>
@@ -52,6 +53,7 @@
 #include "regs-jpeg.h"
 
 static struct clk		*s3c_jpeg_clk;
+static struct regulator		*jpeg_pd_regulator;
 
 static struct resource		*s3c_jpeg_mem;
 void __iomem			*s3c_jpeg_base;
@@ -103,6 +105,8 @@ static int s3c_jpeg_open(struct inode *inode, struct file *file)
 	sspc100_jpg_ctx *jpg_reg_ctx;
 	DWORD	ret;
 
+	/* Turn on jpeg power domain regulator */
+	regulator_enable(jpeg_pd_regulator);
         /* clock enable */
 	clk_enable(s3c_jpeg_clk);
 	
@@ -165,8 +169,10 @@ static int s3c_jpeg_release(struct inode *inode, struct file *file)
 	unlock_jpg_mutex();
 	kfree(jpg_reg_ctx);
 
-/* clock disable */
+	/* clock disable */
 	clk_disable(s3c_jpeg_clk);
+	/* Turn off jpeg power domain regulator */
+	regulator_disable(jpeg_pd_regulator);
 
 	return 0;
 }
@@ -354,6 +360,15 @@ static int s3c_jpeg_probe(struct platform_device *pdev)
 	static int		ret;
 	HANDLE 			h_mutex;
 
+	/* Get jpeg power domain regulator */
+	jpeg_pd_regulator = regulator_get(&pdev->dev, "pd");
+	if (IS_ERR(jpeg_pd_regulator)) {
+		jpg_err("%s: failed to get resource %s\n",
+				__func__, "s3c-jpg");
+		return PTR_ERR(jpeg_pd_regulator);
+	}
+	regulator_enable(jpeg_pd_regulator);
+
 	s3c_jpeg_clk = clk_get(&pdev->dev, "jpeg");
 
 	if (IS_ERR(s3c_jpeg_clk)) {
@@ -427,6 +442,8 @@ static int s3c_jpeg_probe(struct platform_device *pdev)
 
 	/* clock disable */
 	clk_disable(s3c_jpeg_clk);
+	/* Turn off jpeg power domain regulator */
+	regulator_disable(jpeg_pd_regulator);
 
 	return 0;
 }
@@ -449,12 +466,16 @@ static int s3c_jpeg_suspend(struct platform_device *pdev, pm_message_t state)
 {
 	/* clock disable */
 	clk_disable(s3c_jpeg_clk);
+	/* Turn off jpeg power domain regulator */
+	regulator_disable(jpeg_pd_regulator);
 	
 	return 0;
 }
 
 static int s3c_jpeg_resume(struct platform_device *pdev)
 {
+	/* Turn on jpeg power domain regulator */
+	regulator_enable(jpeg_pd_regulator);
 	/* clock enable */
 	clk_enable(s3c_jpeg_clk);
 

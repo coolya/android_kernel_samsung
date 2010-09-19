@@ -224,6 +224,7 @@ struct s3cfb_global {
 	struct mutex		lock;
 	struct device		*dev;
 	struct clk		*clock;
+        struct regulator        *regulator;
 	int			irq;
 	wait_queue_head_t	wq;
 	unsigned int		wq_count;

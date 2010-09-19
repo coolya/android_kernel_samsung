@@ -25,6 +25,7 @@
 #include <linux/dma-mapping.h>
 #include <linux/interrupt.h>
 #include <linux/platform_device.h>
+#include <linux/regulator/consumer.h>
 #include <linux/io.h>
 #include <linux/memory.h>
 #include <linux/cpufreq.h>
@@ -1163,6 +1164,14 @@ static int s3cfb_probe(struct platform_device *pdev)
 
 	fbdev->dev = &pdev->dev;
 
+	/* Get s3cfb power domain regulator */
+	fbdev->regulator = regulator_get(&pdev->dev, "pd");
+	if (IS_ERR(fbdev->regulator)) {
+		printk(KERN_ERR "failed to get resource %s\n", "s3cfb");
+		return PTR_ERR(fbdev->regulator);
+	}
+	regulator_enable(fbdev->regulator);
+
 	/* gpio */
 	pdata = to_fb_plat(&pdev->dev);
 
@@ -1344,6 +1353,8 @@ void s3cfb_early_suspend(struct early_suspend *h)
 #if defined(CONFIG_FB_S3C_TL2796)
 	lcd_cfg_gpio_early_suspend();
 #endif
+	/* Turn off s3cfb power domain regulator */
+	regulator_disable(info->regulator);
 
 	return ;
 }
@@ -1359,6 +1370,9 @@ void s3cfb_late_resume(struct early_suspend *h)
 	struct platform_device *pdev = to_platform_device(info->dev);
 
 	pr_debug("s3cfb_late_resume is called\n");
+
+	/* Turn on s3cfb power domain regulator */
+	regulator_enable(info->regulator);
 
 #if defined(CONFIG_FB_S3C_TL2796)
 	lcd_cfg_gpio_late_resume();

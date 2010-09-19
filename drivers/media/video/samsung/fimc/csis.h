@@ -33,6 +33,7 @@ struct s3c_csis_info {
 	char 		name[16];
 	struct device	*dev;
 	struct clk	*clock;
+        struct regulator *regulator;
 	void __iomem	*regs;
 	int		irq;
 	int		nr_lanes;
