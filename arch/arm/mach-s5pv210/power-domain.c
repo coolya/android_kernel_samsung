@@ -30,7 +30,6 @@ struct s5pv210_pd_data {
 	struct regulator_dev *dev;
 	int microvolts;
 	unsigned startup_delay;
-	bool is_enabled;
 	struct clk_should_be_running *clk_run;
 	int ctrlbit;
 };
@@ -79,7 +78,6 @@ static struct regulator_init_data s5pv210_pd_cam_data = {
 	.constraints = {
 		.valid_modes_mask	= REGULATOR_MODE_NORMAL,
 		.valid_ops_mask		= REGULATOR_CHANGE_STATUS,
-		.boot_on		= 1,
 	},
 	.num_consumer_supplies	= ARRAY_SIZE(s5pv210_pd_cam_supply),
 	.consumer_supplies	= s5pv210_pd_cam_supply,
@@ -89,7 +87,6 @@ static struct regulator_init_data s5pv210_pd_tv_data = {
 	.constraints = {
 		.valid_modes_mask	= REGULATOR_MODE_NORMAL,
 		.valid_ops_mask		= REGULATOR_CHANGE_STATUS,
-		.boot_on		= 1,
 	},
 	.num_consumer_supplies	= ARRAY_SIZE(s5pv210_pd_tv_supply),
 	.consumer_supplies	= s5pv210_pd_tv_supply,
@@ -99,7 +96,6 @@ static struct regulator_init_data s5pv210_pd_lcd_data = {
 	.constraints = {
 		.valid_modes_mask	= REGULATOR_MODE_NORMAL,
 		.valid_ops_mask		= REGULATOR_CHANGE_STATUS,
-		.boot_on		= 1,
 	},
 	.num_consumer_supplies	= ARRAY_SIZE(s5pv210_pd_lcd_supply),
 	.consumer_supplies	= s5pv210_pd_lcd_supply,
@@ -109,7 +105,6 @@ static struct regulator_init_data s5pv210_pd_mfc_data = {
 	.constraints = {
 		.valid_modes_mask	= REGULATOR_MODE_NORMAL,
 		.valid_ops_mask		= REGULATOR_CHANGE_STATUS,
-		.boot_on		= 1
 	},
 	.num_consumer_supplies	= ARRAY_SIZE(s5pv210_pd_mfc_supply),
 	.consumer_supplies	= s5pv210_pd_mfc_supply,
@@ -196,7 +191,6 @@ static struct s5pv210_pd_config s5pv210_pd_audio_pdata = {
 	.init_data = &s5pv210_pd_audio_data,
 	.clk_run = s5pv210_pd_audio_clk,
 	.ctrlbit = S5PV210_PD_AUDIO,
-	.enabled_at_boot = 1,
 };
 
 static struct s5pv210_pd_config s5pv210_pd_cam_pdata = {
@@ -205,7 +199,6 @@ static struct s5pv210_pd_config s5pv210_pd_cam_pdata = {
 	.init_data = &s5pv210_pd_cam_data,
 	.clk_run = s5pv210_pd_cam_clk,
 	.ctrlbit = S5PV210_PD_CAM,
-	.enabled_at_boot = 0,
 };
 
 static struct s5pv210_pd_config s5pv210_pd_tv_pdata = {
@@ -214,7 +207,6 @@ static struct s5pv210_pd_config s5pv210_pd_tv_pdata = {
 	.init_data = &s5pv210_pd_tv_data,
 	.clk_run = s5pv210_pd_tv_clk,
 	.ctrlbit = S5PV210_PD_TV,
-	.enabled_at_boot = 0,
 };
 
 static struct s5pv210_pd_config s5pv210_pd_lcd_pdata = {
@@ -223,7 +215,6 @@ static struct s5pv210_pd_config s5pv210_pd_lcd_pdata = {
 	.init_data = &s5pv210_pd_lcd_data,
 	.clk_run = s5pv210_pd_lcd_clk,
 	.ctrlbit = S5PV210_PD_LCD,
-	.enabled_at_boot = 1,
 };
 
 static struct s5pv210_pd_config s5pv210_pd_mfc_pdata = {
@@ -232,7 +223,6 @@ static struct s5pv210_pd_config s5pv210_pd_mfc_pdata = {
 	.init_data = &s5pv210_pd_mfc_data,
 	.clk_run = s5pv210_pd_mfc_clk,
 	.ctrlbit = S5PV210_PD_MFC,
-	.enabled_at_boot = 0,
 };
 
 struct platform_device s5pv210_pd_audio = {
@@ -369,7 +359,7 @@ static int s5pv210_pd_is_enabled(struct regulator_dev *dev)
 {
 	struct s5pv210_pd_data *data = rdev_get_drvdata(dev);
 
-	return data->is_enabled;
+	return (__raw_readl(S5P_BLK_PWR_STAT) & data->ctrlbit) ? 1 : 0;
 }
 
 static int s5pv210_pd_enable(struct regulator_dev *dev)
@@ -385,7 +375,6 @@ static int s5pv210_pd_enable(struct regulator_dev *dev)
 		printk(KERN_ERR "failed to enable power domain\n");
 		return ret;
 	}
-	data->is_enabled = true;
 
 	if (data->clk_run)
 		s5pv210_pd_clk_disable(data->clk_run);
@@ -403,7 +392,6 @@ static int s5pv210_pd_disable(struct regulator_dev *dev)
 		printk(KERN_ERR "faild to disable power domain\n");
 		return ret;
 	}
-	data->is_enabled = false;
 
 	return 0;
 }
@@ -470,7 +458,6 @@ static int __devinit reg_s5pv210_pd_probe(struct platform_device *pdev)
 	drvdata->microvolts = config->microvolts;
 	drvdata->startup_delay = config->startup_delay;
 
-	drvdata->is_enabled = config->enabled_at_boot;
 	drvdata->clk_run = config->clk_run;
 	drvdata->ctrlbit = config->ctrlbit;
 
