@@ -73,7 +73,6 @@ void __init s3c_i2c0_set_platdata(struct s3c2410_platform_i2c *pd)
 
 void s3c_i2c0_force_stop()
 {
-	struct resource *ioarea;
 	void __iomem *regs;
 	struct clk *clk;
 	unsigned long iicstat;
