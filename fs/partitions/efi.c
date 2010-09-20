@@ -602,7 +602,7 @@ int efi_partition(struct parsed_partitions *state)
 {
 	gpt_header *gpt = NULL;
 	gpt_entry *ptes = NULL;
-	u32 i;
+	u32 i, j;
 	unsigned ssz = bdev_logical_block_size(state->bdev) / 512;
 
 	if (!find_valid_gpt(state, &gpt, &ptes) || !gpt || !ptes) {
@@ -617,11 +617,17 @@ int efi_partition(struct parsed_partitions *state)
 		u64 start = le64_to_cpu(ptes[i].starting_lba);
 		u64 size = le64_to_cpu(ptes[i].ending_lba) -
 			   le64_to_cpu(ptes[i].starting_lba) + 1ULL;
+		u8 name[sizeof(ptes->partition_name) / sizeof(efi_char16_t)];
 
 		if (!is_pte_valid(&ptes[i], last_lba(state->bdev)))
 			continue;
 
-		put_partition(state, i+1, start * ssz, size * ssz);
+		/* Truncate to ASCII. UTF8 might be better... */
+		for (j = 0; j < sizeof(name); j++)
+			name[j] = ptes[i].partition_name[j] & 0x7f;
+
+		put_named_partition(state, i+1, start * ssz, size * ssz,
+				    name, strnlen(name, sizeof(name)));
 
 		/* If this is a RAID volume, tell md */
 		if (!efi_guidcmp(ptes[i].partition_type_guid,
