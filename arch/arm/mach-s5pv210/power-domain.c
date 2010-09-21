@@ -41,26 +41,28 @@ struct clk_should_be_running {
 };
 
 static struct regulator_consumer_supply s5pv210_pd_audio_supply[] = {
-	REGULATOR_SUPPLY("s3c-ac97", NULL),
+	REGULATOR_SUPPLY("pd", "s5pc1xx-iis.0"),
 };
 
 static struct regulator_consumer_supply s5pv210_pd_cam_supply[] = {
-	REGULATOR_SUPPLY("s3c-fimc", NULL),
-	REGULATOR_SUPPLY("s3c-jpg", NULL),
-	REGULATOR_SUPPLY("s3c-csis", NULL),
-	REGULATOR_SUPPLY("s5p-rotator", NULL),
+	REGULATOR_SUPPLY("pd", "s3c-fimc.0"),
+	REGULATOR_SUPPLY("pd", "s3c-fimc.1"),
+	REGULATOR_SUPPLY("pd", "s3c-fimc.2"),
+	REGULATOR_SUPPLY("pd", "s3c-jpg"),
+	REGULATOR_SUPPLY("pd", "s3c-csis"),
+	REGULATOR_SUPPLY("pd", "s5p-rotator"),
 };
 
 static struct regulator_consumer_supply s5pv210_pd_tv_supply[] = {
-	REGULATOR_SUPPLY("s5p-tvout", NULL),
+	REGULATOR_SUPPLY("pd", "s5p-tvout"),
 };
 
 static struct regulator_consumer_supply s5pv210_pd_lcd_supply[] = {
-	REGULATOR_SUPPLY("s3cfb", NULL),
+	REGULATOR_SUPPLY("pd", "s3cfb"),
 };
 
 static struct regulator_consumer_supply s5pv210_pd_mfc_supply[] = {
-	REGULATOR_SUPPLY("mfc", NULL),
+	REGULATOR_SUPPLY("pd", "s3c-mfc"),
 };
 
 static struct regulator_init_data s5pv210_pd_audio_data = {
