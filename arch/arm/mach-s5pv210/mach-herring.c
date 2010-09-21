@@ -172,7 +172,7 @@ static void gps_gpio_init(void)
 	return;
 }
 
-static void jupiter_switch_init(void)
+static void herring_switch_init(void)
 {
 	sec_class = class_create(THIS_MODULE, "sec");
 
@@ -1703,7 +1703,7 @@ static struct platform_device sec_device_btsleep = {
  *
  * The table can be modified with the appropriate value for each pin.
  */
-static unsigned int jupiter_gpio_table[][8] = {
+static unsigned int herring_gpio_table[][8] = {
 	/* Off part */
 	{ S5PV210_GPB(0), S3C_GPIO_INPUT, S3C_GPIO_SETPIN_NONE,
 	  S3C_GPIO_PULL_DOWN, S3C_GPIO_DRVSTR_1X, S3C_GPIO_SLEWRATE_FAST,
@@ -2377,7 +2377,7 @@ static void herring_power_off(void)
 }
 
 /* this table only for B4 board */
-static unsigned int jupiter_sleep_gpio_table[][3] = {
+static unsigned int herring_sleep_gpio_table[][3] = {
 	{ S5PV210_GPA0(0), S3C_GPIO_SLP_PREV,	S3C_GPIO_PULL_NONE},
 	{ S5PV210_GPA0(1), S3C_GPIO_SLP_PREV,	S3C_GPIO_PULL_NONE},
 	{ S5PV210_GPA0(2), S3C_GPIO_SLP_PREV,	S3C_GPIO_PULL_NONE},
@@ -3085,12 +3085,12 @@ static void __init qt_touch_init(void)
 	i2c_devs2[1].irq = irq;
 }
 
-static void jupiter_init_gpio(void)
+static void herring_init_gpio(void)
 {
-	s3c_config_gpio_table(ARRAY_SIZE(jupiter_gpio_table),
-			jupiter_gpio_table);
-	s3c_config_sleep_gpio_table(ARRAY_SIZE(jupiter_sleep_gpio_table),
-			jupiter_sleep_gpio_table);
+	s3c_config_gpio_table(ARRAY_SIZE(herring_gpio_table),
+			herring_gpio_table);
+	s3c_config_sleep_gpio_table(ARRAY_SIZE(herring_sleep_gpio_table),
+			herring_sleep_gpio_table);
 }
 
 static void __init fsa9480_gpio_init(void)
@@ -3156,7 +3156,7 @@ static void __init herring_machine_init(void)
 	printk(KERN_INFO "HWREV is 0x%x\n", HWREV);
 
 	/*initialise the gpio's*/
-	jupiter_init_gpio();
+	herring_init_gpio();
 
 	/* OneNAND */
 #ifdef CONFIG_MTD_ONENAND
@@ -3275,7 +3275,7 @@ static void __init herring_machine_init(void)
 #endif
 	register_reboot_notifier(&herring_reboot_notifier);
 
-	jupiter_switch_init();
+	herring_switch_init();
 
 	gps_gpio_init();
 
