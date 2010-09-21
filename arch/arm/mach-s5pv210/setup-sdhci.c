@@ -310,9 +310,9 @@ void s3c_sdhci_set_platdata(void)
 #if defined(CONFIG_S3C_DEV_HSMMC2)
 
 	if (machine_is_herring()) {
-		hsmmc2_platform.ext_cd = IRQ_EINT(28);
-		hsmmc2_platform.cfg_ext_cd = universal_sdhci2_cfg_ext_cd;
-		hsmmc2_platform.detect_ext_cd = universal_sdhci2_detect_ext_cd;
+		hsmmc2_platdata.ext_cd = IRQ_EINT(28);
+		hsmmc2_platdata.cfg_ext_cd = universal_sdhci2_cfg_ext_cd;
+		hsmmc2_platdata.detect_ext_cd = universal_sdhci2_detect_ext_cd;
 	}
 
 	s3c_sdhci2_set_platdata(&hsmmc2_platdata);
