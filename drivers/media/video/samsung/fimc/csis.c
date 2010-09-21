@@ -268,7 +268,6 @@ static int s3c_csis_clk_on(struct platform_device *pdev)
 {
 	struct s3c_platform_csis *pdata;
 	struct clk *parent, *mout_csis;
-	int ret;
 
 	pdata = to_csis_plat(&pdev->dev);
 
@@ -301,7 +300,6 @@ static int s3c_csis_clk_on(struct platform_device *pdev)
 static int s3c_csis_clk_off(struct platform_device *pdev)
 {
 	struct s3c_platform_csis *plat;
-	int ret;
 
 	plat = to_csis_plat(&pdev->dev);
 
