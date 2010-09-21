@@ -527,7 +527,7 @@ static const struct snd_kcontrol_new wm8994_snd_controls[] = {
 	SOC_ENUM_EXT("Voice Call Path", path_control_enum[1],
 		     wm8994_get_voice_path, wm8994_set_voice_path),
 
-	SOC_ENUM_EXT("MIC Path", path_control_enum[2],
+	SOC_ENUM_EXT("Capture MIC Path", path_control_enum[2],
 		     wm8994_get_mic_path, wm8994_set_mic_path),
 
 #if defined USE_INFINIEON_EC_FOR_VT
