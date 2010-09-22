@@ -1202,13 +1202,36 @@ EXPORT_SYMBOL_GPL(s3c24xx_serial_remove);
 
 #ifdef CONFIG_PM
 
+#include <plat/pm.h>
+
+#define SAVE_UART(va) \
+	 SAVE_ITEM((va) + S3C2410_ULCON), \
+	 SAVE_ITEM((va) + S3C2410_UCON), \
+	 SAVE_ITEM((va) + S3C2410_UFCON), \
+	 SAVE_ITEM((va) + S3C2410_UMCON), \
+	 SAVE_ITEM((va) + S3C2410_UBRDIV), \
+	 SAVE_ITEM((va) + S3C2410_UDIVSLOT), \
+	 SAVE_ITEM((va) + S3C2410_UINTMSK)
+
+static struct sleep_save uart_save[] = {
+	SAVE_UART(S3C_VA_UARTx(0)),
+	SAVE_UART(S3C_VA_UARTx(1)),
+	SAVE_UART(S3C_VA_UARTx(2)),
+	SAVE_UART(S3C_VA_UARTx(3)),
+};
+
+#define SAVE_UART_PORT (ARRAY_SIZE(uart_save) / 4)
+
 static int
 s3c24xx_serial_suspend(struct platform_device *dev, pm_message_t state)
 {
 	struct uart_port *port = s3c24xx_dev_to_port(&dev->dev);
 
-	if (port)
+	if (port) {
 		uart_suspend_port(&s3c24xx_uart_drv, port);
+		s3c_pm_do_save(uart_save + port->line * SAVE_UART_PORT,
+				SAVE_UART_PORT);
+	}
 
 	return 0;
 }
@@ -1222,7 +1245,8 @@ static int s3c24xx_serial_resume(struct platform_device *dev)
 		clk_enable(ourport->clk);
 		s3c24xx_serial_resetport(port, s3c24xx_port_to_cfg(port));
 		clk_disable(ourport->clk);
-
+		s3c_pm_do_restore(uart_save + port->line * SAVE_UART_PORT,
+				SAVE_UART_PORT);
 		uart_resume_port(&s3c24xx_uart_drv, port);
 	}
 
