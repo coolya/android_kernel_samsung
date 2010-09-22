@@ -29,6 +29,7 @@
 #include <asm/irq.h>
 
 #include <plat/pm.h>
+#include <plat/irq-eint-group.h>
 #include <mach/pm-core.h>
 
 /* for external use */
@@ -317,6 +318,7 @@ static int s3c_pm_enter(suspend_state_t state)
 	s3c_pm_restore_core();
 	s3c_pm_restore_uarts();
 	s3c_pm_restore_gpios();
+	s5pv210_restore_eint_group();
 
 	s3c_pm_debug_init();
 
