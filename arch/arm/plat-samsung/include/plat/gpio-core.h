@@ -66,7 +66,7 @@ struct s3c_gpio_chip {
 	int			eint_offset;
 	spinlock_t		 lock;
 #ifdef CONFIG_PM
-	u32			pm_save[5];
+	u32			pm_save[7];
 #endif
 };
 
