@@ -75,6 +75,7 @@
 #include <plat/clock.h>
 #include <plat/regs-otg.h>
 #include <linux/gp2a.h>
+#include <linux/kr3dm.h>
 
 #include <../../../drivers/video/samsung/s3cfb.h>
 #include <linux/max17040_battery.h>
@@ -1409,9 +1410,14 @@ static struct i2c_board_info i2c_devs10[] __initdata = {
 	},
 };
 
+static struct kr3dm_platform_data kr3dm_data = {
+	.gpio_acc_int = GPIO_ACC_INT,
+};
+
 static struct i2c_board_info i2c_devs5[] __initdata = {
 	{
 		I2C_BOARD_INFO("kr3dm", 0x09),
+		.platform_data  = &kr3dm_data,
 	},
 };
 
