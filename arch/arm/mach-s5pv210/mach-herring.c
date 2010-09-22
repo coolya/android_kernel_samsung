@@ -25,7 +25,6 @@
 #include <linux/usb/ch9.h>
 #include <linux/spi/spi.h>
 #include <linux/spi/spi_gpio.h>
-#include <linux/pwm_backlight.h>
 #include <linux/clk.h>
 #include <linux/usb/ch9.h>
 #include <linux/input/cypress-touchkey.h>
@@ -75,9 +74,6 @@
 #include <plat/fimc.h>
 #include <plat/clock.h>
 #include <plat/regs-otg.h>
-#ifdef CONFIG_CPU_FREQ
-#include <mach/cpu-freq-v210.h>
-#endif
 #include <linux/gp2a.h>
 
 #include <../../../drivers/video/samsung/s3cfb.h>
@@ -1049,66 +1045,6 @@ static struct touchkey_platform_data touchkey_data = {
 	.touchkey_onoff = &touch_keypad_onoff,
 };
 
-#ifdef CONFIG_S5PV210_ADCTS
-static struct s3c_adcts_plat_info s3c_adcts_cfgs __initdata = {
-	.channel = {
-		{ /* 0 */
-			.delay = 0xFF,
-			.presc = 49,
-			.resol = S3C_ADCCON_RESSEL_12BIT,
-		}, { /* 1 */
-			.delay = 0xFF,
-			.presc = 49,
-			.resol = S3C_ADCCON_RESSEL_12BIT,
-		}, { /* 2 */
-			.delay = 0xFF,
-			.presc = 49,
-			.resol = S3C_ADCCON_RESSEL_12BIT,
-		}, { /* 3 */
-			.delay = 0xFF,
-			.presc = 49,
-			.resol = S3C_ADCCON_RESSEL_12BIT,
-		}, { /* 4 */
-			.delay = 0xFF,
-			.presc = 49,
-			.resol = S3C_ADCCON_RESSEL_12BIT,
-		}, { /* 5 */
-			.delay = 0xFF,
-			.presc = 49,
-			.resol = S3C_ADCCON_RESSEL_12BIT,
-		}, { /* 6 */
-			.delay = 0xFF,
-			.presc = 49,
-			.resol = S3C_ADCCON_RESSEL_12BIT,
-		}, { /* 7 */
-			.delay = 0xFF,
-			.presc = 49,
-			.resol = S3C_ADCCON_RESSEL_12BIT,
-		},
-	},
-};
-#endif
-
-#ifdef CONFIG_TOUCHSCREEN_S3C
-static struct s3c_ts_mach_info s3c_ts_platform __initdata = {
-	.adcts = {
-		.delay = 0xFF,
-	.presc                  = 49,
-		.resol = S3C_ADCCON_RESSEL_12BIT,
-	},
-	.sampling_time = 18,
-	.sampling_interval_ms = 20,
-	.x_coor_min	= 180,
-	.x_coor_max = 4000,
-	.x_coor_fuzz = 32,
-	.y_coor_min = 300,
-	.y_coor_max = 3900,
-	.y_coor_fuzz = 32,
-	.use_tscal = false,
-	.tscal = {0, 0, 0, 0, 0, 0, 0},
-};
-#endif
-
 static struct gpio_event_direct_entry herring_keypad_key_map[] = {
 	{
 		.gpio	= S5PV210_GPH2(6),
@@ -1429,39 +1365,6 @@ static struct s3c_platform_fimc fimc_plat = {
 };
 #endif
 
-#if defined(CONFIG_BACKLIGHT_PWM)
-static struct platform_pwm_backlight_data smdk_backlight_data = {
-	.pwm_id  = 3,
-	.max_brightness = 255,
-	.dft_brightness = 255,
-	.pwm_period_ns  = 78770,
-};
-
-static struct platform_device smdk_backlight_device = {
-	.name	= "pwm-backlight",
-	.id	= -1,
-	.dev	= {
-		.parent = &s3c_device_timer[3].dev,
-		.platform_data = &smdk_backlight_data,
-	},
-};
-
-static void __init smdk_backlight_register(void)
-{
-	int ret = platform_device_register(&smdk_backlight_device);
-
-	if (ret)
-		printk(KERN_ERR
-			"smdk: failed to register backlight device: %d\n", ret);
-}
-#endif
-
-#if defined(CONFIG_BLK_DEV_IDE_S3C)
-static struct s3c_ide_platdata smdkv210_ide_pdata __initdata = {
-	.setup_gpio     = s3c_ide_setup_gpio,
-};
-#endif
-
 /* I2C0 */
 static struct i2c_board_info i2c_devs0[] __initdata = {
 };
@@ -1599,32 +1502,6 @@ static struct platform_device ram_console_device = {
 	.num_resources = ARRAY_SIZE(ram_console_resource),
 	.resource = ram_console_resource,
 };
-
-#ifdef CONFIG_DM9000
-static void __init smdkv210_dm9000_set(void)
-{
-	unsigned int tmp;
-
-	tmp = ((0<<28)|(0<<24)|(5<<16)|(0<<12)|(0<<8)|(0<<4)|(0<<0));
-	__raw_writel(tmp, (S5P_SROM_BW+0x18));
-
-	tmp = __raw_readl(S5P_SROM_BW);
-	tmp &= ~(0xf << 20);
-
-#ifdef CONFIG_DM9000_16BIT
-	tmp |= (0x1 << 20);
-#else
-	tmp |= (0x2 << 20);
-#endif
-	__raw_writel(tmp, S5P_SROM_BW);
-
-	tmp = __raw_readl(S5PV210_MP01CON);
-	tmp &= ~(0xf << 20);
-	tmp |= (2 << 20);
-
-	__raw_writel(tmp, S5PV210_MP01CON);
-}
-#endif
 
 #ifdef CONFIG_ANDROID_PMEM
 static struct android_pmem_platform_data pmem_pdata = {
@@ -3028,15 +2905,6 @@ static void __init herring_fixup(struct machine_desc *desc,
 	ram_console_size = SZ_1M;
 }
 
-#ifdef CONFIG_FB_S3C_LTE480WV
-static struct s3c_platform_fb lte480wv_fb_data __initdata = {
-	.hw_ver	= 0x62,
-	.nr_wins = 5,
-	.default_win = CONFIG_FB_S3C_DEFAULT_WINDOW,
-	.swap = FB_SWAP_WORD | FB_SWAP_HWORD,
-};
-#endif
-
 /* this function are used to detect s5pc110 chip version temporally */
 int s5pc110_version ;
 
@@ -3171,16 +3039,7 @@ static void __init herring_machine_init(void)
 	/*initialise the gpio's*/
 	herring_init_gpio();
 
-	/* OneNAND */
-#ifdef CONFIG_MTD_ONENAND
-	/* s3c_device_onenand.dev.platform_data = &s5p_onenand_data; */
-#endif
-
 	qt_touch_init();
-
-#ifdef CONFIG_DM9000
-	smdkv210_dm9000_set();
-#endif
 
 #ifdef CONFIG_ANDROID_PMEM
 	android_pmem_set_platdata();
@@ -3224,25 +3083,9 @@ static void __init herring_machine_init(void)
 	/* magnetic sensor */
 	i2c_register_board_info(12, i2c_devs12, ARRAY_SIZE(i2c_devs12));
 
-#ifdef CONFIG_FB_S3C_LTE480WV
-	s3cfb_set_platdata(&lte480wv_fb_data);
-#endif
-
-#if defined(CONFIG_BLK_DEV_IDE_S3C)
-	s3c_ide_set_platdata(&smdkv210_ide_pdata);
-#endif
-
-#if defined(CONFIG_TOUCHSCREEN_S3C)
-	s3c_ts_set_platdata(&s3c_ts_platform);
-#endif
-
 #ifdef CONFIG_FB_S3C_TL2796
 	spi_register_board_info(spi_board_info, ARRAY_SIZE(spi_board_info));
 	s3cfb_set_platdata(&tl2796_data);
-#endif
-
-#if defined(CONFIG_S5PV210_ADCTS)
-	s3c_adcts_set_platdata(&s3c_adcts_cfgs);
 #endif
 
 #if defined(CONFIG_S5P_ADC)
@@ -3254,7 +3097,6 @@ static void __init herring_machine_init(void)
 #endif
 
 	s5ka3dfx_request_gpio();
-
 
 #ifdef CONFIG_VIDEO_FIMC
 	/* fimc */
@@ -3284,9 +3126,6 @@ static void __init herring_machine_init(void)
 	s3c_sdhci_set_platdata();
 #endif
 
-#if defined(CONFIG_BACKLIGHT_PWM)
-	smdk_backlight_register();
-#endif
 	register_reboot_notifier(&herring_reboot_notifier);
 
 	herring_switch_init();
