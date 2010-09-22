@@ -1543,6 +1543,13 @@ static struct i2c_board_info i2c_devs9[] __initdata = {
 	},
 };
 
+static void gp2a_gpio_init(void)
+{
+	int ret = gpio_request(GPIO_PS_ON, "gp2a_power_supply_on");
+	if (ret)
+		printk(KERN_ERR "Failed to request gpio gp2a power supply.\n");
+}
+
 static int gp2a_power(bool on)
 {
 	/* this controls the power supply rail to the gp2a IC */
@@ -3206,6 +3213,7 @@ static void __init herring_machine_init(void)
 	i2c_register_board_info(7, i2c_devs7, ARRAY_SIZE(i2c_devs7));
 	i2c_register_board_info(9, i2c_devs9, ARRAY_SIZE(i2c_devs9));
 	/* optical sensor */
+	gp2a_gpio_init();
 	i2c_register_board_info(11, i2c_devs11, ARRAY_SIZE(i2c_devs11));
 	/* magnetic sensor */
 	i2c_register_board_info(12, i2c_devs12, ARRAY_SIZE(i2c_devs12));
