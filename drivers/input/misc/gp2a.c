@@ -49,7 +49,9 @@
  *  input device framework and control via sysfs attributes.
  */
 
-#define D(x...) pr_info(x)
+
+#define gp2a_dbgmsg(str, args...) pr_debug("%s: " str, __func__, ##args)
+
 
 #define ADC_BUFFER_NUM	6
 
@@ -89,7 +91,7 @@ struct gp2a_data {
 	int irq;
 	struct work_struct work_light;
 	struct hrtimer timer;
-	int64_t light_poll_delay_ns;
+	ktime_t light_poll_delay;
 	int adc_value_buf[ADC_BUFFER_NUM];
 	int adc_index_count;
 	bool adc_buf_initialized;
@@ -130,16 +132,14 @@ int gp2a_i2c_write(struct gp2a_data *gp2a, u8 reg, u8 *val)
 
 static void gp2a_light_enable(struct gp2a_data *gp2a)
 {
-	ktime_t polling_time;
-	D("%s: poll time %lld\n", __func__, gp2a->light_poll_delay_ns);
-	polling_time = ktime_set(0, 0);
-	polling_time = ktime_add_ns(polling_time, gp2a->light_poll_delay_ns);
-	hrtimer_start(&gp2a->timer, polling_time, HRTIMER_MODE_REL);
+	gp2a_dbgmsg("starting poll timer, delay %lldns\n",
+		    ktime_to_ns(gp2a->light_poll_delay));
+	hrtimer_start(&gp2a->timer, gp2a->light_poll_delay, HRTIMER_MODE_REL);
 }
 
 static void gp2a_light_disable(struct gp2a_data *gp2a)
 {
-	D("%s:\n", __func__);
+	gp2a_dbgmsg("cancelling poll timer\n");
 	hrtimer_cancel(&gp2a->timer);
 	cancel_work_sync(&gp2a->work_light);
 }
@@ -148,7 +148,7 @@ static ssize_t poll_delay_show(struct device *dev,
 				struct device_attribute *attr, char *buf)
 {
 	struct gp2a_data *gp2a = dev_get_drvdata(dev);
-	return sprintf(buf, "%lld\n", gp2a->light_poll_delay_ns);
+	return sprintf(buf, "%lld\n", ktime_to_ns(gp2a->light_poll_delay));
 }
 
 
@@ -158,15 +158,24 @@ static ssize_t poll_delay_store(struct device *dev,
 {
 	struct gp2a_data *gp2a = dev_get_drvdata(dev);
 	int64_t new_delay;
-	if (sscanf(buf, "%lld", &new_delay) == 1) {
-		mutex_lock(&gp2a->power_lock);
-		gp2a->light_poll_delay_ns = new_delay;
+	int err;
+
+	err = strict_strtoll(buf, 10, &new_delay);
+	if (err < 0)
+		return err;
+
+	gp2a_dbgmsg("new delay = %lldns, old delay = %lldns\n",
+		    new_delay, ktime_to_ns(gp2a->light_poll_delay));
+	mutex_lock(&gp2a->power_lock);
+	if (new_delay != ktime_to_ns(gp2a->light_poll_delay)) {
+		gp2a->light_poll_delay = ns_to_ktime(new_delay);
 		if (gp2a->power_state & LIGHT_ENABLED) {
 			gp2a_light_disable(gp2a);
 			gp2a_light_enable(gp2a);
 		}
-		mutex_unlock(&gp2a->power_lock);
 	}
+	mutex_unlock(&gp2a->power_lock);
+
 	return size;
 }
 
@@ -192,12 +201,19 @@ static ssize_t light_enable_store(struct device *dev,
 {
 	struct gp2a_data *gp2a = dev_get_drvdata(dev);
 	bool new_value;
-	if (buf[0] == '0')
-		new_value = false;
-	else
+
+	if (sysfs_streq(buf, "1"))
 		new_value = true;
+	else if (sysfs_streq(buf, "0"))
+		new_value = false;
+	else {
+		pr_err("%s: invalid value %d\n", __func__, *buf);
+		return -EINVAL;
+	}
 
 	mutex_lock(&gp2a->power_lock);
+	gp2a_dbgmsg("new_value = %d, old state = %d\n",
+		    new_value, (gp2a->power_state & LIGHT_ENABLED) ? 1 : 0);
 	if (new_value && !(gp2a->power_state & LIGHT_ENABLED)) {
 		if (!gp2a->power_state)
 			gp2a->pdata->power(true);
@@ -219,22 +235,31 @@ static ssize_t proximity_enable_store(struct device *dev,
 {
 	struct gp2a_data *gp2a = dev_get_drvdata(dev);
 	bool new_value;
-	if (buf[0] == '0')
-		new_value = false;
-	else
+
+	if (sysfs_streq(buf, "1"))
 		new_value = true;
+	else if (sysfs_streq(buf, "0"))
+		new_value = false;
+	else {
+		pr_err("%s: invalid value %d\n", __func__, *buf);
+		return -EINVAL;
+	}
 
 	mutex_lock(&gp2a->power_lock);
+	gp2a_dbgmsg("new_value = %d, old state = %d\n",
+		    new_value, (gp2a->power_state & PROXIMITY_ENABLED) ? 1 : 0);
 	if (new_value && !(gp2a->power_state & PROXIMITY_ENABLED)) {
 		if (!gp2a->power_state)
 			gp2a->pdata->power(true);
 		gp2a->power_state |= PROXIMITY_ENABLED;
 		enable_irq(gp2a->irq);
+		enable_irq_wake(gp2a->irq);
 		gp2a_i2c_write(gp2a, REGS_GAIN, &reg_defaults[1]);
 		gp2a_i2c_write(gp2a, REGS_HYS, &reg_defaults[2]);
 		gp2a_i2c_write(gp2a, REGS_CYCLE, &reg_defaults[3]);
 		gp2a_i2c_write(gp2a, REGS_OPMOD, &reg_defaults[4]);
 	} else if (!new_value && (gp2a->power_state & PROXIMITY_ENABLED)) {
+		disable_irq_wake(gp2a->irq);
 		disable_irq(gp2a->irq);
 		gp2a_i2c_write(gp2a, REGS_OPMOD, &reg_defaults[0]);
 		gp2a->power_state &= ~PROXIMITY_ENABLED;
@@ -336,8 +361,7 @@ static enum hrtimer_restart gp2a_timer_func(struct hrtimer *timer)
 {
 	struct gp2a_data *gp2a = container_of(timer, struct gp2a_data, timer);
 	queue_work(gp2a->wq, &gp2a->work_light);
-	hrtimer_forward_now(&gp2a->timer,
-			    ktime_set(0, gp2a->light_poll_delay_ns));
+	hrtimer_forward_now(&gp2a->timer, gp2a->light_poll_delay);
 	return HRTIMER_RESTART;
 }
 
@@ -350,6 +374,8 @@ irqreturn_t gp2a_irq_handler(int irq, void *data)
 		pr_err("%s: gpio_get_value error %d\n", __func__, val);
 		return IRQ_HANDLED;
 	}
+
+	gp2a_dbgmsg("gp2a: proximity val=%d\n", val);
 
 	/* 0 is close, 1 is far */
 	input_report_abs(ip->proximity_input_dev, ABS_DISTANCE, val);
@@ -365,7 +391,7 @@ static int gp2a_setup_irq(struct gp2a_data *gp2a)
 	struct gp2a_platform_data *pdata = gp2a->pdata;
 	int irq;
 
-	D("%s\n", __func__);
+	gp2a_dbgmsg("start\n");
 
 	rc = gpio_request(pdata->p_out, "gpio_proximity_out");
 	if (rc < 0) {
@@ -394,20 +420,14 @@ static int gp2a_setup_irq(struct gp2a_data *gp2a)
 		goto err_request_irq;
 	}
 
-	rc = set_irq_wake(irq, 1);
-	if (rc < 0) {
-		pr_err("%s: failed to set irq %d as a wake interrupt\n",
-			__func__, irq);
-		goto err_set_irq_wake;
-
-	}
-
+	/* start with interrupts disabled */
+	disable_irq(irq);
 	gp2a->irq = irq;
+
+	gp2a_dbgmsg("success\n");
 
 	goto done;
 
-err_set_irq_wake:
-	free_irq(irq, 0);
 err_request_irq:
 err_gpio_direction_input:
 	gpio_free(pdata->p_out);
@@ -470,7 +490,7 @@ static int gp2a_i2c_probe(struct i2c_client *client,
 	input_set_capability(input_dev, EV_ABS, ABS_DISTANCE);
 	input_set_abs_params(input_dev, ABS_DISTANCE, 0, 1, 0, 0);
 
-	D("%s: registering proximity input device\n", __func__);
+	gp2a_dbgmsg("registering proximity input device\n");
 	ret = input_register_device(input_dev);
 	if (ret < 0) {
 		pr_err("%s: could not register input device\n", __func__);
@@ -486,7 +506,7 @@ static int gp2a_i2c_probe(struct i2c_client *client,
 
 	/* hrtimer settings.  we poll for light values using a timer. */
 	hrtimer_init(&gp2a->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	gp2a->light_poll_delay_ns = 5000000000LL;
+	gp2a->light_poll_delay = ns_to_ktime(200 * NSEC_PER_MSEC);
 	gp2a->timer.function = gp2a_timer_func;
 
 	/* the timer just fires off a work queue request.  we need a thread
@@ -512,7 +532,7 @@ static int gp2a_i2c_probe(struct i2c_client *client,
 	input_set_capability(input_dev, EV_ABS, ABS_MISC);
 	input_set_abs_params(input_dev, ABS_MISC, 0, 1, 0, 0);
 
-	D("%s: registering lightsensor-level input device\n", __func__);
+	gp2a_dbgmsg("registering lightsensor-level input device\n");
 	ret = input_register_device(input_dev);
 	if (ret < 0) {
 		pr_err("%s: could not register input device\n", __func__);
