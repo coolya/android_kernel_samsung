@@ -375,21 +375,6 @@ static inline void s5pv210_irq_eint_group_mask(unsigned int irq)
 	__raw_writel(mask, group->mask_reg);
 }
 
-static void s5pv210_irq_eint_group_unmask(unsigned int irq)
-{
-	struct s5pv210_eint_group_t *group;
-	int grp;
-	u32 mask;
-
-	grp = to_group_number(irq);
-	group = &eint_groups[grp];
-
-	mask = __raw_readl(group->mask_reg);
-	mask &= ~(1 << (group->mask_ofs + to_irq_number(grp, irq)));
-
-	__raw_writel(mask, group->mask_reg);
-}
-
 static inline void s5pv210_irq_eint_group_ack(unsigned int irq)
 {
 	struct s5pv210_eint_group_t *group;
@@ -402,6 +387,31 @@ static inline void s5pv210_irq_eint_group_ack(unsigned int irq)
 	pend = (1 << (group->pend_ofs + to_irq_number(grp, irq)));
 
 	__raw_writel(pend, group->pend_reg);
+}
+
+static void s5pv210_irq_eint_group_unmask(unsigned int irq)
+{
+	struct s5pv210_eint_group_t *group;
+	int grp;
+	u32 mask;
+
+	grp = to_group_number(irq);
+	group = &eint_groups[grp];
+
+	/* for level triggered interrupts, masking doesn't prevent
+	 * the interrupt from becoming pending again.  by the time
+	 * the handler (either irq or thread) can do its thing to clear
+	 * the interrupt, it's too late because it could be pending
+	 * already.  we have to ack it here, after the handler runs,
+	 * or else we get a false interrupt.
+	 */
+	if (irq_to_desc(irq)->status & IRQ_LEVEL)
+		s5pv210_irq_eint_group_ack(irq);
+
+	mask = __raw_readl(group->mask_reg);
+	mask &= ~(1 << (group->mask_ofs + to_irq_number(grp, irq)));
+
+	__raw_writel(mask, group->mask_reg);
 }
 
 static void s5pv210_irq_eint_group_maskack(unsigned int irq)
