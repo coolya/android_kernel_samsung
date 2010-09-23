@@ -68,7 +68,7 @@ static int max17040_get_property(struct power_supply *psy,
 		val->intval = chip->online;
 		break;
 	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		val->intval = chip->vcell;
+		val->intval = chip->vcell * 1250;
 		break;
 	case POWER_SUPPLY_PROP_CAPACITY:
 		val->intval = chip->soc;
