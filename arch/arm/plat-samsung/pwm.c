@@ -230,6 +230,9 @@ int pwm_config(struct pwm_device *pwm, int duty_ns, int period_ns)
 	/* The TCMP and TCNT can be read without a lock, they're not
 	 * shared between the timers. */
 
+	clk_enable(pwm->clk);
+	clk_enable(pwm->clk_div);
+
 	tcmp = __raw_readl(S3C2410_TCMPB(pwm->pwm_id));
 	tcnt = __raw_readl(S3C2410_TCNTB(pwm->pwm_id));
 
@@ -287,7 +290,11 @@ int pwm_config(struct pwm_device *pwm, int duty_ns, int period_ns)
 
 	spin_unlock_irqrestore(&pwm_spin_lock, flags);
 
+	clk_disable(pwm->clk);
+	clk_disable(pwm->clk_div);
+
 	return 0;
+
 }
 
 EXPORT_SYMBOL(pwm_config);
