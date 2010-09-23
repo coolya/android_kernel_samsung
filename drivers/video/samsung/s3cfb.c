@@ -227,14 +227,13 @@ static int s3cfb_map_default_video_memory(struct fb_info *fb)
 #if defined(CONFIG_FB_S3C_VIRTUAL)
 	struct fb_fix_screeninfo *fix = &fb->fix;
 	struct s3cfb_window *win = fb->par;
-	int reserved_size = 0;
+	struct s3c_platform_fb *pdata = to_fb_plat(fbdev->dev);
 
 	if (win->owner == DMA_MEM_OTHER)
 		return 0;
 
-	fix->smem_start = s5p_get_media_memory_bank(S5P_MDEV_FIMD, 1);
-	reserved_size = s5p_get_media_memsize_bank(S5P_MDEV_FIMD, 1);
-	fb->screen_base = ioremap_wc(fix->smem_start, reserved_size);
+	fix->smem_start = pdata->pmem_start;
+	fb->screen_base = ioremap_wc(fix->smem_start, pdata->pmem_size);
 
 	if (!fb->screen_base)
 		return -ENOMEM;

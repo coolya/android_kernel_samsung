@@ -32,7 +32,8 @@ struct s3c_platform_fb {
 	int		nr_buffers[5];
 	int		default_win;
 	int		swap;
-	
+	phys_addr_t	pmem_start; /* starting physical address of memory region */
+	size_t		pmem_size; /* size of memory region */
 	void            *lcd;
 	void		(*cfg_gpio)(struct platform_device *dev);
 	int		(*backlight_on)(struct platform_device *dev);

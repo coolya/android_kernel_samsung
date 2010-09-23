@@ -320,6 +320,11 @@ void __init s3cfb_set_platdata(struct s3c_platform_fb *pd)
 		npd->clk_on = s3cfb_clk_on;
 		npd->clk_off = s3cfb_clk_off;
 
+		/* starting physical address of memory region */
+		npd->pmem_start = s5p_get_media_memory_bank(S5P_MDEV_FIMD, 1);
+		/* size of memory region */
+		npd->pmem_size = s5p_get_media_memsize_bank(S5P_MDEV_FIMD, 1);
+
 		s3c_device_fb.dev.platform_data = npd;
 	}
 }
