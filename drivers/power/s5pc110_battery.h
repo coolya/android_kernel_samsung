@@ -118,47 +118,58 @@ const int temper_table[][2] =  {
 };
 
 #define TEMP_IDX_ZERO_CELSIUS	10
-#define TEMP_HIGH_BLOCK		temper_table[TEMP_IDX_ZERO_CELSIUS+65][0]
-#define TEMP_HIGH_RECOVER	temper_table[TEMP_IDX_ZERO_CELSIUS+45][0]
+#define TEMP_EVENT_HIGH_BLOCK	temper_table[TEMP_IDX_ZERO_CELSIUS+65][0]
+#define TEMP_EVENT_HIGH_RECOVER	temper_table[TEMP_IDX_ZERO_CELSIUS+45][0]
+#define TEMP_IDLE_HIGH_BLOCK	temper_table[TEMP_IDX_ZERO_CELSIUS+45][0]
+#define TEMP_IDLE_HIGH_RECOVER	temper_table[TEMP_IDX_ZERO_CELSIUS+40][0]
 #define TEMP_LOW_BLOCK		temper_table[TEMP_IDX_ZERO_CELSIUS][0]
 #define TEMP_LOW_RECOVER	temper_table[TEMP_IDX_ZERO_CELSIUS+2][0]
 
 /*
  * ADC channel
  */
-typedef enum s3c_adc_channel {
+enum adc_channel_type{
 	S3C_ADC_VOLTAGE = 0,
 	S3C_ADC_CHG_CURRENT = 2,
 	S3C_ADC_EAR = 3,
 	S3C_ADC_TEMPERATURE = 6,
 	S3C_ADC_V_F,
 	ENDOFADC
-} adc_channel_type;
+};
 
-#define IRQ_TA_CONNECTED_N	IRQ_EINT(19)
-#define IRQ_TA_CHG_N		IRQ_EINT(25)
+enum charger_type_t{
+	CHARGER_BATTERY = 0,
+	CHARGER_USB,
+	CHARGER_AC,
+	CHARGER_DISCHARGE
+};
 
-/******************************************************************************
- * Battery driver features
- * ***************************************************************************/
-/* #define __TEMP_ADC_VALUE__ */
-/* #define __USE_EGPIO__ */
-/* #define __CHECK_BATTERY_V_F__ */
-#define __BATTERY_V_F__
-#define __BATTERY_COMPENSATION__
-/* #define __CHECK_BOARD_REV__ */
-/* #define __BOARD_REV_ADC__ */
-/* #define __TEST_DEVICE_DRIVER__ */
-/* #define __ALWAYS_AWAKE_DEVICE__  */
-#define __TEST_MODE_INTERFACE__
-#define __FUEL_GAUGES_IC__
-
-/*****************************************************************************/
+enum {
+	BATT_VOL = 0,
+	BATT_VOL_ADC,
+	BATT_VOL_ADC_CAL,
+	BATT_TEMP,
+	BATT_TEMP_ADC,
+	BATT_TEMP_ADC_CAL,
+	BATT_VOL_ADC_AVER,
+	BATT_CHARGING_SOURCE,
+	BATT_VIBRATOR,
+	BATT_CAMERA,
+	BATT_MP3,
+	BATT_VIDEO,
+	BATT_VOICE_CALL_2G,
+	BATT_VOICE_CALL_3G,
+	BATT_DATA_CALL,
+	BATT_DEV_STATE,
+	BATT_COMPENSATION,
+	BATT_BOOTING,
+	BATT_FG_SOC,
+	BATT_RESET_SOC,
+};
 
 #define TOTAL_CHARGING_TIME	(6*60*60*1000)	/* 6 hours */
 #define TOTAL_RECHARGING_TIME	  (90*60*1000)	/* 1.5 hours */
 
-#ifdef __BATTERY_COMPENSATION__
 #define COMPENSATE_VIBRATOR		19
 #define COMPENSATE_CAMERA		25
 #define COMPENSATE_MP3			17
@@ -170,14 +181,9 @@ typedef enum s3c_adc_channel {
 #define COMPENSATE_TA			0
 #define COMPENSATE_CAM_FALSH		0
 #define COMPENSATE_BOOTING		52
-#endif /* __BATTERY_COMPENSATION__ */
 
-#ifdef __FUEL_GAUGES_IC__
 #define SOC_LB_FOR_POWER_OFF		27
 
 #define FULL_CHARGE_COND_VOLTAGE	4000
 #define RECHARGE_COND_VOLTAGE		4130
 #define RECHARGE_COND_TIME		(30*1000)	/* 30 seconds */
-#endif /* __FUEL_GAUGES_IC__ */
-
-
