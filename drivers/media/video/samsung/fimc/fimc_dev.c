@@ -444,8 +444,8 @@ struct fimc_control *fimc_register_controller(struct platform_device *pdev)
 	ctrl->vd->minor = id;
 
 	/* alloc from bank1 as default */
-	ctrl->mem.base = s5p_get_media_memory_bank(mdev_id, 1);
-	ctrl->mem.size = s5p_get_media_memsize_bank(mdev_id, 1);
+	ctrl->mem.base = pdata->pmem_start;
+	ctrl->mem.size = pdata->pmem_size;
 	ctrl->mem.curr = ctrl->mem.base;
 
 	ctrl->status = FIMC_STREAMOFF;

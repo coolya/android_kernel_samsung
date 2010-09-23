@@ -36,6 +36,8 @@
 #include <plat/fb.h>
 #include <plat/fimc.h>
 #include <plat/csis.h>
+#include <plat/media.h>
+#include <mach/media.h>
 
 /* Android Gadget */
 #include <linux/usb/android_composite.h>
@@ -371,6 +373,11 @@ void __init s3c_fimc0_set_platdata(struct s3c_platform_fimc *pd)
 
 		npd->hw_ver = 0x45;
 
+		/* starting physical address of memory region */
+		npd->pmem_start = s5p_get_media_memory_bank(S5P_MDEV_FIMC0, 1);
+		/* size of memory region */
+		npd->pmem_size = s5p_get_media_memsize_bank(S5P_MDEV_FIMC0, 1);
+
 		s3c_device_fimc0.dev.platform_data = npd;
 	}
 }
@@ -422,6 +429,11 @@ void __init s3c_fimc1_set_platdata(struct s3c_platform_fimc *pd)
 
 		npd->hw_ver = 0x50;
 
+		/* starting physical address of memory region */
+		npd->pmem_start = s5p_get_media_memory_bank(S5P_MDEV_FIMC1, 1);
+		/* size of memory region */
+		npd->pmem_size = s5p_get_media_memsize_bank(S5P_MDEV_FIMC1, 1);
+
 		s3c_device_fimc1.dev.platform_data = npd;
 	}
 }
@@ -472,6 +484,11 @@ void __init s3c_fimc2_set_platdata(struct s3c_platform_fimc *pd)
 			npd->clk_off = s3c_fimc_clk_off;
 
 		npd->hw_ver = 0x45;
+
+		/* starting physical address of memory region */
+		npd->pmem_start = s5p_get_media_memory_bank(S5P_MDEV_FIMC2, 1);
+		/* size of memory region */
+		npd->pmem_size = s5p_get_media_memsize_bank(S5P_MDEV_FIMC2, 1);
 
 		s3c_device_fimc2.dev.platform_data = npd;
 	}
