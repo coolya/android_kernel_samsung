@@ -347,7 +347,7 @@ static struct platform_device s3c_device_qtts = {
 #endif
 
 static struct regulator_consumer_supply ldo3_consumer[] = {
-	{	.supply	= "vdd_otg_d", },
+	REGULATOR_SUPPLY("pd_io", "s3c-usbgadget")
 };
 
 static struct regulator_consumer_supply ldo7_consumer[] = {
@@ -355,7 +355,7 @@ static struct regulator_consumer_supply ldo7_consumer[] = {
 };
 
 static struct regulator_consumer_supply ldo8_consumer[] = {
-	{	.supply	= "vdd_otg_a", },
+	REGULATOR_SUPPLY("pd_core", "s3c-usbgadget")
 };
 
 static struct regulator_consumer_supply ldo11_consumer[] = {
