@@ -438,6 +438,7 @@ static struct regulator_init_data herring_ldo7_data = {
 		.min_uV		= 1800000,
 		.max_uV		= 1800000,
 		.apply_uV	= 1,
+		.always_on	= 1,
 		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
 			.disabled = 1,
@@ -568,6 +569,7 @@ static struct regulator_init_data herring_ldo17_data = {
 		.min_uV		= 3000000,
 		.max_uV		= 3000000,
 		.apply_uV	= 1,
+		.always_on	= 1,
 		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
 			.disabled = 1,
@@ -3146,6 +3148,8 @@ static void __init herring_machine_init(void)
 #ifdef CONFIG_S5PV210_SETUP_SDHCI
 	s3c_sdhci_set_platdata();
 #endif
+
+	regulator_has_full_constraints();
 
 	register_reboot_notifier(&herring_reboot_notifier);
 
