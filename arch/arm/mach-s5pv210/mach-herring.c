@@ -3188,19 +3188,27 @@ static void __init herring_machine_init(void)
 /* Initializes OTG Phy. */
 void otg_phy_init(void)
 {
-	__raw_writel(__raw_readl(S5P_USB_PHY_CONTROL) | (0x1<<0),
-			S5P_USB_PHY_CONTROL); /* USB PHY0 Enable */
-	__raw_writel((__raw_readl(S3C_USBOTG_PHYPWR)
-			& ~(0x3<<3) & ~(0x1<<0)) | (0x1<<5),
+	/* USB PHY0 Enable */
+	writel(readl(S5P_USB_PHY_CONTROL) | (0x1<<0),
+			S5P_USB_PHY_CONTROL);
+	writel((readl(S3C_USBOTG_PHYPWR) & ~(0x3<<3) & ~(0x1<<0)) | (0x1<<5),
 			S3C_USBOTG_PHYPWR);
-	__raw_writel((__raw_readl(S3C_USBOTG_PHYCLK) & ~(0x5<<2)) | (0x3<<0),
+	writel((readl(S3C_USBOTG_PHYCLK) & ~(0x5<<2)) | (0x3<<0),
 			S3C_USBOTG_PHYCLK);
-	__raw_writel((__raw_readl(S3C_USBOTG_RSTCON) & ~(0x3<<1)) | (0x1<<0),
+	writel((readl(S3C_USBOTG_RSTCON) & ~(0x3<<1)) | (0x1<<0),
 			S3C_USBOTG_RSTCON);
-	udelay(10);
-	__raw_writel(__raw_readl(S3C_USBOTG_RSTCON) & ~(0x7<<0),
+	msleep(1);
+	writel(readl(S3C_USBOTG_RSTCON) & ~(0x7<<0),
 			S3C_USBOTG_RSTCON);
-	udelay(10);
+	msleep(1);
+
+	/* rising/falling time */
+	writel(readl(S3C_USBOTG_PHYTUNE) | (0x1<<20),
+			S3C_USBOTG_PHYTUNE);
+
+	/* set DC level as 6 (6%) */
+	writel((readl(S3C_USBOTG_PHYTUNE) & ~(0xf)) | (0x1<<2) | (0x1<<1),
+			S3C_USBOTG_PHYTUNE);
 }
 EXPORT_SYMBOL(otg_phy_init);
 
@@ -3210,9 +3218,9 @@ struct usb_ctrlrequest usb_ctrl __attribute__((aligned(64)));
 /* OTG PHY Power Off */
 void otg_phy_off(void)
 {
-	__raw_writel(__raw_readl(S3C_USBOTG_PHYPWR) | (0x3<<3),
+	writel(readl(S3C_USBOTG_PHYPWR) | (0x3<<3),
 			S3C_USBOTG_PHYPWR);
-	__raw_writel(__raw_readl(S5P_USB_PHY_CONTROL) & ~(1<<0),
+	writel(readl(S5P_USB_PHY_CONTROL) & ~(1<<0),
 			S5P_USB_PHY_CONTROL);
 }
 EXPORT_SYMBOL(otg_phy_off);
