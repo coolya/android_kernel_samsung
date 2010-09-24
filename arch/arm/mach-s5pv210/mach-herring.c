@@ -19,7 +19,6 @@
 #include <linux/i2c-gpio.h>
 #include <linux/regulator/consumer.h>
 #include <linux/mfd/max8998.h>
-#include <linux/i2c/qt602240_ts.h>
 #include <linux/i2c/ak8973.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
@@ -338,13 +337,6 @@ static struct s5p_media_device herring_media_devs[] = {
 		.paddr = 0,
 	},
 };
-
-#if defined(CONFIG_TOUCHSCREEN_QT602240)
-static struct platform_device s3c_device_qtts = {
-	.name	= "qt602240-ts",
-	.id	= -1,
-};
-#endif
 
 static struct regulator_consumer_supply ldo3_consumer[] = {
 	REGULATOR_SUPPLY("pd_io", "s3c-usbgadget")
@@ -1399,22 +1391,10 @@ static struct i2c_board_info i2c_devs4[] __initdata = {
 static struct i2c_board_info i2c_devs1[] __initdata = {
 };
 
-/* i2c board & device info. */
-static struct qt602240_platform_data qt602240_p1_platform_data = {
-	.x_line = 19,
-	.y_line = 11,
-	.x_size = 1024,
-	.y_size = 1024,
-	.blen = 0x41,
-	.threshold = 0x30,
-	.orient = QT602240_VERTICAL_FLIP,
-};
-
 /* I2C2 */
 static struct i2c_board_info i2c_devs2[] __initdata = {
 	{
 		I2C_BOARD_INFO("qt602240_ts", 0x4a),
-		.platform_data  = &qt602240_p1_platform_data,
 	},
 };
 
@@ -2904,9 +2884,6 @@ static struct platform_device *herring_devices[] __initdata = {
 	&s3c_device_timer[2],
 	&s3c_device_timer[3],
 #endif
-#ifdef CONFIG_TOUCHSCREEN_QT602240
-	&s3c_device_qtts,
-#endif
 	&sec_device_rfkill,
 	&sec_device_btsleep,
 	&ram_console_device,
@@ -2992,11 +2969,6 @@ EXPORT_SYMBOL(hw_version_check);
 static void __init qt_touch_init(void)
 {
 	int gpio, irq;
-
-	/* qt602240 TSP */
-	qt602240_p1_platform_data.blen = 0x1;
-	qt602240_p1_platform_data.threshold = 0x13;
-	qt602240_p1_platform_data.orient = QT602240_VERTICAL_FLIP;
 
 	gpio = S5PV210_GPG3(6);	/* XMMC3DATA_3 */
 	gpio_request(gpio, "TOUCH_EN");
