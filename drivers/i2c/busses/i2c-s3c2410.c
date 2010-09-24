@@ -488,7 +488,6 @@ static int s3c24xx_i2c_doxfer(struct s3c24xx_i2c *i2c,
 {
 	unsigned long timeout;
 	int ret;
-	struct s3c2410_platform_i2c *pdata = i2c->dev->platform_data;
 
 	if (i2c->suspended)
 		return -EIO;
