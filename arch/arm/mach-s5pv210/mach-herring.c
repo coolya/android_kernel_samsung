@@ -1377,8 +1377,21 @@ static struct s3c_platform_fimc fimc_plat = {
 };
 #endif
 
+static struct k3g_platform_data k3g_pdata = {
+	.axis_map_x = 1,
+	.axis_map_y = 1,
+	.axis_map_z = 1,
+	.negate_x = 0,
+	.negate_y = 0,
+	.negate_z = 0,
+};
+
 /* I2C0 */
 static struct i2c_board_info i2c_devs0[] __initdata = {
+	{
+		I2C_BOARD_INFO("k3g", 0x69),
+		.platform_data = &k3g_pdata,
+	},
 };
 
 static struct i2c_board_info i2c_devs4[] __initdata = {
@@ -1420,22 +1433,21 @@ static struct i2c_board_info i2c_devs5[] __initdata = {
 	},
 };
 
-static struct k3g_platform_data k3g_pdata = {
-	.axis_map_x = 1,
-	.axis_map_y = 1,
-	.axis_map_z = 1,
-	.negate_x = 0,
-	.negate_y = 0,
-	.negate_z = 0,
+static struct i2c_board_info i2c_devs8[] __initdata = {
+	{
+		I2C_BOARD_INFO("ak8973b", 0x1c),
+	},
+	{
+		I2C_BOARD_INFO("kr3dm", 0x09),
+	},
 };
 
-static struct i2c_board_info i2c_devs8[] __initdata = {
+static struct i2c_board_info i2c_devs8_hwrev04[] __initdata = {
 	{
 		I2C_BOARD_INFO("k3g", 0x69),
 		.platform_data = &k3g_pdata,
 	},
 };
-
 
 static struct fsa9480_i2c_platform_data fsa9480_pdata = {
 	.usb_sel = GPIO_USB_SEL,
@@ -3081,16 +3093,18 @@ static void __init herring_machine_init(void)
 #ifdef CONFIG_S3C_DEV_I2C2
 	s3c_i2c2_set_platdata(NULL);
 #endif
-	i2c_register_board_info(0, i2c_devs0, ARRAY_SIZE(i2c_devs0));
+	/* gyro sensor */
+	if (system_rev >= 0x05)
+		i2c_register_board_info(0, i2c_devs0, ARRAY_SIZE(i2c_devs0));
 	i2c_register_board_info(1, i2c_devs1, ARRAY_SIZE(i2c_devs1));
 	i2c_register_board_info(2, i2c_devs2, ARRAY_SIZE(i2c_devs2));
 
 	/* wm8994 codec */
 	sound_init();
 	i2c_register_board_info(4, i2c_devs4, ARRAY_SIZE(i2c_devs4));
-
-	/* accel sensor */
-	i2c_register_board_info(5, i2c_devs5, ARRAY_SIZE(i2c_devs5));
+	/* accel sensor for rev04 */
+	if (system_rev == 0x04)
+		i2c_register_board_info(5, i2c_devs5, ARRAY_SIZE(i2c_devs5));
 	i2c_register_board_info(6, i2c_devs6, ARRAY_SIZE(i2c_devs6));
 	/* Touch Key */
 	touch_keypad_gpio_init();
@@ -3098,13 +3112,20 @@ static void __init herring_machine_init(void)
 	/* FSA9480 */
 	fsa9480_gpio_init();
 	i2c_register_board_info(7, i2c_devs7, ARRAY_SIZE(i2c_devs7));
-	i2c_register_board_info(8, i2c_devs8, ARRAY_SIZE(i2c_devs8));
+	if (system_rev >= 0x05)
+		/* magnetic and accel sensor */
+		i2c_register_board_info(8, i2c_devs8, ARRAY_SIZE(i2c_devs8));
+	else
+		/* gyro sensor for rev04 */
+		i2c_register_board_info(8, i2c_devs8_hwrev04,
+					ARRAY_SIZE(i2c_devs8_hwrev04));
 	i2c_register_board_info(9, i2c_devs9, ARRAY_SIZE(i2c_devs9));
 	/* optical sensor */
 	gp2a_gpio_init();
 	i2c_register_board_info(11, i2c_devs11, ARRAY_SIZE(i2c_devs11));
-	/* magnetic sensor */
-	i2c_register_board_info(12, i2c_devs12, ARRAY_SIZE(i2c_devs12));
+	/* magnetic sensor for rev04 */
+	if (system_rev == 0x04)
+		i2c_register_board_info(12, i2c_devs12, ARRAY_SIZE(i2c_devs12));
 
 #ifdef CONFIG_FB_S3C_TL2796
 	spi_register_board_info(spi_board_info, ARRAY_SIZE(spi_board_info));
