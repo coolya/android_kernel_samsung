@@ -588,10 +588,7 @@ void s5pv210_restore_eint_group(void)
 
 int __init s5pv210_init_irq_eint_group(void)
 {
-	struct s5pv210_eint_group_t *group;
-	unsigned long flags;
 	int irq;
-	int grp;
 
 	for (irq = IRQ_EINT_GROUP_BASE; irq < NR_IRQS; irq++) {
 		set_irq_chip(irq, &s5pv210_irq_eint_group);
