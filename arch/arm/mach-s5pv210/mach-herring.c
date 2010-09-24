@@ -1486,9 +1486,6 @@ static struct i2c_board_info i2c_devs1[] __initdata = {
 
 /* I2C2 */
 static struct i2c_board_info i2c_devs2[] __initdata = {
-	{
-		I2C_BOARD_INFO("qt602240_ts", 0x4a),
-	},
 };
 
 /* I2C2 */
@@ -3573,27 +3570,6 @@ int hw_version_check(void)
 }
 EXPORT_SYMBOL(hw_version_check);
 
-/* touch screen device init */
-static void __init qt_touch_init(void)
-{
-	int gpio, irq;
-
-	gpio = S5PV210_GPG3(6);	/* XMMC3DATA_3 */
-	gpio_request(gpio, "TOUCH_EN");
-	s3c_gpio_cfgpin(gpio, S3C_GPIO_OUTPUT);
-	gpio_direction_output(gpio, 1);
-	gpio_free(gpio);
-
-	gpio = S5PV210_GPJ0(5);	/* XMSMADDR_5 */
-	gpio_request(gpio, "TOUCH_INT");
-	s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(0xf));
-	s3c_gpio_setpull(gpio, S3C_GPIO_PULL_UP);
-	irq = gpio_to_irq(gpio);
-	gpio_free(gpio);
-
-	i2c_devs2[1].irq = irq;
-}
-
 static void herring_init_gpio(void)
 {
 	s3c_config_gpio_table();
@@ -3667,16 +3643,9 @@ static void __init herring_machine_init(void)
 	/*initialise the gpio's*/
 	herring_init_gpio();
 
-	qt_touch_init();
-
 #ifdef CONFIG_ANDROID_PMEM
 	android_pmem_set_platdata();
 #endif
-	{
-		int tint = GPIO_TOUCH_INT;
-		s3c_gpio_cfgpin(tint, S3C_GPIO_INPUT);
-		s3c_gpio_setpull(tint, S3C_GPIO_PULL_UP);
-	}
 
 	/* headset/earjack detection */
 	if (system_rev >= 0x0a)
