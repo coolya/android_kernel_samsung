@@ -17,70 +17,15 @@
 
 #include <linux/version.h>
 #include <plat/media.h>
+#include <mach/media.h>
 
-#define JPG_REG_BASE_ADDR    	(0xFB600000)
+#define JPG_REG_BASE_ADDR	(0xFB600000)
 
-#define jpg_data_base_addr		\
-			(unsigned int)s5p_get_media_memory_bank(S5P_MDEV_JPEG, 0)
+#define jpg_data_base_addr	\
+	(unsigned int)s5p_get_media_memory_bank(S5P_MDEV_JPEG, 0)
+#define jpg_reserved_mem_size		\
+	((unsigned int)s5p_get_media_memsize_bank(S5P_MDEV_JPEG, 0))
 
-#define MAX_JPG_WIDTH       	2560
-#define MAX_JPG_HEIGHT       	1920
-#define MAX_JPG_RESOLUTION	(MAX_JPG_WIDTH * MAX_JPG_HEIGHT)
-
-/* It assumes that JPG thumbnail is not used 
- * Set the resolution when you need to use */
-#define MAX_JPG_THUMBNAIL_WIDTH	 0
-#define MAX_JPG_THUMBNAIL_HEIGHT 0
-#define MAX_JPG_THUMBNAIL_RESOLUTION (MAX_JPG_THUMBNAIL_WIDTH * MAX_JPG_THUMBNAIL_HEIGHT)
-
-/* It assumes that RGB data encoding is not used
- * Set the resolution when you need to use */
-#define MAX_RGB_WIDTH        0
-#define MAX_RGB_HEIGHT       0
-#define MAX_RGB_RESOLUTION	(MAX_RGB_WIDTH * MAX_RGB_HEIGHT)
-
-/*******************************************************************************/
-/* define JPG & image memory */
-/* memory area is 4k(PAGE_SIZE) aligned because of VirtualCopyEx() */
-
-/* Below definitions assume that JPEG_V2 uses only decoding without thumbnail.
- * Max jpeg size of camera input is 3M, and decoded output data is YUV422.
- * To reduce unnecessary memory reservation, 
- * useless definitions are set to 0. */
-#define JPG_STREAM_BUF_SIZE		3*1024*1024
-#define JPG_STREAM_THUMB_BUF_SIZE 	0
-#define JPG_FRAME_BUF_SIZE		\
-		((MAX_JPG_RESOLUTION * 2) / PAGE_SIZE + 1) * PAGE_SIZE
-#define JPG_FRAME_THUMB_BUF_SIZE	0
-#define JPG_RGB_BUF_SIZE		0
-
-/* Use below definitions if you need to use encoding and thumbnail 
- * Begin of definitions
-#define JPG_STREAM_BUF_SIZE		\
-		(MAX_JPG_RESOLUTION / PAGE_SIZE + 1) * PAGE_SIZE
-#define JPG_STREAM_THUMB_BUF_SIZE 	\
-		(MAX_JPG_THUMBNAIL_RESOLUTION / PAGE_SIZE + 1) * PAGE_SIZE
-#define JPG_FRAME_BUF_SIZE		\
-		((MAX_JPG_RESOLUTION * 3) / PAGE_SIZE + 1) * PAGE_SIZE
-#define JPG_FRAME_THUMB_BUF_SIZE	\
-		((MAX_JPG_THUMBNAIL_RESOLUTION * 3) / PAGE_SIZE + 1) * PAGE_SIZE
-#define JPG_RGB_BUF_SIZE		\
-		((MAX_RGB_RESOLUTION * 4) / PAGE_SIZE + 1) * PAGE_SIZE
-end of definitions */
-
-
-#define JPG_TOTAL_BUF_SIZE	(JPG_STREAM_BUF_SIZE + \
-				JPG_STREAM_THUMB_BUF_SIZE + \
-				JPG_FRAME_BUF_SIZE + \
-				JPG_FRAME_THUMB_BUF_SIZE + \
-				JPG_RGB_BUF_SIZE)
-
-#define JPG_MAIN_STRART		0x00
-#define JPG_THUMB_START		JPG_STREAM_BUF_SIZE
-#define IMG_MAIN_START		(JPG_STREAM_BUF_SIZE + JPG_STREAM_THUMB_BUF_SIZE)
-#define IMG_THUMB_START		(IMG_MAIN_START + JPG_FRAME_BUF_SIZE)
-
-/*******************************************************************************/
 #define COEF1_RGB_2_YUV         0x4d971e
 #define COEF2_RGB_2_YUV         0x2c5783
 #define COEF3_RGB_2_YUV         0x836e13
@@ -92,7 +37,7 @@ end of definitions */
 #define JPG_4BIT_MASK           0xF
 
 /* SubSampling_Mode Mask is JPGMOD Register [2:0] bits mask */
-#define JPG_SMPL_MODE_MASK	0x07	
+#define JPG_SMPL_MODE_MASK	0x07
 
 /* Restart Interval value in JPGDRI Register is 2*/
 #define JPG_RESTART_INTRAVEL    2
@@ -118,27 +63,48 @@ end of definitions */
 #define ENABLE_MOTION_ENC       (0x1<<3)
 #define DISABLE_MOTION_ENC      (0x0<<3)
 
-#define ENABLE_MOTION_DEC       (0x1<<0)
-#define DISABLE_MOTION_DEC      (0x0<<0)
+#define ENABLE_MOTION_DEC	(0x1<<0)
+#define DISABLE_MOTION_DEC	(0x0<<0)
 
-#define ENABLE_HW_DEC           (0x1<<2)
-#define DISABLE_HW_DEC          (0x0<<2)
+#define ENABLE_HW_DEC		(0x1<<2)
+#define DISABLE_HW_DEC		(0x0<<2)
 
-#define INCREMENTAL_DEC         (0x1<<3)
-#define NORMAL_DEC              (0x0<<3)
-#define YCBCR_MEMORY			(0x1<<5)
+#define INCREMENTAL_DEC		(0x1<<3)
+#define NORMAL_DEC		(0x0<<3)
+#define YCBCR_MEMORY		(0x1<<5)
 
-#define	ENABLE_IRQ				(0xf<<3)
+#define	ENABLE_IRQ		(0xf<<3)
 
-typedef struct __s5pc100_jpg_ctx {
-	volatile UINT32                  jpg_data_addr;
-	volatile UINT32                  img_data_addr;
-	volatile UINT32                  jpg_thumb_data_addr;
-	volatile UINT32                  img_thumb_data_addr;
-	int                          caller_process;
-} sspc100_jpg_ctx;
+struct jpegv2_limits {
+	unsigned int max_main_width;
+	unsigned int max_main_height;
+	unsigned int max_thumb_width;
+	unsigned int max_thumb_height;
+};
 
-void *phy_to_vir_addr(UINT32 phy_addr, int mem_size);
+struct jpegv2_buf {
+	unsigned int main_stream_start;
+	unsigned int main_stream_size;
+	unsigned int main_frame_start;
+	unsigned int main_frame_size;
+	unsigned int thumb_stream_start;
+	unsigned int thumb_stream_size;
+	unsigned int thumb_frame_start;
+	unsigned int thumb_frame_size;
+	unsigned int total_buf_size;
+};
+
+struct s5pc110_jpg_ctx {
+	unsigned int		jpg_data_addr;
+	unsigned int		img_data_addr;
+	unsigned int		jpg_thumb_data_addr;
+	unsigned int		img_thumb_data_addr;
+	int			caller_process;
+	struct jpegv2_limits	*limits;
+	struct jpegv2_buf	*bufinfo;
+};
+
+void *phy_to_vir_addr(unsigned int phy_addr, int mem_size);
 void *mem_move(void *dst, const void *src, unsigned int size);
 void *mem_alloc(unsigned int size);
 #endif

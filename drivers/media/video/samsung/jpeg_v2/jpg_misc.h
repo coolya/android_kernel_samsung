@@ -15,20 +15,13 @@
 
 #include <linux/types.h>
 
-typedef	unsigned char	UCHAR;
-typedef unsigned long	ULONG;
-typedef	unsigned int	UINT;
-typedef struct mutex *	HANDLE;
-typedef unsigned long	DWORD;
-typedef unsigned int	UINT32;
-typedef unsigned char	UINT8;
-typedef enum {FALSE, TRUE} BOOL;
+enum BOOL {FALSE, TRUE};
 
 #define INT_TIMEOUT			1000
 
-HANDLE create_jpg_mutex(void);
-DWORD lock_jpg_mutex(void);
-DWORD unlock_jpg_mutex(void);
+struct mutex *create_jpg_mutex(void);
+unsigned long lock_jpg_mutex(void);
+unsigned long unlock_jpg_mutex(void);
 void delete_jpg_mutex(void);
 
 #endif

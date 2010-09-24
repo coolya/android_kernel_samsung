@@ -16,7 +16,7 @@
 
 
 #define MAX_INSTANCE_NUM	1
-#define MAX_PROCESSING_THRESHOLD 1000	// 1Sec
+#define MAX_PROCESSING_THRESHOLD 1000	/* 1Sec */
 
 #define JPEG_IOCTL_MAGIC 'J'
 
@@ -29,5 +29,8 @@
 #define IOCTL_JPG_GET_PHY_FRMBUF		_IO(JPEG_IOCTL_MAGIC, 7)
 #define IOCTL_JPG_GET_PHY_THUMB_FRMBUF		_IO(JPEG_IOCTL_MAGIC, 8)
 #define JPG_CLOCK_DIVIDER_RATIO_QUARTER	4
+
+/* Driver Helper function */
+#define to_jpeg_plat(d)		(to_platform_device(d)->dev.platform_data)
 
 #endif /*__JPEG_DRIVER_H__*/

@@ -10,25 +10,24 @@
  * published by the Free Software Foundation.
 */
 
-#include <asm/io.h>
+#include <linux/io.h>
 #include <linux/string.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
-#include <asm/uaccess.h>
+#include <linux/uaccess.h>
 #include <linux/types.h>
 
 #include "jpg_mem.h"
 #include "jpg_misc.h"
 #include "jpg_opr.h"
 
-/*----------------------------------------------------------------------------
-*Function: phy_to_vir_addr
-
-*Parameters: 		dwContext		:
-*Return Value:		True/False
-*Implementation Notes: memory mapping from physical addr to virtual addr
------------------------------------------------------------------------------*/
-void *phy_to_vir_addr(UINT32 phy_addr, int mem_size)
+/*
+ * Function: phy_to_vir_addr
+ * Parameters: phy_addr, mem_size
+ * Return Value: vir_addr
+ * Implementation Notes: memory mapping from physical addr to virtual addr
+ */
+void *phy_to_vir_addr(unsigned int phy_addr, int mem_size)
 {
 	void	*reserved_mem;
 
@@ -51,7 +50,7 @@ void *mem_alloc(unsigned int size)
 {
 	void	*alloc_mem;
 
-	alloc_mem = (void *)kmalloc((int)size, GFP_KERNEL);
+	alloc_mem = kmalloc((int)size, GFP_KERNEL);
 
 	if (alloc_mem == NULL) {
 		jpg_err("memory allocation failed!\r\n");

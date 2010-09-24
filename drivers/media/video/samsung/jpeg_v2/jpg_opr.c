@@ -11,7 +11,7 @@
 */
 
 #include <linux/delay.h>
-#include <asm/io.h>
+#include <linux/io.h>
 
 #include "jpg_mem.h"
 #include "jpg_misc.h"
@@ -20,9 +20,6 @@
 
 #include "regs-jpeg.h"
 
-extern void __iomem		*s3c_jpeg_base;
-extern int			jpg_irq_reason;
-
 enum {
 	UNKNOWN,
 	BASELINE = 0xC0,
@@ -30,21 +27,22 @@ enum {
 	PROGRESSIVE = 0xC2
 } jpg_sof_marker;
 
-jpg_return_status wait_for_interrupt(void)
+enum jpg_return_status wait_for_interrupt(void)
 {
-	if (interruptible_sleep_on_timeout(&wait_queue_jpeg, INT_TIMEOUT) == 0) {
+	if (interruptible_sleep_on_timeout(&wait_queue_jpeg,	\
+					 INT_TIMEOUT) == 0) {
 		jpg_err("waiting for interrupt is timeout\n");
 	}
 
 	return jpg_irq_reason;
 }
 
-jpg_return_status decode_jpg(sspc100_jpg_ctx *jpg_ctx,
-			     jpg_dec_proc_param *dec_param)
+enum jpg_return_status decode_jpg(struct s5pc110_jpg_ctx *jpg_ctx,
+				  struct jpg_dec_proc_param *dec_param)
 {
-	volatile int		ret;
-	sample_mode_t sample_mode;
-	UINT32	width, height;
+	int		ret;
+	enum sample_mode sample_mode;
+	unsigned int	width, height;
 	jpg_dbg("enter decode_jpg function\n");
 
 	if (jpg_ctx)
@@ -107,16 +105,17 @@ jpg_return_status decode_jpg(sspc100_jpg_ctx *jpg_ctx,
 	get_xy(jpg_ctx, &width, &height);
 	jpg_dbg("decode size:: width : %d height : %d\n", width, height);
 
-	dec_param->data_size = get_yuv_size(dec_param->out_format, width, height);
+	dec_param->data_size = get_yuv_size(dec_param->out_format,
+					    width, height);
 	dec_param->width = width;
 	dec_param->height = height;
 
 	return JPG_SUCCESS;
 }
 
-void reset_jpg(sspc100_jpg_ctx *jpg_ctx)
+void reset_jpg(struct s5pc110_jpg_ctx *jpg_ctx)
 {
-jpg_dbg("s3c_jpeg_base %p \n", s3c_jpeg_base);
+	jpg_dbg("s3c_jpeg_base %p\n", s3c_jpeg_base);
 	writel(S3C_JPEG_SW_RESET_REG_ENABLE,
 			s3c_jpeg_base + S3C_JPEG_SW_RESET_REG);
 
@@ -124,13 +123,14 @@ jpg_dbg("s3c_jpeg_base %p \n", s3c_jpeg_base);
 		writel(S3C_JPEG_SW_RESET_REG_ENABLE,
 				s3c_jpeg_base + S3C_JPEG_SW_RESET_REG);
 	} while (((readl(s3c_jpeg_base + S3C_JPEG_SW_RESET_REG))
-		& S3C_JPEG_SW_RESET_REG_ENABLE) == S3C_JPEG_SW_RESET_REG_ENABLE);
+		   & S3C_JPEG_SW_RESET_REG_ENABLE)
+		   == S3C_JPEG_SW_RESET_REG_ENABLE);
 }
 
-sample_mode_t get_sample_type(sspc100_jpg_ctx *jpg_ctx)
+enum sample_mode get_sample_type(struct s5pc110_jpg_ctx *jpg_ctx)
 {
-	ULONG		jpgMode;
-	sample_mode_t   sample_mode = JPG_SAMPLE_UNKNOWN;
+	unsigned long		jpgMode;
+	enum sample_mode	sample_mode = JPG_SAMPLE_UNKNOWN;
 
 	jpgMode = readl(s3c_jpeg_base + S3C_JPEG_MOD_REG);
 
@@ -139,12 +139,13 @@ sample_mode_t get_sample_type(sspc100_jpg_ctx *jpg_ctx)
 		((jpgMode & JPG_SMPL_MODE_MASK) == JPG_422) ? JPG_422 :
 		((jpgMode & JPG_SMPL_MODE_MASK) == JPG_420) ? JPG_420 :
 		((jpgMode & JPG_SMPL_MODE_MASK) == JPG_400) ? JPG_400 :
-		((jpgMode & JPG_SMPL_MODE_MASK) == JPG_411) ? JPG_411 : JPG_SAMPLE_UNKNOWN;
+		((jpgMode & JPG_SMPL_MODE_MASK) == JPG_411) ? JPG_411 :
+						    JPG_SAMPLE_UNKNOWN;
 
-	return(sample_mode);
+	return sample_mode;
 }
 
-void get_xy(sspc100_jpg_ctx *jpg_ctx, UINT32 *x, UINT32 *y)
+void get_xy(struct s5pc110_jpg_ctx *jpg_ctx, unsigned int *x, unsigned int *y)
 {
 	*x = (readl(s3c_jpeg_base + S3C_JPEG_X_U_REG)<<8)|
 		readl(s3c_jpeg_base + S3C_JPEG_X_L_REG);
@@ -152,10 +153,11 @@ void get_xy(sspc100_jpg_ctx *jpg_ctx, UINT32 *x, UINT32 *y)
 		readl(s3c_jpeg_base + S3C_JPEG_Y_L_REG);
 }
 
-UINT32 get_yuv_size(out_mode_t out_format, UINT32 width, UINT32 height)
+unsigned int get_yuv_size(enum out_mode out_format,
+			  unsigned int width, unsigned int height)
 {
 	switch (out_format) {
-	case YCBCR_422 :
+	case YCBCR_422:
 
 		if (width % 16 != 0)
 			width += 16 - (width % 16);
@@ -165,7 +167,7 @@ UINT32 get_yuv_size(out_mode_t out_format, UINT32 width, UINT32 height)
 
 		break;
 
-	case YCBCR_420 :
+	case YCBCR_420:
 
 		if (width % 16 != 0)
 			width += 16 - (width % 16);
@@ -182,31 +184,33 @@ UINT32 get_yuv_size(out_mode_t out_format, UINT32 width, UINT32 height)
 	jpg_dbg("get_yuv_size width(%d) height(%d)\n", width, height);
 
 	switch (out_format) {
-	case YCBCR_422 :
-		return(width*height*2);
-	case YCBCR_420 :
-		return((width*height) + (width*height >> 1));
-	default :
-		return(0);
+	case YCBCR_422:
+		return width * height * 2;
+	case YCBCR_420:
+		return (width * height) + (width * height >> 1);
+	default:
+		return 0;
 	}
 }
 
-jpg_return_status encode_jpg(sspc100_jpg_ctx *jpg_ctx,
-			     jpg_enc_proc_param	*enc_param)
+enum jpg_return_status encode_jpg(struct s5pc110_jpg_ctx *jpg_ctx,
+				  struct jpg_enc_proc_param *enc_param)
 {
 
-	UINT	i, ret;
-	UINT32	cmd_val;
+	unsigned int	i, ret;
+	unsigned int	cmd_val;
 
-	if (enc_param->width <= 0 || enc_param->width > MAX_JPG_WIDTH
-	    || enc_param->height <= 0 || enc_param->height > MAX_JPG_HEIGHT) {
-		jpg_err("::encoder : width: %d, height: %d \n",
-			enc_param->width, enc_param->height);
-		jpg_err("::encoder : invalid width/height \n");
+	if (enc_param->width <= 0
+			|| enc_param->width > jpg_ctx->limits->max_main_width
+			|| enc_param->height <= 0
+			|| enc_param->height > jpg_ctx->limits->max_main_height) {
+		jpg_err("::encoder : width: %d, height: %d\n",
+				enc_param->width, enc_param->height);
+		jpg_err("::encoder : invalid width/height\n");
 		return JPG_FAIL;
 	}
 
-/* SW reset */
+	/* SW reset */
 	if (jpg_ctx)
 		reset_jpg(jpg_ctx);
 	else {
@@ -222,9 +226,11 @@ jpg_return_status encode_jpg(sspc100_jpg_ctx *jpg_ctx,
 			(enc_param->in_format << JPG_MODE_SEL_BIT),
 			s3c_jpeg_base + S3C_JPEG_CMOD_REG);
 	cmd_val = (enc_param->sample_mode == JPG_422) ?
-		(S3C_JPEG_MOD_REG_SUBSAMPLE_422) : (S3C_JPEG_MOD_REG_SUBSAMPLE_420);
-		
-	writel(cmd_val | S3C_JPEG_MOD_REG_PROC_ENC, s3c_jpeg_base + S3C_JPEG_MOD_REG);
+			(S3C_JPEG_MOD_REG_SUBSAMPLE_422) :
+			(S3C_JPEG_MOD_REG_SUBSAMPLE_420);
+
+	writel(cmd_val | S3C_JPEG_MOD_REG_PROC_ENC,
+			 s3c_jpeg_base + S3C_JPEG_MOD_REG);
 
 	/* set DRI(Define Restart Interval) */
 	writel(JPG_RESTART_INTRAVEL, s3c_jpeg_base + S3C_JPEG_DRI_L_REG);
@@ -236,7 +242,7 @@ jpg_return_status encode_jpg(sspc100_jpg_ctx *jpg_ctx,
 	/* Horizontal resolution */
 	writel((enc_param->width>>8), s3c_jpeg_base + S3C_JPEG_X_U_REG);
 	writel(enc_param->width, s3c_jpeg_base + S3C_JPEG_X_L_REG);
-	
+
 	/* Vertical resolution */
 	writel((enc_param->height>>8), s3c_jpeg_base + S3C_JPEG_Y_U_REG);
 	writel(enc_param->height, s3c_jpeg_base + S3C_JPEG_Y_L_REG);
@@ -246,43 +252,47 @@ jpg_return_status encode_jpg(sspc100_jpg_ctx *jpg_ctx,
 	if (enc_param->enc_type == JPG_MAIN) {
 		jpg_dbg("encode image size width: %d, height: %d\n",
 				enc_param->width, enc_param->height);
-		writel(jpg_ctx->img_data_addr, s3c_jpeg_base + S3C_JPEG_IMGADR_REG);
-		writel(jpg_ctx->jpg_data_addr, s3c_jpeg_base + S3C_JPEG_JPGADR_REG);
-	} else { // thumbnail encoding
+		writel(jpg_ctx->img_data_addr,
+			s3c_jpeg_base + S3C_JPEG_IMGADR_REG);
+		writel(jpg_ctx->jpg_data_addr,
+			s3c_jpeg_base + S3C_JPEG_JPGADR_REG);
+	} else { /* thumbnail encoding */
 		jpg_dbg("thumb image size width: %d, height: %d\n",
 				enc_param->width, enc_param->height);
-		writel(jpg_ctx->img_thumb_data_addr, s3c_jpeg_base + S3C_JPEG_IMGADR_REG);
-		writel(jpg_ctx->jpg_thumb_data_addr, s3c_jpeg_base + S3C_JPEG_JPGADR_REG);
+		writel(jpg_ctx->img_thumb_data_addr,
+			s3c_jpeg_base + S3C_JPEG_IMGADR_REG);
+		writel(jpg_ctx->jpg_thumb_data_addr,
+			s3c_jpeg_base + S3C_JPEG_JPGADR_REG);
 	}
 
 	/*  Coefficient value 1~3 for RGB to YCbCr */
 	writel(COEF1_RGB_2_YUV, s3c_jpeg_base + S3C_JPEG_COEF1_REG);
 	writel(COEF2_RGB_2_YUV, s3c_jpeg_base + S3C_JPEG_COEF2_REG);
 	writel(COEF3_RGB_2_YUV, s3c_jpeg_base + S3C_JPEG_COEF3_REG);
-	
+
 	/* Quantiazation and Huffman Table setting */
 	for (i = 0; i < 64; i++) {
-		writel((UINT32)qtbl_luminance[enc_param->quality][i],
+		writel((unsigned int)qtbl_luminance[enc_param->quality][i],
 			s3c_jpeg_base + S3C_JPEG_QTBL0_REG + (i*0x04));
 	}
 	for (i = 0; i < 64; i++) {
-		writel((UINT32)qtbl_chrominance[enc_param->quality][i],
+		writel((unsigned int)qtbl_chrominance[enc_param->quality][i],
 			s3c_jpeg_base + S3C_JPEG_QTBL1_REG + (i*0x04));
 	}
 	for (i = 0; i < 16; i++) {
-		writel((UINT32)hdctbl0[i], 
+		writel((unsigned int)hdctbl0[i],
 			s3c_jpeg_base + S3C_JPEG_HDCTBL0_REG + (i*0x04));
 	}
 	for (i = 0; i < 12; i++) {
-		writel((UINT32)hdctblg0[i], 
+		writel((unsigned int)hdctblg0[i],
 			s3c_jpeg_base + S3C_JPEG_HDCTBLG0_REG + (i*0x04));
 	}
 	for (i = 0; i < 16; i++) {
-		writel((UINT32)hactbl0[i], 
+		writel((unsigned int)hactbl0[i],
 			s3c_jpeg_base + S3C_JPEG_HACTBL0_REG + (i*0x04));
 	}
 	for (i = 0; i < 162; i++) {
-		writel((UINT32)hactblg0[i], 
+		writel((unsigned int)hactblg0[i],
 			s3c_jpeg_base + S3C_JPEG_HACTBLG0_REG + (i*0x04));
 	}
 	writel(readl(s3c_jpeg_base + S3C_JPEG_INTSE_REG) |
@@ -291,7 +301,7 @@ jpg_return_status encode_jpg(sspc100_jpg_ctx *jpg_ctx,
 			S3C_JPEG_INTSE_REG_FINAL_MCU_NUM_INT_EN),
 			s3c_jpeg_base + S3C_JPEG_INTSE_REG);
 
-	writel(readl(s3c_jpeg_base + S3C_JPEG_JSTART_REG) | 
+	writel(readl(s3c_jpeg_base + S3C_JPEG_JSTART_REG) |
 			S3C_JPEG_JSTART_REG_ENABLE,
 			s3c_jpeg_base + S3C_JPEG_JSTART_REG);
 	ret = wait_for_interrupt();

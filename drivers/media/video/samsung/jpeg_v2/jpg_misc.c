@@ -20,22 +20,22 @@
 
 #include <linux/version.h>
 
-#include <asm/io.h>
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/wait.h>
 
 #include "jpg_misc.h"
 #include "jpg_mem.h"
 
-static HANDLE h_mutex	= NULL;
+static struct mutex *h_mutex;
 
-/*----------------------------------------------------------------------------
-*Function: create_jpg_mutex
-*Implementation Notes: Create Mutex handle
------------------------------------------------------------------------------*/
-HANDLE create_jpg_mutex(void)
+/*
+ * Function: create_jpg_mutex
+ * Implementation Notes: Create Mutex handle
+ */
+struct mutex *create_jpg_mutex(void)
 {
-	h_mutex = (HANDLE)kmalloc(sizeof(struct mutex), GFP_KERNEL);
+	h_mutex = kmalloc(sizeof(struct mutex), GFP_KERNEL);
 
 	if (h_mutex == NULL)
 		return NULL;
@@ -45,31 +45,32 @@ HANDLE create_jpg_mutex(void)
 	return h_mutex;
 }
 
-/*----------------------------------------------------------------------------
-*Function: lock_jpg_mutex
-*Implementation Notes: lock mutex
------------------------------------------------------------------------------*/
-DWORD lock_jpg_mutex(void)
+/*
+ * Function: lock_jpg_mutex
+ * Implementation Notes: lock mutex
+ */
+unsigned long lock_jpg_mutex(void)
 {
 	mutex_lock(h_mutex);
 	return 1;
 }
 
-/*----------------------------------------------------------------------------
-*Function: unlock_jpg_mutex
-*Implementation Notes: unlock mutex
------------------------------------------------------------------------------*/
-DWORD unlock_jpg_mutex(void)
+/*
+ * Function: unlock_jpg_mutex
+ * Implementation Notes: unlock mutex
+*/
+unsigned long unlock_jpg_mutex(void)
 {
-	mutex_unlock(h_mutex);
+       mutex_unlock(h_mutex);
 
-	return 1;
+       return 1;
 }
 
-/*----------------------------------------------------------------------------
-*Function: delete_jpg_mutex
-*Implementation Notes: delete mutex handle
------------------------------------------------------------------------------*/
+
+/*
+ * Function: delete_jpg_mutex
+ * Implementation Notes: delete mutex handle
+ */
 void delete_jpg_mutex(void)
 {
 	if (h_mutex == NULL)
