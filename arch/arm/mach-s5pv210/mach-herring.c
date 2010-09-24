@@ -72,6 +72,7 @@
 
 #include <plat/sdhci.h>
 #include <plat/fimc.h>
+#include <plat/jpeg.h>
 #include <plat/clock.h>
 #include <plat/regs-otg.h>
 #include <linux/gp2a.h>
@@ -1374,6 +1375,15 @@ static struct s3c_platform_fimc fimc_plat = {
 #endif
 	},
 	.hw_ver		= 0x43,
+};
+#endif
+
+#ifdef CONFIG_VIDEO_JPEG_V2
+static struct s3c_platform_jpeg jpeg_plat __initdata = {
+	.max_main_width	= 800,
+	.max_main_height	= 480,
+	.max_thumb_width	= 320,
+	.max_thumb_height	= 240,
 };
 #endif
 
@@ -3147,6 +3157,10 @@ static void __init herring_machine_init(void)
 	s3c_fimc0_set_platdata(&fimc_plat);
 	s3c_fimc1_set_platdata(&fimc_plat);
 	s3c_fimc2_set_platdata(&fimc_plat);
+#endif
+
+#ifdef CONFIG_VIDEO_JPEG_V2
+	s3c_jpeg_set_platdata(&jpeg_plat);
 #endif
 
 #ifdef CONFIG_VIDEO_MFC50

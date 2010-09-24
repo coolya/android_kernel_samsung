@@ -37,6 +37,7 @@
 #include <plat/fimc.h>
 #include <plat/csis.h>
 #include <plat/media.h>
+#include <plat/jpeg.h>
 #include <mach/media.h>
 
 /* Android Gadget */
@@ -558,6 +559,27 @@ void __init s3c_csis_set_platdata(struct s3c_platform_csis *pd)
 #endif
 
 /* JPEG controller  */
+static struct s3c_platform_jpeg default_jpeg_data __initdata = {
+	.max_main_width		= 2560,
+	.max_main_height	= 1920,
+	.max_thumb_width	= 0,
+	.max_thumb_height	= 0,
+};
+
+void __init s3c_jpeg_set_platdata(struct s3c_platform_jpeg *pd)
+{
+	struct s3c_platform_jpeg *npd;
+
+	if (!pd)
+		pd = &default_jpeg_data;
+
+	npd = kmemdup(pd, sizeof(struct s3c_platform_jpeg), GFP_KERNEL);
+	if (!npd)
+		printk(KERN_ERR "%s: no memory for platform data\n", __func__);
+	else
+		s3c_device_jpeg.dev.platform_data = npd;
+}
+
 static struct resource s3c_jpeg_resource[] = {
 	[0] = {
 		.start = S5PV210_PA_JPEG,
