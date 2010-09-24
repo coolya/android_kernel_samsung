@@ -77,7 +77,7 @@
 #include <plat/regs-otg.h>
 #include <linux/gp2a.h>
 #include <linux/kr3dm.h>
-
+#include <linux/input/k3g.h>
 #include <../../../drivers/video/samsung/s3cfb.h>
 #include <linux/max17040_battery.h>
 
@@ -956,6 +956,22 @@ static struct platform_device s3c_device_i2c7 = {
 	.dev.platform_data      = &i2c7_platdata,
 };
 
+static  struct  i2c_gpio_platform_data  i2c8_platdata = {
+	.sda_pin                = GYRO_SDA_28V,
+	.scl_pin                = GYRO_SCL_28V,
+	.udelay                 = 2,    /* 250KHz */
+	.sda_is_open_drain      = 0,
+	.scl_is_open_drain      = 0,
+	.scl_is_output_only     = 0,
+};
+
+static struct platform_device s3c_device_i2c8 = {
+	.name			= "i2c-gpio",
+	.id			= 8,
+	.dev.platform_data      = &i2c8_platdata,
+};
+
+
 static  struct  i2c_gpio_platform_data  i2c9_platdata = {
 	.sda_pin                = FUEL_SDA_18V,
 	.scl_pin                = FUEL_SCL_18V,
@@ -1421,6 +1437,23 @@ static struct i2c_board_info i2c_devs5[] __initdata = {
 		.platform_data  = &kr3dm_data,
 	},
 };
+
+static struct k3g_platform_data k3g_pdata = {
+	.axis_map_x = 1,
+	.axis_map_y = 1,
+	.axis_map_z = 1,
+	.negate_x = 0,
+	.negate_y = 0,
+	.negate_z = 0,
+};
+
+static struct i2c_board_info i2c_devs8[] __initdata = {
+	{
+		I2C_BOARD_INFO("k3g", 0x69),
+		.platform_data = &k3g_pdata,
+	},
+};
+
 
 static struct fsa9480_i2c_platform_data fsa9480_pdata = {
 	.usb_sel = GPIO_USB_SEL,
@@ -2821,6 +2854,7 @@ static struct platform_device *herring_devices[] __initdata = {
 	&s3c_device_i2c5,  /* accel sensor */
 	&s3c_device_i2c6,
 	&s3c_device_i2c7,
+	&s3c_device_i2c8,  /* gyro sensor */
 	&s3c_device_i2c9,  /* max1704x:fuel_guage */
 	&s3c_device_i2c11, /* optical sensor */
 	&s3c_device_i2c12, /* magnetic sensor */
@@ -3090,6 +3124,7 @@ static void __init herring_machine_init(void)
 	/* FSA9480 */
 	fsa9480_gpio_init();
 	i2c_register_board_info(7, i2c_devs7, ARRAY_SIZE(i2c_devs7));
+	i2c_register_board_info(8, i2c_devs8, ARRAY_SIZE(i2c_devs8));
 	i2c_register_board_info(9, i2c_devs9, ARRAY_SIZE(i2c_devs9));
 	/* optical sensor */
 	gp2a_gpio_init();
