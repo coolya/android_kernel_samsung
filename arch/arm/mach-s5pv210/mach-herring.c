@@ -1443,12 +1443,20 @@ static struct i2c_board_info i2c_devs5[] __initdata = {
 	},
 };
 
+static struct akm8973_platform_data akm8973_pdata = {
+	.reset_line = GPIO_MSENSE_nRST,
+	.reset_asserted = GPIO_LEVEL_LOW,
+	.gpio_data_ready_int = GPIO_MSENSE_IRQ,
+};
+
 static struct i2c_board_info i2c_devs8[] __initdata = {
 	{
-		I2C_BOARD_INFO("ak8973b", 0x1c),
+		I2C_BOARD_INFO("ak8973", 0x1c),
+		.platform_data = &akm8973_pdata,
 	},
 	{
 		I2C_BOARD_INFO("kr3dm", 0x09),
+		.platform_data  = &kr3dm_data,
 	},
 };
 
@@ -1526,12 +1534,6 @@ static struct i2c_board_info i2c_devs11[] __initdata = {
 		I2C_BOARD_INFO("gp2a", (0x88 >> 1)),
 		.platform_data = &gp2a_pdata,
 	},
-};
-
-static struct akm8973_platform_data akm8973_pdata = {
-	.reset_line = GPIO_MSENSE_nRST,
-	.reset_asserted = GPIO_LEVEL_LOW,
-	.gpio_data_ready_int = GPIO_MSENSE_IRQ,
 };
 
 static struct i2c_board_info i2c_devs12[] __initdata = {
