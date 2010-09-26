@@ -1494,6 +1494,7 @@ static struct i2c_board_info i2c_devs7[] __initdata = {
 	{
 		I2C_BOARD_INFO("fsa9480", 0x4A >> 1),
 		.platform_data = &fsa9480_pdata,
+		.irq = IRQ_EINT(23),
 	},
 };
 
