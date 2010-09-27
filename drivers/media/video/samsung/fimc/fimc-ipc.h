@@ -133,9 +133,9 @@ struct ipc_control {
 	void __iomem			*regs;
 	struct clk			*clk;
 	struct device			*dev;
-	struct ipc_source 		src;
-	struct ipc_destination 		dst;
-	struct ipc_controlvariable 	control_var;
+	struct ipc_source		src;
+	struct ipc_destination		dst;
+	struct ipc_controlvariable	control_var;
 	struct ipc_enhancingvariable	enhance_var;
 };
 

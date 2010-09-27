@@ -1,7 +1,7 @@
 /* linux/drivers/media/video/samsung/csis.c
  *
  * Copyright (c) 2010 Samsung Electronics Co,. Ltd.
- * 		http://www.samsung.com/
+ *		http://www.samsung.com/
  *
  * MIPI-CSI2 Support file for FIMC driver
  *
@@ -210,7 +210,8 @@ static void s3c_csis_set_hs_settle(int settle)
 }
 #endif
 
-void s3c_csis_start(int lanes, int settle, int align, int width, int height, int pixel_format)
+void s3c_csis_start(int lanes, int settle, int align, int width,
+		int height, int pixel_format)
 {
 	struct s3c_platform_csis *pdata;
 
@@ -226,7 +227,7 @@ void s3c_csis_start(int lanes, int settle, int align, int width, int height, int
 	s3c_csis_set_hs_settle(settle);	/* s5k6aa */
 	s3c_csis_set_data_align(align);
 	s3c_csis_set_wclk(0);
-	if (pixel_format == V4L2_PIX_FMT_JPEG) 
+	if (pixel_format == V4L2_PIX_FMT_JPEG)
 		s3c_csis_set_format(MIPI_USER_DEF_PACKET_1);
 	else
 		s3c_csis_set_format(MIPI_CSI_YCBCR422_8BIT);

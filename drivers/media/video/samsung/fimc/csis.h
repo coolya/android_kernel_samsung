@@ -1,7 +1,7 @@
 /* linux/drivers/media/video/samsung/csis.h
  *
  * Copyright (c) 2010 Samsung Electronics Co,. Ltd.
- * 		http://www.samsung.com/
+ *		http://www.samsung.com/
  *
  * Header file for Samsung MIPI-CSI2 driver
  *
@@ -30,10 +30,10 @@ enum mipi_format {
 };
 
 struct s3c_csis_info {
-	char 		name[16];
+	char		name[16];
 	struct device	*dev;
 	struct clk	*clock;
-        struct regulator *regulator;
+	struct regulator *regulator;
 	void __iomem	*regs;
 	int		irq;
 	int		nr_lanes;
