@@ -56,16 +56,6 @@ static __u32 fimc_get_pixel_format_type(__u32 pixelformat)
 
 void fimc_outdev_set_src_addr(struct fimc_control *ctrl, dma_addr_t *base)
 {
-	unsigned int *LCDControllerBase = NULL;
-	unsigned int offset = 0xa0/4 + CONFIG_FB_S3C_DEFAULT_WINDOW*2;
-
-	if (base[FIMC_ADDR_Y] == 0) {
-		LCDControllerBase = (unsigned int *)ioremap(0xf8000000, 1024);
-		base[FIMC_ADDR_Y] = base[FIMC_ADDR_CB]
-				= base[FIMC_ADDR_CR]
-				= LCDControllerBase[offset];
-		iounmap(LCDControllerBase);
-	}
 	fimc_hwset_addr_change_disable(ctrl);
 	fimc_hwset_input_address(ctrl, base);
 	fimc_hwset_addr_change_enable(ctrl);
@@ -92,56 +82,6 @@ static int fimc_outdev_stop_camif(void *param)
 	fimc_hwset_disable_capture(ctrl);
 
 	fimc_clk_en(ctrl, false);
-	return 0;
-}
-
-static int fimc_outdev_stop_dma(struct fimc_control *ctrl, struct fimc_ctx *ctx)
-{
-	struct s3cfb_user_window window;
-	int ret = -1;
-
-	fimc_dbg("%s: called\n", __func__);
-
-	ret = wait_event_timeout(ctrl->wq, (ctx->status == FIMC_STREAMOFF),
-							FIMC_ONESHOT_TIMEOUT);
-	if (ret == 0)
-		fimc_err("Fail: %s ctx->status=%d\n", __func__, ctx->status);
-
-	fimc_outdev_stop_camif(ctrl);
-
-	if (ctx->overlay.mode == FIMC_OVLY_DMA_MANUAL)
-		return 0;
-
-	ret = s3cfb_direct_ioctl(ctrl->id, S3CFB_SET_WIN_OFF,
-							(unsigned long)NULL);
-	if (ret < 0) {
-		fimc_err("direct_ioctl(S3CFB_SET_WIN_OFF) fail\n");
-		return -EINVAL;
-	}
-
-	/* reset WIN position */
-	memset(&window, 0, sizeof(window));
-	ret = s3cfb_direct_ioctl(ctrl->id, S3CFB_WIN_POSITION,
-			(unsigned long)&window);
-	if (ret < 0) {
-		fimc_err("direct_ioctl(S3CFB_WIN_POSITION) fail\n");
-		return -EINVAL;
-	}
-
-	ret = s3cfb_direct_ioctl(ctrl->id, S3CFB_SET_WIN_ADDR, 0x00000000);
-	if (ret < 0) {
-		fimc_err("direct_ioctl(S3CFB_SET_WIN_ADDR) fail\n");
-		return -EINVAL;
-	}
-
-	ret = s3cfb_direct_ioctl(ctrl->id, S3CFB_SET_WIN_MEM, DMA_MEM_NONE);
-	if (ret < 0) {
-		fimc_err("direct_ioctl(S3CFB_SET_WIN_MEM) fail\n");
-		return -EINVAL;
-	}
-
-	ctrl->fb.is_enable = 0;
-
 	return 0;
 }
 
@@ -218,10 +158,14 @@ int fimc_outdev_resume_dma(struct fimc_control *ctrl, struct fimc_ctx *ctx)
 {
 	struct v4l2_rect fimd_rect;
 	struct fb_var_screeninfo var;
-	struct s3cfb_user_window window;
+	struct fb_info *fbinfo;
+	struct s3cfb_window *win;
 	int ret = -1, idx;
-	u32 id = ctrl->id;
 
+	fbinfo = registered_fb[ctx->overlay.fb_id];
+	win = (struct s3cfb_window *)fbinfo->par;
+
+	memcpy(&var, &fbinfo->var, sizeof(struct fb_var_screeninfo));
 	memset(&fimd_rect, 0, sizeof(struct v4l2_rect));
 	ret = fimc_fimd_rect(ctrl, ctx, &fimd_rect);
 	if (ret < 0) {
@@ -229,27 +173,11 @@ int fimc_outdev_resume_dma(struct fimc_control *ctrl, struct fimc_ctx *ctx)
 		return -EINVAL;
 	}
 
-	/* Get WIN var_screeninfo */
-	ret = s3cfb_direct_ioctl(id, FBIOGET_VSCREENINFO,
-						(unsigned long)&var);
-	if (ret < 0) {
-		fimc_err("direct_ioctl(FBIOGET_VSCREENINFO) fail\n");
-		return -EINVAL;
-	}
-
-	/* window path : DMA */
-	ret = s3cfb_direct_ioctl(id, S3CFB_SET_WIN_PATH, DATA_PATH_DMA);
-	if (ret < 0) {
-		fimc_err("direct_ioctl(S3CFB_SET_WIN_PATH) fail\n");
-		return -EINVAL;
-	}
-
-	/* Don't allocate the memory. */
-	ret = s3cfb_direct_ioctl(id, S3CFB_SET_WIN_MEM, DMA_MEM_OTHER);
-	if (ret < 0) {
-		fimc_err("direct_ioctl(S3CFB_SET_WIN_MEM) fail\n");
-		return -EINVAL;
-	}
+	/* set window path & owner */
+	win->path = DATA_PATH_DMA;
+	win->owner = DMA_MEM_OTHER;
+	win->other_mem_addr = ctx->dst[1].base[FIMC_ADDR_Y];
+	win->other_mem_size = ctx->dst[1].length[FIMC_ADDR_Y];
 
 	/* Update WIN size */
 	var.xres_virtual = fimd_rect.width;
@@ -257,20 +185,14 @@ int fimc_outdev_resume_dma(struct fimc_control *ctrl, struct fimc_ctx *ctx)
 	var.xres = fimd_rect.width;
 	var.yres = fimd_rect.height;
 
-	ret = s3cfb_direct_ioctl(id, FBIOPUT_VSCREENINFO,
-						(unsigned long)&var);
-	if (ret < 0) {
-		fimc_err("direct_ioctl(FBIOPUT_VSCREENINFO) fail\n");
-		return -EINVAL;
-	}
-
 	/* Update WIN position */
-	window.x = fimd_rect.left;
-	window.y = fimd_rect.top;
-	ret = s3cfb_direct_ioctl(id, S3CFB_WIN_POSITION,
-			(unsigned long)&window);
+	win->x = fimd_rect.left;
+	win->y = fimd_rect.top;
+
+	var.activate = FB_ACTIVATE_FORCE;
+	ret = fb_set_var(fbinfo, &var);
 	if (ret < 0) {
-		fimc_err("direct_ioctl(S3CFB_WIN_POSITION) fail\n");
+		fimc_err("fb_set_var fail (ret=%d)\n", ret);
 		return -EINVAL;
 	}
 
@@ -280,10 +202,10 @@ int fimc_outdev_resume_dma(struct fimc_control *ctrl, struct fimc_ctx *ctx)
 		return -EINVAL;
 	}
 
-	ret = s3cfb_direct_ioctl(ctrl->id, S3CFB_SET_WIN_ADDR,
-			(unsigned long)ctx->dst[idx].base[FIMC_ADDR_Y]);
+	win->other_mem_addr = ctx->dst[idx].base[FIMC_ADDR_Y];
+	ret = fb_pan_display(fbinfo, &fbinfo->var);
 	if (ret < 0) {
-		fimc_err("direct_ioctl(S3CFB_SET_WIN_ADDR) fail\n");
+		fimc_err("%s: fb_pan_display fail (ret=%d)\n", __func__, ret);
 		return -EINVAL;
 	}
 
@@ -1411,10 +1333,15 @@ int fimc_start_fifo(struct fimc_control *ctrl, struct fimc_ctx *ctx)
 {
 	struct v4l2_rect fimd_rect;
 	struct fb_var_screeninfo var;
-	struct s3cfb_user_window window;
+	struct fb_info *fbinfo;
+	struct s3cfb_window *win;
 	int ret = -1;
 	u32 id = ctrl->id;
 
+	fbinfo = registered_fb[ctx->overlay.fb_id];
+	win = (struct s3cfb_window *)fbinfo->par;
+
+	memcpy(&var, &fbinfo->var, sizeof(struct fb_var_screeninfo));
 	memset(&fimd_rect, 0, sizeof(struct v4l2_rect));
 	ret = fimc_fimd_rect(ctrl, ctx, &fimd_rect);
 	if (ret < 0) {
@@ -1422,57 +1349,30 @@ int fimc_start_fifo(struct fimc_control *ctrl, struct fimc_ctx *ctx)
 		return -EINVAL;
 	}
 
-	/* Get WIN var_screeninfo */
-	ret = s3cfb_direct_ioctl(id, FBIOGET_VSCREENINFO,
-						(unsigned long)&var);
-	if (ret < 0) {
-		fimc_err("direct_ioctl(FBIOGET_VSCREENINFO) fail\n");
-		return -EINVAL;
-	}
-
 	/* Don't allocate the memory. */
 	if (ctx->pix.field == V4L2_FIELD_NONE)
-		ret = s3cfb_direct_ioctl(id,
-					S3CFB_SET_WIN_PATH, DATA_PATH_FIFO);
+		win->path = DATA_PATH_FIFO;
 	else if (ctx->pix.field == V4L2_FIELD_INTERLACED_TB)
-		ret = s3cfb_direct_ioctl(id,
-					S3CFB_SET_WIN_PATH, DATA_PATH_IPC);
-	if (ret < 0) {
-		fimc_err("direct_ioctl(S3CFB_SET_WIN_PATH) fail\n");
-		return -EINVAL;
-	}
+		win->path = DATA_PATH_IPC;
 
-	ret = s3cfb_direct_ioctl(id, S3CFB_SET_WIN_MEM, DMA_MEM_NONE);
-	if (ret < 0) {
-		fimc_err("direct_ioctl(S3CFB_SET_WIN_MEM) fail\n");
-		return -EINVAL;
-	}
-
-	ret = s3cfb_direct_ioctl(id, S3CFB_SET_WIN_ADDR, 0x00000000);
-	if (ret < 0) {
-		fimc_err("direct_ioctl(S3CFB_SET_WIN_ADDR) fail\n");
-		return -EINVAL;
-	}
+	win->owner = DMA_MEM_NONE;
+	win->other_mem_addr = 0;
+	win->other_mem_size = 0;
 
 	/* Update WIN size */
 	var.xres_virtual = fimd_rect.width;
 	var.yres_virtual = fimd_rect.height;
 	var.xres = fimd_rect.width;
 	var.yres = fimd_rect.height;
-	ret = s3cfb_direct_ioctl(id, FBIOPUT_VSCREENINFO,
-					(unsigned long)&var);
-	if (ret < 0) {
-		fimc_err("direct_ioctl(FBIOPUT_VSCREENINFO) fail\n");
-		return -EINVAL;
-	}
 
 	/* Update WIN position */
-	window.x = fimd_rect.left;
-	window.y = fimd_rect.top;
-	ret = s3cfb_direct_ioctl(id, S3CFB_WIN_POSITION,
-					(unsigned long)&window);
+	win->x = fimd_rect.left;
+	win->y = fimd_rect.top;
+
+	var.activate = FB_ACTIVATE_FORCE;
+	ret = fb_set_var(fbinfo, &var);
 	if (ret < 0) {
-		fimc_err("direct_ioctl(S3CFB_WIN_POSITION) fail\n");
+		fimc_err("fb_set_var fail (ret=%d)\n", ret);
 		return -EINVAL;
 	}
 
@@ -2071,12 +1971,26 @@ int fimc_streamoff_output(void *fh)
 	if (ctx_id == ctrl->out->last_ctx)
 		ctrl->out->last_ctx = -1;
 
+	if (ctx->overlay.mode == FIMC_OVLY_DMA_AUTO && ctrl->fb.is_enable == 1) {
+		fimc_info2("WIN_OFF for FIMC%d\n", ctrl->id);
+		ret = fb_blank(registered_fb[ctx->overlay.fb_id],
+						FB_BLANK_POWERDOWN);
+		if (ret < 0) {
+			fimc_err("%s: fb_blank: fb[%d] " \
+					"mode=FB_BLANK_POWERDOWN\n",
+					__func__, ctx->overlay.fb_id);
+			return -EINVAL;
+		}
+
+		ctrl->fb.is_enable = 0;
+	}
+
 	return 0;
 }
 
 
 int fimc_output_set_dst_addr(struct fimc_control *ctrl,
-		struct fimc_ctx *ctx, int idx)
+				struct fimc_ctx *ctx, int idx)
 {
 	struct fimc_buf_set buf_set;	/* destination addr */
 	u32 format = ctx->fbuf.fmt.pixelformat;
@@ -2215,14 +2129,18 @@ static int fimc_qbuf_output_dma_auto(struct fimc_control *ctrl,
 				      int idx)
 {
 	struct fb_var_screeninfo var;
-	struct s3cfb_user_window window;
+	struct fb_info *fbinfo;
+	struct s3cfb_window *win;
 	struct v4l2_rect fimd_rect;
 	struct fimc_buf_set buf_set;	/* destination addr */
-	u32 id = ctrl->id;
 	int ret = -1, i;
 
 	switch (ctx->status) {
 	case FIMC_READY_ON:
+		fbinfo = registered_fb[ctx->overlay.fb_id];
+		win = (struct s3cfb_window *)fbinfo->par;
+
+		memcpy(&var, &fbinfo->var, sizeof(struct fb_var_screeninfo));
 		memset(&fimd_rect, 0, sizeof(struct v4l2_rect));
 		ret = fimc_fimd_rect(ctrl, ctx, &fimd_rect);
 		if (ret < 0) {
@@ -2230,28 +2148,11 @@ static int fimc_qbuf_output_dma_auto(struct fimc_control *ctrl,
 			return -EINVAL;
 		}
 
-		/* Get WIN var_screeninfo */
-		ret = s3cfb_direct_ioctl(id, FBIOGET_VSCREENINFO,
-						(unsigned long)&var);
-		if (ret < 0) {
-			fimc_err("direct_ioctl(FBIOGET_VSCREENINFO) fail\n");
-			return -EINVAL;
-		}
-
-		/* window path : DMA */
-		ret = s3cfb_direct_ioctl(id, S3CFB_SET_WIN_PATH,
-							DATA_PATH_DMA);
-		if (ret < 0) {
-			fimc_err("direct_ioctl(S3CFB_SET_WIN_PATH) fail\n");
-			return -EINVAL;
-		}
-
-		/* Don't allocate the memory. */
-		ret = s3cfb_direct_ioctl(id, S3CFB_SET_WIN_MEM, DMA_MEM_OTHER);
-		if (ret < 0) {
-			fimc_err("direct_ioctl(S3CFB_SET_WIN_MEM) fail\n");
-			return -EINVAL;
-		}
+		/* set window path & owner */
+		win->path = DATA_PATH_DMA;
+		win->owner = DMA_MEM_OTHER;
+		win->other_mem_addr = ctx->dst[1].base[FIMC_ADDR_Y];
+		win->other_mem_size = ctx->dst[1].length[FIMC_ADDR_Y];
 
 		/* Update WIN size */
 		var.xres_virtual = fimd_rect.width;
@@ -2259,20 +2160,14 @@ static int fimc_qbuf_output_dma_auto(struct fimc_control *ctrl,
 		var.xres = fimd_rect.width;
 		var.yres = fimd_rect.height;
 
-		ret = s3cfb_direct_ioctl(id, FBIOPUT_VSCREENINFO,
-							(unsigned long)&var);
-		if (ret < 0) {
-			fimc_err("direct_ioctl(FBIOPUT_VSCREENINFO) fail\n");
-			return -EINVAL;
-		}
-
 		/* Update WIN position */
-		window.x = fimd_rect.left;
-		window.y = fimd_rect.top;
-		ret = s3cfb_direct_ioctl(id, S3CFB_WIN_POSITION,
-				(unsigned long)&window);
+		win->x = fimd_rect.left;
+		win->y = fimd_rect.top;
+
+		var.activate = FB_ACTIVATE_FORCE;
+		ret = fb_set_var(fbinfo, &var);
 		if (ret < 0) {
-			fimc_err("direct_ioctl(S3CFB_WIN_POSITION) fail\n");
+			fimc_err("fb_set_var fail (ret=%d)\n", ret);
 			return -EINVAL;
 		}
 
@@ -2489,6 +2384,18 @@ int fimc_dqbuf_output(void *fh, struct v4l2_buffer *b)
 				return -EINVAL;
 			}
 		}
+	}
+
+	if (ctx->overlay.mode == FIMC_OVLY_DMA_AUTO && ctrl->fb.is_enable == 0) {
+		ret = fb_blank(registered_fb[ctx->overlay.fb_id],
+						FB_BLANK_UNBLANK);
+		if (ret < 0) {
+			fimc_err("%s: fb_blank: fb[%d] " \
+					"mode=FB_BLANK_UNBLANK\n",
+					__func__, ctx->overlay.fb_id);
+			return -EINVAL;
+		}
+		ctrl->fb.is_enable = 1;
 	}
 
 	b->index = idx;

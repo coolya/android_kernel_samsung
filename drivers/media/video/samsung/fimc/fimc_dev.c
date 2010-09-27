@@ -263,23 +263,19 @@ static inline u32 fimc_irq_out_dma(struct fimc_control *ctrl,
 		fimc_err("Failed: fimc_push_outq\n");
 
 	if (ctx->overlay.mode == FIMC_OVLY_DMA_AUTO) {
-		ret = s3cfb_direct_ioctl(ctrl->id, S3CFB_SET_WIN_ADDR,
-			(unsigned long)ctx->dst[idx].base[FIMC_ADDR_Y]);
+		struct s3cfb_window *win;
+		struct fb_info *fbinfo;
+
+		fbinfo = registered_fb[ctx->overlay.fb_id];
+		win = (struct s3cfb_window *)fbinfo->par;
+
+		win->other_mem_addr = ctx->dst[idx].base[FIMC_ADDR_Y];
+
+		ret = fb_pan_display(fbinfo, &fbinfo->var);
 		if (ret < 0) {
-			fimc_err("direct_ioctl(S3CFB_SET_WIN_ADDR) fail\n");
+			fimc_err("%s: fb_pan_display fail (ret=%d)\n",
+					__func__, ret);
 			return -EINVAL;
-		}
-
-		if (ctrl->fb.is_enable == 0) {
-			ret = s3cfb_direct_ioctl(ctrl->id, S3CFB_SET_WIN_ON,
-							(unsigned long)NULL);
-			if (ret < 0) {
-				fimc_err("direct_ioctl "
-						"(S3CFB_SET_WIN_ON) fail\n");
-				return -EINVAL;
-			}
-
-			ctrl->fb.is_enable = 1;
 		}
 	}
 
@@ -924,15 +920,14 @@ static int fimc_open(struct file *filp)
 		ctrl->fb.open_fifo = s3cfb_open_fifo;
 		ctrl->fb.close_fifo = s3cfb_close_fifo;
 
-		ret = s3cfb_direct_ioctl(ctrl->id, S3CFB_GET_LCD_WIDTH,
-					(unsigned long)&ctrl->fb.lcd_hres);
-		if (ret < 0)
-			fimc_err("Fail: S3CFB_GET_LCD_WIDTH\n");
-
-		ret = s3cfb_direct_ioctl(ctrl->id, S3CFB_GET_LCD_HEIGHT,
-					(unsigned long)&ctrl->fb.lcd_vres);
-		if (ret < 0)
-			fimc_err("Fail: S3CFB_GET_LCD_HEIGHT\n");
+		if (num_registered_fb > 0) {
+			struct fb_info *fbinfo = registered_fb[0];
+			ctrl->fb.lcd_hres = (int)fbinfo->var.xres;
+			ctrl->fb.lcd_vres = (int)fbinfo->var.yres;
+			fimc_info1("%s: fd.lcd_hres=%d fd.lcd_vres=%d\n",
+					__func__, ctrl->fb.lcd_hres,
+					ctrl->fb.lcd_vres);
+		}
 
 		ctrl->mem.curr = ctrl->mem.base;
 		ctrl->status = FIMC_STREAMOFF;
@@ -1078,11 +1073,13 @@ static int fimc_release(struct file *filp)
 	 * it remain afterimage when I play movie using overlay and exit
 	 */
 	if (ctrl->fb.is_enable == 1) {
-		fimc_warn("WIN_OFF for FIMC%d\n", ctrl->id);
-		ret = s3cfb_direct_ioctl(ctrl->id, S3CFB_SET_WIN_OFF,
-						(unsigned long)NULL);
+		fimc_info2("WIN_OFF for FIMC%d\n", ctrl->id);
+		ret = fb_blank(registered_fb[ctx->overlay.fb_id],
+				FB_BLANK_POWERDOWN);
 		if (ret < 0) {
-			fimc_err("direct_ioctl(S3CFB_SET_WIN_OFF) fail\n");
+			fimc_err("%s: fb_blank: fb[%d] " \
+					"mode=FB_BLANK_POWERDOWN\n",
+					__func__, ctx->overlay.fb_id);
 			return -EINVAL;
 		}
 

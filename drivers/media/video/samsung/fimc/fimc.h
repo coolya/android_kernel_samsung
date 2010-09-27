@@ -63,11 +63,7 @@
 
 #define FIMC_HCLK		0
 #define FIMC_SCLK		1
-#if defined(CONFIG_VIDEO_FIMC_FIFO)
-#define FIMC_OVLY_MODE FIMC_OVLY_FIFO
-#elif defined(CONFIG_VIDEO_FIMC_DMA_AUTO)
 #define FIMC_OVLY_MODE FIMC_OVLY_DMA_AUTO
-#endif
 
 #define PINGPONG_2ADDR_MODE
 #if defined(PINGPONG_2ADDR_MODE)
@@ -171,6 +167,7 @@ struct fimc_overlay {
 	enum fimc_overlay_mode mode;
 	struct fimc_overlay_buf buf;
 	s32 req_idx;
+	int	fb_id;
 };
 
 /* general buffer */
@@ -280,6 +277,49 @@ enum s3cfb_mem_owner_t {
 	DMA_MEM_NONE	= 0,
 	DMA_MEM_FIMD	= 1,
 	DMA_MEM_OTHER	= 2,
+};
+
+enum s3cfb_alpha_t {
+	PLANE_BLENDING,
+	PIXEL_BLENDING,
+};
+
+enum s3cfb_chroma_dir_t {
+	CHROMA_FG,
+	CHROMA_BG,
+};
+
+struct s3cfb_alpha {
+	enum		s3cfb_alpha_t mode;
+	int		channel;
+	unsigned int	value;
+};
+
+
+struct s3cfb_chroma {
+	int		enabled;
+	int		blended;
+	unsigned int	key;
+	unsigned int	comp_key;
+	unsigned int	alpha;
+	enum		s3cfb_chroma_dir_t dir;
+};
+
+struct s3cfb_window {
+	int			id;
+	int			enabled;
+	atomic_t		in_use;
+	int			x;
+	int			y;
+	enum			s3cfb_data_path_t path;
+	enum			s3cfb_mem_owner_t owner;
+	unsigned int	other_mem_addr;
+	unsigned int	other_mem_size;
+	int			local_channel;
+	int			dma_burst;
+	unsigned int		pseudo_pal[16];
+	struct			s3cfb_alpha alpha;
+	struct			s3cfb_chroma chroma;
 };
 
 #define S3CFB_WIN_OFF_ALL	_IO('F', 202)

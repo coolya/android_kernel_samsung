@@ -34,21 +34,3 @@ config VIDEO_FIMC_MIPI
 	bool "MIPI-CSI2 Slave Interface support"
 	depends on VIDEO_FIMC && ARCH_S5PV210
 	default y
-
-choice
-depends on VIDEO_FIMC
-prompt "Select Output Mode"
-default VIDEO_FIMC_DMA_AUTO
-config VIDEO_FIMC_DMA_AUTO
-        bool "DMA AUTO MODE"
-        depends on VIDEO_FIMC
-        help
-          This enables support for FIMC1 DMA AUTO mode
-
-config VIDEO_FIMC_FIFO
-        bool "FIFO MODE"
-        depends on VIDEO_FIMC
-        help
-          This enables support for FIMC1 FIFO mode
-
-endchoice
