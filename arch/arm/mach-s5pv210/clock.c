@@ -333,8 +333,8 @@ static struct clk init_clocks_disable[] = {
 		.name		= "jpeg",
 		.id		= -1,
 		.parent		= &clk_hclk_dsys.clk,
-		.enable		= s5pv210_clk_ip0_ctrl,
-		.ctrlbit	= S5P_CLKGATE_IP0_JPEG,
+		.enable		= s5pv210_clk_ip5_ctrl,
+		.ctrlbit	= S5P_CLKGATE_IP5_JPEG,
 	}, {
 		.name		= "sclk_fimc_lclk",
 		.id		= 0,
@@ -533,12 +533,6 @@ static struct clk init_clocks_disable[] = {
 		.parent		= &clk_pclk_psys.clk,
 		.enable		= s5pv210_clk_ip3_ctrl,
 		.ctrlbit	= S5P_CLKGATE_IP3_PCM0,
-	}, {
-		.name		= "jpeg",
-		.id		= -1,
-		.parent		= &clk_hclk_dsys.clk,
-		.enable	= s5pv210_clk_ip5_ctrl,
-		.ctrlbit	= (1 << 29),
 	}, {
 		.name		= "i2c-hdmiphy",
 		.id		= -1,
