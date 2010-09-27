@@ -21,12 +21,15 @@
 #include <linux/wakelock.h>
 #include <linux/mutex.h>
 #include <linux/clk.h>
+#include <linux/workqueue.h>
 
 #include <asm/mach-types.h>
 
 #include <../../../drivers/staging/android/timed_output.h>
 
 #include <mach/gpio-herring.h>
+
+#define GPD0_TOUT_1		2 << 4
 
 #define PWM_PERIOD		(89284 / 2)
 #define PWM_DUTY		(87000 / 2)
@@ -37,6 +40,7 @@ static struct vibrator {
 	struct pwm_device *pwm_dev;
 	struct hrtimer timer;
 	struct mutex lock;
+	struct work_struct work;
 } vibdata;
 
 static void herring_vibrator_off(void)
@@ -62,6 +66,7 @@ static void herring_vibrator_enable(struct timed_output_dev *dev, int value)
 
 	/* cancel previous timer and set GPIO according to value */
 	hrtimer_cancel(&vibdata.timer);
+	cancel_work_sync(&vibdata.work);
 	if (value) {
 		wake_lock(&vibdata.wklock);
 		pwm_config(vibdata.pwm_dev, PWM_DUTY, PWM_PERIOD);
@@ -90,8 +95,13 @@ static struct timed_output_dev to_dev = {
 
 static enum hrtimer_restart herring_vibrator_timer_func(struct hrtimer *timer)
 {
-	herring_vibrator_off();
+	schedule_work(&vibdata.work);
 	return HRTIMER_NORESTART;
+}
+
+static void herring_vibrator_work(struct work_struct *work)
+{
+	herring_vibrator_off();
 }
 
 static int __init herring_init_vibrator(void)
@@ -104,12 +114,13 @@ static int __init herring_init_vibrator(void)
 #endif
 	hrtimer_init(&vibdata.timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	vibdata.timer.function = herring_vibrator_timer_func;
+	INIT_WORK(&vibdata.work, herring_vibrator_work);
 
 	ret = gpio_request(GPIO_VIBTONE_EN1, "vibrator-en");
 	if (ret < 0)
 		return ret;
 
-	s3c_gpio_cfgpin(GPIO_VIBTONE_PWM, 0x2 << 4);
+	s3c_gpio_cfgpin(GPIO_VIBTONE_PWM, GPD0_TOUT_1);
 
 	vibdata.pwm_dev = pwm_request(1, "vibrator-pwm");
 	if (IS_ERR(vibdata.pwm_dev)) {
