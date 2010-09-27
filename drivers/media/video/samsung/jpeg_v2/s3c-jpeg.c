@@ -47,6 +47,8 @@
 #include <linux/time.h>
 #include <linux/clk.h>
 
+#include <plat/clock.h>
+
 #include "s3c-jpeg.h"
 #include "jpg_mem.h"
 #include "jpg_misc.h"
@@ -68,6 +70,24 @@ wait_queue_head_t	wait_queue_jpeg;
 
 
 DECLARE_WAIT_QUEUE_HEAD(WaitQueue_JPEG);
+
+static void jpeg_clock_enable(void)
+{
+	/* power domain enable */
+	regulator_enable(jpeg_pd_regulator);
+
+	/* clock enable */
+	clk_enable(s3c_jpeg_clk);
+}
+
+static void jpeg_clock_disable(void)
+{
+	/* clock disable */
+	clk_disable(s3c_jpeg_clk);
+
+	/* power domain disable */
+	regulator_disable(jpeg_pd_regulator);
+}
 
 irqreturn_t s3c_jpeg_irq(int irq, void *dev_id, struct pt_regs *regs)
 {
@@ -109,11 +129,6 @@ static int s3c_jpeg_open(struct inode *inode, struct file *file)
 {
 	struct s5pc110_jpg_ctx *jpg_reg_ctx;
 	unsigned long	ret;
-
-	/* Turn on jpeg power domain regulator */
-	regulator_enable(jpeg_pd_regulator);
-	/* clock enable */
-	clk_enable(s3c_jpeg_clk);
 
 	jpg_dbg("JPG_open \r\n");
 
@@ -179,11 +194,6 @@ static int s3c_jpeg_release(struct inode *inode, struct file *file)
 	unlock_jpg_mutex();
 	kfree(jpg_reg_ctx);
 
-	/* clock disable */
-	clk_disable(s3c_jpeg_clk);
-	/* Turn off jpeg power domain regulator */
-	regulator_disable(jpeg_pd_regulator);
-
 	return 0;
 }
 
@@ -236,7 +246,10 @@ static int s3c_jpeg_ioctl(struct inode *inode, struct file *file,
 			(unsigned int)jpg_data_base_addr
 			+ jpg_reg_ctx->bufinfo->main_frame_start;
 
+		jpeg_clock_enable();
 		result = decode_jpg(jpg_reg_ctx, param.dec_param);
+		jpeg_clock_disable();
+
 		out = copy_to_user((void *)arg,
 				  (void *)&param, sizeof(struct jpg_args));
 		break;
@@ -251,6 +264,7 @@ static int s3c_jpeg_ioctl(struct inode *inode, struct file *file,
 		jpg_dbg("encode size :: width : %d hegiht : %d\n",
 			param.enc_param->width, param.enc_param->height);
 
+		jpeg_clock_enable();
 		if (param.enc_param->enc_type == JPG_MAIN) {
 			jpg_reg_ctx->jpg_data_addr =
 					(unsigned int)jpg_data_base_addr;
@@ -273,6 +287,8 @@ static int s3c_jpeg_ioctl(struct inode *inode, struct file *file,
 
 			result = encode_jpg(jpg_reg_ctx, param.thumb_enc_param);
 		}
+		jpeg_clock_disable();
+
 		out = copy_to_user((void *)arg, (void *)&param,
 				   sizeof(struct jpg_args));
 		break;
@@ -463,7 +479,6 @@ static int s3c_jpeg_probe(struct platform_device *pdev)
 				__func__, "s3c-jpg");
 		return PTR_ERR(jpeg_pd_regulator);
 	}
-	regulator_enable(jpeg_pd_regulator);
 
 	s3c_jpeg_clk = clk_get(&pdev->dev, "jpeg");
 
@@ -471,8 +486,6 @@ static int s3c_jpeg_probe(struct platform_device *pdev)
 		jpg_err("failed to find jpeg clock source\n");
 		return -ENOENT;
 	}
-
-	clk_enable(s3c_jpeg_clk);
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 
@@ -537,11 +550,6 @@ static int s3c_jpeg_probe(struct platform_device *pdev)
 
 	ret = misc_register(&s3c_jpeg_miscdev);
 
-	/* clock disable */
-	clk_disable(s3c_jpeg_clk);
-	/* Turn off jpeg power domain regulator */
-	regulator_disable(jpeg_pd_regulator);
-
 	return 0;
 }
 
@@ -558,34 +566,10 @@ static int s3c_jpeg_remove(struct platform_device *dev)
 	return 0;
 }
 
-#ifdef CONFIG_CPU_S5PV210
-static int s3c_jpeg_suspend(struct platform_device *pdev, pm_message_t state)
-{
-	/* clock disable */
-	clk_disable(s3c_jpeg_clk);
-	/* Turn off jpeg power domain regulator */
-	regulator_disable(jpeg_pd_regulator);
-
-	return 0;
-}
-
-static int s3c_jpeg_resume(struct platform_device *pdev)
-{
-	/* Turn on jpeg power domain regulator */
-	regulator_enable(jpeg_pd_regulator);
-	/* clock enable */
-	clk_enable(s3c_jpeg_clk);
-
-	return 0;
-}
-#endif
-
 static struct platform_driver s3c_jpeg_driver = {
 	.probe		= s3c_jpeg_probe,
 	.remove		= s3c_jpeg_remove,
 	.shutdown	= NULL,
-	.suspend	= s3c_jpeg_suspend,
-	.resume		= s3c_jpeg_resume,
 	.driver		= {
 			.owner	= THIS_MODULE,
 			.name	= "s3c-jpg",
