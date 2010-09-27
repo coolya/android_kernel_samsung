@@ -200,6 +200,8 @@ struct s3cfb_window {
 	int			y;
 	enum			s3cfb_data_path_t path;
 	enum			s3cfb_mem_owner_t owner;
+	unsigned int	other_mem_addr;
+	unsigned int	other_mem_size;
 	int			local_channel;
 	int			dma_burst;
 	unsigned int		pseudo_pal[16];
@@ -224,7 +226,7 @@ struct s3cfb_global {
 	struct mutex		lock;
 	struct device		*dev;
 	struct clk		*clock;
-        struct regulator        *regulator;
+	struct regulator	*regulator;
 	int			irq;
 	wait_queue_head_t	wq;
 	unsigned int		wq_count;

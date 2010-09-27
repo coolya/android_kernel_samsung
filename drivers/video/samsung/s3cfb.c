@@ -200,7 +200,14 @@ static int s3cfb_map_video_memory(struct fb_info *fb)
 	struct fb_fix_screeninfo *fix = &fb->fix;
 	struct s3cfb_window *win = fb->par;
 
-	if (win->owner == DMA_MEM_OTHER)
+	if (win->owner == DMA_MEM_OTHER) {
+		fix->smem_start = win->other_mem_addr;
+		fix->smem_len = win->other_mem_size;
+		return 0;
+	}
+
+	/* already allocated a memory */
+	if (fb->screen_base)
 		return 0;
 
 	fb->screen_base = dma_alloc_writecombine(fbdev->dev,
@@ -257,8 +264,9 @@ static int s3cfb_unmap_video_memory(struct fb_info *fb)
 	struct s3cfb_window *win = fb->par;
 
 	if (fix->smem_start) {
-		dma_free_writecombine(fbdev->dev, fix->smem_len,
-				      fb->screen_base, fix->smem_start);
+		if (win->owner == DMA_MEM_FIMD)
+			dma_free_writecombine(fbdev->dev, fix->smem_len,
+					      fb->screen_base, fix->smem_start);
 		fix->smem_start = 0;
 		fix->smem_len = 0;
 		dev_info(fbdev->dev, "[fb%d] video memory released\n", win->id);
@@ -273,7 +281,12 @@ static int s3cfb_unmap_default_video_memory(struct fb_info *fb)
 	struct s3cfb_window *win = fb->par;
 
 	if (fix->smem_start) {
+#if defined(CONFIG_FB_S3C_VIRTUAL)
 		iounmap(fb->screen_base);
+#else
+		dma_free_writecombine(fbdev->dev, fix->smem_len,
+				      fb->screen_base, fix->smem_start);
+#endif
 		fix->smem_start = 0;
 		fix->smem_len = 0;
 		dev_info(fbdev->dev, "[fb%d] video memory released\n", win->id);
@@ -428,6 +441,8 @@ static int s3cfb_set_par(struct fb_info *fb)
 		fb->fix.line_length = fb->var.xres_virtual *
 						fb->var.bits_per_pixel / 8;
 		fb->fix.smem_len = fb->fix.line_length * fb->var.yres_virtual;
+
+		s3cfb_map_video_memory(fb);
 	}
 
 	s3cfb_set_win_params(win->id);
@@ -478,12 +493,16 @@ static int s3cfb_blank(int blank_mode, struct fb_info *fb)
 
 static int s3cfb_pan_display(struct fb_var_screeninfo *var, struct fb_info *fb)
 {
+	struct fb_fix_screeninfo *fix = &fb->fix;
 	struct s3cfb_window *win = fb->par;
 
 	if (var->yoffset + var->yres > var->yres_virtual) {
 		dev_err(fbdev->dev, "invalid yoffset value\n");
 		return -EINVAL;
 	}
+
+	if (win->owner == DMA_MEM_OTHER)
+		fix->smem_start = win->other_mem_addr;
 
 	fb->var.yoffset = var->yoffset;
 
@@ -919,7 +938,6 @@ int s3cfb_direct_ioctl(int id, unsigned int cmd, unsigned long arg)
 
 	return ret;
 }
-EXPORT_SYMBOL(s3cfb_direct_ioctl);
 
 static int s3cfb_init_fbinfo(int id)
 {
