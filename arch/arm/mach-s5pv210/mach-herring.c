@@ -83,6 +83,7 @@
 #include <../../../drivers/video/samsung/s3cfb.h>
 #include <linux/max17040_battery.h>
 #include <linux/sec_jack.h>
+#include <linux/input/mxt224.h>
 
 struct class *sec_class;
 EXPORT_SYMBOL(sec_class);
@@ -1484,8 +1485,73 @@ static struct i2c_board_info i2c_devs1[] __initdata = {
 	},
 };
 
+static void mxt224_power_on(void)
+{
+	gpio_direction_output(GPIO_TOUCH_EN, 1);
+
+	mdelay(40);
+}
+
+static void mxt224_power_off(void)
+{
+	gpio_direction_output(GPIO_TOUCH_EN, 0);
+}
+
+#define MXT224_MAX_MT_FINGERS 5
+
+static u8 t7_config[] = {GEN_POWERCONFIG_T7,
+				64, 255, 50};
+static u8 t8_config[] = {GEN_ACQUISITIONCONFIG_T8,
+				10, 0, 5, 0, 0, 0, 9, 23};
+static u8 t9_config[] = {TOUCH_MULTITOUCHSCREEN_T9,
+				139, 0, 0, 19, 11, 0, 16, 26, 2, 1, 0, 3, 1,
+				46, MXT224_MAX_MT_FINGERS, 3, 26, 6, 31, 3,
+				223, 1, 0, 0, 0, 0, 143, 40, 143, 80, 18};
+static u8 t18_config[] = {SPT_COMCONFIG_T18,
+				0, 1};
+static u8 t20_config[] = {PROCI_GRIPFACESUPPRESSION_T20,
+				7, 0, 0, 0, 0, 0, 0, 80, 40, 4, 35, 10};
+static u8 t22_config[] = {PROCG_NOISESUPPRESSION_T22,
+				5, 0, 0, 0, 0, 0, 0, 3, 20, 0, 0, 20, 24, 30,
+				40, 48, 3};
+static u8 t28_config[] = {SPT_CTECONFIG_T28,
+				1, 0, 3, 16, 63, 60};
+static u8 end_config[] = {RESERVED_T255};
+
+static const u8 *mxt224_config[] = {
+	t7_config,
+	t8_config,
+	t9_config,
+	t18_config,
+	t20_config,
+	t22_config,
+	t28_config,
+	end_config,
+};
+
+static struct mxt224_platform_data mxt224_data = {
+	.max_finger_touches = MXT224_MAX_MT_FINGERS,
+	.gpio_read_done = GPIO_TOUCH_INT,
+	.config = mxt224_config,
+	.min_x = 0,
+	.max_x = 479,
+	.min_y = 0,
+	.max_y = 799,
+	.min_z = 0,
+	.max_z = 255,
+	.min_w = 0,
+	.max_w = 30,
+	.power_on = mxt224_power_on,
+	.power_off = mxt224_power_off,
+};
+
 /* I2C2 */
 static struct i2c_board_info i2c_devs2[] __initdata = {
+	{
+		I2C_BOARD_INFO(MXT224_DEV_NAME, 0x4a),
+		.platform_data = &mxt224_data,
+		.irq = IRQ_EINT_GROUP(18, 5),
+	},
 };
 
 /* I2C2 */
@@ -2514,7 +2580,7 @@ static struct gpio_init_data herring_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPJ0(5),
-		.cfg	= S3C_GPIO_INPUT,
+		.cfg	= S3C_GPIO_SFN(0xF),
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_DOWN,
 		.drv	= S3C_GPIO_DRVSTR_1X,
@@ -3652,6 +3718,8 @@ static void __init herring_machine_init(void)
 		gpio_request(GPIO_EAR_MICBIAS_EN, "ear_micbias_enable");
 	gpio_request(GPIO_DET_35, "ear_jack_detect");
 	gpio_request(GPIO_EAR_SEND_END, "ear_jack_button");
+
+	gpio_request(GPIO_TOUCH_EN, "touch en");
 
 	/* i2c */
 	s3c_i2c0_set_platdata(NULL);
