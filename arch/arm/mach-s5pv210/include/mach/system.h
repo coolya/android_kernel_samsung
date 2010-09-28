@@ -13,6 +13,7 @@
 #ifndef __ASM_ARCH_SYSTEM_H
 #define __ASM_ARCH_SYSTEM_H __FILE__
 
+#include <asm/proc-fns.h>
 #include <plat/watchdog-reset.h>
 
 static void arch_idle(void)
