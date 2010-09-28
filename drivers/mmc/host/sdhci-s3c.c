@@ -20,6 +20,7 @@
 #include <linux/io.h>
 
 #include <linux/mmc/host.h>
+#include <linux/mmc/card.h>
 
 #include <plat/sdhci.h>
 #include <plat/regs-sdhci.h>
@@ -535,6 +536,11 @@ static int sdhci_s3c_suspend(struct platform_device *dev, pm_message_t pm)
 {
 	struct sdhci_host *host = platform_get_drvdata(dev);
 	struct s3c_sdhci_platdata *pdata = dev->dev.platform_data;
+
+	struct mmc_host *mmc = host->mmc;
+
+	if (mmc->card && (mmc->card->type == MMC_TYPE_SDIO))
+		mmc->pm_flags |= MMC_PM_KEEP_POWER;
 
 	sdhci_suspend_host(host, pm);
 
