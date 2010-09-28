@@ -272,7 +272,7 @@ static struct clock_event_device clockevent_tick_timer = {
 	.set_mode	= s5p_tick_set_mode,
 };
 
-irqreturn_t s5p_tick_timer_interrupt(int irq, void *dev_id)
+static irqreturn_t s5p_tick_timer_interrupt(int irq, void *dev_id)
 {
 	struct clock_event_device *evt = &clockevent_tick_timer;
 
@@ -350,7 +350,7 @@ struct irqaction s5p_systimer_irq = {
 };
 
 
-static cycle_t s5p_sched_timer_read(void)
+static cycle_t s5p_sched_timer_read(struct clocksource *cs)
 {
 
 	return (cycle_t)~__raw_readl(S5P_SYSTIMER_TICNTO);
@@ -394,7 +394,7 @@ unsigned long long sched_clock(void)
 
 	if (likely(sched_timer_running)) {
 		overflow_cnt = (s5p_sched_timer_overflows - old_overflows);
-		ticks = s5p_sched_timer_read();
+		ticks = s5p_sched_timer_read(&clocksource_s5p);
 
 		if (overflow_cnt) {
 			increment = (overflow_cnt - 1) *
