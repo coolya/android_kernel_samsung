@@ -44,6 +44,8 @@
 #include <mach/fsa9480_i2c.h>
 #include <mach/adc.h>
 #include <mach/param.h>
+
+#include <linux/pn544.h>
 #include <linux/notifier.h>
 #include <linux/reboot.h>
 #include <linux/wlan_plat.h>
@@ -1027,6 +1029,21 @@ static struct platform_device s3c_device_i2c12 = {
 	.dev.platform_data	= &i2c12_platdata,
 };
 
+static struct i2c_gpio_platform_data i2c14_platdata = {
+	.sda_pin		= NFC_SDA_18V,
+	.scl_pin		= NFC_SCL_18V,
+	.udelay			= 2,
+	.sda_is_open_drain      = 0,
+	.scl_is_open_drain      = 0,
+	.scl_is_output_only     = 0,
+};
+
+static struct platform_device s3c_device_i2c14 = {
+	.name			= "i2c-gpio",
+	.id			= 14,
+	.dev.platform_data	= &i2c14_platdata,
+};
+
 static void touch_keypad_gpio_init(void)
 {
 	int ret = 0;
@@ -1491,6 +1508,18 @@ static struct i2c_board_info i2c_devs6[] __initdata = {
 		I2C_BOARD_INFO("rtc_max8998", (0x0D >> 1)),
 	},
 #endif
+};
+
+static struct pn544_i2c_platform_data pn544_pdata = {
+	.irq_gpio = NFC_IRQ,
+};
+
+static struct i2c_board_info i2c_devs14[] __initdata = {
+	{
+		I2C_BOARD_INFO("pn544", 0x2b),
+		.irq = IRQ_EINT(12),
+		.platform_data = &pn544_pdata,
+	},
 };
 
 struct max17040_platform_data max17040_pdata = {
@@ -2172,16 +2201,16 @@ static struct gpio_init_data herring_init_gpios[] = {
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
-	}, {
+	}, { /* NFC_IRQ */
 		.num	= S5PV210_GPH1(4),
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
-	}, {
+	}, { /* NFC_EN */
 		.num	= S5PV210_GPH1(5),
 		.cfg	= S3C_GPIO_OUTPUT,
-		.val	= S3C_GPIO_SETPIN_ZERO,
+		.val	= S3C_GPIO_SETPIN_ONE,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
@@ -2640,17 +2669,17 @@ static struct gpio_init_data herring_init_gpios[] = {
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_DOWN,
 		.drv	= S3C_GPIO_DRVSTR_1X,
-	}, {
+	}, { /* NFC_SCL_18V */
 		.num	= S5PV210_MP04(4),
-		.cfg	= S3C_GPIO_INPUT,
-		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_NONE,
+		.cfg	= S3C_GPIO_OUTPUT,
+		.val	= S3C_GPIO_SETPIN_ZERO,
+		.pud	= S3C_GPIO_PULL_UP,
 		.drv	= S3C_GPIO_DRVSTR_1X,
-	}, {
+	}, { /* NFC_SDA_18V */
 		.num	= S5PV210_MP04(5),
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_NONE,
+		.pud	= S3C_GPIO_PULL_UP,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_MP04(6),
@@ -3282,6 +3311,7 @@ static struct platform_device *herring_devices[] __initdata = {
 	&s3c_device_i2c9,  /* max1704x:fuel_guage */
 	&s3c_device_i2c11, /* optical sensor */
 	&s3c_device_i2c12, /* magnetic sensor */
+	&s3c_device_i2c14, /* nfc sensor */
 #ifdef CONFIG_USB_GADGET
 	&s3c_device_usbgadget,
 #endif
@@ -3555,6 +3585,9 @@ static void __init herring_machine_init(void)
 	/* magnetic sensor for rev04 */
 	if (system_rev == 0x04)
 		i2c_register_board_info(12, i2c_devs12, ARRAY_SIZE(i2c_devs12));
+
+       /* nfc sensor */
+	i2c_register_board_info(14, i2c_devs14, ARRAY_SIZE(i2c_devs14));
 
 #ifdef CONFIG_FB_S3C_TL2796
 	spi_register_board_info(spi_board_info, ARRAY_SIZE(spi_board_info));
