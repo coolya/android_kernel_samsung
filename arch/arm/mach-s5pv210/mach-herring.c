@@ -1462,9 +1462,26 @@ static struct i2c_board_info i2c_devs4[] __initdata = {
 	},
 };
 
+static struct akm8973_platform_data akm8973_pdata = {
+	.reset_line = GPIO_MSENSE_nRST,
+	.reset_asserted = GPIO_LEVEL_LOW,
+	.gpio_data_ready_int = GPIO_MSENSE_IRQ,
+};
+
+static struct kr3dm_platform_data kr3dm_data = {
+	.gpio_acc_int = GPIO_ACC_INT,
+};
 
 /* I2C1 */
 static struct i2c_board_info i2c_devs1[] __initdata = {
+	{
+		I2C_BOARD_INFO("ak8973", 0x1c),
+		.platform_data = &akm8973_pdata,
+	},
+	{
+		I2C_BOARD_INFO("kr3dm", 0x09),
+		.platform_data  = &kr3dm_data,
+	},
 };
 
 /* I2C2 */
@@ -1483,10 +1500,6 @@ static struct i2c_board_info i2c_devs10[] __initdata = {
 	},
 };
 
-static struct kr3dm_platform_data kr3dm_data = {
-	.gpio_acc_int = GPIO_ACC_INT,
-};
-
 static struct i2c_board_info i2c_devs5[] __initdata = {
 	{
 		I2C_BOARD_INFO("kr3dm", 0x09),
@@ -1494,24 +1507,7 @@ static struct i2c_board_info i2c_devs5[] __initdata = {
 	},
 };
 
-static struct akm8973_platform_data akm8973_pdata = {
-	.reset_line = GPIO_MSENSE_nRST,
-	.reset_asserted = GPIO_LEVEL_LOW,
-	.gpio_data_ready_int = GPIO_MSENSE_IRQ,
-};
-
 static struct i2c_board_info i2c_devs8[] __initdata = {
-	{
-		I2C_BOARD_INFO("ak8973", 0x1c),
-		.platform_data = &akm8973_pdata,
-	},
-	{
-		I2C_BOARD_INFO("kr3dm", 0x09),
-		.platform_data  = &kr3dm_data,
-	},
-};
-
-static struct i2c_board_info i2c_devs8_hwrev04[] __initdata = {
 	{
 		I2C_BOARD_INFO("k3g", 0x69),
 		.platform_data = &k3g_pdata,
@@ -3691,10 +3687,13 @@ static void __init herring_machine_init(void)
 #ifdef CONFIG_S3C_DEV_I2C2
 	s3c_i2c2_set_platdata(NULL);
 #endif
-	/* gyro sensor */
-	if (system_rev >= 0x05)
+	/* H/W I2C lines */
+	if (system_rev >= 0x05) {
+		/* gyro sensor */
 		i2c_register_board_info(0, i2c_devs0, ARRAY_SIZE(i2c_devs0));
-	i2c_register_board_info(1, i2c_devs1, ARRAY_SIZE(i2c_devs1));
+		/* magnetic and accel sensor */
+		i2c_register_board_info(1, i2c_devs1, ARRAY_SIZE(i2c_devs1));
+	}
 	i2c_register_board_info(2, i2c_devs2, ARRAY_SIZE(i2c_devs2));
 
 	/* wm8994 codec */
@@ -3710,13 +3709,11 @@ static void __init herring_machine_init(void)
 	/* FSA9480 */
 	fsa9480_gpio_init();
 	i2c_register_board_info(7, i2c_devs7, ARRAY_SIZE(i2c_devs7));
-	if (system_rev >= 0x05)
-		/* magnetic and accel sensor */
+
+	/* gyro sensor for rev04 */
+	if (system_rev == 0x04)
 		i2c_register_board_info(8, i2c_devs8, ARRAY_SIZE(i2c_devs8));
-	else
-		/* gyro sensor for rev04 */
-		i2c_register_board_info(8, i2c_devs8_hwrev04,
-					ARRAY_SIZE(i2c_devs8_hwrev04));
+
 	i2c_register_board_info(9, i2c_devs9, ARRAY_SIZE(i2c_devs9));
 	/* optical sensor */
 	gp2a_gpio_init();
