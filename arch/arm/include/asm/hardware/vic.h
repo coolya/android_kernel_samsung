@@ -42,6 +42,7 @@
 
 #ifndef __ASSEMBLY__
 void vic_init(void __iomem *base, unsigned int irq_start, u32 vic_sources, u32 resume_sources);
+int vic_set_fiq(unsigned int irq, bool enable);
 #endif
 
 #endif
