@@ -28,6 +28,11 @@ extern struct platform_device s3c24xx_uart_device1;
 extern struct platform_device s3c24xx_uart_device2;
 extern struct platform_device s3c24xx_uart_device3;
 
+extern struct platform_device s5pv210_device_fiqdbg_uart0;
+extern struct platform_device s5pv210_device_fiqdbg_uart1;
+extern struct platform_device s5pv210_device_fiqdbg_uart2;
+extern struct platform_device s5pv210_device_fiqdbg_uart3;
+
 extern struct platform_device s3c_device_timer[];
 
 extern struct platform_device s3c64xx_device_iis0;

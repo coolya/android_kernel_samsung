@@ -35,6 +35,7 @@ obj-$(CONFIG_S5PV210_SETUP_SDHCI)       += setup-sdhci.o
 # device support
 
 obj-y				+= dev-audio.o
+obj-y				+= dev-fiqdbg.o
 obj-$(CONFIG_S3C64XX_DEV_SPI)	+= dev-spi.o
 obj-$(CONFIG_S5PC110_DEV_ONENAND) += dev-onenand.o
 
