@@ -228,4 +228,6 @@
 
 #define HALL_SENSOR_IRQ		IRQ_EINT3
 
+#define FIQ_START		0
+
 #endif /* ASM_ARCH_IRQS_H */
