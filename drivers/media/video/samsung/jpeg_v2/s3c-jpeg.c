@@ -271,8 +271,8 @@ static int s3c_jpeg_ioctl(struct inode *inode, struct file *file,
 			jpg_reg_ctx->img_data_addr =
 				(unsigned int)jpg_data_base_addr
 				+ jpg_reg_ctx->bufinfo->main_frame_start;
-			jpg_dbg("enc_img_data_addr=0x%08x,
-				enc_jpg_data_addr=0x%08x\n",
+			jpg_dbg("enc_img_data_addr=0x%08x,"
+				"enc_jpg_data_addr=0x%08x\n",
 				jpg_reg_ctx->img_data_addr,
 				jpg_reg_ctx->jpg_data_addr);
 
