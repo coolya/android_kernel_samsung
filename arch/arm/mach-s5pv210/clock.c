@@ -852,7 +852,7 @@ static struct clksrc_clk clk_dout_audio_bus_clk_i2s = {
 	.clk		= {
 		.name		= "dout_audio_bus_clk_i2s",
 		.id		= -1,
-		.parent		= &clk_mout_audss,
+		.parent		= &clk_mout_audss.clk,
 		.enable		= s5pv210_clk_audss_ctrl,
 		.ctrlbit	= (1 << 5),
 	},
