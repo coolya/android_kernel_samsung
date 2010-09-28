@@ -429,6 +429,15 @@ config APANIC_PLABEL
 	 If your platform uses a different flash partition label for storing
  	 crashdumps, enter it here.
 
+config SAMSUNG_JACK
+	bool "3.5MM ear jack driver for Samsung devices"
+	depends on INPUT
+	default n
+	---help---
+	 This is 3.5MM ear jack driver for Samsung devices.
+
+	 If unsure, say N.
+
 source "drivers/misc/c2port/Kconfig"
 source "drivers/misc/eeprom/Kconfig"
 source "drivers/misc/cb710/Kconfig"
