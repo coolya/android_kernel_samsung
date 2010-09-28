@@ -203,28 +203,30 @@ static void herring_switch_init(void)
 				 S5PV210_UFCON_RXTRIG4)
 
 static struct s3c2410_uartcfg herring_uartcfgs[] __initdata = {
-	[0] = {
+	{
 		.hwport		= 0,
 		.flags		= 0,
 		.ucon		= S5PV210_UCON_DEFAULT,
 		.ulcon		= S5PV210_ULCON_DEFAULT,
 		.ufcon		= S5PV210_UFCON_DEFAULT,
 	},
-	[1] = {
+	{
 		.hwport		= 1,
 		.flags		= 0,
 		.ucon		= S5PV210_UCON_DEFAULT,
 		.ulcon		= S5PV210_ULCON_DEFAULT,
 		.ufcon		= S5PV210_UFCON_DEFAULT,
 	},
-	[2] = {
+#ifndef CONFIG_FIQ_DEBUGGER
+	{
 		.hwport		= 2,
 		.flags		= 0,
 		.ucon		= S5PV210_UCON_DEFAULT,
 		.ulcon		= S5PV210_ULCON_DEFAULT,
 		.ufcon		= S5PV210_UFCON_DEFAULT,
 	},
-	[3] = {
+#endif
+	{
 		.hwport		= 3,
 		.flags		= 0,
 		.ucon		= S5PV210_UCON_DEFAULT,
@@ -3454,6 +3456,9 @@ static void __init herring_pvr_init(void)
 }
 
 static struct platform_device *herring_devices[] __initdata = {
+#ifdef CONFIG_FIQ_DEBUGGER
+	&s5pv210_device_fiqdbg_uart2,
+#endif
 	&s5pc110_device_onenand,
 #ifdef CONFIG_RTC_DRV_S3C
 	&s5p_device_rtc,
