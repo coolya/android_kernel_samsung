@@ -23,6 +23,7 @@
 #include <linux/leds.h>
 
 #include <linux/mmc/host.h>
+#include <linux/mmc/card.h>
 
 #if defined(CONFIG_MMC_SDHCI_S3C) || defined(CONFIG_MMC_SDHCI_MODULE)
 #include <plat/regs-sdhci.h>
@@ -1731,41 +1732,45 @@ out:
 
 int sdhci_suspend_host(struct sdhci_host *host, pm_message_t state)
 {
-	int ret;
+	int ret = 0;
+	struct mmc_host *mmc = host->mmc;
 
 	sdhci_disable_card_detection(host);
 
-	ret = mmc_suspend_host(host->mmc);
-	if (ret)
-		return ret;
+	if (mmc->card && (mmc->card->type != MMC_TYPE_SDIO))
+		ret = mmc_suspend_host(host->mmc);
+
+	sdhci_mask_irqs(host, SDHCI_INT_ALL_MASK);
 
 	del_timer(&host->busy_check_timer);
 
-	free_irq(host->irq, host);
+	if (host->irq)
+		disable_irq(host->irq);
 
-	return 0;
+	return ret;
 }
 
 EXPORT_SYMBOL_GPL(sdhci_suspend_host);
 
 int sdhci_resume_host(struct sdhci_host *host)
 {
-	int ret;
+	int ret = 0;
+	struct mmc_host *mmc = host->mmc;
 
 	if (host->flags & (SDHCI_USE_SDMA | SDHCI_USE_ADMA)) {
 		if (host->ops->enable_dma)
 			host->ops->enable_dma(host);
 	}
 
-	ret = request_irq(host->irq, sdhci_irq, IRQF_SHARED,
-			  mmc_hostname(host->mmc), host);
-	if (ret)
-		return ret;
+	if (host->irq)
+		enable_irq(host->irq);
 
 	sdhci_init(host, (host->mmc->pm_flags & MMC_PM_KEEP_POWER));
 	mmiowb();
 
-	ret = mmc_resume_host(host->mmc);
+	if (mmc->card && (mmc->card->type != MMC_TYPE_SDIO))
+		ret = mmc_resume_host(host->mmc);
+
 	sdhci_enable_card_detection(host);
 
 	return ret;
