@@ -110,7 +110,6 @@ EXPORT_SYMBOL_GPL(soc_codec_dev_pcm_wm8994);
 struct snd_soc_codec_device soc_codec_dev_wm8994;
 EXPORT_SYMBOL_GPL(soc_codec_dev_wm8994);
 
-static struct wm8994_platform_data *pdata;
 
 static void wm8994_set_off(struct snd_soc_codec *codec);
 
@@ -130,7 +129,9 @@ select_route universal_wm8994_voicecall_paths[] = {
 };
 
 select_mic_route universal_wm8994_mic_paths[] = {
-	wm8994_record_main_mic, wm8994_record_headset_mic, wm8994_record_bluetooth,
+	wm8994_record_main_mic,
+	wm8994_record_headset_mic,
+	wm8994_record_bluetooth,
 };
 
 select_clock_control universal_clock_controls = wm8994_configure_clock;
@@ -1123,7 +1124,7 @@ static void wm8994_shutdown(struct snd_pcm_substream *substream,
 	if (wm8994->call_state == DISCONNECT) {
 		if (!wm8994->play_en_dis && !wm8994->rec_en_dis) {
 			DEBUG_LOG("Turn off Codec!!");
-			gpio_set_value(wm8994->pdata->micbias, 0);
+			wm8994->pdata->set_mic_bias(false);
 			wm8994->power_state = CODEC_OFF;
 			wm8994_write(codec, WM8994_SOFTWARE_RESET, 0x0000);
 		return;
@@ -1189,7 +1190,8 @@ struct snd_soc_dai wm8994_dai = {
  * initialise the WM8994 driver
  * register the mixer and dsp interfaces with the kernel
  */
-static int wm8994_init(struct wm8994_priv *wm8994_private)
+static int wm8994_init(struct wm8994_priv *wm8994_private,
+		       struct wm8994_platform_data *pdata)
 {
 	struct snd_soc_codec *codec = &wm8994_private->codec;
 	struct wm8994_priv *wm8994;
@@ -1230,6 +1232,7 @@ static int wm8994_init(struct wm8994_priv *wm8994_private)
 
 	if (IS_ERR(wm8994->codec_clk)) {
 		pr_err("failed to get MCLK clock from AP\n");
+		ret = PTR_ERR(wm8994->codec_clk);
 		goto card_err;
 	}
 
@@ -1279,7 +1282,8 @@ static int wm8994_i2c_probe(struct i2c_client *i2c,
 {
 	struct snd_soc_codec *codec;
 	struct wm8994_priv *wm8994_priv;
-	int ret;
+	int ret = -ENODEV;
+	struct wm8994_platform_data *pdata;
 
 	DEBUG_LOG("");
 
@@ -1294,8 +1298,15 @@ static int wm8994_i2c_probe(struct i2c_client *i2c,
 
 	pdata = i2c->dev.platform_data;
 
-	if (!pdata)
+	if (!pdata) {
 		dev_err(&i2c->dev, "failed to initialize WM8994\n");
+		goto err_bad_pdata;
+	}
+
+	if (!pdata->set_mic_bias) {
+		dev_err(&i2c->dev, "bad pdata WM8994\n");
+		goto err_bad_pdata;
+	}
 
 	/* CODEC LDO SETTING */
 	if (gpio_is_valid(pdata->ldo)) {
@@ -1327,16 +1338,6 @@ static int wm8994_i2c_probe(struct i2c_client *i2c,
 	s3c_gpio_slp_cfgpin(pdata->ear_sel, S3C_GPIO_SLP_PREV);
 	s3c_gpio_slp_setpull_updown(pdata->ear_sel, S3C_GPIO_PULL_NONE);
 
-	if (gpio_is_valid(pdata->micbias)) {
-		ret = gpio_request(pdata->micbias, "MICBIAS_EN");
-		if (ret) {
-			pr_err("Failed to request MICBIAS_EN!\n");
-			goto err_micbias;
-		}
-		gpio_direction_output(pdata->micbias, 0);
-	}
-	s3c_gpio_slp_cfgpin(pdata->micbias, S3C_GPIO_SLP_PREV);
-
 	wm8994_ldo_control(pdata, 1);
 
 	codec->hw_write = (hw_write_t) i2c_master_send;
@@ -1345,20 +1346,21 @@ static int wm8994_i2c_probe(struct i2c_client *i2c,
 	codec->dev = &i2c->dev;
 	control_data1 = i2c;
 
-	ret = wm8994_init(wm8994_priv);
-	if (ret < 0)
+	ret = wm8994_init(wm8994_priv, pdata);
+	if (ret) {
 		dev_err(&i2c->dev, "failed to initialize WM8994\n");
+		goto err_init;
+	}
 
 	return ret;
 
-err_ldo:
-	gpio_free(pdata->ldo);
-	return ret;
-err_micbias:
-	gpio_free(pdata->micbias);
-	return ret;
-err_earsel:
+err_init:
 	gpio_free(pdata->ear_sel);
+err_earsel:
+	gpio_free(pdata->ldo);
+err_ldo:
+err_bad_pdata:
+	kfree(wm8994_priv);
 	return ret;
 }
 
@@ -1366,11 +1368,9 @@ static int wm8994_i2c_remove(struct i2c_client *client)
 {
 	struct wm8994_priv *wm8994_priv = i2c_get_clientdata(client);
 
-	gpio_free(pdata->ldo);
-	gpio_free(pdata->micbias);
-	gpio_free(pdata->ear_sel);
+	gpio_free(wm8994_priv->pdata->ldo);
+	gpio_free(wm8994_priv->pdata->ear_sel);
 
-	kfree(pdata);
 	kfree(wm8994_priv);
 	return 0;
 }

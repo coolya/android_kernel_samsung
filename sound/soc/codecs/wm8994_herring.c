@@ -481,9 +481,9 @@ void audio_ctrl_mic_bias_gpio(struct wm8994_platform_data *pdata, int enable)
 		pr_err("failed to turn off micbias pin\n");
 	else {
 		if (enable)
-			gpio_set_value(pdata->micbias, 1);
+			pdata->set_mic_bias(true);
 		else
-			gpio_set_value(pdata->micbias, 0);
+			pdata->set_mic_bias(false);
 	}
 }
 
@@ -2121,7 +2121,7 @@ int wm8994_set_codec_gain(struct snd_soc_codec *codec, u16 mode, u16 device)
 	int gain_set_bits = COMMON_SET_BIT;
 	u16 val;
 	struct gain_info_t *default_gain_table_p = NULL;
-	int table_num;
+	int table_num = 0;
 
 	if (mode == PLAYBACK_MODE) {
 		default_gain_table_p = playback_gain_table;
