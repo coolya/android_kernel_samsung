@@ -82,6 +82,7 @@
 #include <linux/input/k3g.h>
 #include <../../../drivers/video/samsung/s3cfb.h>
 #include <linux/max17040_battery.h>
+#include <linux/sec_jack.h>
 
 struct class *sec_class;
 EXPORT_SYMBOL(sec_class);
@@ -1134,10 +1135,43 @@ static struct s3c_adc_mach_info s3c_adc_platform __initdata = {
  * Guide for Camera Configuration for Aries
 */
 
+
+/* in revisions before 1.0, there is a common mic bias gpio */
+
+static DEFINE_MUTEX(mic_bias_mutex);
+static bool wm8994_mic_bias;
+static bool jack_mic_bias;
+static void set_shared_mic_bias(void)
+{
+	gpio_set_value(GPIO_MICBIAS_EN, wm8994_mic_bias || jack_mic_bias);
+}
+
+static void wm8994_set_mic_bias(bool on)
+{
+	if (system_rev <= 0x0a) {
+		mutex_lock(&mic_bias_mutex);
+		wm8994_mic_bias = on;
+		set_shared_mic_bias();
+		mutex_unlock(&mic_bias_mutex);
+	} else
+		gpio_set_value(GPIO_MICBIAS_EN, on);
+}
+
+static void sec_jack_set_micbias_state(bool on)
+{
+	if (system_rev <= 0x0a) {
+		mutex_lock(&mic_bias_mutex);
+		jack_mic_bias = on;
+		set_shared_mic_bias();
+		mutex_unlock(&mic_bias_mutex);
+	} else
+		gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
+}
+
 static struct wm8994_platform_data wm8994_pdata = {
 	.ldo = GPIO_CODEC_LDO_EN,
 	.ear_sel = GPIO_EAR_SEL,
-	.micbias = GPIO_MICBIAS_EN,
+	.set_mic_bias = wm8994_set_mic_bias,
 };
 
 /* External camera module setting */
@@ -1663,6 +1697,83 @@ static struct platform_device sec_device_btsleep = {
 	.id	= -1,
 };
 
+static struct sec_jack_zone sec_jack_zones[] = {
+	{
+		/* adc == 0, 3 pole */
+		.adc_high = 0,
+		.delay_ms = 0,
+		.check_count = 0,
+		.jack_type = SEC_HEADSET_3POLE,
+	},
+	{
+		/* 0 < adc <= 600, unstable zone, default to 3pole if it stays
+		 * in this range for a 200ms (20ms delays, 10 samples)
+		 */
+		.adc_high = 600,
+		.delay_ms = 20,
+		.check_count = 10,
+		.jack_type = SEC_HEADSET_3POLE,
+	},
+	{
+		/* 600 < adc <= 2000, unstable zone, default to 3pole if it
+		 * stays in this range for a second (10ms delays, 100 samples)
+		 */
+		.adc_high = 2000,
+		.delay_ms = 10,
+		.check_count = 100,
+		.jack_type = SEC_HEADSET_3POLE,
+	},
+	{
+		/* 2000 < adc <= 3700, 4 pole zone */
+		.adc_high = 3700,
+		.delay_ms = 0,
+		.check_count = 0,
+		.jack_type = SEC_HEADSET_4POLE,
+	},
+	{
+		/* adc > 3700, unstable zone, default to 3pole if it stays
+		 * in this range for a second (10ms delays, 100 samples)
+		 */
+		.adc_high = 0x7fffffff,
+		.delay_ms = 10,
+		.check_count = 100,
+		.jack_type = SEC_HEADSET_3POLE,
+	},
+};
+
+static int sec_jack_get_det_jack_state(void)
+{
+	/* active low */
+	return !gpio_get_value(GPIO_DET_35);
+}
+static int sec_jack_get_send_key_state(void)
+{
+	/* active low */
+	return !gpio_get_value(GPIO_EAR_SEND_END);
+}
+static int sec_jack_get_adc_value(void)
+{
+	return s3c_adc_get_adc_data(3);
+}
+
+struct sec_jack_platform_data sec_jack_pdata = {
+	.get_det_jack_state = sec_jack_get_det_jack_state,
+	.get_send_key_state = sec_jack_get_send_key_state,
+	.set_micbias_state = sec_jack_set_micbias_state,
+	.get_adc_value = sec_jack_get_adc_value,
+	.zones = sec_jack_zones,
+	.num_zones = ARRAY_SIZE(sec_jack_zones),
+	.det_int = IRQ_EINT6,
+	.send_int = IRQ_EINT(30),
+};
+
+static struct platform_device sec_device_jack = {
+	.name			= "sec_jack",
+	.id			= -1,
+	.dev.platform_data	= &sec_jack_pdata,
+};
+
+
 #define S3C_GPIO_SETPIN_ZERO         0
 #define S3C_GPIO_SETPIN_ONE          1
 #define S3C_GPIO_SETPIN_NONE	     2
@@ -2164,9 +2275,9 @@ static struct gpio_init_data herring_init_gpios[] = {
 		.val	= S3C_GPIO_SETPIN_ZERO,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
-	}, {
+	}, { /* GPIO_DET_35 - 3.5" ear jack */
 		.num	= S5PV210_GPH0(6),
-		.cfg	= S3C_GPIO_INPUT,
+		.cfg	= S3C_GPIO_SFN(GPIO_DET_35_AF),
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
@@ -2314,9 +2425,9 @@ static struct gpio_init_data herring_init_gpios[] = {
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_DOWN,
 		.drv	= S3C_GPIO_DRVSTR_1X,
-	}, {
+	}, { /* GPIO_EAR_SEND_END */
 		.num	= S5PV210_GPH3(6),
-		.cfg	= S3C_GPIO_INPUT,
+		.cfg	= S3C_GPIO_SFN(GPIO_EAR_SEND_END_AF),
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
@@ -2528,10 +2639,10 @@ static struct gpio_init_data herring_init_gpios[] = {
 		.val	= S3C_GPIO_SETPIN_ZERO,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
-	}, {
+	}, { /* GPIO_EAR_ADC_SEL */
 		.num	= S5PV210_GPJ3(3),
 		.cfg	= S3C_GPIO_OUTPUT,
-		.val	= S3C_GPIO_SETPIN_ZERO,
+		.val	= S3C_GPIO_SETPIN_ONE,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
@@ -3311,6 +3422,7 @@ static struct platform_device *herring_devices[] __initdata = {
 #ifdef CONFIG_FB_S3C_TL2796
 	&s3c_device_spi_gpio,
 #endif
+	&sec_device_jack,
 
 	&s3c_device_i2c0,
 #if defined(CONFIG_S3C_DEV_I2C1)
@@ -3523,6 +3635,7 @@ static void __init sound_init(void)
 	reg |= 0x1;
 	__raw_writel(reg, S5P_CLK_OUT);
 
+	gpio_request(GPIO_MICBIAS_EN, "micbias_enable");
 }
 static void __init herring_machine_init(void)
 {
@@ -3562,6 +3675,12 @@ static void __init herring_machine_init(void)
 		s3c_gpio_cfgpin(tint, S3C_GPIO_INPUT);
 		s3c_gpio_setpull(tint, S3C_GPIO_PULL_UP);
 	}
+
+	/* headset/earjack detection */
+	if (system_rev >= 0x0a)
+		gpio_request(GPIO_EAR_MICBIAS_EN, "ear_micbias_enable");
+	gpio_request(GPIO_DET_35, "ear_jack_detect");
+	gpio_request(GPIO_EAR_SEND_END, "ear_jack_button");
 
 	/* i2c */
 	s3c_i2c0_set_platdata(NULL);
