@@ -1146,18 +1146,20 @@ static DEVICE_ATTR(clock_source, S_IRUGO, s3c24xx_serial_show_clksrc, NULL);
 
 /* Device driver serial port probe */
 
-static int probe_index;
-
 int s3c24xx_serial_probe(struct platform_device *dev,
 			 struct s3c24xx_uart_info *info)
 {
 	struct s3c24xx_uart_port *ourport;
 	int ret;
 
-	dbg("s3c24xx_serial_probe(%p, %p) %d\n", dev, info, probe_index);
+	dbg("s3c24xx_serial_probe(%p, %p) %d\n", dev, info, dev->id);
 
-	ourport = &s3c24xx_serial_ports[probe_index];
-	probe_index++;
+	if (dev->id >= ARRAY_SIZE(s3c24xx_serial_ports)) {
+		dev_err(&dev->dev, "unsupported device id %d\n", dev->id);
+		return -ENODEV;
+	}
+
+	ourport = &s3c24xx_serial_ports[dev->id];
 
 	dbg("%s: initialising port %p...\n", __func__, ourport);
 
