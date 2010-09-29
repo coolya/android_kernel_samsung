@@ -263,7 +263,7 @@ static int sdhci_s3c_get_cd(struct sdhci_host *host)
 	return detect;
 }
 
-static int sdhci_s3c_adjust_cfg(struct sdhci_host *host, int rw)
+static void sdhci_s3c_adjust_cfg(struct sdhci_host *host, int rw)
 {
 	struct sdhci_s3c *ourhost = to_s3c(host);
 	struct s3c_sdhci_platdata *pdata = ourhost->pdata;
@@ -297,10 +297,11 @@ EXPORT_SYMBOL_GPL(sdhci_s3c_force_presence_change);
 irqreturn_t sdhci_irq_cd(int irq, void *dev_id)
 {
 	struct sdhci_s3c* sc = dev_id;
+	uint detect;
 
 	printk(KERN_DEBUG "sdhci: card interrupt.\n");
 
-	uint detect = sc->pdata->detect_ext_cd();
+	detect = sc->pdata->detect_ext_cd();
 
 	if (detect) {
 		printk(KERN_DEBUG "sdhci: card inserted.\n");
