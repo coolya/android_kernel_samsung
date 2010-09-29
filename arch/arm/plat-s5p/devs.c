@@ -42,9 +42,11 @@
 
 /* Android Gadget */
 #include <linux/usb/android_composite.h>
-#define S3C_VENDOR_ID		0x18d1
-#define S3C_PRODUCT_ID		0x0001
-#define S3C_ADB_PRODUCT_ID	0x0005
+#define S3C_VENDOR_ID			0x18d1
+#define S3C_UMS_PRODUCT_ID		0x4E21
+#define S3C_UMS_ADB_PRODUCT_ID		0x4E22
+#define S3C_RNDIS_PRODUCT_ID		0x4E23
+#define S3C_RNDIS_ADB_PRODUCT_ID	0x4E24
 #define MAX_USB_SERIAL_NUM	17
 
 static char *usb_functions_ums[] = {
@@ -65,29 +67,21 @@ static char *usb_functions_ums_adb[] = {
 };
 
 static char *usb_functions_all[] = {
-#ifdef CONFIG_USB_ANDROID_RNDIS
 	"rndis",
-#endif
-#ifdef CONFIG_USB_ANDROID_MASS_STORAGE
 	"usb_mass_storage",
-#endif
 	"adb",
-#ifdef CONFIG_USB_ANDROID_ACM
-	"acm",
-#endif
 };
 static struct android_usb_product usb_products[] = {
 	{
-		.product_id	= S3C_PRODUCT_ID,
+		.product_id	= S3C_UMS_PRODUCT_ID,
 		.num_functions	= ARRAY_SIZE(usb_functions_ums),
 		.functions	= usb_functions_ums,
 	},
 	{
-		.product_id	= S3C_ADB_PRODUCT_ID,
+		.product_id	= S3C_UMS_ADB_PRODUCT_ID,
 		.num_functions	= ARRAY_SIZE(usb_functions_ums_adb),
 		.functions	= usb_functions_ums_adb,
 	},
-	/*
 	{
 		.product_id	= S3C_RNDIS_PRODUCT_ID,
 		.num_functions	= ARRAY_SIZE(usb_functions_rndis),
@@ -98,7 +92,6 @@ static struct android_usb_product usb_products[] = {
 		.num_functions	= ARRAY_SIZE(usb_functions_rndis_adb),
 		.functions	= usb_functions_rndis_adb,
 	},
-	*/
 };
 
 static char device_serial[MAX_USB_SERIAL_NUM] = "0123456789ABCDEF";
@@ -107,7 +100,7 @@ static char device_serial[MAX_USB_SERIAL_NUM] = "0123456789ABCDEF";
 /* Information should be changed as real product for commercial release */
 static struct android_usb_platform_data android_usb_pdata = {
 	.vendor_id		= S3C_VENDOR_ID,
-	.product_id		= S3C_PRODUCT_ID,
+	.product_id		= S3C_UMS_PRODUCT_ID,
 	.manufacturer_name	= "Samsung",
 	.product_name		= "Samsung S5PC110",
 	.serial_number		= device_serial,
@@ -117,10 +110,37 @@ static struct android_usb_platform_data android_usb_pdata = {
 	.functions		= usb_functions_all,
 };
 
+static struct usb_ether_platform_data rndis_pdata = {
+	/* ethaddr is filled by board_serialno_setup */
+	.vendorID	= 0x18d1,
+	.vendorDescr	= "Samsung",
+};
+
+struct platform_device s3c_device_rndis = {
+	.name	= "rndis",
+	.id	= -1,
+	.dev	= {
+		.platform_data = &rndis_pdata,
+	},
+};
+
 void __init s3c_usb_set_serial(void)
 {
+	int i;
+	char *src;
+
 	sprintf(device_serial, "%08X%08X", system_serial_high,
 			system_serial_low);
+
+	/* create a fake MAC address from our serial number.
+	 * first byte is 0x02 to signify locally administered.
+	 */
+	src = device_serial;
+	rndis_pdata.ethaddr[0] = 0x02;
+	for (i = 0; *src; i++) {
+		/* XOR the USB serial across the remaining bytes */
+		rndis_pdata.ethaddr[i % (ETH_ALEN - 1) + 1] ^= *src++;
+	}
 }
 
 struct platform_device s3c_device_android_usb = {
