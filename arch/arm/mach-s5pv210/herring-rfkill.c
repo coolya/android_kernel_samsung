@@ -96,6 +96,12 @@ static int bluetooth_set_power(void *data, enum rfkill_user_states state)
 		pr_debug("[BT] GPIO_BT_nRST = %d\n",
 				gpio_get_value(GPIO_BT_nRST));
 
+		/*
+		 * 50msec, delay after bt rst
+		 * (bcm4329 powerup sequence)
+		 */
+		msleep(50);
+
 		break;
 
 	case RFKILL_USER_STATE_SOFT_BLOCKED:
