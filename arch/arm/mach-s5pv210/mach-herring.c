@@ -3261,6 +3261,20 @@ static struct platform_device sec_device_wifi = {
 	},
 };
 
+static struct platform_device herring_pvr_device = {
+	.name	= "pvrsrvkm",
+	.id	= -1,
+};
+static struct platform_device herring_lcd_device = {
+	.name	= "s3c_lcd",
+	.id	= -1,
+};
+static void __init herring_pvr_init(void)
+{
+	platform_device_register(&herring_pvr_device);
+	platform_device_register(&herring_lcd_device);
+}
+
 static struct platform_device *herring_devices[] __initdata = {
 	&s5pc110_device_onenand,
 #ifdef CONFIG_RTC_DRV_S3C
@@ -3646,6 +3660,8 @@ static void __init herring_machine_init(void)
 	gps_gpio_init();
 
 	herring_init_wifi_mem();
+
+	herring_pvr_init();
 }
 
 #ifdef CONFIG_USB_SUPPORT
