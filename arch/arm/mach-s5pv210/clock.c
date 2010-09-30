@@ -432,12 +432,6 @@ static struct clk init_clocks_disable[] = {
 		.enable		= s5pv210_clk_ip3_ctrl,
 		.ctrlbit	= (1<<16),
 	}, {
-		.name		= "watchdog",
-		.id		= -1,
-		.parent		= &clk_pclk_psys.clk,
-		.enable		= s5pv210_clk_ip3_ctrl,
-		.ctrlbit	= (1<<22),
-	}, {
 		.name		= "rtc",
 		.id		= -1,
 		.parent		= &clk_pclk_psys.clk,
@@ -593,6 +587,12 @@ static struct clk_ops s5pc11x_clkout_ops = {
 
 static struct clk init_clocks[] = {
 	{
+		.name		= "watchdog",
+		.id		= -1,
+		.parent		= &clk_pclk_psys.clk,
+		.enable		= s5pv210_clk_ip3_ctrl,
+		.ctrlbit	= (1<<22),
+	}, {
 		.name		= "hclk_imem",
 		.id		= -1,
 		.parent		= &clk_hclk_msys.clk,
