@@ -109,16 +109,14 @@ enum fimc_input {
 enum fimc_overlay_mode {
 	/* Overlay mode isn't fixed. */
 	FIMC_OVLY_NOT_FIXED		= 0x0,
-	/* Non-destructive Overlay with FIFO */
-	FIMC_OVLY_FIFO			= 0x1,
 	/* Non-destructive Overlay with DMA */
-	FIMC_OVLY_DMA_AUTO		= 0x2,
+	FIMC_OVLY_DMA_AUTO		= 0x1,
 	/* Non-destructive Overlay with DMA */
-	FIMC_OVLY_DMA_MANUAL		= 0x3,
+	FIMC_OVLY_DMA_MANUAL		= 0x2,
 	/* Destructive Overlay with DMA single destination buffer */
-	FIMC_OVLY_NONE_SINGLE_BUF	= 0x4,
+	FIMC_OVLY_NONE_SINGLE_BUF	= 0x3,
 	/* Destructive Overlay with DMA multiple dstination buffer */
-	FIMC_OVLY_NONE_MULTI_BUF	= 0x5,
+	FIMC_OVLY_NONE_MULTI_BUF	= 0x4,
 };
 
 enum fimc_autoload {
@@ -340,10 +338,6 @@ struct fimc_fbinfo {
 	int				lcd_hres;
 	int				lcd_vres;
 	u32				is_enable;
-	/* lcd fifo control */
-
-	int (*open_fifo)(int id, int ch, int (*do_priv)(void *), void *param);
-	int (*close_fifo)(int id, int (*do_priv)(void *), void *param);
 };
 
 struct fimc_limit {
@@ -478,12 +472,6 @@ extern const struct v4l2_ioctl_ops fimc_v4l2_ops;
 extern struct fimc_limit fimc40_limits[FIMC_DEVICES];
 extern struct fimc_limit fimc43_limits[FIMC_DEVICES];
 extern struct fimc_limit fimc50_limits[FIMC_DEVICES];
-
-/* FIMD */
-extern int s3cfb_direct_ioctl(int id, unsigned int cmd, unsigned long arg);
-extern int s3cfb_open_fifo(int id, int ch,
-					int (*do_priv)(void *), void *param);
-extern int s3cfb_close_fifo(int id, int (*do_priv)(void *), void *param);
 
 /* general */
 extern void s3c_csis_start(int lanes, int settle, int align,
@@ -699,9 +687,6 @@ extern int fimc_hwset_shadow_disable(struct fimc_control *ctrl);
 extern void fimc_save_regs(struct fimc_control *ctrl);
 extern void fimc_load_regs(struct fimc_control *ctrl);
 extern void fimc_dump_regs(struct fimc_control *ctrl);
-
-/* IPC related file */
-extern void ipc_start(void);
 
 /*
  * D R I V E R  H E L P E R S

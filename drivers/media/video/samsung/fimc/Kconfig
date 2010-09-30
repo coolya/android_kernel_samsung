@@ -1,7 +1,6 @@
 config VIDEO_FIMC
 	bool "Samsung Camera Interface (FIMC) driver"
 	depends on VIDEO_SAMSUNG && ARCH_S5PV210
-	select VIDEO_IPC if ARCH_S5PV210
 	default n
 	help
 	  This is a video4linux driver for Samsung FIMC device.
@@ -22,9 +21,6 @@ config VIDEO_FIMC_RANGE_WIDE
 	---help---
 	  RGB <-> YUV Color Conversion Wide Range Equation
 endchoice	
-
-config VIDEO_IPC
-	bool
 
 config VIDEO_FIMC_DEBUG
 	bool "FIMC driver debug messages"

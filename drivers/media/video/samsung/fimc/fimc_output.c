@@ -25,7 +25,6 @@
 #include <linux/clk.h>
 
 #include "fimc.h"
-#include "fimc-ipc.h"
 
 static __u32 fimc_get_pixel_format_type(__u32 pixelformat)
 {
@@ -85,35 +84,6 @@ static int fimc_outdev_stop_camif(void *param)
 	return 0;
 }
 
-static int fimc_outdev_stop_fifo(struct fimc_control *ctrl,
-				 struct fimc_ctx *ctx)
-{
-	struct s3c_platform_fimc *pdata = to_fimc_plat(ctrl->dev);
-	int ret = -1;
-
-	fimc_dbg("%s: called\n", __func__);
-
-	if (pdata->hw_ver == 0x40) {		/* to support C100 */
-		ret = ctrl->fb.close_fifo(ctrl->id, fimc_outdev_stop_camif,
-				(void *)ctrl);
-		if (ret < 0)
-			fimc_err("FIMD FIFO close fail\n");
-	} else if ((pdata->hw_ver == 0x43) || (pdata->hw_ver == 0x50)) {
-		ret = ctrl->fb.close_fifo(ctrl->id, NULL, NULL);
-		if (ret < 0)
-			fimc_err("FIMD FIFO close fail\n");
-		fimc_hw_wait_winoff(ctrl);
-		fimc_outdev_stop_camif(ctrl);
-		fimc_hw_wait_stop_input_dma(ctrl);
-#if defined(CONFIG_VIDEO_IPC)
-		if (ctx->pix.field == V4L2_FIELD_INTERLACED_TB)
-			ipc_stop();
-#endif
-	}
-
-	return 0;
-}
-
 int fimc_outdev_stop_streaming(struct fimc_control *ctrl, struct fimc_ctx *ctx)
 {
 	int ret = 0;
@@ -121,10 +91,6 @@ int fimc_outdev_stop_streaming(struct fimc_control *ctrl, struct fimc_ctx *ctx)
 	fimc_dbg("%s: called\n", __func__);
 
 	switch (ctx->overlay.mode) {
-	case FIMC_OVLY_FIFO:
-		ctx->status = FIMC_READY_OFF;
-		fimc_outdev_stop_fifo(ctrl, ctx);
-		break;
 	case FIMC_OVLY_DMA_AUTO:		/* fall through */
 	case FIMC_OVLY_DMA_MANUAL:
 		if (ctx->status == FIMC_STREAMON_IDLE)
@@ -397,7 +363,6 @@ int fimc_outdev_check_param(struct fimc_control *ctrl,
 	dst.height = ctx->win.w.height;
 
 	switch (ctx->overlay.mode) {
-	case FIMC_OVLY_FIFO:		/* fall through */
 	case FIMC_OVLY_DMA_AUTO:	/* fall through */
 	case FIMC_OVLY_DMA_MANUAL:
 		if (rot & FIMC_ROT) {
@@ -441,7 +406,6 @@ int fimc_outdev_check_param(struct fimc_control *ctrl,
 	/* check other open instance */
 	for (i = 0; i < FIMC_MAX_CTXS; i++) {
 		switch (ctrl->out->ctx[i].overlay.mode) {
-		case FIMC_OVLY_FIFO:		/* fall through */
 		case FIMC_OVLY_DMA_AUTO:	/* fall through */
 		case FIMC_OVLY_DMA_MANUAL:
 			exclusive++;
@@ -494,7 +458,6 @@ static void fimc_outdev_set_format(struct fimc_control *ctrl,
 	fimc_outdev_set_src_format(ctrl, ctx->pix.pixelformat, ctx->pix.field);
 
 	switch (ctx->overlay.mode) {
-	case FIMC_OVLY_FIFO:		/* fall through */
 	case FIMC_OVLY_DMA_AUTO:	/* fall through */
 	case FIMC_OVLY_DMA_MANUAL:	/* Non-destructive overlay mode */
 		if (ctx->pix.field == V4L2_FIELD_NONE) {
@@ -529,13 +492,8 @@ static void fimc_outdev_set_path(struct fimc_control *ctrl,
 	/* source path */
 	fimc_hwset_input_source(ctrl, FIMC_SRC_MSDMA);
 
-	if (ctx->overlay.mode == FIMC_OVLY_FIFO) {
-		fimc_hwset_enable_lcdfifo(ctrl);
-		fimc_hwset_enable_autoload(ctrl);
-	} else {
-		fimc_hwset_disable_lcdfifo(ctrl);
-		fimc_hwset_disable_autoload(ctrl);
-	}
+	fimc_hwset_disable_lcdfifo(ctrl);
+	fimc_hwset_disable_autoload(ctrl);
 }
 
 static void fimc_outdev_set_rot(struct fimc_control *ctrl,
@@ -544,15 +502,9 @@ static void fimc_outdev_set_rot(struct fimc_control *ctrl,
 	u32 rot = ctx->rotate;
 	u32 flip = ctx->flip;
 
-	if (ctx->overlay.mode == FIMC_OVLY_FIFO) {
-		fimc_hwset_input_rot(ctrl, rot, flip);
-		fimc_hwset_input_flip(ctrl, rot, flip);
-		fimc_hwset_output_rot_flip(ctrl, 0, 0);
-	} else {
-		fimc_hwset_input_rot(ctrl, 0, 0);
-		fimc_hwset_input_flip(ctrl, 0, 0);
-		fimc_hwset_output_rot_flip(ctrl, rot, flip);
-	}
+	fimc_hwset_input_rot(ctrl, 0, 0);
+	fimc_hwset_input_flip(ctrl, 0, 0);
+	fimc_hwset_output_rot_flip(ctrl, rot, flip);
 }
 
 static void fimc_outdev_set_src_dma_offset(struct fimc_control *ctrl,
@@ -577,57 +529,21 @@ static int fimc4x_outdev_check_src_size(struct fimc_control *ctrl,
 					struct v4l2_rect *real,
 					struct v4l2_rect *org)
 {
-	u32 rot = ctx->rotate;
-
-	if ((ctx->overlay.mode == FIMC_OVLY_FIFO) &&
-	    ((rot == 90) || (rot == 270))) {
-		/* Input Rotator */
-		if (real->height % 16) {
-			fimc_err("SRC Real_H: multiple of 16 !\n");
-			return -EINVAL;
-		}
-
-		if (ctx->sc.pre_hratio) {
-			if (real->height % (ctx->sc.pre_hratio * 4)) {
-				fimc_err("SRC Real_H: multiple of "
-						"4*pre_hratio\n");
-				return -EINVAL;
-			}
-		}
-
-		if (ctx->sc.pre_vratio) {
-			if (real->width % ctx->sc.pre_vratio) {
-				fimc_err("SRC Real_W: multiple of "
-						"pre_vratio\n");
-				return -EINVAL;
-			}
-		}
-
-		if (real->height < 16) {
-			fimc_err("SRC Real_H: Min 16\n");
-			return -EINVAL;
-		}
-		if (real->width < 8) {
-			fimc_err("SRC Real_W: Min 8\n");
-			return -EINVAL;
-		}
-	} else {
 		/* No Input Rotator */
-		if (real->height < 8) {
-			fimc_err("SRC Real_H: Min 8\n");
-			return -EINVAL;
-		}
+	if (real->height < 8) {
+		fimc_err("SRC Real_H: Min 8\n");
+		return -EINVAL;
+	}
 
-		if (real->width < 16) {
-			fimc_err("SRC Real_W: Min 16\n");
-			return -EINVAL;
-		}
+	if (real->width < 16) {
+		fimc_err("SRC Real_W: Min 16\n");
+		return -EINVAL;
+	}
 
-		if (real->width > ctrl->limit->real_w_no_rot) {
-			fimc_err("SRC REAL_W: Real_W <= %d\n",
-					ctrl->limit->real_w_no_rot);
-			return -EINVAL;
-		}
+	if (real->width > ctrl->limit->real_w_no_rot) {
+		fimc_err("SRC REAL_W: Real_W <= %d\n",
+				ctrl->limit->real_w_no_rot);
+		return -EINVAL;
 	}
 
 	if (org->height < real->height) {
@@ -677,46 +593,23 @@ static int fimc50_outdev_check_src_size(struct fimc_control *ctrl,
 					struct v4l2_rect *real,
 					struct v4l2_rect *org)
 {
-	u32 rot = ctx->rotate;
 	u32 pixelformat = ctx->pix.pixelformat;
 
-	if ((ctx->overlay.mode == FIMC_OVLY_FIFO) &&
-	    ((rot == 90) || (rot == 270))) {
-		/* Input Rotator */
-		switch (pixelformat) {
-		case V4L2_PIX_FMT_YUV422P:	/* fall through */
-		case V4L2_PIX_FMT_YVU420:
-			if (real->height % 2) {
-				fimc_err("SRC Real_H: multiple of 2\n");
-				return -EINVAL;
-			}
-		}
+	/* No Input Rotator */
+	if (real->height < 8) {
+		fimc_err("SRC Real_H: Min 8\n");
+		return -EINVAL;
+	}
 
-		if (real->height < 16) {
-			fimc_err("SRC Real_H: Min 16\n");
-			return -EINVAL;
-		}
-		if (real->width < 8) {
-			fimc_err("SRC Real_W: Min 8\n");
-			return -EINVAL;
-		}
-	} else {
-		/* No Input Rotator */
-		if (real->height < 8) {
-			fimc_err("SRC Real_H: Min 8\n");
-			return -EINVAL;
-		}
+	if (real->width < 16) {
+		fimc_err("SRC Real_W: Min 16\n");
+		return -EINVAL;
+	}
 
-		if (real->width < 16) {
-			fimc_err("SRC Real_W: Min 16\n");
-			return -EINVAL;
-		}
-
-		if (real->width > ctrl->limit->real_w_no_rot) {
-			fimc_err("SRC REAL_W: Real_W <= %d\n",
-					ctrl->limit->real_w_no_rot);
-			return -EINVAL;
-		}
+	if (real->width > ctrl->limit->real_w_no_rot) {
+		fimc_err("SRC REAL_W: Real_W <= %d\n",
+				ctrl->limit->real_w_no_rot);
+		return -EINVAL;
 	}
 
 	if (org->height < real->height) {
@@ -852,7 +745,6 @@ static void fimc_outdev_set_dst_dma_offset(struct fimc_control *ctrl,
 	}
 
 	switch (ctx->overlay.mode) {
-	case FIMC_OVLY_FIFO:		/* fall through */
 	case FIMC_OVLY_DMA_AUTO:	/* fall through */
 	case FIMC_OVLY_DMA_MANUAL:
 		memset(&bound, 0, sizeof(bound));
@@ -884,8 +776,7 @@ static int fimc_outdev_check_dst_size(struct fimc_control *ctrl,
 		return -EINVAL;
 	}
 
-	if ((ctx->overlay.mode != FIMC_OVLY_FIFO) &&
-	    ((rot == 90) || (rot == 270))) {
+	if ((rot == 90) || (rot == 270)) {
 		/* Use Output Rotator */
 		if (org->height < real->width) {
 			fimc_err("DST Org_H: Org_H(%d) >= Real_W(%d)\n",
@@ -904,7 +795,7 @@ static int fimc_outdev_check_dst_size(struct fimc_control *ctrl,
 					ctrl->limit->trg_h_rot);
 			return -EINVAL;
 		}
-	} else if (ctx->overlay.mode != FIMC_OVLY_FIFO) {
+	} else {
 		/* No Output Rotator */
 		if (org->height < 8) {
 			fimc_err("DST Org_H: Min 8\n");
@@ -991,29 +882,6 @@ static int fimc_outdev_set_dst_dma_size(struct fimc_control *ctrl,
 		}
 
 		break;
-	case FIMC_OVLY_FIFO:
-		switch (ctx->rotate) {
-		case 0:		/* fall through */
-		case 180:
-			real.width = ctx->win.w.width;
-			real.height = ctx->win.w.height;
-			org.width = ctrl->fb.lcd_hres;
-			org.height = ctrl->fb.lcd_vres;
-			break;
-		case 90:	/* fall through */
-		case 270:
-			real.width = ctx->win.w.height;
-			real.height = ctx->win.w.width;
-			org.width = ctrl->fb.lcd_vres;
-			org.height = ctrl->fb.lcd_hres;
-			break;
-
-		default:
-			fimc_err("Rotation degree is invalid\n");
-			break;
-		}
-
-		break;
 	default:
 		break;
 	}
@@ -1038,34 +906,11 @@ static void fimc_outdev_calibrate_scale_info(struct fimc_control *ctrl,
 					     struct v4l2_rect *src,
 					     struct v4l2_rect *dst)
 {
-	if (ctx->overlay.mode != FIMC_OVLY_FIFO) {
 		/* OUTPUT ROTATOR */
-		src->width = ctx->crop.width;
-		src->height = ctx->crop.height;
-		dst->width = ctx->win.w.width;
-		dst->height = ctx->win.w.height;
-	} else {
-		/* INPUT ROTATOR */
-		switch (ctx->rotate) {
-		case 0:		/* fall through */
-		case 180:
-			src->width = ctx->crop.width;
-			src->height = ctx->crop.height;
-			dst->width = ctx->win.w.width;
-			dst->height = ctx->win.w.height;
-			break;
-		case 90:	/* fall through */
-		case 270:
-			src->width = ctx->crop.height;
-			src->height = ctx->crop.width;
-			dst->width = ctx->win.w.height;
-			dst->height = ctx->win.w.width;
-			break;
-		default:
-			fimc_err("Rotation degree is invalid\n");
-			break;
-		}
-	}
+	src->width = ctx->crop.width;
+	src->height = ctx->crop.height;
+	dst->width = ctx->win.w.width;
+	dst->height = ctx->win.w.height;
 
 	fimc_dbg("src->width(%d), src->height(%d)\n", src->width, src->height);
 	fimc_dbg("dst->width(%d), dst->height(%d)\n", dst->width, dst->height);
@@ -1117,7 +962,6 @@ static int fimc_outdev_check_scaler(struct fimc_control *ctrl,
 
 	/* DST width double boundary check */
 	switch (ctx->overlay.mode) {
-	case FIMC_OVLY_FIFO:			/* fall through */
 	case FIMC_OVLY_DMA_AUTO:		/* fall through */
 	case FIMC_OVLY_DMA_MANUAL:
 		dstfmt = V4L2_PIX_FMT_RGB32;
@@ -1233,12 +1077,6 @@ static int fimc_outdev_set_scaler(struct fimc_control *ctrl,
 int fimc_outdev_set_ctx_param(struct fimc_control *ctrl, struct fimc_ctx *ctx)
 {
 	int ret;
-#if defined(CONFIG_VIDEO_IPC)
-	u32 use_ipc = 0;
-	struct v4l2_rect src, dst;
-	memset(&src, 0, sizeof(src));
-	memset(&dst, 0, sizeof(dst));
-#endif
 
 	if (ctrl->status == FIMC_READY_ON || ctrl->status == FIMC_STREAMON_IDLE)
 		fimc_hwset_enable_irq(ctrl, 0, 1);
@@ -1261,19 +1099,6 @@ int fimc_outdev_set_ctx_param(struct fimc_control *ctrl, struct fimc_ctx *ctx)
 	ret = fimc_outdev_set_scaler(ctrl, ctx);
 	if (ret < 0)
 		return ret;
-
-#if defined(CONFIG_VIDEO_IPC)
-	if (ctx->overlay.mode == FIMC_OVLY_FIFO)
-		if (ctx->pix.field == V4L2_FIELD_INTERLACED_TB)
-			use_ipc = 1;
-
-	if (use_ipc) {
-		fimc_outdev_calibrate_scale_info(ctrl, ctx, &src, &dst);
-		ret = ipc_init(dst.width, dst.height/2, IPC_2D);
-		if (ret < 0)
-			return ret;
-	}
-#endif
 
 	return 0;
 }
@@ -1324,63 +1149,6 @@ int fimc_fimd_rect(const struct fimc_control *ctrl,
 		return -EINVAL;
 
 		break;
-	}
-
-	return 0;
-}
-
-int fimc_start_fifo(struct fimc_control *ctrl, struct fimc_ctx *ctx)
-{
-	struct v4l2_rect fimd_rect;
-	struct fb_var_screeninfo var;
-	struct fb_info *fbinfo;
-	struct s3cfb_window *win;
-	int ret = -1;
-	u32 id = ctrl->id;
-
-	fbinfo = registered_fb[ctx->overlay.fb_id];
-	win = (struct s3cfb_window *)fbinfo->par;
-
-	memcpy(&var, &fbinfo->var, sizeof(struct fb_var_screeninfo));
-	memset(&fimd_rect, 0, sizeof(struct v4l2_rect));
-	ret = fimc_fimd_rect(ctrl, ctx, &fimd_rect);
-	if (ret < 0) {
-		fimc_err("fimc_fimd_rect fail\n");
-		return -EINVAL;
-	}
-
-	/* Don't allocate the memory. */
-	if (ctx->pix.field == V4L2_FIELD_NONE)
-		win->path = DATA_PATH_FIFO;
-	else if (ctx->pix.field == V4L2_FIELD_INTERLACED_TB)
-		win->path = DATA_PATH_IPC;
-
-	win->owner = DMA_MEM_NONE;
-	win->other_mem_addr = 0;
-	win->other_mem_size = 0;
-
-	/* Update WIN size */
-	var.xres_virtual = fimd_rect.width;
-	var.yres_virtual = fimd_rect.height;
-	var.xres = fimd_rect.width;
-	var.yres = fimd_rect.height;
-
-	/* Update WIN position */
-	win->x = fimd_rect.left;
-	win->y = fimd_rect.top;
-
-	var.activate = FB_ACTIVATE_FORCE;
-	ret = fb_set_var(fbinfo, &var);
-	if (ret < 0) {
-		fimc_err("fb_set_var fail (ret=%d)\n", ret);
-		return -EINVAL;
-	}
-
-	/* Open WIN FIFO */
-	ret = ctrl->fb.open_fifo(id, 0, fimc_outdev_start_camif, (void *)ctrl);
-	if (ret < 0) {
-		fimc_err("FIMD FIFO close fail\n");
-		return -EINVAL;
 	}
 
 	return 0;
@@ -2233,34 +2001,6 @@ static int fimc_qbuf_output_dma_manual(struct fimc_control *ctrl,
 	return 0;
 }
 
-static int fimc_qbuf_output_fifo(struct fimc_control *ctrl,
-				      struct fimc_ctx *ctx,
-				      int idx)
-{
-	int ret = -1;
-
-#if defined(CONFIG_VIDEO_IPC)
-	if (ctx->pix.field == V4L2_FIELD_INTERLACED_TB)
-		ipc_start();
-#endif
-
-	fimc_outdev_set_src_addr(ctrl, ctx->src[idx].base);
-
-	ret = fimc_start_fifo(ctrl, ctx);
-	if (ret < 0) {
-		fimc_err("Fail: fimc_start_fifo\n");
-		return -EINVAL;
-	}
-
-	ctrl->out->idxs.active.idx = idx;
-	ctrl->out->idxs.active.ctx = ctx->ctx_num;
-
-	ctrl->status = FIMC_STREAMON;
-	ctx->status = FIMC_STREAMON;
-
-	return 0;
-}
-
 static int fimc_update_in_queue_addr(struct fimc_control *ctrl,
 				     struct fimc_ctx *ctx,
 				     u32 idx, dma_addr_t *addr)
@@ -2334,9 +2074,6 @@ int fimc_qbuf_output(void *fh, struct v4l2_buffer *b)
 		}
 
 		switch (ctx->overlay.mode) {
-		case FIMC_OVLY_FIFO:
-			ret = fimc_qbuf_output_fifo(ctrl, ctx, idx);
-			break;
 		case FIMC_OVLY_DMA_AUTO:
 			ret = fimc_qbuf_output_dma_auto(ctrl, ctx, idx);
 			break;

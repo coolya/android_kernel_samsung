@@ -378,10 +378,6 @@ static inline void fimc_irq_out(struct fimc_control *ctrl)
 	case FIMC_OVLY_DMA_MANUAL:
 		wakeup = fimc_irq_out_dma(ctrl, ctx);
 		break;
-	case FIMC_OVLY_FIFO:
-		if (ctx->status != FIMC_READY_OFF)
-			wakeup = fimc_irq_out_fimd(ctrl, ctx);
-		break;
 	default:
 		break;
 	}
@@ -917,9 +913,6 @@ static int fimc_open(struct file *filp)
 		/* Apply things to interface register */
 		fimc_hwset_reset(ctrl);
 
-		ctrl->fb.open_fifo = s3cfb_open_fifo;
-		ctrl->fb.close_fifo = s3cfb_close_fifo;
-
 		if (num_registered_fb > 0) {
 			struct fb_info *fbinfo = registered_fb[0];
 			ctrl->fb.lcd_hres = (int)fbinfo->var.xres;
@@ -1421,24 +1414,6 @@ static inline void fimc_suspend_out_ctx(struct fimc_control *ctrl,
 		}
 
 		break;
-	case FIMC_OVLY_FIFO:
-		if (ctx->status == FIMC_STREAMON) {
-			if (ctx->inq[0] != -1)
-				fimc_err("%s: %d in queue unstable\n",
-					 __func__, __LINE__);
-
-			if ((ctrl->out->idxs.next.idx != -1) ||
-			    (ctrl->out->idxs.prev.idx != -1))
-				fimc_err("%s: %d FIMC unstable\n",
-					__func__, __LINE__);
-
-			fimc_outdev_stop_streaming(ctrl, ctx);
-			ctx->status = FIMC_ON_SLEEP;
-		} else {
-			ctx->status = FIMC_OFF_SLEEP;
-		}
-
-		break;
 	case FIMC_OVLY_NOT_FIXED:
 		ctx->status = FIMC_OFF_SLEEP;
 		break;
@@ -1517,36 +1492,9 @@ int fimc_suspend(struct platform_device *pdev, pm_message_t state)
 static inline void fimc_resume_out_ctx(struct fimc_control *ctrl,
 				       struct fimc_ctx *ctx)
 {
-	int index = -1, ret = -1;
+	int ret = -1;
 
 	switch (ctx->overlay.mode) {
-	case FIMC_OVLY_FIFO:
-		if (ctx->status == FIMC_ON_SLEEP) {
-			ctx->status = FIMC_READY_ON;
-
-			ret = fimc_outdev_set_ctx_param(ctrl, ctx);
-			if (ret < 0)
-				fimc_err("Fail: fimc_outdev_set_ctx_param\n");
-
-#if defined(CONFIG_VIDEO_IPC)
-			if (ctx->pix.field == V4L2_FIELD_INTERLACED_TB)
-				ipc_start();
-#endif
-			index = ctrl->out->idxs.active.idx;
-			fimc_outdev_set_src_addr(ctrl, ctx->src[index].base);
-
-			ret = fimc_start_fifo(ctrl, ctx);
-			if (ret < 0)
-				fimc_err("Fail: fimc_start_fifo\n");
-
-			ctx->status = FIMC_STREAMON;
-		} else if (ctx->status == FIMC_OFF_SLEEP) {
-			ctx->status = FIMC_STREAMOFF;
-		} else {
-			fimc_err("%s: Abnormal (%d)\n", __func__, ctx->status);
-		}
-
-		break;
 	case FIMC_OVLY_DMA_AUTO:
 		if (ctx->status == FIMC_ON_IDLE_SLEEP) {
 			fimc_outdev_resume_dma(ctrl, ctx);
