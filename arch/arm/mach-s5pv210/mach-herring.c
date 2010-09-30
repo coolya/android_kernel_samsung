@@ -2781,17 +2781,17 @@ static struct gpio_init_data herring_init_gpios[] = {
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_DOWN,
 		.drv	= S3C_GPIO_DRVSTR_1X,
-	}, { /* NFC_SCL_18V */
+	}, { /* NFC_SCL_18V - has external pull up resistor */
 		.num	= S5PV210_MP04(4),
-		.cfg	= S3C_GPIO_OUTPUT,
-		.val	= S3C_GPIO_SETPIN_ZERO,
-		.pud	= S3C_GPIO_PULL_UP,
+		.cfg	= S3C_GPIO_INPUT,
+		.val	= S3C_GPIO_SETPIN_NONE,
+		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
-	}, { /* NFC_SDA_18V */
+	}, { /* NFC_SDA_18V - has external pull up resistor */
 		.num	= S5PV210_MP04(5),
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_UP,
+		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_MP04(6),
