@@ -19,12 +19,8 @@ enum s3c2410_dma_buffresult {
 enum s3c2410_dmasrc {
 	S3C2410_DMASRC_HW,		/* source is memory */
 	S3C2410_DMASRC_MEM,		/* source is hardware */
-#ifdef CONFIG_OLD_DMA_PL330
-	S3C_DMA_MEM2MEM,      		/* source is memory - READ/WRITE */
-	S3C_DMA_MEM2MEM_SET,      	/* source is memory - READ/WRITE for MEMSET*/
-	S3C_DMA_MEM2MEM_P,      	/* source is hardware - READ/WRITE */
-	S3C_DMA_PER2PER      		/* source is hardware - READ/WRITE */
-#endif
+	S3C_DMA_MEM2MEM,
+	S3C_DMA_MEM2MEM_SET,
 };
 
 /* enum s3c2410_chan_op
@@ -41,9 +37,6 @@ enum s3c2410_chan_op {
 	S3C2410_DMAOP_FLUSH,
 	S3C2410_DMAOP_TIMEOUT,		/* internal signal to handler */
 	S3C2410_DMAOP_STARTED,		/* indicate channel started */
-#ifdef CONFIG_OLD_DMA_PL330
-	S3C2410_DMAOP_ABORT,		/* abnormal stop */
-#endif
 };
 
 struct s3c2410_dma_client {

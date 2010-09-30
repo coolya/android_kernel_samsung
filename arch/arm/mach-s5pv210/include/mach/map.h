@@ -65,13 +65,6 @@
 #define S3C_VA_UARTx(uart) (S3C_VA_UART + ((uart * S5P_SZ_UART_FULL)))
 
 #define S5PV210_PA_SROMC	(0xE8000000)
-/* DMA */
-/* Old */
-#define S5PV210_PA_DMA		(0xFA200000)
-#define S5P_PA_DMA		S5PV210_PA_DMA
-#define S5PV210_PA_PDMA		(0xE0900000)
-#define S5P_PA_PDMA		S5PV210_PA_PDMA
-/* New */
 
 /* usb */
 #define S5PV210_PA_OTG          (0xEC000000)
