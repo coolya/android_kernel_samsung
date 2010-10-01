@@ -44,6 +44,7 @@
 #include <mach/fsa9480_i2c.h>
 #include <mach/adc.h>
 #include <mach/param.h>
+#include <mach/system.h>
 
 #include <linux/pn544.h>
 #include <linux/notifier.h>
@@ -2954,15 +2955,33 @@ void s3c_config_gpio_table(void)
 #define S5PV210_PS_HOLD_CONTROL_REG (S3C_VA_SYS+0xE81C)
 static void herring_power_off(void)
 {
-	printk(KERN_DEBUG "herring_power_off\n");
+	while (1) {
+		/* Check reboot charging */
+		/* TODO : Check not only TA but also USB additionally */
+		if (!gpio_get_value(GPIO_TA_CURRENT_SEL_AP)) {
+			/* watchdog reset */
+			pr_info("%s: charger connected, rebooting\n", __func__);
+			writel(3, S5P_INFORM6);
+			arch_reset('r', NULL);
+			pr_crit("%s: waiting for reset!\n", __func__);
+			while (1);
+		}
 
-	/* power off code */
-	/* PS_HOLD high  PS_HOLD_CONTROL, R/W, 0xE010_E81C */
-	writel(readl(S5PV210_PS_HOLD_CONTROL_REG) & 0xFFFFFEFF,
-		     S5PV210_PS_HOLD_CONTROL_REG);
+		/* wait for power button release */
+		if (gpio_get_value(GPIO_nPOWER)) {
+			pr_info("%s: set PS_HOLD low\n", __func__);
 
-	while (1)
-		;
+			/* PS_HOLD high  PS_HOLD_CONTROL, R/W, 0xE010_E81C */
+			writel(readl(S5PV210_PS_HOLD_CONTROL_REG) & 0xFFFFFEFF,
+			       S5PV210_PS_HOLD_CONTROL_REG);
+
+			pr_crit("%s: should not reach here!\n", __func__);
+		}
+
+		/* if power button is not released, wait and check TA again */
+		pr_info("%s: PowerButton is not released.\n", __func__);
+		mdelay(1000);
+	}
 }
 
 /* this table only for B4 board */
