@@ -233,16 +233,13 @@ static int s3c_rtc_settime(struct device *dev, struct rtc_time *tm)
 		return -EINVAL;
 	}
 
-	/* For Max 8998 */
-	tm->tm_mon += 1;
-
 	s3c_rtc_enable(dev, 1);
 
 	writeb(bin2bcd(tm->tm_sec),  base + S3C2410_RTCSEC);
 	writeb(bin2bcd(tm->tm_min),  base + S3C2410_RTCMIN);
 	writeb(bin2bcd(tm->tm_hour), base + S3C2410_RTCHOUR);
 	writeb(bin2bcd(tm->tm_mday), base + S3C2410_RTCDATE);
-	writeb(bin2bcd(tm->tm_mon), base + S3C2410_RTCMON);
+	writeb(bin2bcd(tm->tm_mon + 1), base + S3C2410_RTCMON);
 
 #if defined(CONFIG_CPU_S5PV210)
 	year100 = year/100;
@@ -704,7 +701,7 @@ static int __devinit s3c_rtc_probe(struct platform_device *pdev)
 	writeb(bin2bcd(tm.tm_min),  s3c_rtc_base + S3C2410_RTCMIN);
 	writeb(bin2bcd(tm.tm_hour), s3c_rtc_base + S3C2410_RTCHOUR);
 	writeb(bin2bcd(tm.tm_mday), s3c_rtc_base + S3C2410_RTCDATE);
-	writeb(bin2bcd(tm.tm_mon), s3c_rtc_base + S3C2410_RTCMON);
+	writeb(bin2bcd(tm.tm_mon + 1), s3c_rtc_base + S3C2410_RTCMON);
 
 #if defined(CONFIG_CPU_S5PV210)
 	year100 = year/100;
