@@ -26,6 +26,7 @@
 #include <plat/regs-serial.h>
 #include <mach/regs-clock.h>
 #include <mach/regs-irq.h>
+#include <asm/fiq_glue.h>
 #include <asm/irq.h>
 
 #include <plat/pm.h>
@@ -314,6 +315,9 @@ static int s3c_pm_enter(suspend_state_t state)
 	cpu_init();
 
 	/* restore the system state */
+
+	fiq_glue_resume();
+	local_fiq_enable();
 
 	s3c_pm_restore_core();
 	s3c_pm_restore_uarts();
