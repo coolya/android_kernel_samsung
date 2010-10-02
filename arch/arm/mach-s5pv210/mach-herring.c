@@ -63,6 +63,7 @@
 #endif
 
 #include <media/s5ka3dfx_platform.h>
+#include <media/s5k4ecgx.h>
 
 #include <plat/regs-serial.h>
 #include <plat/s5pv210.h>
@@ -547,9 +548,9 @@ static struct regulator_init_data herring_ldo14_data = {
 
 static struct regulator_init_data herring_ldo15_data = {
 	.constraints	= {
-		.name		= "CAM_ISP_HOST_2.8V",
-		.min_uV		= 2800000,
-		.max_uV		= 2800000,
+		.name		= "CAM_ISP_HOST_3.0V",
+		.min_uV		= 3000000,
+		.max_uV		= 3000000,
 		.apply_uV	= 1,
 		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
@@ -1141,7 +1142,6 @@ static struct s3c_adc_mach_info s3c_adc_platform __initdata = {
 };
 #endif
 
-#ifdef CONFIG_VIDEO_FIMC
 /*
  * Guide for Camera Configuration for Aries
 */
@@ -1186,6 +1186,278 @@ static struct wm8994_platform_data wm8994_pdata = {
 	.ear_sel = GPIO_EAR_SEL,
 	.set_mic_bias = wm8994_set_mic_bias,
 };
+
+/*
+ * Guide for Camera Configuration for Crespo board
+ * ITU CAM CH A: LSI s5k4ecgx
+ */
+static struct regulator *cam_isp_core_regulator;
+static struct regulator *cam_isp_host_regulator;
+static struct regulator *cam_af_regulator;
+static bool s5k4ecgx_ldos_enabled;
+static int s5k4ecgx_regulator_init(void)
+{
+	if (cam_isp_core_regulator == NULL) {
+		cam_isp_core_regulator = regulator_get(NULL, "cam_isp_core");
+		if (cam_isp_core_regulator == NULL) {
+			pr_err("failed to get cam_isp_core regulator");
+			return -EINVAL;
+		}
+	}
+	if (cam_isp_host_regulator == NULL) {
+		cam_isp_host_regulator = regulator_get(NULL, "cam_isp_host");
+		if (cam_isp_host_regulator == NULL) {
+			pr_err("failed to get cam_isp_host regulator");
+			return -EINVAL;
+		}
+	}
+	if (cam_af_regulator == NULL) {
+		cam_af_regulator = regulator_get(NULL, "cam_af");
+		if (cam_af_regulator == NULL) {
+			pr_err("failed to get cam_af regulator");
+			return -EINVAL;
+		}
+	}
+	pr_debug("cam_isp_core_regulator = %p\n", cam_isp_core_regulator);
+	pr_debug("cam_isp_host_regulator = %p\n", cam_isp_host_regulator);
+	pr_debug("cam_af_regulator = %p\n", cam_af_regulator);
+	return 0;
+}
+
+static void s5k4ecgx_init(void)
+{
+	/* CAM_IO_EN - GPB(7) */
+	if (gpio_request(GPIO_GPB7, "GPB7") < 0)
+		pr_err("failed gpio_request(GPB7) for camera control\n");
+	/* CAM_MEGA_nRST - GPJ1(5) */
+	if (gpio_request(GPIO_CAM_MEGA_nRST, "GPJ1") < 0)
+		pr_err("failed gpio_request(GPJ1) for camera control\n");
+	/* CAM_MEGA_EN - GPJ0(6) */
+	if (gpio_request(GPIO_CAM_MEGA_EN, "GPJ0") < 0)
+		pr_err("failed gpio_request(GPJ0) for camera control\n");
+	/* FLASH_EN - GPJ1(2) */
+	if (gpio_request(GPIO_FLASH_EN, "GPIO_FLASH_EN") < 0)
+		pr_err("failed gpio_request(GPIO_FLASH_EN)\n");
+	/* FLASH_EN_SET - GPJ1(0) */
+	if (gpio_request(GPIO_CAM_FLASH_EN_SET, "GPIO_CAM_FLASH_EN_SET") < 0)
+		pr_err("failed gpio_request(GPIO_CAM_FLASH_EN_SET)\n");
+}
+
+static int s5k4ecgx_ldo_en(bool en)
+{
+	int err = 0;
+	int result;
+
+	/* can happen if something odd happens and we are closed
+	 * by camera framework before we even completely opened.
+	 */
+	if (en == s5k4ecgx_ldos_enabled)
+		return 0;
+
+	if ((cam_isp_core_regulator == NULL) ||
+		(cam_isp_host_regulator == NULL) ||
+		(cam_af_regulator == NULL)) {
+		pr_err("Camera regulators not initialized\n");
+		return -EINVAL;
+	}
+
+	s5k4ecgx_ldos_enabled = en;
+
+	if (!en)
+		goto off;
+
+	/* Turn CAM_ISP_CORE_1.2V(VDD_REG) on */
+	err = regulator_enable(cam_isp_core_regulator);
+	if (err) {
+		pr_err("Failed to enable regulator cam_isp_core\n");
+		goto off;
+	}
+	mdelay(1);
+
+	/* Turn CAM_SENSOR_A_2.8V(VDDA) on */
+	gpio_set_value(GPIO_GPB7, 1);
+	mdelay(1);
+
+	/* Turn CAM_ISP_HOST_2.8V(VDDIO) on */
+	err = regulator_enable(cam_isp_host_regulator);
+	if (err) {
+		pr_err("Failed to enable regulator cam_isp_core\n");
+		goto off;
+	}
+	udelay(50);
+
+	/* Turn CAM_AF_2.8V or 3.0V on */
+	err = regulator_enable(cam_af_regulator);
+	if (err) {
+		pr_err("Failed to enable regulator cam_isp_core\n");
+		goto off;
+	}
+	udelay(50);
+	pr_info("camera ldos enabled\n");
+	return 0;
+
+off:
+	result = err;
+	err = regulator_disable(cam_af_regulator);
+	if (err) {
+		pr_err("Failed to disable regulator cam_isp_core\n");
+		result = err;
+	}
+	err = regulator_disable(cam_isp_host_regulator);
+	if (err) {
+		pr_err("Failed to disable regulator cam_isp_core\n");
+		result = err;
+	}
+	gpio_set_value(GPIO_GPB7, 0);
+	err = regulator_disable(cam_isp_core_regulator);
+	if (err) {
+		pr_err("Failed to disable regulator cam_isp_core\n");
+		result = err;
+	}
+	pr_info("camera ldos disabled\n");
+	return result;
+}
+
+static int s5k4ecgx_power_on(void)
+{
+	/* LDO on */
+	int err;
+
+	/* can't do this earlier because regulators aren't available in
+	 * early boot
+	 */
+	if (s5k4ecgx_regulator_init()) {
+		pr_err("Failed to initialize camera regulators\n");
+		return -EINVAL;
+	}
+
+	err = s5k4ecgx_ldo_en(true);
+	if (err)
+		return err;
+	mdelay(66);
+
+	/* MCLK on - default is input, to save power when camera not on */
+	s3c_gpio_cfgpin(GPIO_CAM_MCLK, S3C_GPIO_SFN(GPIO_CAM_MCLK_AF));
+	mdelay(1);
+
+	/* CAM_MEGA_EN - GPJ1(2) LOW */
+	gpio_set_value(GPIO_CAM_MEGA_EN, 1);
+	mdelay(1);
+
+	/* CAM_MEGA_nRST - GPJ1(5) LOW */
+	gpio_set_value(GPIO_CAM_MEGA_nRST, 1);
+	mdelay(1);
+
+	pr_info("camera powered on\n");
+	return 0;
+}
+
+static int s5k4ecgx_power_off(void)
+{
+	/* CAM_MEGA_nRST - GPJ1(5) LOW */
+	gpio_set_value(GPIO_CAM_MEGA_nRST, 0);
+	udelay(60);
+
+	/*  Mclk disable - set to input function to save power */
+	s3c_gpio_cfgpin(GPIO_CAM_MCLK, 0);
+	udelay(10);
+
+	/* CAM_MEGA_EN - GPJ1(2) LOW */
+	gpio_set_value(GPIO_CAM_MEGA_EN, 0);
+	udelay(10);
+
+	s5k4ecgx_ldo_en(false);
+	mdelay(1);
+
+	pr_info("camera powered off\n");
+	return 0;
+}
+
+static int s5k4ecgx_power_en(int onoff)
+{
+	if (onoff)
+		return s5k4ecgx_power_on();
+
+	return s5k4ecgx_power_off();
+}
+
+static  int s5k4ecgx_flash(int lux_val)
+{
+	int i;
+
+	if (lux_val == 100) {
+		gpio_set_value(GPIO_FLASH_EN, 0);
+		for (i = lux_val; i > 1; i--) {
+			gpio_set_value(GPIO_CAM_FLASH_EN_SET, 1);
+			udelay(1);
+			gpio_set_value(GPIO_CAM_FLASH_EN_SET, 0);
+			udelay(1);
+		}
+		gpio_set_value(GPIO_CAM_FLASH_EN_SET, 1);
+		msleep(2);
+	} else if (lux_val == 0) {
+		gpio_set_value(GPIO_FLASH_EN, 0);
+		gpio_set_value(GPIO_CAM_FLASH_EN_SET, 0);
+	} else {
+		gpio_set_value(GPIO_FLASH_EN, 1);
+		udelay(20);
+		for (i = lux_val; i > 1; i--) {
+			gpio_set_value(GPIO_CAM_FLASH_EN_SET, 1);
+			udelay(1);
+			gpio_set_value(GPIO_CAM_FLASH_EN_SET, 0);
+			udelay(1);
+		}
+		gpio_set_value(GPIO_CAM_FLASH_EN_SET, 1);
+		msleep(2);
+	}
+
+	return 0;
+}
+
+static struct s5k4ecgx_platform_data s5k4ecgx_plat = {
+	.default_width = 640,
+	.default_height = 480,
+	.pixelformat = V4L2_PIX_FMT_UYVY,
+	.freq = 24000000,
+	.flash_onoff = &s5k4ecgx_flash,
+};
+
+static struct i2c_board_info  s5k4ecgx_i2c_info = {
+	I2C_BOARD_INFO("S5K4ECGX", 0x5A>>1),
+	.platform_data = &s5k4ecgx_plat,
+};
+
+static struct s3c_platform_camera s5k4ecgx = {
+	.id = CAMERA_PAR_A,
+	.type = CAM_TYPE_ITU,
+	.fmt = ITU_601_YCBCR422_8BIT,
+	.order422 = CAM_ORDER422_8BIT_CBYCRY,
+	.i2c_busnum = 0,
+	.info = &s5k4ecgx_i2c_info,
+	.pixelformat = V4L2_PIX_FMT_UYVY,
+	.srclk_name = "xusbxti",
+	.clk_name = "sclk_cam",
+	.clk_rate = 24000000,
+	.line_length = 1920,
+	.width = 640,
+	.height = 480,
+	.window = {
+		.left = 0,
+		.top = 0,
+		.width = 640,
+		.height = 480,
+	},
+
+	/* Polarity */
+	.inv_pclk = 0,
+	.inv_vsync = 1,
+	.inv_href = 0,
+	.inv_hsync = 0,
+
+	.initialized = 0,
+	.cam_power = s5k4ecgx_power_en,
+};
+
 
 /* External camera module setting */
 static struct regulator *s5ka3dfx_vga_avdd;
@@ -1257,7 +1529,7 @@ static int s5ka3dfx_power_on(void)
 	int err;
 
 	if (s5ka3dfx_power_init()) {
-		pr_err("Faild to get all regulator\n");
+		pr_err("Failed to get all regulator\n");
 		return -EINVAL;
 	}
 
@@ -1427,20 +1699,18 @@ static struct s3c_platform_camera s5ka3dfx = {
 };
 
 /* Interface setting */
-static struct s3c_platform_fimc fimc_plat = {
+static struct s3c_platform_fimc fimc_plat_lsi = {
 	.srclk_name	= "mout_mpll",
 	.clk_name	= "sclk_fimc",
 	.lclk_name	= "sclk_fimc_lclk",
 	.clk_rate	= 166750000,
 	.default_cam	= CAMERA_PAR_A,
 	.camera		= {
-#ifdef CONFIG_VIDEO_S5KA3DFX
+		&s5k4ecgx,
 		&s5ka3dfx,
-#endif
 	},
 	.hw_ver		= 0x43,
 };
-#endif
 
 #ifdef CONFIG_VIDEO_JPEG_V2
 static struct s3c_platform_jpeg jpeg_plat __initdata = {
@@ -3816,11 +4086,16 @@ static void __init herring_machine_init(void)
 
 	s5ka3dfx_request_gpio();
 
+	if (system_rev < 0x6)
+		fimc_plat_lsi.camera[0] = &isx006;
+	else
+		s5k4ecgx_init();
+
 #ifdef CONFIG_VIDEO_FIMC
 	/* fimc */
-	s3c_fimc0_set_platdata(&fimc_plat);
-	s3c_fimc1_set_platdata(&fimc_plat);
-	s3c_fimc2_set_platdata(&fimc_plat);
+	s3c_fimc0_set_platdata(&fimc_plat_lsi);
+	s3c_fimc1_set_platdata(&fimc_plat_lsi);
+	s3c_fimc2_set_platdata(&fimc_plat_lsi);
 #endif
 
 #ifdef CONFIG_VIDEO_JPEG_V2
