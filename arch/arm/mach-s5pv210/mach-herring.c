@@ -1079,7 +1079,7 @@ static const int touch_keypad_code[5] = {
 static struct touchkey_platform_data touchkey_data = {
 	.keycode_cnt = 5,
 	.keycode = &touch_keypad_code,
-	.touchkey_onoff = &touch_keypad_onoff,
+	.touchkey_onoff = touch_keypad_onoff,
 };
 
 static struct gpio_event_direct_entry herring_keypad_key_map[] = {
