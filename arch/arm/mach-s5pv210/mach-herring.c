@@ -1149,7 +1149,7 @@ static struct s3c_adc_mach_info s3c_adc_platform __initdata = {
 
 /* in revisions before 1.0, there is a common mic bias gpio */
 
-static DEFINE_MUTEX(mic_bias_mutex);
+static DEFINE_SPINLOCK(mic_bias_lock);
 static bool wm8994_mic_bias;
 static bool jack_mic_bias;
 static void set_shared_mic_bias(void)
@@ -1160,10 +1160,11 @@ static void set_shared_mic_bias(void)
 static void wm8994_set_mic_bias(bool on)
 {
 	if (system_rev <= 0x0a) {
-		mutex_lock(&mic_bias_mutex);
+		unsigned long flags;
+		spin_lock_irqsave(&mic_bias_lock, flags);
 		wm8994_mic_bias = on;
 		set_shared_mic_bias();
-		mutex_unlock(&mic_bias_mutex);
+		spin_unlock_irqrestore(&mic_bias_lock, flags);
 	} else
 		gpio_set_value(GPIO_MICBIAS_EN, on);
 }
@@ -1171,10 +1172,11 @@ static void wm8994_set_mic_bias(bool on)
 static void sec_jack_set_micbias_state(bool on)
 {
 	if (system_rev <= 0x0a) {
-		mutex_lock(&mic_bias_mutex);
+		unsigned long flags;
+		spin_lock_irqsave(&mic_bias_lock, flags);
 		jack_mic_bias = on;
 		set_shared_mic_bias();
-		mutex_unlock(&mic_bias_mutex);
+		spin_unlock_irqrestore(&mic_bias_lock, flags);
 	} else
 		gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
 }
@@ -1829,35 +1831,23 @@ static struct sec_jack_zone sec_jack_zones[] = {
 	},
 };
 
-static int sec_jack_get_det_jack_state(void)
-{
-	/* active low */
-	return !gpio_get_value(GPIO_DET_35);
-}
-static int sec_jack_get_send_key_state(void)
-{
-	/* active low */
-	return !gpio_get_value(GPIO_EAR_SEND_END);
-}
 static int sec_jack_get_adc_value(void)
 {
 	return s3c_adc_get_adc_data(3);
 }
 
 struct sec_jack_platform_data sec_jack_pdata = {
-	.get_det_jack_state = sec_jack_get_det_jack_state,
-	.get_send_key_state = sec_jack_get_send_key_state,
 	.set_micbias_state = sec_jack_set_micbias_state,
 	.get_adc_value = sec_jack_get_adc_value,
 	.zones = sec_jack_zones,
 	.num_zones = ARRAY_SIZE(sec_jack_zones),
-	.det_int = IRQ_EINT6,
-	.send_int = IRQ_EINT(30),
+	.det_gpio = GPIO_DET_35,
+	.send_end_gpio = GPIO_EAR_SEND_END,
 };
 
 static struct platform_device sec_device_jack = {
 	.name			= "sec_jack",
-	.id			= -1,
+	.id			= 1, /* will be used also for gpio_event id */
 	.dev.platform_data	= &sec_jack_pdata,
 };
 
@@ -3760,8 +3750,6 @@ static void __init herring_machine_init(void)
 	/* headset/earjack detection */
 	if (system_rev >= 0x0a)
 		gpio_request(GPIO_EAR_MICBIAS_EN, "ear_micbias_enable");
-	gpio_request(GPIO_DET_35, "ear_jack_detect");
-	gpio_request(GPIO_EAR_SEND_END, "ear_jack_button");
 
 	gpio_request(GPIO_TOUCH_EN, "touch en");
 
