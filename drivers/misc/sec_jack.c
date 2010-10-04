@@ -1,5 +1,4 @@
-/*
- *  headset/ear-jack device detection driver.
+/*  drivers/misc/sec_jack.c
  *
  *  Copyright (C) 2010 Samsung Electronics Co.Ltd
  *
@@ -14,8 +13,6 @@
  *  GNU General Public License for more details.
  */
 #include <linux/module.h>
-#include <linux/sysdev.h>
-#include <linux/fs.h>
 #include <linux/interrupt.h>
 #include <linux/workqueue.h>
 #include <linux/irq.h>
@@ -30,6 +27,8 @@
 #include <linux/timer.h>
 #include <linux/wakelock.h>
 #include <linux/slab.h>
+#include <linux/gpio.h>
+#include <linux/gpio_event.h>
 #include <linux/sec_jack.h>
 
 #define MAX_ZONE_LIMIT		10
@@ -40,15 +39,22 @@
 struct sec_jack_info {
 	struct sec_jack_platform_data *pdata;
 	struct delayed_work jack_detect_work;
-	struct input_dev *input;
 	struct wake_lock det_wake_lock;
 	struct sec_jack_zone *zone;
-
-	bool send_key_pressed;
-	bool send_key_irq_enabled;
+	int det_irq;
+	int dev_id;
+	struct platform_device *send_key_dev;
 	unsigned int cur_jack_type;
-
 };
+
+/* with some modifications like moving all the gpio structs inside
+ * the platform data and getting the name for the switch and
+ * gpio_event from the platform data, the driver could support more than
+ * one headset jack, but currently user space is looking only for
+ * one key file and switch for a headset so it'd be overkill and
+ * untestable so we limit to one instantiation for now.
+ */
+static atomic_t instantiated = ATOMIC_INIT(0);
 
 /* sysfs name HeadsetObserver.java looks for to track headset state
  */
@@ -56,12 +62,30 @@ struct switch_dev switch_jack_detection = {
 	.name = "h2w",
 };
 
-static void set_send_key_state(struct sec_jack_info *hi, int state)
-{
-	input_report_key(hi->input, KEY_MEDIA, state);
-	input_sync(hi->input);
-	hi->send_key_pressed = state;
-}
+static struct gpio_event_direct_entry sec_jack_key_map[] = {
+	{
+		.code	= KEY_MEDIA,
+	},
+};
+
+static struct gpio_event_input_info sec_jack_key_info = {
+	.info.func = gpio_event_input_func,
+	.info.no_suspend = true,
+	.type = EV_KEY,
+	.debounce_time.tv.nsec = SEND_KEY_CHECK_TIME_MS * NSEC_PER_MSEC,
+	.keymap = sec_jack_key_map,
+	.keymap_size = ARRAY_SIZE(sec_jack_key_map)
+};
+
+static struct gpio_event_info *sec_jack_input_info[] = {
+	&sec_jack_key_info.info,
+};
+
+static struct gpio_event_platform_data sec_jack_input_data = {
+	.name = "sec_jack",
+	.info = sec_jack_input_info,
+	.info_count = ARRAY_SIZE(sec_jack_input_info),
+};
 
 static void sec_jack_set_type(struct sec_jack_info *hi, int jack_type)
 {
@@ -74,29 +98,25 @@ static void sec_jack_set_type(struct sec_jack_info *hi, int jack_type)
 		return;
 
 	if (jack_type == SEC_HEADSET_4POLE) {
-		/* for a 4 pole headset, enable irq
-		   for detecting send/end key presses */
-		if (!hi->send_key_irq_enabled) {
-			enable_irq(pdata->send_int);
-			enable_irq_wake(pdata->send_int);
-			hi->send_key_irq_enabled = 1;
-		}
+		/* for a 4 pole headset, enable detection of send/end key */
+		if (hi->send_key_dev == NULL)
+			/* enable to get events again */
+			hi->send_key_dev = platform_device_register_data(NULL,
+					GPIO_EVENT_DEV_NAME,
+					hi->dev_id,
+					&sec_jack_input_data,
+					sizeof(sec_jack_input_data));
 	} else {
-		/* for all other jacks, disable send/end irq */
-		if (hi->send_key_irq_enabled) {
-			disable_irq_wake(pdata->send_int);
-			disable_irq(pdata->send_int);
-			hi->send_key_irq_enabled = 0;
+		/* for all other jacks, disable send/end key detection */
+		if (hi->send_key_dev != NULL) {
+			/* disable to prevent false events on next insert */
+			platform_device_unregister(hi->send_key_dev);
+			hi->send_key_dev = NULL;
 		}
-		if (hi->send_key_pressed) {
-			set_send_key_state(hi, 0);
-			pr_info("%s : BTN set released by jack switch to %d\n",
-				__func__, jack_type);
-		}
+		/* micbias is left enabled for 4pole and disabled otherwise */
+		pdata->set_micbias_state(false);
 	}
 
-	/* micbias is left enabled for 4pole and disabled otherwise */
-	pdata->set_micbias_state(hi->send_key_irq_enabled);
 	hi->cur_jack_type = jack_type;
 	pr_info("%s : jack_type = %d\n", __func__, jack_type);
 
@@ -119,10 +139,11 @@ static void determine_jack_type(struct sec_jack_info *hi)
 	int count[MAX_ZONE_LIMIT] = {0};
 	int adc;
 	int i;
+	unsigned npolarity = !hi->pdata->det_active_high;
 
-	while (hi->pdata->get_det_jack_state()) {
+	while (gpio_get_value(hi->pdata->det_gpio) ^ npolarity) {
 		adc = hi->pdata->get_adc_value();
-		pr_debug("adc = %d\n", adc);
+		pr_debug("%s: adc = %d\n", __func__, adc);
 
 		/* determine the type of headset based on the
 		 * adc value.  An adc value can fall in various
@@ -145,6 +166,7 @@ static void determine_jack_type(struct sec_jack_info *hi)
 		}
 	}
 	/* jack removed before detection complete */
+	pr_debug("%s : jack removed before detection complete\n", __func__);
 	handle_jack_not_inserted(hi);
 }
 
@@ -156,6 +178,7 @@ static irqreturn_t sec_jack_detect_irq_thread(int irq, void *dev_id)
 	struct sec_jack_info *hi = dev_id;
 	struct sec_jack_platform_data *pdata = hi->pdata;
 	int time_left_ms = DET_CHECK_TIME_MS;
+	unsigned npolarity = !hi->pdata->det_active_high;
 
 	/* set mic bias to enable adc */
 	pdata->set_micbias_state(true);
@@ -164,7 +187,7 @@ static irqreturn_t sec_jack_detect_irq_thread(int irq, void *dev_id)
 	 * headset until the detect state is true for a while.
 	 */
 	while (time_left_ms > 0) {
-		if (!pdata->get_det_jack_state()) {
+		if (!(gpio_get_value(hi->pdata->det_gpio) ^ npolarity)) {
 			/* jack not detected. */
 			handle_jack_not_inserted(hi);
 			return IRQ_HANDLED;
@@ -174,41 +197,6 @@ static irqreturn_t sec_jack_detect_irq_thread(int irq, void *dev_id)
 	}
 	/* jack presence was detected the whole time, figure out which type */
 	determine_jack_type(hi);
-	return IRQ_HANDLED;
-}
-
-/* thread run whenever the send/end key state changes. irq thread
- * handles don't need wake locks and since this one reports using
- * input_dev, input_dev guarantees that user space gets event
- * without needing a wake_lock.
- */
-static irqreturn_t sec_jack_send_key_irq_thread(int irq, void *dev_id)
-{
-	struct sec_jack_info *hi = dev_id;
-	struct sec_jack_platform_data *pdata = hi->pdata;
-	int time_left_ms = SEND_KEY_CHECK_TIME_MS;
-	int send_key_state;
-
-	/* debounce send/end key */
-	while (time_left_ms > 0) {
-		send_key_state = pdata->get_send_key_state();
-		if (!send_key_state || pdata->get_det_jack_state() ||
-		    hi->cur_jack_type != SEC_HEADSET_4POLE) {
-			/* button released or jack removed or more
-			 * strangely a non-4pole headset
-			 */
-			break;
-		}
-		msleep(10);
-		time_left_ms -= 10;
-	}
-
-	/* report state change of the send_end_key */
-	if (hi->send_key_pressed != send_key_state) {
-		set_send_key_state(hi, send_key_state);
-		pr_info("%s : BTN is %s.\n",
-			__func__, send_key_state ? "pressed" : "released");
-	}
 	return IRQ_HANDLED;
 }
 
@@ -224,33 +212,40 @@ static int sec_jack_probe(struct platform_device *pdev)
 		return -ENODEV;
 	}
 
-	if (!pdata->get_adc_value || !pdata->get_det_jack_state	||
-	    !pdata->get_send_key_state || !pdata->zones ||
+	if (!pdata->get_adc_value || !pdata->zones ||
 	    !pdata->set_micbias_state || pdata->num_zones > MAX_ZONE_LIMIT) {
 		pr_err("%s : need to check pdata\n", __func__);
 		return -ENODEV;
 	}
 
+	if (atomic_xchg(&instantiated, 1)) {
+		pr_err("%s : already instantiated, can only have one\n",
+			__func__);
+		return -ENODEV;
+	}
+
+	sec_jack_key_map[0].gpio = pdata->send_end_gpio;
+
 	hi = kzalloc(sizeof(struct sec_jack_info), GFP_KERNEL);
 	if (hi == NULL) {
 		pr_err("%s : Failed to allocate memory.\n", __func__);
-		return -ENOMEM;
+		ret = -ENOMEM;
+		goto err_kzalloc;
 	}
 
 	hi->pdata = pdata;
-	hi->input = input_allocate_device();
-	if (hi->input == NULL) {
-		ret = -ENOMEM;
-		pr_err("%s : Failed to allocate input device.\n", __func__);
-		goto err_request_input_dev;
-	}
 
-	hi->input->name = "sec_jack";
-	input_set_capability(hi->input, EV_KEY, KEY_MEDIA);
-	ret = input_register_device(hi->input);
+	/* make the id of our gpi_event device the same as our platform device,
+	 * which makes it the responsiblity of the board file to make sure
+	 * it is unique relative to other gpio_event devices
+	 */
+	hi->dev_id = pdev->id;
+
+	ret = gpio_request(pdata->det_gpio, "ear_jack_detect");
 	if (ret) {
-		pr_err("%s : Failed to register driver\n", __func__);
-		goto err_register_input_dev;
+		pr_err("%s : gpio_request failed for %d\n",
+		       __func__, pdata->det_gpio);
+		goto err_gpio_request;
 	}
 
 	ret = switch_dev_register(&switch_jack_detection);
@@ -261,7 +256,8 @@ static int sec_jack_probe(struct platform_device *pdev)
 
 	wake_lock_init(&hi->det_wake_lock, WAKE_LOCK_SUSPEND, "sec_jack_det");
 
-	ret = request_threaded_irq(pdata->det_int, NULL,
+	hi->det_irq = gpio_to_irq(pdata->det_gpio);
+	ret = request_threaded_irq(hi->det_irq, NULL,
 				   sec_jack_detect_irq_thread,
 				   IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING |
 				   IRQF_ONESHOT, "sec_headset_detect", hi);
@@ -271,45 +267,27 @@ static int sec_jack_probe(struct platform_device *pdev)
 	}
 
 	/* to handle insert/removal when we're sleeping in a call */
-	ret = enable_irq_wake(pdata->det_int);
+	ret = enable_irq_wake(hi->det_irq);
 	if (ret) {
 		pr_err("%s : Failed to enable_irq_wake.\n", __func__);
 		goto err_enable_irq_wake;
 	}
 
-	ret = request_threaded_irq(pdata->send_int, NULL,
-				   sec_jack_send_key_irq_thread,
-				   IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING |
-				   IRQF_ONESHOT,
-				   "sec_headset_send_key", hi);
-	if (ret) {
-		pr_err("%s : Failed to request_irq.\n", __func__);
-
-		goto err_request_send_key_irq;
-	}
-
-	/* start with send/end interrupt disable. we only enable it
-	 * when we detect a 4 pole headset
-	 */
-	disable_irq(pdata->send_int);
 	dev_set_drvdata(&pdev->dev, hi);
 
 	return 0;
 
-err_request_send_key_irq:
-	disable_irq_wake(pdata->det_int);
 err_enable_irq_wake:
-	free_irq(pdata->det_int, hi);
+	free_irq(hi->det_irq, hi);
 err_request_detect_irq:
 	wake_lock_destroy(&hi->det_wake_lock);
 	switch_dev_unregister(&switch_jack_detection);
 err_switch_dev_register:
-	input_unregister_device(hi->input);
-	goto err_request_input_dev;
-err_register_input_dev:
-	input_free_device(hi->input);
-err_request_input_dev:
+	gpio_free(pdata->det_gpio);
+err_gpio_request:
 	kfree(hi);
+err_kzalloc:
+	atomic_set(&instantiated, 0);
 
 	return ret;
 }
@@ -320,18 +298,14 @@ static int sec_jack_remove(struct platform_device *pdev)
 	struct sec_jack_info *hi = dev_get_drvdata(&pdev->dev);
 
 	pr_info("%s :\n", __func__);
-	/* rebalance before free */
-	if (hi->send_key_irq_enabled)
-		disable_irq_wake(hi->pdata->send_int);
-	else
-		enable_irq(hi->pdata->send_int);
-	free_irq(hi->pdata->send_int, hi);
-	disable_irq_wake(hi->pdata->det_int);
-	free_irq(hi->pdata->det_int, hi);
+	disable_irq_wake(hi->det_irq);
+	free_irq(hi->det_irq, hi);
+	platform_device_unregister(hi->send_key_dev);
 	wake_lock_destroy(&hi->det_wake_lock);
 	switch_dev_unregister(&switch_jack_detection);
-	input_unregister_device(hi->input);
+	gpio_free(hi->pdata->det_gpio);
 	kfree(hi);
+	atomic_set(&instantiated, 0);
 
 	return 0;
 }

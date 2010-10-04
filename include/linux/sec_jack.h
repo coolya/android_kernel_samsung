@@ -38,15 +38,14 @@ struct sec_jack_zone {
 };
 
 struct sec_jack_platform_data {
-	int	(*get_det_jack_state) (void);
-	int	(*get_send_key_state) (void);
 	void	(*set_micbias_state) (bool);
 	int	(*get_adc_value) (void);
 	struct sec_jack_zone	*zones;
 	int	num_zones;
-	int	det_int;
-	int	send_int;
-
+	int	det_gpio;
+	int	send_end_gpio;
+	bool	det_active_high;
+	bool	send_end_active_high;
 };
 #endif
 
