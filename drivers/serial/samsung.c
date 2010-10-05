@@ -848,6 +848,14 @@ s3c24xx_serial_verify_port(struct uart_port *port, struct serial_struct *ser)
 	return 0;
 }
 
+static void
+s3c24xx_serial_wake_peer(struct uart_port *port)
+{
+	struct s3c2410_uartcfg *cfg = s3c24xx_port_to_cfg(port);
+
+	if (cfg->wake_peer)
+		cfg->wake_peer(port);
+}
 
 #ifdef CONFIG_SERIAL_SAMSUNG_CONSOLE
 
@@ -876,6 +884,7 @@ static struct uart_ops s3c24xx_serial_ops = {
 	.request_port	= s3c24xx_serial_request_port,
 	.config_port	= s3c24xx_serial_config_port,
 	.verify_port	= s3c24xx_serial_verify_port,
+	.wake_peer	= s3c24xx_serial_wake_peer,
 };
 
 

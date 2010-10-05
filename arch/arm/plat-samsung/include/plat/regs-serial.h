@@ -277,6 +277,8 @@ struct s3c2410_uartcfg {
 
 	struct s3c24xx_uart_clksrc *clocks;
 	unsigned int		    clocks_size;
+
+	void (*wake_peer)(struct uart_port *);
 };
 
 /* s3c24xx_uart_devs
