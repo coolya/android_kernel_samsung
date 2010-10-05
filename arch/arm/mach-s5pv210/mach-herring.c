@@ -3232,7 +3232,7 @@ static int wlan_power_en(int onoff)
 		gpio_set_value(GPIO_WLAN_nRST, GPIO_LEVEL_HIGH);
 		s3c_gpio_slp_cfgpin(GPIO_WLAN_nRST, S3C_GPIO_SLP_OUT1);
 
-		msleep(25);
+		msleep(40);
 	} else {
 		gpio_set_value(GPIO_WLAN_nRST, GPIO_LEVEL_LOW);
 		s3c_gpio_slp_cfgpin(GPIO_WLAN_nRST, S3C_GPIO_SLP_OUT0);
