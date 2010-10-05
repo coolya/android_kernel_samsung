@@ -290,7 +290,7 @@ void sdhci_s3c_force_presence_change(struct platform_device *pdev)
 	struct sdhci_host *host = platform_get_drvdata(pdev);
 
 	printk(KERN_DEBUG "%s : Enter\n",__FUNCTION__);
-	mmc_detect_change(host->mmc, msecs_to_jiffies(200));
+	mmc_detect_change(host->mmc, msecs_to_jiffies(60));
 }
 EXPORT_SYMBOL_GPL(sdhci_s3c_force_presence_change);
 
