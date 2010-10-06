@@ -130,7 +130,7 @@ static void max17040_get_soc(struct i2c_client *client)
 	msb = max17040_read_reg(client, MAX17040_SOC_MSB);
 	lsb = max17040_read_reg(client, MAX17040_SOC_LSB);
 
-	chip->soc = msb;
+	chip->soc = min(msb, (u8)100);
 }
 
 static void max17040_get_version(struct i2c_client *client)
