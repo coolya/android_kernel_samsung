@@ -27,7 +27,7 @@ obj-$(CONFIG_MACH_GONI)		+= mach-goni.o
 obj-$(CONFIG_MACH_HERRING)	+= mach-herring.o herring-rfkill.o
 obj-$(CONFIG_MACH_HERRING)	+= herring-vibrator.o
 
-obj-$(CONFIG_CRESPO_LEGACY_MODEM)	+= dev-herring-phone.o
+obj-$(CONFIG_MACH_HERRING)	+= dev-herring-phone.o
 
 obj-$(CONFIG_CPU_FREQ)		+= cpu-freq.o
 obj-$(CONFIG_S5PV210_SETUP_SDHCI)       += setup-sdhci.o
