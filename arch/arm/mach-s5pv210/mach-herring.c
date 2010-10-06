@@ -85,6 +85,8 @@
 #include <linux/sec_jack.h>
 #include <linux/input/mxt224.h>
 
+#include "herring.h"
+
 struct class *sec_class;
 EXPORT_SYMBOL(sec_class);
 
@@ -209,6 +211,7 @@ static struct s3c2410_uartcfg herring_uartcfgs[] __initdata = {
 		.ucon		= S5PV210_UCON_DEFAULT,
 		.ulcon		= S5PV210_ULCON_DEFAULT,
 		.ufcon		= S5PV210_UFCON_DEFAULT,
+		.wake_peer	= herring_bt_uart_wake_peer,
 	},
 	{
 		.hwport		= 1,
