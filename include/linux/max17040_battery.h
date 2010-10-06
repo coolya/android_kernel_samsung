@@ -17,6 +17,7 @@ struct max17040_platform_data {
 	int (*power_supply_register)(struct device *parent,
 		struct power_supply *psy);
 	void (*power_supply_unregister)(struct power_supply *psy);
+	u16 rcomp_value;
 };
 
 #endif

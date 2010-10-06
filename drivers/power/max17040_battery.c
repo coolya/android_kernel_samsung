@@ -236,6 +236,10 @@ static int __devinit max17040_probe(struct i2c_client *client,
 	max17040_reset(client);
 	max17040_get_version(client);
 
+	if (chip->pdata)
+		i2c_smbus_write_word_data(client, MAX17040_RCOMP_MSB,
+			swab16(chip->pdata->rcomp_value));
+
 	INIT_DELAYED_WORK_DEFERRABLE(&chip->work, max17040_work);
 	schedule_delayed_work(&chip->work, MAX17040_DELAY);
 
