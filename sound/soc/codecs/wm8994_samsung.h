@@ -71,7 +71,7 @@ extern struct snd_soc_dai wm8994_dai;
 #define RECORDING_REC_HP	(0x01 << 5)
 #define RECORDING_REC_BT	(0x01 << 6)
 
-#define PLAYBACK_GAIN_NUM 41
+#define PLAYBACK_GAIN_NUM 39
 #define VOICECALL_GAIN_NUM 26
 #define RECORDING_GAIN_NUM 16
 

@@ -110,16 +110,6 @@ struct gain_info_t playback_gain_table[PLAYBACK_GAIN_NUM] = {
 		.reg  = WM8994_AIF1_DAC1_RIGHT_VOLUME,	/* 403h */
 		.mask = WM8994_AIF1DAC1R_VOL_MASK,
 		.gain = WM8994_AIF1DAC1_VU | 0xB8
-	}, {
-		.mode = PLAYBACK_SPK,
-		.reg  = WM8994_DAC1_LEFT_VOLUME,	/* 610h */
-		.mask = WM8994_DAC1L_VOL_MASK,
-		.gain = WM8994_DAC1_VU | 0xB1
-	}, {
-		.mode = PLAYBACK_SPK,
-		.reg  = WM8994_DAC1_RIGHT_VOLUME,	/* 611h */
-		.mask = WM8994_DAC1R_VOL_MASK,
-		.gain = WM8994_DAC1_VU | 0xB1
 	}, { /* HP */
 		.mode = PLAYBACK_HP,
 		.reg  = WM8994_LEFT_OUTPUT_VOLUME,	/* 1Ch */
@@ -293,12 +283,12 @@ struct gain_info_t voicecall_gain_table[VOICECALL_GAIN_NUM] = {
 		.mode = VOICECALL_RCV,
 		.reg  = WM8994_LEFT_OPGA_VOLUME,	/* 20h */
 		.mask = WM8994_MIXOUTL_VOL_MASK,
-		.gain = WM8994_MIXOUT_VU | 0x39
+		.gain = WM8994_MIXOUT_VU | 0x3F
 	}, {
 		.mode = VOICECALL_RCV,
 		.reg  = WM8994_RIGHT_OPGA_VOLUME,	/* 21h */
 		.mask = WM8994_MIXOUTR_VOL_MASK,
-		.gain = WM8994_MIXOUT_VU | 0x39
+		.gain = WM8994_MIXOUT_VU | 0x3F
 	}, {
 		.mode = VOICECALL_RCV,
 		.reg  = WM8994_HPOUT2_VOLUME,		/* 1Fh */
@@ -328,7 +318,7 @@ struct gain_info_t voicecall_gain_table[VOICECALL_GAIN_NUM] = {
 		.mode = VOICECALL_SPK,
 		.reg  = WM8994_SPEAKER_VOLUME_LEFT,	/* 26h */
 		.mask = WM8994_SPKOUTL_VOL_MASK,
-		.gain = WM8994_SPKOUT_VU | 0x39
+		.gain = WM8994_SPKOUT_VU | 0x3C
 	}, {
 		.mode = VOICECALL_SPK,
 		.reg  = WM8994_SPEAKER_VOLUME_RIGHT,	/* 27h */
