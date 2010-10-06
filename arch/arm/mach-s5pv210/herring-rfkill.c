@@ -35,7 +35,7 @@
 #include <mach/hardware.h>
 #include <plat/gpio-cfg.h>
 #include <plat/irqs.h>
-#include <mach/rfkill-herring.h>
+#include "herring.h"
 
 #define IRQ_BT_HOST_WAKE      IRQ_EINT(21)
 
