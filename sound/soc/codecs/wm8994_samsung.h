@@ -34,6 +34,15 @@ extern struct snd_soc_dai wm8994_dai;
 
 #define AUDIO_COMMON_DEBUG	0
 
+#define DEACTIVE		0x00
+#define PLAYBACK_ACTIVE		0x01
+#define CAPTURE_ACTIVE		0x02
+#define CALL_ACTIVE		0x04
+
+#define PCM_STREAM_DEACTIVE	0x00
+#define PCM_STREAM_PLAYBACK	0x01
+#define PCM_STREAM_CAPTURE	0x02
+
 /* Codec Output Path BIT */
 #define PLAYBACK_MODE	0x01
 #define VOICECALL_MODE	(0x01 << 1)
@@ -77,7 +86,7 @@ enum mic_path		{MAIN, SUB, BT_REC, MIC_OFF};
 enum call_state		{DISCONNECT, CONNECT};
 enum power_state	{CODEC_OFF, CODEC_ON };
 enum mic_state		{MIC_NO_USE, MIC_USE};
-enum ringtone_state	{DEACTIVE, ACTIVE};
+enum ringtone_state	{RING_OFF, RING_ON};
 enum recognition	{REC_OFF, REC_ON};
 
 typedef void (*select_route)(struct snd_soc_codec *);
@@ -99,6 +108,8 @@ struct wm8994_priv {
 	unsigned int fs;
 	unsigned int bclk;
 	unsigned int hw_version;
+	unsigned int codec_state;
+	unsigned int  stream_state;
 	enum audio_path cur_path;
 	enum mic_path rec_path;
 	enum call_state call_state;
@@ -110,8 +121,6 @@ struct wm8994_priv {
 	select_route *universal_voicecall_path;
 	select_mic_route *universal_mic_path;
 	select_clock_control universal_clock_control;
-	bool	play_en_dis;
-	bool	rec_en_dis;
 	struct wm8994_platform_data *pdata;
 	struct clk *codec_clk;
 };

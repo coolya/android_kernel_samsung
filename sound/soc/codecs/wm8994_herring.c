@@ -487,6 +487,20 @@ void audio_ctrl_mic_bias_gpio(struct wm8994_platform_data *pdata, int enable)
 	}
 }
 
+static int wm8994_earsel_control(struct wm8994_platform_data *pdata, int en)
+{
+
+	if (!pdata) {
+		pr_err("failed to control wm8994 ear selection\n");
+		return -EINVAL;
+	}
+
+	gpio_set_value(pdata->ear_sel, en);
+
+	return 0;
+
+}
+
 /* Audio Routing routines for the universal board..wm8994 codec*/
 void wm8994_disable_playback_path(struct snd_soc_codec *codec,
 				  enum audio_path path)
@@ -1108,6 +1122,8 @@ void wm8994_set_playback_headset(struct snd_soc_codec *codec)
 
 	DEBUG_LOG("");
 
+	wm8994_earsel_control(wm8994->pdata, 0);
+
 	/* Enable the Timeslot0 to DAC1L */
 	val = wm8994_read(codec, WM8994_DAC1_LEFT_MIXER_ROUTING);
 	val &= ~(WM8994_AIF1DAC1L_TO_DAC1L_MASK);
@@ -1393,6 +1409,8 @@ void wm8994_set_playback_speaker_headset(struct snd_soc_codec *codec)
 	u16 ncompensationresulthigh = 0;
 	u8  nservo4low = 0;
 	u8  nservo4high = 0;
+
+	wm8994_earsel_control(wm8994->pdata, 0);
 
 	/* Enable the Timeslot0 to DAC1L */
 	val = wm8994_read(codec, WM8994_DAC1_LEFT_MIXER_ROUTING);
@@ -1813,6 +1831,7 @@ void wm8994_set_voicecall_headset(struct snd_soc_codec *codec)
 	DEBUG_LOG("");
 
 	audio_ctrl_mic_bias_gpio(wm8994->pdata, 1);
+	wm8994_earsel_control(wm8994->pdata, 1);
 
 	wm8994_set_voicecall_common_setting(codec);
 
