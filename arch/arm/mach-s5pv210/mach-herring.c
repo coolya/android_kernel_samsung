@@ -1511,8 +1511,14 @@ static struct i2c_board_info i2c_devs8[] __initdata = {
 	{
 		I2C_BOARD_INFO("k3g", 0x69),
 		.platform_data = &k3g_pdata,
+		.irq = -1,
 	},
 };
+
+static void k3g_irq_init(void)
+{
+	i2c_devs0[0].irq = (system_rev >= 0x0A) ? IRQ_EINT(29) : -1;
+}
 
 static struct fsa9480_i2c_platform_data fsa9480_pdata = {
 	.usb_sel = GPIO_USB_SEL,
@@ -3687,6 +3693,7 @@ static void __init herring_machine_init(void)
 #ifdef CONFIG_S3C_DEV_I2C2
 	s3c_i2c2_set_platdata(NULL);
 #endif
+	k3g_irq_init();
 	/* H/W I2C lines */
 	if (system_rev >= 0x05) {
 		/* gyro sensor */
