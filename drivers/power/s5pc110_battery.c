@@ -189,18 +189,32 @@ static int s3c_bat_get_property(struct power_supply *bat_ps,
 	return 0;
 }
 
-static int s3c_power_get_property(struct power_supply *bat_ps,
+static int s3c_usb_get_property(struct power_supply *ps,
 				enum power_supply_property psp,
 				union power_supply_propval *val)
 {
-
-	pr_info("%s : psp = %d\n", __func__, psp);
+	struct chg_data *chg = container_of(ps, struct chg_data, psy_usb);
 
 	if (psp != POWER_SUPPLY_PROP_ONLINE)
 		return -EINVAL;
 
-	val->intval = (bat_ps->type == POWER_SUPPLY_TYPE_MAINS
-				|| bat_ps->type == POWER_SUPPLY_TYPE_USB);
+	/* Set enable=1 only if the USB charger is in use */
+	val->intval = (chg->cable_status == CHARGER_USB);
+
+	return 0;
+}
+
+static int s3c_ac_get_property(struct power_supply *ps,
+				enum power_supply_property psp,
+				union power_supply_propval *val)
+{
+	struct chg_data *chg = container_of(ps, struct chg_data, psy_ac);
+
+	if (psp != POWER_SUPPLY_PROP_ONLINE)
+		return -EINVAL;
+
+	/* Set enable=1 only if the AC charger is in use */
+	val->intval = (chg->cable_status == CHARGER_AC);
 
 	return 0;
 }
@@ -551,7 +565,7 @@ static __devinit int max8998_charger_probe(struct platform_device *pdev)
 	chg->psy_usb.num_supplicants = ARRAY_SIZE(supply_list),
 	chg->psy_usb.properties = s3c_power_properties,
 	chg->psy_usb.num_properties = ARRAY_SIZE(s3c_power_properties),
-	chg->psy_usb.get_property = s3c_power_get_property,
+	chg->psy_usb.get_property = s3c_usb_get_property,
 
 	chg->psy_ac.name = "ac",
 	chg->psy_ac.type = POWER_SUPPLY_TYPE_MAINS,
@@ -559,7 +573,7 @@ static __devinit int max8998_charger_probe(struct platform_device *pdev)
 	chg->psy_ac.num_supplicants = ARRAY_SIZE(supply_list),
 	chg->psy_ac.properties = s3c_power_properties,
 	chg->psy_ac.num_properties = ARRAY_SIZE(s3c_power_properties),
-	chg->psy_ac.get_property = s3c_power_get_property,
+	chg->psy_ac.get_property = s3c_ac_get_property,
 
 	chg->present = 1;
 	chg->polling_interval = POLLING_INTERVAL;
