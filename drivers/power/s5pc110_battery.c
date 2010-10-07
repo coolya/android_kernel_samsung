@@ -24,6 +24,7 @@
 #include <linux/irq.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
+#include <linux/mfd/max8998.h>
 #include <linux/mfd/max8998-private.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
@@ -84,6 +85,7 @@ struct chg_data {
 	struct device		*dev;
 	struct max8998_dev	*iodev;
 	struct delayed_work	bat_work;
+	struct max8998_charger_data *pdata;
 
 	struct power_supply	psy_bat;
 	struct power_supply	psy_usb;
@@ -111,6 +113,9 @@ static enum power_supply_property max8998_battery_props[] = {
 	POWER_SUPPLY_PROP_HEALTH,
 	POWER_SUPPLY_PROP_PRESENT,
 	POWER_SUPPLY_PROP_TEMP,
+	POWER_SUPPLY_PROP_ONLINE,
+	POWER_SUPPLY_PROP_VOLTAGE_NOW,
+	POWER_SUPPLY_PROP_CAPACITY,
 };
 
 static enum power_supply_property s3c_power_properties[] = {
@@ -165,6 +170,18 @@ static int s3c_bat_get_property(struct power_supply *bat_ps,
 	case POWER_SUPPLY_PROP_TEMP:
 		val->intval = chg->bat_info.batt_temp;
 		pr_info("psp = %d\n", chg->bat_info.batt_temp);
+		break;
+	case POWER_SUPPLY_PROP_ONLINE:
+		/* battery is always online */
+		val->intval = 1;
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+	case POWER_SUPPLY_PROP_CAPACITY:
+		if (chg->pdata && chg->pdata->psy_fuelgauge &&
+			chg->pdata->psy_fuelgauge->get_property &&
+			chg->pdata->psy_fuelgauge->get_property(chg->pdata->psy_fuelgauge,
+				psp, (union power_supply_propval *)&val->intval) < 0)
+			return -EINVAL;
 		break;
 	default:
 		return -EINVAL;
@@ -509,6 +526,7 @@ err:
 static __devinit int max8998_charger_probe(struct platform_device *pdev)
 {
 	struct max8998_dev *iodev = dev_get_drvdata(pdev->dev.parent);
+	struct max8998_platform_data *pdata = dev_get_platdata(iodev->dev);
 	struct chg_data *chg;
 	int ret = 0;
 
@@ -519,6 +537,7 @@ static __devinit int max8998_charger_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	chg->iodev = iodev;
+	chg->pdata = pdata->charger;
 
 	chg->psy_bat.name = "battery",
 	chg->psy_bat.type = POWER_SUPPLY_TYPE_BATTERY,

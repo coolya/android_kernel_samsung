@@ -65,6 +65,15 @@ struct max8998_regulator_data {
 };
 
 /**
+ * max8998_charger_data - charger data
+ * @id: charger id
+ * @initdata: charger init data (contraints, supplies, ...)
+ */
+struct max8998_charger_data {
+	struct power_supply *psy_fuelgauge;
+};
+
+/**
  * struct max8998_board - packages regulator init data
  * @num_regulators: number of regultors used
  * @regulators: array of defined regulators
@@ -73,6 +82,7 @@ struct max8998_regulator_data {
 struct max8998_platform_data {
 	int				num_regulators;
 	struct max8998_regulator_data	*regulators;
+	struct max8998_charger_data	*charger;
 };
 
 #endif /*  __LINUX_MFD_MAX8998_H */
