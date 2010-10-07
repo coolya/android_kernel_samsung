@@ -181,12 +181,6 @@ static int __init herring_rfkill_probe(struct platform_device *pdev)
 		goto err_req_gpio_bt_nrst;
 	}
 
-	ret = gpio_request(GPIO_BT_WAKE, "GPH2");
-	if (ret < 0) {
-		pr_err("[BT] Failed to request GPIO_BT_WAKE!\n");
-		goto err_req_gpio_bt_wake;
-	}
-
 	/* BT Host Wake IRQ */
 	irq = IRQ_BT_HOST_WAKE;
 
@@ -239,9 +233,6 @@ static int __init herring_rfkill_probe(struct platform_device *pdev)
 	free_irq(irq, NULL);
 
  err_req_irq:
-	gpio_free(GPIO_BT_WAKE);
-
- err_req_gpio_bt_wake:
 	gpio_free(GPIO_BT_nRST);
 
  err_req_gpio_bt_nrst:
