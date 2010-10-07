@@ -14,6 +14,9 @@ struct max17040_platform_data {
 	int (*battery_online)(void);
 	int (*charger_online)(void);
 	int (*charger_enable)(void);
+	int (*power_supply_register)(struct device *parent,
+		struct power_supply *psy);
+	void (*power_supply_unregister)(struct power_supply *psy);
 };
 
 #endif

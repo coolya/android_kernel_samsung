@@ -148,7 +148,7 @@ static void max17040_get_online(struct i2c_client *client)
 {
 	struct max17040_chip *chip = i2c_get_clientdata(client);
 
-	if (chip->pdata->battery_online)
+	if (chip->pdata && chip->pdata->battery_online)
 		chip->online = chip->pdata->battery_online();
 	else
 		chip->online = 1;
@@ -158,7 +158,7 @@ static void max17040_get_status(struct i2c_client *client)
 {
 	struct max17040_chip *chip = i2c_get_clientdata(client);
 
-	if (!chip->pdata->charger_online || !chip->pdata->charger_enable) {
+	if (chip->pdata && (!chip->pdata->charger_online || !chip->pdata->charger_enable)) {
 		chip->status = POWER_SUPPLY_STATUS_UNKNOWN;
 		return;
 	}
@@ -222,7 +222,10 @@ static int __devinit max17040_probe(struct i2c_client *client,
 	chip->battery.properties	= max17040_battery_props;
 	chip->battery.num_properties	= ARRAY_SIZE(max17040_battery_props);
 
-	ret = power_supply_register(&client->dev, &chip->battery);
+	if (chip->pdata && chip->pdata->power_supply_register)
+		ret = chip->pdata->power_supply_register(&client->dev, &chip->battery);
+	else
+		ret = power_supply_register(&client->dev, &chip->battery);
 	if (ret) {
 		dev_err(&client->dev, "failed: power supply register\n");
 		kfree(chip);
@@ -242,7 +245,10 @@ static int __devexit max17040_remove(struct i2c_client *client)
 {
 	struct max17040_chip *chip = i2c_get_clientdata(client);
 
-	power_supply_unregister(&chip->battery);
+	if (chip->pdata && chip->pdata->power_supply_unregister)
+		chip->pdata->power_supply_unregister(&chip->battery);
+	else
+		power_supply_unregister(&chip->battery);
 	cancel_delayed_work(&chip->work);
 	kfree(chip);
 	return 0;
