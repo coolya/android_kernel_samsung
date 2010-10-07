@@ -81,7 +81,6 @@
 #include <linux/kr3dm.h>
 #include <linux/input/k3g.h>
 #include <../../../drivers/video/samsung/s3cfb.h>
-#include <linux/max17040_battery.h>
 #include <linux/sec_jack.h>
 #include <linux/input/mxt224.h>
 
@@ -1627,14 +1626,9 @@ static struct i2c_board_info i2c_devs14[] __initdata = {
 	},
 };
 
-struct max17040_platform_data max17040_pdata = {
-	.power_name = "fuelgauge",
-};
-
 static struct i2c_board_info i2c_devs9[] __initdata = {
 	{
-		I2C_BOARD_INFO("max17040", (0x6D >> 1)),
-		.platform_data = &max17040_pdata,
+		I2C_BOARD_INFO("max1704x", (0x6D >> 1)),
 	},
 };
 
