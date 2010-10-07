@@ -83,6 +83,8 @@
 #include <../../../drivers/video/samsung/s3cfb.h>
 #include <linux/sec_jack.h>
 #include <linux/input/mxt224.h>
+#include <linux/max17040_battery.h>
+#include <linux/mfd/max8998.h>
 
 #include "herring.h"
 
@@ -670,9 +672,12 @@ static struct max8998_regulator_data herring_regulators[] = {
 	{ MAX8998_BUCK4, &herring_buck4_data },
 };
 
+static struct max8998_charger_data herring_charger;
+
 static struct max8998_platform_data max8998_pdata = {
 	.num_regulators = ARRAY_SIZE(herring_regulators),
 	.regulators     = herring_regulators,
+	.charger        = &herring_charger,
 };
 
 struct platform_device sec_device_dpram = {
@@ -1626,9 +1631,27 @@ static struct i2c_board_info i2c_devs14[] __initdata = {
 	},
 };
 
+static int max17040_power_supply_register(struct device *parent,
+	struct power_supply *psy)
+{
+	herring_charger.psy_fuelgauge = psy;
+	return 0;
+}
+
+static void max17040_power_supply_unregister(struct power_supply *psy)
+{
+	herring_charger.psy_fuelgauge = NULL;
+}
+
+static struct max17040_platform_data max17040_pdata = {
+	.power_supply_register = max17040_power_supply_register,
+	.power_supply_unregister = max17040_power_supply_unregister,
+};
+
 static struct i2c_board_info i2c_devs9[] __initdata = {
 	{
-		I2C_BOARD_INFO("max1704x", (0x6D >> 1)),
+		I2C_BOARD_INFO("max17040", (0x6D >> 1)),
+		.platform_data = &max17040_pdata,
 	},
 };
 
