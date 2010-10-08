@@ -1167,7 +1167,7 @@ static void wm8994_shutdown(struct snd_pcm_substream *substream,
 static struct snd_soc_device *wm8994_socdev;
 static struct snd_soc_codec *wm8994_codec;
 
-#define WM8994_RATES SNDRV_PCM_RATE_8000_96000
+#define WM8994_RATES SNDRV_PCM_RATE_44100
 #define WM8994_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE |\
 			SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE)
 static struct snd_soc_dai_ops wm8994_ops = {
