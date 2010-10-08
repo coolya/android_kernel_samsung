@@ -91,8 +91,6 @@ static int vic_class_resume(struct sys_device *dev)
 	struct vic_device *vic = to_vic(dev);
 	void __iomem *base = vic->base;
 
-	printk(KERN_DEBUG "%s: resuming vic at %p\n", __func__, base);
-
 	/* re-initialise static settings */
 	vic_init2(base);
 
@@ -115,8 +113,6 @@ static int vic_class_suspend(struct sys_device *dev, pm_message_t state)
 {
 	struct vic_device *vic = to_vic(dev);
 	void __iomem *base = vic->base;
-
-	printk(KERN_DEBUG "%s: suspending vic at %p\n", __func__, base);
 
 	vic->int_select = readl(base + VIC_INT_SELECT);
 	vic->int_enable = readl(base + VIC_INT_ENABLE);
