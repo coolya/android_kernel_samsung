@@ -41,11 +41,12 @@
 #include <mach/regs-clock.h>
 #include <mach/gpio.h>
 #include <mach/gpio-herring.h>
-#include <mach/fsa9480_i2c.h>
 #include <mach/adc.h>
 #include <mach/param.h>
 #include <mach/system.h>
 
+#include <linux/usb/gadget.h>
+#include <linux/fsa9480.h>
 #include <linux/pn544.h>
 #include <linux/notifier.h>
 #include <linux/reboot.h>
@@ -1865,10 +1866,21 @@ static void k3g_irq_init(void)
 	i2c_devs0[0].irq = (system_rev >= 0x0A) ? IRQ_EINT(29) : -1;
 }
 
-static struct fsa9480_i2c_platform_data fsa9480_pdata = {
-	.usb_sel = GPIO_USB_SEL,
-	.uart_sel = GPIO_UART_SEL,
-	.jack_nint = GPIO_JACK_nINT,
+
+static void fsa9480_usb_cb(bool attached)
+{
+	struct usb_gadget *gadget = platform_get_drvdata(&s3c_device_usbgadget);
+
+	if (gadget) {
+		if (attached)
+			usb_gadget_vbus_connect(gadget);
+		else
+			usb_gadget_vbus_disconnect(gadget);
+	}
+}
+
+static struct fsa9480_platform_data fsa9480_pdata = {
+	.usb_cb = fsa9480_usb_cb,
 };
 
 static struct i2c_board_info i2c_devs7[] __initdata = {
