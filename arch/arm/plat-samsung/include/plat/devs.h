@@ -132,6 +132,10 @@ extern struct platform_device s5p_device_rtc;
 extern struct platform_device s3c_device_adc;
 /* s3c2440 specific devices */
 
+extern struct platform_device s5pv210_device_pdma0;
+extern struct platform_device s5pv210_device_pdma1;
+extern struct platform_device s5pv210_device_mdma;
+
 #ifdef CONFIG_CPU_S3C2440
 
 extern struct platform_device s3c_device_camif;

@@ -547,6 +547,31 @@ static struct clk init_clocks_disable[] = {
 	},
 };
 
+static struct clk init_dmaclocks[] = {
+	{
+		.name           = "dma",
+		.id             = 0,
+		.parent         = &clk_hclk_dsys.clk,
+		.enable         = s5pv210_clk_ip0_ctrl,
+		.ctrlbit        = (1<<2),
+		.dev            = &s5pv210_device_mdma.dev,
+	}, {
+		.name           = "dma",
+		.id             = 1,
+		.parent         = &clk_hclk_psys.clk,
+		.enable         = s5pv210_clk_ip0_ctrl,
+		.ctrlbit        = (1<<3),
+		.dev            = &s5pv210_device_pdma0.dev,
+	}, {
+		.name           = "dma",
+		.id             = 2,
+		.parent         = &init_dmaclocks[1],
+		.enable         = s5pv210_clk_ip0_ctrl,
+		.ctrlbit        = (1<<4),
+		.dev            = &s5pv210_device_pdma1.dev,
+	},
+};
+
 static  int s5pc11x_clk_out_set_rate(struct clk *clk, unsigned long rate);
 static int s5pc11x_clk_out_set_parent(struct clk *clk, struct clk *parent);
 
@@ -562,24 +587,6 @@ static struct clk init_clocks[] = {
 		.parent		= &clk_pclk_psys.clk,
 		.enable		= s5pv210_clk_ip3_ctrl,
 		.ctrlbit	= (1<<22),
-	}, {
-		.name		= "pdma1",
-		.id		= -1,
-		.parent		= &clk_hclk_psys.clk,
-		.enable		= s5pv210_clk_ip0_ctrl,
-		.ctrlbit	= (1<<4),
-	}, {
-		.name		= "pdma0",
-		.id		= -1,
-		.parent		= &clk_hclk_psys.clk,
-		.enable		= s5pv210_clk_ip0_ctrl,
-		.ctrlbit	= (1<<3),
-	}, {
-		.name		= "mdma",
-		.id		= -1,
-		.parent		= &clk_hclk_dsys.clk,
-		.enable		= s5pv210_clk_ip0_ctrl,
-		.ctrlbit	= (1<<2),
 	}, {
 		.name		= "hclk_imem",
 		.id		= -1,
@@ -1536,6 +1543,9 @@ void __init s5pv210_register_clocks(void)
 		}
 		(clkp->enable)(clkp, 0);
 	}
+
+	/* Register DMA Clock */
+	s3c_register_clocks(init_dmaclocks, ARRAY_SIZE(init_dmaclocks));
 
 	s3c_pwmclk_init();
 }
