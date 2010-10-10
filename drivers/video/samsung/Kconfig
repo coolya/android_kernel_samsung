@@ -16,7 +16,7 @@ config FB_S3C
 config FB_S3C_SPLASH_SCREEN
         bool "SPLASH_SCREEN on LCD"
         depends on FB_S3C
-	default y
+	default n
 
 config FB_S3C_LCD_INIT
         bool "LCD init in kernel"
