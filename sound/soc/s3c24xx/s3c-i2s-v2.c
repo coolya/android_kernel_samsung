@@ -31,7 +31,8 @@
 #include <sound/soc.h>
 
 #include <plat/regs-iis.h>
-
+#include <mach/map.h>
+#include <mach/regs-audss.h>
 #include <mach/dma.h>
 
 #include "s3c-i2s-v2.h"
@@ -63,7 +64,8 @@ static inline struct s3c_i2sv2_info *to_info(struct snd_soc_dai *cpu_dai)
 #if S3C2412_I2S_DEBUG_CON
 static void dbg_showcon(const char *fn, u32 con)
 {
-	printk(KERN_DEBUG "%s: LRI=%d, TXFEMPT=%d, RXFEMPT=%d, TXFFULL=%d, RXFFULL=%d\n", fn,
+	printk(KERN_DEBUG "%s: LRI=%d, TXFEMPT=%d, RXFEMPT=%d, TXFFULL=%d,\
+		RXFFULL=%d\n", fn,
 	       bit_set(con, S3C2412_IISCON_LRINDEX),
 	       bit_set(con, S3C2412_IISCON_TXFIFO_EMPTY),
 	       bit_set(con, S3C2412_IISCON_RXFIFO_EMPTY),
@@ -274,7 +276,7 @@ static int s3c2412_i2s_set_fmt(struct snd_soc_dai *cpu_dai,
 	pr_debug("Entered %s\n", __func__);
 
 	iismod = readl(i2s->regs + S3C2412_IISMOD);
-	pr_debug("hw_params r: IISMOD: %x \n", iismod);
+	pr_debug("hw_params r: IISMOD: %x\n", iismod);
 
 #if defined(CONFIG_CPU_S3C2412) || defined(CONFIG_CPU_S3C2413)
 #define IISMOD_MASTER_MASK S3C2412_IISMOD_MASTER_MASK
@@ -332,7 +334,7 @@ static int s3c2412_i2s_set_fmt(struct snd_soc_dai *cpu_dai,
 	}
 
 	writel(iismod, i2s->regs + S3C2412_IISMOD);
-	pr_debug("hw_params w: IISMOD: %x \n", iismod);
+	pr_debug("hw_params w: IISMOD: %x\n", iismod);
 	return 0;
 }
 
@@ -349,15 +351,17 @@ int s3c2412_i2s_hw_params(struct snd_pcm_substream *substream,
 
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-		snd_soc_dai_set_dma_data(rtd->dai->cpu_dai, substream,i2s->dma_playback);
+		snd_soc_dai_set_dma_data(rtd->dai->cpu_dai, substream,
+						i2s->dma_playback);
 	else
-		snd_soc_dai_set_dma_data(rtd->dai->cpu_dai, substream,i2s->dma_capture);
+		snd_soc_dai_set_dma_data(rtd->dai->cpu_dai, substream,
+						i2s->dma_capture);
 
 	/* Working copies of register */
 	iismod = readl(i2s->regs + S3C2412_IISMOD);
 	pr_debug("%s: r: IISMOD: %x\n", __func__, iismod);
 
-	switch(params_channels(params)){
+	switch (params_channels(params)) {
 	case 1:
 		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 			i2s->dma_playback->dma_size = 2;
@@ -503,7 +507,8 @@ static int s3c2412_i2s_set_clkdiv(struct snd_soc_dai *cpu_dai,
 		reg &= ~S3C2412_IISMOD_BCLK_MASK;
 		writel(reg | div, i2s->regs + S3C2412_IISMOD);
 
-		pr_debug("%s: MOD=%08x\n", __func__, readl(i2s->regs + S3C2412_IISMOD));
+		pr_debug("%s: MOD=%08x\n", __func__,
+				readl(i2s->regs + S3C2412_IISMOD));
 		break;
 
 	case S3C_I2SV2_DIV_RCLK:
@@ -535,7 +540,8 @@ static int s3c2412_i2s_set_clkdiv(struct snd_soc_dai *cpu_dai,
 		reg = readl(i2s->regs + S3C2412_IISMOD);
 		reg &= ~S3C2412_IISMOD_RCLK_MASK;
 		writel(reg | div, i2s->regs + S3C2412_IISMOD);
-		pr_debug("%s: MOD=%08x\n", __func__, readl(i2s->regs + S3C2412_IISMOD));
+		pr_debug("%s: MOD=%08x\n", __func__,
+				readl(i2s->regs + S3C2412_IISMOD));
 		break;
 
 	case S3C_I2SV2_DIV_PRESCALER:
@@ -545,7 +551,8 @@ static int s3c2412_i2s_set_clkdiv(struct snd_soc_dai *cpu_dai,
 		} else {
 			writel(0x0, i2s->regs + S3C2412_IISPSR);
 		}
-		pr_debug("%s: PSR=%08x\n", __func__, readl(i2s->regs + S3C2412_IISPSR));
+		pr_debug("%s: PSR=%08x\n", __func__,
+				readl(i2s->regs + S3C2412_IISPSR));
 		break;
 
 	default:
@@ -658,9 +665,6 @@ EXPORT_SYMBOL_GPL(s3c_i2sv2_probe);
 
 #ifdef CONFIG_PM
 
-#include <mach/map.h>
-#define S3C_VA_AUDSS	S3C_ADDR(0x01600000)	/* Audio SubSystem */
-#include <mach/regs-audss.h>
 static int s3c2412_i2s_suspend(struct snd_soc_dai *dai)
 {
 	struct s3c_i2sv2_info *i2s = to_info(dai);
@@ -671,7 +675,7 @@ static int s3c2412_i2s_suspend(struct snd_soc_dai *dai)
 	i2s->suspend_iispsr = readl(i2s->regs + S3C2412_IISPSR);
 
 	/* Is this dai for I2Sv5? */
-	if(dai->id == 0)
+	if (dai->id == 0)
 		i2s->suspend_audss_clksrc = readl(S5P_CLKSRC_AUDSS);
 
 	/* some basic suspend checks */
@@ -702,7 +706,7 @@ static int s3c2412_i2s_resume(struct snd_soc_dai *dai)
 	writel(i2s->suspend_iispsr, i2s->regs + S3C2412_IISPSR);
 
 	/* Is this dai for I2Sv5? */
-	if(dai->id == 0)
+	if (dai->id == 0)
 		writel(i2s->suspend_audss_clksrc, S5P_CLKSRC_AUDSS);
 
 	writel(S3C2412_IISFIC_RXFLUSH | S3C2412_IISFIC_TXFLUSH,

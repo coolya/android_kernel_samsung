@@ -92,5 +92,5 @@ extern int s3c_i2sv2_probe(struct platform_device *pdev,
  * soc core.
  */
 extern int s3c_i2sv2_register_dai(struct snd_soc_dai *dai);
-
+extern void s5p_idma_init(void *);
 #endif /* __SND_SOC_S3C24XX_S3C_I2SV2_I2S_H */

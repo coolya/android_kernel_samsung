@@ -22,6 +22,7 @@
 #include <mach/regs-clock.h>
 #include <plat/regs-iis.h>
 
+#include <mach/regs-audss.h>
 #include <mach/dma.h>
 #include "s3c-dma.h"
 #include "s3c-i2s-v2.h"
@@ -33,8 +34,6 @@
 #define S3C64XX_CLKSRC_PCLK	(0)
 #define S3C64XX_CLKSRC_MUX	(1)
 #define S3C64XX_CLKSRC_CDCLK    (2)
-
-extern void s5p_idma_init(void *);
 
 static void __iomem *s5p_i2s0_regs;
 
@@ -63,7 +62,8 @@ static void s5p_snd_rxctrl(int on)
 	con = readl(s5p_i2s0_regs + S3C2412_IISCON);
 	mod = readl(s5p_i2s0_regs + S3C2412_IISMOD);
 
-	pr_debug("%s: On=%d..IIS: CON=%x MOD=%x FIC=%x\n", __func__,on, con, mod, fic);
+	pr_debug("%s: On=%d..IIS: CON=%x MOD=%x FIC=%x\n",
+				__func__, on, con, mod, fic);
 
 	if (on) {
 		con |= S3C2412_IISCON_RXDMA_ACTIVE | S3C2412_IISCON_IIS_ACTIVE;
@@ -81,9 +81,10 @@ static void s5p_snd_rxctrl(int on)
 			mod |= S3C2412_IISMOD_MODE_TXRX;
 			break;
 
-//		default:
-//			dev_err(i2s->dev, "RXEN: Invalid MODE %x in IISMOD\n",
-//				mod & S3C2412_IISMOD_MODE_MASK);
+		default:
+			printk(KERN_WARNING
+				"RXEN: Invalid MODE %x in IISMOD\n",
+				mod & S3C2412_IISMOD_MODE_MASK);
 		}
 
 		writel(mod, s5p_i2s0_regs + S3C2412_IISMOD);
@@ -106,9 +107,10 @@ static void s5p_snd_rxctrl(int on)
 			mod |= S3C2412_IISMOD_MODE_TXONLY;
 			break;
 
-//		default:
-//			dev_err(i2s->dev, "RXDIS: Invalid MODE %x in IISMOD\n",
-//				mod & S3C2412_IISMOD_MODE_MASK);
+		default:
+			printk(KERN_WARNING
+				"RXDIS: Invalid MODE %x in IISMOD\n",
+				mod & S3C2412_IISMOD_MODE_MASK);
 		}
 
 		writel(con, s5p_i2s0_regs + S3C2412_IISCON);
@@ -124,7 +126,8 @@ static void s5p_snd_txctrl(int on)
 	u32 iiscon, iismod;
 	iiscon = readl(s5p_i2s0_regs + S3C2412_IISCON);
 	iismod = readl(s5p_i2s0_regs + S3C2412_IISMOD);
-	pr_debug("%s: On=%d . IIS: CON=%x MOD=%x \n", __func__,on, iiscon, iismod);
+	pr_debug("%s: On=%d . IIS: CON=%x MOD=%x\n",
+			__func__, on, iiscon, iismod);
 
 	if (on) {
 		iiscon |= S3C2412_IISCON_IIS_ACTIVE;
@@ -144,7 +147,8 @@ static void s5p_snd_txctrl(int on)
 			break;
 
 		default:
-			printk("TXEN: Invalid MODE %x in IISMOD\n",
+			printk(KERN_WARNING
+				"TXEN: Invalid MODE %x in IISMOD\n",
 				iismod & S3C2412_IISMOD_MODE_MASK);
 			break;
 		}
@@ -175,11 +179,12 @@ static void s5p_snd_txctrl(int on)
 			break;
 
 		default:
-			printk("TXDIS: Invalid MODE %x in IISMOD\n",
+			printk(KERN_WARNING
+				"TXDIS: Invalid MODE %x in IISMOD\n",
 				iismod & S3C2412_IISMOD_MODE_MASK);
 			break;
 		}
-	
+
 
 		writel(iismod, s5p_i2s0_regs + S3C2412_IISMOD);
 		writel(iiscon, s5p_i2s0_regs + S3C2412_IISCON);
@@ -219,11 +224,10 @@ int s5p_i2s_hw_params(struct snd_pcm_substream *substream,
 		struct snd_pcm_hw_params *params, struct snd_soc_dai *dai)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_dai_link *dailink = rtd->dai;
 	u32 iismod;
 
-	//dailink->cpu_dai->dma_data = &s5p_i2s_sec_pcm_out;
-	snd_soc_dai_set_dma_data(rtd->dai->cpu_dai, substream,&s5p_i2s_sec_pcm_out);// ..new way of setting DMA info
+	snd_soc_dai_set_dma_data(rtd->dai->cpu_dai,
+				substream, &s5p_i2s_sec_pcm_out);
 
 	iismod = readl(s5p_i2s0_regs + S3C2412_IISMOD);
 
@@ -253,9 +257,14 @@ int s5p_i2s_startup(struct snd_soc_dai *dai)
 	writel(iismod, s5p_i2s0_regs + S3C2412_IISMOD);
 
 	s5p_snd_txctrl(0);
-	//s5p_snd_rxctrl(0);//Don't turn-off RX setting as recording may b active during playback startup
+	/* 
+	* Don't turn-off RX setting as recording may be
+	* active during playback startup
+	* s5p_snd_rxctrl(0);
+	*/
 
-	/* FIFOs must be flushed before enabling PSR and other MOD bits, so we do it here. */
+	/* FIFOs must be flushed before enabling PSR
+	*  and other MOD bits, so we do it here. */
 	if (iiscon & S5P_IISCON_TXSDMACTIVE)
 		return 0;
 
@@ -275,7 +284,7 @@ int s5p_i2s_startup(struct snd_soc_dai *dai)
 }
 EXPORT_SYMBOL_GPL(s5p_i2s_startup);
 
-int i2s_trigger_stop = 0;
+int i2s_trigger_stop ;
 EXPORT_SYMBOL_GPL(i2s_trigger_stop);
 int s5p_i2s_trigger(struct snd_pcm_substream *substream,
 		int cmd, struct snd_soc_dai *dai)
@@ -316,10 +325,6 @@ void s5p_i2s_sec_init(void *regs, dma_addr_t phys_base)
 {
 	u32 val;
 #ifdef CONFIG_ARCH_S5PV210
-/* S5PC110 or S5PV210 */
-//#include <plat/map.h>
-#define S3C_VA_AUDSS	S3C_ADDR(0x01600000)	/* Audio SubSystem */
-#include <mach/regs-audss.h>
 	/* We use I2SCLK for rate generation, so set EPLLout as
 	 * the parent of I2SCLK.
 	 */
