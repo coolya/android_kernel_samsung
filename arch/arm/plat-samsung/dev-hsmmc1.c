@@ -79,4 +79,6 @@ void s3c_sdhci1_set_platdata(struct s3c_sdhci_platdata *pd)
 		set->detect_ext_cd = pd->detect_ext_cd;
 	if (pd->detect_ext_cd)
 		set->detect_ext_cd = pd->detect_ext_cd;
+	if (pd->built_in)
+		set->built_in = pd->built_in;
 }

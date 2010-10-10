@@ -57,6 +57,10 @@ struct s3c_sdhci_platdata {
 	/* add to deal with GPIO as a card write protection pin */
 	void            (*cfg_wp) (void);
 	int             (*get_ro) (struct mmc_host *mmc);
+
+        /* add to deal with non-removable device */
+        int     built_in;
+
 };
 
 /**
