@@ -68,7 +68,6 @@ static struct regulator_init_data s5pv210_pd_audio_data = {
 	.constraints = {
 		.valid_modes_mask	= REGULATOR_MODE_NORMAL,
 		.valid_ops_mask		= REGULATOR_CHANGE_STATUS,
-		.always_on		= 1,
 	},
 	.num_consumer_supplies	= ARRAY_SIZE(s5pv210_pd_audio_supply),
 	.consumer_supplies	= s5pv210_pd_audio_supply,
