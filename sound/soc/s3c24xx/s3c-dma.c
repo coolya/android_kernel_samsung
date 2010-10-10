@@ -195,6 +195,11 @@ static int s3c_dma_hw_params(struct snd_pcm_substream *substream,
 	prtd->dma_start = runtime->dma_addr;
 	prtd->dma_pos = prtd->dma_start;
 	prtd->dma_end = prtd->dma_start + totbytes;
+
+	pr_debug("DmaAddr=@%x Total=%lubytes PrdSz=%u #Prds=%u dma_area=0x%x\n",
+			prtd->dma_start, totbytes, params_period_bytes(params),
+			params_periods(params), (unsigned int)runtime->dma_area);
+
 	spin_unlock_irq(&prtd->lock);
 
 	return 0;
@@ -463,23 +468,11 @@ static int s3c_dma_new(struct snd_card *card,
 
 struct snd_soc_platform s3c24xx_soc_platform = {
 	.name		= "s3c24xx-audio",
-	.pcm_ops 	= &s3c_dma_ops,
+	.pcm_ops	= &s3c_dma_ops,
 	.pcm_new	= s3c_dma_new,
 	.pcm_free	= s3c_dma_free_dma_buffers,
 };
 EXPORT_SYMBOL_GPL(s3c24xx_soc_platform);
-
-static int __init s3c24xx_soc_platform_init(void)
-{
-	return snd_soc_register_platform(&s3c24xx_soc_platform);
-}
-module_init(s3c24xx_soc_platform_init);
-
-static void __exit s3c24xx_soc_platform_exit(void)
-{
-	snd_soc_unregister_platform(&s3c24xx_soc_platform);
-}
-module_exit(s3c24xx_soc_platform_exit);
 
 MODULE_AUTHOR("Ben Dooks, <ben@simtec.co.uk>");
 MODULE_DESCRIPTION("Samsung S3C Audio DMA module");

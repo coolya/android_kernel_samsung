@@ -2,7 +2,7 @@
  * s3c-dma-wrapper.c  --  S3C DMA Platform Wrapper Driver
  *
  * Copyright (c) 2010 Samsung Electronics Co. Ltd
- * 	Jaswinder Singh <jassi.brar@samsung.com>
+ *	Jaswinder Singh <jassi.brar@samsung.com>
  *
  *  This program is free software; you can redistribute  it and/or modify it
  *  under  the terms of  the GNU General  Public License as published by the
@@ -11,9 +11,8 @@
  */
 
 #include <sound/soc.h>
-
-extern struct snd_soc_platform idma_soc_platform;
-extern struct snd_soc_platform s3c24xx_soc_platform;
+#include "s3c-dma.h"
+#include "s3c-idma.h"
 
 static int s3c_wrpdma_hw_params(struct snd_pcm_substream *substream,
 		struct snd_pcm_hw_params *params)
@@ -135,7 +134,7 @@ static int s3c_wrpdma_close(struct snd_pcm_substream *substream)
 		return 0;
 }
 
-static int s3c_wrpdma_ioctl(struct snd_pcm_substream * substream,
+static int s3c_wrpdma_ioctl(struct snd_pcm_substream *substream,
 		unsigned int cmd, void *arg)
 {
 	struct snd_soc_platform *platform;
@@ -225,7 +224,7 @@ static int s3c_wrpdma_pcm_new(struct snd_card *card,
 
 struct snd_soc_platform s3c_dma_wrapper = {
 	.name		= "samsung-audio",
-	.pcm_ops 	= &s3c_wrpdma_ops,
+	.pcm_ops	= &s3c_wrpdma_ops,
 	.pcm_new	= s3c_wrpdma_pcm_new,
 	.pcm_free	= s3c_wrpdma_pcm_free,
 };
