@@ -450,6 +450,11 @@ static int __devinit sdhci_s3c_probe(struct platform_device *pdev)
 	else
 		host->mmc->caps = 0;
 
+	/* Set pm_flags for built_in device */
+	host->mmc->pm_caps = MMC_PM_KEEP_POWER | MMC_PM_IGNORE_PM_NOTIFY;
+	if (pdata->built_in)
+		host->mmc->pm_flags = MMC_PM_KEEP_POWER | MMC_PM_IGNORE_PM_NOTIFY;
+
 	/* to add external irq as a card detect signal */
 	if (pdata->cfg_ext_cd) {
 		pdata->cfg_ext_cd();
