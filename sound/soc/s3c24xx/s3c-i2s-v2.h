@@ -48,6 +48,7 @@ struct s3c_i2sv2_info {
 	struct clk	*iis_cclk;
 	struct clk	*iis_clk;
 	struct clk	*iis_busclk;
+	struct regulator	*regulator;
 
 	unsigned char	 master;
 

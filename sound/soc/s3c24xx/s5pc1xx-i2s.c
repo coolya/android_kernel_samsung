@@ -18,6 +18,7 @@
 #include <linux/device.h>
 #include <linux/clk.h>
 #include <linux/io.h>
+#include <linux/regulator/consumer.h>
 
 #include <sound/soc.h>
 
@@ -99,6 +100,9 @@ void s5p_i2s_set_clk_enabled(struct snd_soc_dai *dai, bool state)
 	pr_debug("..entering %s\n", __func__);
 
 	if (state) {
+		if (audio_clk_gated == 1)
+			regulator_enable(i2s->regulator);
+
 		if (dai->id == 0) {	/* I2S V5.1? */
 			clk_enable(i2s->iis_ipclk);
 			clk_enable(i2s->iis_clk);
@@ -111,6 +115,9 @@ void s5p_i2s_set_clk_enabled(struct snd_soc_dai *dai, bool state)
 			clk_disable(i2s->iis_clk);
 			clk_disable(i2s->iis_ipclk);
 		}
+
+		if (audio_clk_gated == 0)
+			regulator_disable(i2s->regulator);
 
 		audio_clk_gated = 1;
 	}
@@ -667,6 +674,17 @@ static __devinit int s3c64xx_iis_dev_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "Unable to configure gpio\n");
 		return -EINVAL;
 	}
+
+	/* Get i2s power domain regulator */
+	i2s->regulator = regulator_get(&pdev->dev, "pd");
+	if (IS_ERR(i2s->regulator)) {
+		dev_err(&pdev->dev, "%s: failed to get resource %s\n",
+				__func__, "i2s");
+		return PTR_ERR(i2s->regulator);
+	}
+
+	/* Enable Power domain */
+	regulator_enable(i2s->regulator);
 
 	/* Audio Clock
 	 * fout_epll >> mout_epll >> sclk_audio
