@@ -100,7 +100,7 @@ config	SND_S5P_WM8994_MASTER
 config  S5P_INTERNAL_DMA
 	bool "IIS operate with Internal DMA"
 	depends on SND_S5P_SOC_WM8994
-	default n 
+	default y
 	help
 	  Say Y for IIS to operate with Internal DMA(IIS's own DMA)
 	 
