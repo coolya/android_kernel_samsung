@@ -1507,34 +1507,56 @@ static int s5k4ecgx_power_en(int onoff)
 	return s5k4ecgx_power_off();
 }
 
-static  int s5k4ecgx_flash(int lux_val)
-{
-	int i;
+#define FLASH_MOVIE_MODE_CURRENT_50_PERCENT	7
 
-	if (lux_val == 100) {
-		gpio_set_value(GPIO_FLASH_EN, 0);
-		for (i = lux_val; i > 1; i--) {
-			gpio_set_value(GPIO_CAM_FLASH_EN_SET, 1);
-			udelay(1);
-			gpio_set_value(GPIO_CAM_FLASH_EN_SET, 0);
-			udelay(1);
-		}
-		gpio_set_value(GPIO_CAM_FLASH_EN_SET, 1);
-		msleep(2);
-	} else if (lux_val == 0) {
-		gpio_set_value(GPIO_FLASH_EN, 0);
+#define FLASH_TIME_LATCH_US			500
+#define FLASH_TIME_EN_SET_US			1
+
+/* The AAT1274 uses a single wire interface to write data to its
+ * control registers. An incoming value is written by sending a number
+ * of rising edges to EN_SET. Data is 4 bits, or 1-16 pulses, and
+ * addresses are 17 pulses or more. Data written without an address
+ * controls the current to the LED via the default address 17. */
+static void aat1274_write(int value)
+{
+	while (value--) {
 		gpio_set_value(GPIO_CAM_FLASH_EN_SET, 0);
-	} else {
-		gpio_set_value(GPIO_FLASH_EN, 1);
-		udelay(20);
-		for (i = lux_val; i > 1; i--) {
-			gpio_set_value(GPIO_CAM_FLASH_EN_SET, 1);
-			udelay(1);
-			gpio_set_value(GPIO_CAM_FLASH_EN_SET, 0);
-			udelay(1);
-		}
+		udelay(FLASH_TIME_EN_SET_US);
 		gpio_set_value(GPIO_CAM_FLASH_EN_SET, 1);
-		msleep(2);
+		udelay(FLASH_TIME_EN_SET_US);
+	}
+	udelay(FLASH_TIME_LATCH_US);
+	/* At this point, the LED will be on */
+}
+
+static int aat1274_flash(int enable)
+{
+	/* Turn main flash on or off by asserting a value on the EN line. */
+	gpio_set_value(GPIO_FLASH_EN, !!enable);
+
+	return 0;
+}
+
+static int aat1274_af_assist(int enable)
+{
+	/* Turn assist light on or off by asserting a value on the EN_SET
+	 * line. The default illumination level of 1/7.3 at 100% is used */
+	gpio_set_value(GPIO_CAM_FLASH_EN_SET, !!enable);
+	if (!enable)
+		gpio_set_value(GPIO_FLASH_EN, 0);
+
+	return 0;
+}
+
+static int aat1274_torch(int enable)
+{
+	/* Turn torch mode on or off by writing to the EN_SET line. A level
+	 * of 1/7.3 and 50% is used (half AF assist brightness). */
+	if (enable) {
+		aat1274_write(FLASH_MOVIE_MODE_CURRENT_50_PERCENT);
+	} else {
+		gpio_set_value(GPIO_CAM_FLASH_EN_SET, 0);
+		gpio_set_value(GPIO_FLASH_EN, 0);
 	}
 
 	return 0;
@@ -1545,7 +1567,9 @@ static struct s5k4ecgx_platform_data s5k4ecgx_plat = {
 	.default_height = 480,
 	.pixelformat = V4L2_PIX_FMT_UYVY,
 	.freq = 24000000,
-	.flash_onoff = &s5k4ecgx_flash,
+	.flash_onoff = &aat1274_flash,
+	.af_assist_onoff = &aat1274_af_assist,
+	.torch_onoff = &aat1274_torch,
 };
 
 static struct i2c_board_info  s5k4ecgx_i2c_info = {
