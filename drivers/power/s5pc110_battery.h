@@ -167,8 +167,8 @@ enum {
 	BATT_RESET_SOC,
 };
 
-#define TOTAL_CHARGING_TIME	(6*60*60*1000)	/* 6 hours */
-#define TOTAL_RECHARGING_TIME	  (90*60*1000)	/* 1.5 hours */
+#define TOTAL_CHARGING_TIME	(6*60*60)	/* 6 hours */
+#define TOTAL_RECHARGING_TIME	  (90*60)	/* 1.5 hours */
 
 #define COMPENSATE_VIBRATOR		19
 #define COMPENSATE_CAMERA		25
@@ -184,6 +184,5 @@ enum {
 
 #define SOC_LB_FOR_POWER_OFF		27
 
-#define FULL_CHARGE_COND_VOLTAGE	4000
-#define RECHARGE_COND_VOLTAGE		4130
+#define RECHARGE_COND_VOLTAGE		4130000
 #define RECHARGE_COND_TIME		(30*1000)	/* 30 seconds */

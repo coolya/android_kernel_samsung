@@ -71,6 +71,7 @@ struct max8998_regulator_data {
  */
 struct max8998_charger_data {
 	struct power_supply *psy_fuelgauge;
+	int (*is_usb_cable) (void);
 };
 
 /**

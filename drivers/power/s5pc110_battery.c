@@ -43,7 +43,9 @@
 #include <mach/regs-gpio.h>
 #include <mach/adc.h>
 #include <plat/gpio-cfg.h>
+#include <linux/android_alarm.h>
 #include "s5pc110_battery.h"
+#include <linux/mfd/max8998.h>
 
 #define POLLING_INTERVAL	1000
 #define ADC_TOTAL_COUNT		10
@@ -61,16 +63,32 @@
 #define OFFSET_CAM_FLASH		(0x1 << 9)
 #define OFFSET_BOOTING			(0x1 << 10)
 
+#define FAST_POLL			(1 * 60)
+#define SLOW_POLL			(10 * 60)
+
+#define DISCONNECT_BAT_FULL		0x1
+#define DISCONNECT_TEMP_OVERHEAT	0x2
+#define DISCONNECT_TEMP_FREEZE		0x4
+#define DISCONNECT_OVER_TIME		0x8
+
+#define ATTACH_USB	1
+#define ATTACH_TA	2
+
 struct battery_info {
 	u32 batt_temp;		/* Battery Temperature (C) from ADC */
+	u32 old_temp;
 	u32 batt_temp_adc;	/* Battery Temperature ADC value */
-	u32 charging_source:2;	/* 0: no cable, 1:usb, 2:AC */
-	int charging_enabled;	/* 0: Disable, 1: Enable */
 	u32 batt_health;	/* Battery Health (Authority) */
-	u32 batt_is_full;	/* 0 : Not full 1: Full */
-	u32 batt_is_recharging; /* 0 : Not recharging 1: Recharging */
+	u32 old_health;
+	u32 dis_reason;
+	u32 batt_vcell;
+	u32 old_vcell;
+	u32 batt_soc;
+	u32 old_soc;
 	u32 charging_status;
-	int charger_online:1;
+	u32 charging_source;  /* 0: no cable, 1:usb, 2:AC */
+	bool batt_is_full;      /* 0 : Not full 1: Full */
+	bool old_is_full;
 };
 
 struct adc_sample_info {
@@ -90,18 +108,23 @@ struct chg_data {
 	struct power_supply	psy_bat;
 	struct power_supply	psy_usb;
 	struct power_supply	psy_ac;
-
+	struct alarm		alarm;
+	struct workqueue_struct *monitor_wqueue;
 	struct wake_lock	vbus_wake_lock;
+	struct wake_lock	work_wake_lock;
 	struct adc_sample_info	adc_sample[ENDOFADC];
 	struct battery_info	bat_info;
 	struct mutex		mutex;
 
 	charging_device_type	current_device_type;
 	enum charger_type_t	cable_status;
-	int			force_update;
 	int			present;
+	int			timestamp;
+	int			set_batt_full;
+	unsigned long		discharging_time;
 	unsigned int		polling_interval;
-	unsigned int		device_state;
+	int                     slow_poll;
+	ktime_t                 last_poll;
 };
 
 static char *supply_list[] = {
@@ -131,7 +154,7 @@ static void s3c_bat_update_charging_status(struct chg_data *chg)
 	switch (charger) {
 	case CHARGER_BATTERY:
 		chg->bat_info.charging_status =
-			POWER_SUPPLY_STATUS_NOT_CHARGING;
+			POWER_SUPPLY_STATUS_DISCHARGING;
 		break;
 	case CHARGER_USB:
 	case CHARGER_AC:
@@ -141,13 +164,12 @@ static void s3c_bat_update_charging_status(struct chg_data *chg)
 		break;
 	case CHARGER_DISCHARGE:
 		chg->bat_info.charging_status =
-			POWER_SUPPLY_STATUS_DISCHARGING;
+			POWER_SUPPLY_STATUS_NOT_CHARGING;
 		break;
 	default:
 		chg->bat_info.charging_status =
 			POWER_SUPPLY_STATUS_UNKNOWN;
 	}
-
 }
 
 static int s3c_bat_get_property(struct power_supply *bat_ps,
@@ -221,24 +243,25 @@ static int s3c_ac_get_property(struct power_supply *ps,
 
 static int s3c_bat_get_adc_data(enum adc_channel_type adc_ch)
 {
-	int adc_arr[ADC_DATA_ARR_SIZE];
+	int adc_data;
 	int adc_max = 0;
 	int adc_min = 0;
 	int adc_total = 0;
 	int i;
 
 	for (i = 0; i < ADC_DATA_ARR_SIZE; i++) {
-		adc_arr[i] = s3c_adc_get_adc_data(adc_ch);
+		adc_data = s3c_adc_get_adc_data(adc_ch);
+
 		if (i != 0) {
-			if (adc_arr[i] > adc_max)
-				adc_max = adc_arr[i];
-			else if (adc_arr[i] < adc_min)
-				adc_min = adc_arr[i];
+			if (adc_data > adc_max)
+				adc_max = adc_data;
+			else if (adc_data < adc_min)
+				adc_min = adc_data;
 		} else {
-			adc_max = adc_arr[0];
-			adc_min = adc_arr[0];
+			adc_max = adc_data;
+			adc_min = adc_data;
 		}
-		adc_total += adc_arr[i];
+		adc_total += adc_data;
 	}
 
 	return (adc_total - adc_max - adc_min) / (ADC_DATA_ARR_SIZE - 2);
@@ -300,10 +323,12 @@ static unsigned long s3c_read_temp(struct chg_data *chg)
 static int s3c_get_bat_temp(struct chg_data *chg)
 {
 	int temp = 0;
-	int array_size = 0;
-	int i = 0;
+	int array_size = ARRAY_SIZE(temper_table);
 	int temp_adc = s3c_read_temp(chg);
 	int health = chg->bat_info.batt_health;
+	int left_side = 0;
+	int right_side = array_size - 1;
+	int mid;
 
 	if (temp_adc <= TEMP_IDLE_HIGH_BLOCK) {
 		if (health != POWER_SUPPLY_HEALTH_OVERHEAT &&
@@ -323,23 +348,89 @@ static int s3c_get_bat_temp(struct chg_data *chg)
 						POWER_SUPPLY_HEALTH_FREEZE;
 	}
 
-	array_size = ARRAY_SIZE(temper_table);
+	while (left_side <= right_side) {
+		mid = (left_side + right_side) / 2 ;
+		if (mid == 0) {
+			temp = temper_table[0][1];
+			break;
+		} else if (mid == array_size - 1) {
+			temp = temper_table[array_size-1][1];
+			break;
+		}
 
-	if (temp_adc >= temper_table[0][0])
-		temp = temper_table[0][1];
-	else if (temp_adc <= temper_table[array_size - 1][0])
-		temp = temper_table[array_size - 1][1];
-
-	for (i = 0; i < array_size - 1; i++)
-		if (temper_table[i][0] > temp_adc &&
-		    temper_table[i+1][0] <= temp_adc)
-			temp = temper_table[i+1][1];
+		if (temper_table[mid][0] <= temp_adc &&
+			temper_table[mid-1][0] > temp_adc) {
+			temp = temper_table[mid][1];
+			break;
+		} else if (temp_adc - temper_table[mid][0] > 0)
+			right_side = mid - 1;
+		else
+			left_side = mid + 1;
+	}
 
 	chg->bat_info.batt_temp = temp;
 
 	pr_debug("%s : temp = %d, adc = %d\n", __func__, temp, temp_adc);
 
 	return temp;
+}
+
+static void s3c_bat_discharge_reason(struct chg_data *chg)
+{
+	int discharge_reason;
+	ktime_t ktime;
+	struct timespec cur_time;
+	union power_supply_propval value;
+
+	if (chg->pdata && chg->pdata->psy_fuelgauge &&
+			 chg->pdata->psy_fuelgauge->get_property) {
+		chg->pdata->psy_fuelgauge->get_property(chg->pdata->psy_fuelgauge,
+		POWER_SUPPLY_PROP_VOLTAGE_NOW, &value);
+		chg->bat_info.batt_vcell = value.intval;
+
+		chg->pdata->psy_fuelgauge->get_property(chg->pdata->psy_fuelgauge,
+		POWER_SUPPLY_PROP_CAPACITY, &value);
+		chg->bat_info.batt_soc = value.intval;
+	}
+
+	discharge_reason = chg->bat_info.dis_reason & 0xf;
+
+	if (discharge_reason == DISCONNECT_BAT_FULL &&
+			chg->bat_info.batt_vcell < RECHARGE_COND_VOLTAGE)
+		chg->bat_info.dis_reason &= ~DISCONNECT_BAT_FULL;
+
+	if (discharge_reason == DISCONNECT_TEMP_OVERHEAT &&
+			chg->bat_info.batt_temp_adc >= TEMP_IDLE_HIGH_RECOVER)
+		chg->bat_info.dis_reason &= ~DISCONNECT_TEMP_OVERHEAT;
+
+	if (discharge_reason == DISCONNECT_TEMP_FREEZE &&
+			chg->bat_info.batt_temp_adc <= TEMP_LOW_RECOVER)
+		chg->bat_info.dis_reason &= ~DISCONNECT_TEMP_FREEZE;
+
+	if (discharge_reason == DISCONNECT_OVER_TIME &&
+			chg->bat_info.batt_vcell < RECHARGE_COND_VOLTAGE)
+		chg->bat_info.dis_reason &= ~DISCONNECT_OVER_TIME;
+
+	if (chg->set_batt_full)
+		chg->bat_info.dis_reason |= DISCONNECT_BAT_FULL;
+
+	if (chg->bat_info.batt_health != POWER_SUPPLY_HEALTH_GOOD)
+		chg->bat_info.dis_reason |= chg->bat_info.batt_health ==
+			POWER_SUPPLY_HEALTH_OVERHEAT ?
+			DISCONNECT_TEMP_OVERHEAT : DISCONNECT_TEMP_FREEZE;
+
+	ktime = alarm_get_elapsed_realtime();
+	cur_time = ktime_to_timespec(ktime);
+
+	if (chg->discharging_time &&
+			cur_time.tv_sec > chg->discharging_time)
+		chg->bat_info.dis_reason |= DISCONNECT_OVER_TIME;
+
+	pr_debug("%s : Current Voltage : %d\n			\
+		Current time : %ld  discharging_time : %ld\n	\
+		discharging reason : %d\n",			\
+		__func__, chg->bat_info.batt_vcell, cur_time.tv_sec,
+		chg->discharging_time, chg->bat_info.dis_reason);
 }
 
 static unsigned char max8998_charging_status(struct chg_data *chg)
@@ -367,7 +458,7 @@ static int max8998_charging_control(struct chg_data *chg,
 
 	if (dev_type == PM_CHARGER_TA) {
 		ret = max8998_update_reg(chg->iodev, MAX8998_REG_CHGR1,
-			(0 << MAX8998_SHIFT_TOPOFF), MAX8998_MASK_TOPOFF);
+			(1 << MAX8998_SHIFT_TOPOFF), MAX8998_MASK_TOPOFF);
 		if (ret < 0)
 			goto err;
 
@@ -399,7 +490,7 @@ static int max8998_charging_control(struct chg_data *chg,
 			goto err;
 
 		ret = max8998_update_reg(chg->iodev, MAX8998_REG_CHGR2,
-			(1 << MAX8998_SHIFT_ESAFEOUT), MAX8998_MASK_ESAFEOUT);
+			(3 << MAX8998_SHIFT_ESAFEOUT), MAX8998_MASK_ESAFEOUT);
 		if (ret < 0)
 			goto err;
 
@@ -425,44 +516,54 @@ err:
 
 static void s3c_bat_status_update(struct chg_data *chg)
 {
-	static int old_temp = -1;
-	static int old_is_full = -1;
-	static int old_health = -1;
-
-	if (old_temp != chg->bat_info.batt_temp ||
-	    old_is_full != chg->bat_info.batt_is_full ||
-	    old_health != chg->bat_info.batt_health ||
-	    chg->force_update) {
-		chg->force_update = 0;
+	if (chg->bat_info.old_temp != chg->bat_info.batt_temp ||
+		chg->bat_info.old_is_full != chg->bat_info.batt_is_full ||
+		chg->bat_info.old_health != chg->bat_info.batt_health ||
+		chg->bat_info.old_vcell != chg->bat_info.batt_vcell ||
+		chg->bat_info.old_soc != chg->bat_info.batt_soc)
 		power_supply_changed(&chg->psy_bat);
-		pr_info("%s : call power_supply_changed\n", __func__);
-	}
 
-	old_temp = chg->bat_info.batt_temp;
-	old_is_full = chg->bat_info.batt_is_full;
-	old_health = chg->bat_info.batt_health;
+	chg->bat_info.old_temp = chg->bat_info.batt_temp;
+	chg->bat_info.old_is_full = chg->bat_info.batt_is_full;
+	chg->bat_info.old_health = chg->bat_info.batt_health;
+	chg->bat_info.old_soc = chg->bat_info.batt_soc;
+	chg->bat_info.old_vcell = chg->bat_info.batt_vcell;
 }
 
 static int s3c_cable_status_update(struct chg_data *chg)
 {
 	static enum charger_type_t old_cable_status = CHARGER_BATTERY;
 	int ret;
+	ktime_t ktime;
+	struct timespec cur_time;
 
 	if (max8998_charging_status(chg)) {
-		if (chg->bat_info.batt_health !=
-					POWER_SUPPLY_HEALTH_GOOD) {
-			pr_info("%s : Unhealth battery state\n", __func__);
+		if (chg->bat_info.dis_reason) {
+			pr_info("%s : battery status discharging : %d\n",
+				__func__, chg->bat_info.dis_reason);
 			chg->cable_status = CHARGER_DISCHARGE;
 			ret = max8998_charging_control(chg, PM_CHARGER_DEFAULT);
 			if (ret < 0)
 				goto err;
-			chg->bat_info.batt_is_recharging = 0;
-			chg->bat_info.charging_enabled = 0;
-			chg->bat_info.charger_online = 1;
-			goto __end__;
+			chg->discharging_time = 0;
+			chg->set_batt_full = 0;
+			goto update;
 		} else {
-			/* TODO : check USB or TA */
-			chg->cable_status = CHARGER_AC;
+			if (chg->discharging_time == 0) {
+				ktime = alarm_get_elapsed_realtime();
+				cur_time = ktime_to_timespec(ktime);
+				chg->discharging_time =
+					chg->bat_info.batt_is_full ?
+					cur_time.tv_sec + TOTAL_RECHARGING_TIME :
+					cur_time.tv_sec + TOTAL_CHARGING_TIME;
+			}
+
+			/* check USB or TA */
+			if (chg->pdata && chg->pdata->is_usb_cable &&
+					(chg->pdata->is_usb_cable() == ATTACH_USB))
+				chg->cable_status = CHARGER_USB;
+			else
+				chg->cable_status = CHARGER_AC;
 		}
 
 		/* TODO : check recharging, full chg, over time */
@@ -470,44 +571,38 @@ static int s3c_cable_status_update(struct chg_data *chg)
 		if (ret < 0)
 			goto err;
 
-		chg->bat_info.charging_enabled = 1;
-		chg->bat_info.charger_online = 1;
 	} else {
 		chg->cable_status = CHARGER_BATTERY;
 		ret = max8998_charging_control(chg, PM_CHARGER_DEFAULT);
 		if (ret < 0)
 			goto err;
 
-		chg->bat_info.batt_is_recharging = 0;
-		chg->bat_info.charging_enabled = 0;
-		chg->bat_info.charger_online = 0;
+		chg->bat_info.batt_is_full = false;
+		chg->set_batt_full = 0;
+		chg->bat_info.dis_reason = 0;
+		chg->discharging_time = 0;
 	}
 
+update:
 	if (old_cable_status != chg->cable_status) {
 		old_cable_status = chg->cable_status;
 		chg->bat_info.charging_source = chg->cable_status;
-
-		chg->bat_info.charging_status =
-				chg->bat_info.batt_is_full ?
-						POWER_SUPPLY_STATUS_FULL :
-						POWER_SUPPLY_STATUS_CHARGING;
-
 		power_supply_changed(&chg->psy_bat);
 	}
 
-	if (chg->current_device_type == PM_CHARGER_NULL) {
-		/* give userspace some time to see the uevent and update */
-		if ((chg->cable_status != CHARGER_AC) &&
-		    (chg->cable_status != CHARGER_USB))
-			wake_lock_timeout(&chg->vbus_wake_lock, HZ / 2);
-	} else {
-		wake_lock(&chg->vbus_wake_lock);
-	}
-
-__end__:
 	return 0;
 err:
 	return ret;
+}
+
+static void s3c_program_alarm(struct chg_data *chg, int seconds)
+{
+	ktime_t low_interval = ktime_set(seconds - 10, 0);
+	ktime_t slack = ktime_set(20, 0);
+	ktime_t next;
+
+	next = ktime_add(chg->last_poll, low_interval);
+	alarm_start_range(&chg->alarm, next, ktime_add(next, slack));
 }
 
 static void s3c_bat_work(struct work_struct *work)
@@ -515,10 +610,12 @@ static void s3c_bat_work(struct work_struct *work)
 	struct chg_data *chg =
 		container_of(work, struct chg_data, bat_work.work);
 	int ret;
-
+	struct timespec ts;
+	unsigned long flags;
 	mutex_lock(&chg->mutex);
 
 	s3c_get_bat_temp(chg);
+	s3c_bat_discharge_reason(chg);
 	s3c_bat_status_update(chg);
 
 	ret = s3c_cable_status_update(chg);
@@ -529,12 +626,59 @@ static void s3c_bat_work(struct work_struct *work)
 
 	mutex_unlock(&chg->mutex);
 
-	schedule_delayed_work(&chg->bat_work,
-		msecs_to_jiffies(chg->polling_interval));
+	chg->last_poll = alarm_get_elapsed_realtime();
+	ts = ktime_to_timespec(chg->last_poll);
+	chg->timestamp = ts.tv_sec;
 
+	/* prevent suspend before starting the alarm */
+	local_irq_save(flags);
+	wake_unlock(&chg->work_wake_lock);
+	s3c_program_alarm(chg, FAST_POLL);
+	local_irq_restore(flags);
 	return;
 err:
 	pr_err("battery workqueue fail\n");
+}
+
+static void s3c_battery_alarm(struct alarm *alarm)
+{
+	struct chg_data *chg =
+			container_of(alarm, struct chg_data, alarm);
+
+	wake_lock(&chg->work_wake_lock);
+	queue_work(chg->monitor_wqueue, &chg->bat_work.work);
+}
+
+static irqreturn_t max8998_int_work_func(int irq, void *max8998_chg)
+{
+	int ret;
+	u8 data = 0;
+	struct chg_data *chg;
+
+	chg = max8998_chg;
+
+	ret = max8998_read_reg(chg->iodev, MAX8998_REG_IRQ1, &data);
+	if (ret < 0)
+		goto err;
+
+	ret = max8998_read_reg(chg->iodev, MAX8998_REG_IRQ3, &data);
+	if (ret < 0)
+		goto err;
+
+	if ((data & 0x4) || (ret != 0)) {
+		pr_info("%s : pmic interrupt\n", __func__);
+		chg->set_batt_full = 1;
+		chg->bat_info.batt_is_full = true;
+	}
+
+	wake_lock(&chg->work_wake_lock);
+	queue_delayed_work(chg->monitor_wqueue,
+		&chg->bat_work, msecs_to_jiffies(200));
+
+	return IRQ_HANDLED;
+err:
+	pr_err("%s : pmic read error\n", __func__);
+	return IRQ_HANDLED;
 }
 
 static __devinit int max8998_charger_probe(struct platform_device *pdev)
@@ -546,7 +690,7 @@ static __devinit int max8998_charger_probe(struct platform_device *pdev)
 
 	pr_info("%s : MAX8998 Charger Driver Loading\n", __func__);
 
-	chg = kzalloc(sizeof(struct chg_data), GFP_KERNEL);
+	chg = kzalloc(sizeof(*chg), GFP_KERNEL);
 	if (!chg)
 		return -ENOMEM;
 
@@ -577,14 +721,10 @@ static __devinit int max8998_charger_probe(struct platform_device *pdev)
 
 	chg->present = 1;
 	chg->polling_interval = POLLING_INTERVAL;
-	chg->bat_info.batt_temp = 0;
-	chg->bat_info.batt_temp_adc = 0;
 	chg->bat_info.charging_source = CHARGER_BATTERY;
-	chg->bat_info.charging_enabled = 0;
 	chg->bat_info.batt_health = POWER_SUPPLY_HEALTH_GOOD;
-	chg->bat_info.batt_is_full = 0;
-	chg->bat_info.batt_is_recharging = 0;
-	chg->bat_info.charging_status = 0;
+	chg->bat_info.batt_is_full = false;
+	chg->bat_info.old_is_full = false;
 
 	chg->current_device_type = PM_CHARGER_NULL;
 	chg->cable_status = CHARGER_BATTERY;
@@ -613,15 +753,48 @@ static __devinit int max8998_charger_probe(struct platform_device *pdev)
 	if (ret < 0)
 		goto err_kfree;
 
-	wake_lock_init(&chg->vbus_wake_lock, WAKE_LOCK_SUSPEND, "vbus_present");
+	pr_info("%s : pmic interrupt registered\n", __func__);
+	ret = max8998_write_reg(iodev, MAX8998_REG_IRQM1,
+		~(MAX8998_MASK_DCINR | MAX8998_MASK_DCINF));
+	if (ret < 0)
+		goto err_kfree;
+
+	ret = max8998_write_reg(iodev, MAX8998_REG_IRQM2, 0xFF);
+	if (ret < 0)
+		goto err_kfree;
+
+	ret = max8998_write_reg(iodev, MAX8998_REG_IRQM3, ~0x4);
+	if (ret < 0)
+		goto err_kfree;
+
+	ret = max8998_write_reg(iodev, MAX8998_REG_IRQM4, 0xFF);
+	if (ret < 0)
+		goto err_kfree;
+
+	wake_lock_init(&chg->vbus_wake_lock, WAKE_LOCK_SUSPEND,
+		"vbus_present");
+	wake_lock_init(&chg->work_wake_lock, WAKE_LOCK_SUSPEND,
+		"max8998-charger");
 
 	INIT_DELAYED_WORK(&chg->bat_work, s3c_bat_work);
+
+	chg->monitor_wqueue =
+		create_singlethread_workqueue(dev_name(&pdev->dev));
+	if (!chg->monitor_wqueue) {
+		pr_err("Failed to create single workqueu\n");
+		ret = -ENOMEM;
+		goto err_wake_lock;
+	}
+
+	chg->last_poll = alarm_get_elapsed_realtime();
+	alarm_init(&chg->alarm, ANDROID_ALARM_ELAPSED_REALTIME_WAKEUP,
+		s3c_battery_alarm);
 
 	/* init power supplier framework */
 	ret = power_supply_register(&pdev->dev, &chg->psy_bat);
 	if (ret) {
 		pr_err("Failed to register power supply psy_bat\n");
-		goto err_wake_lock;
+		goto err_wqueue;
 	}
 
 	ret = power_supply_register(&pdev->dev, &chg->psy_usb);
@@ -636,18 +809,41 @@ static __devinit int max8998_charger_probe(struct platform_device *pdev)
 		goto err_supply_unreg_usb;
 	}
 
-	pr_info("%s : pmic interrupt registered\n", __func__);
+	ret = request_threaded_irq(iodev->i2c_client->irq, NULL,
+			max8998_int_work_func,
+			IRQF_TRIGGER_FALLING, "max8998-charger", chg);
+	if (ret) {
+		pr_err("%s : Failed to request pmic irq\n", __func__);
+		goto err_supply_unreg_ac;
+	}
 
-	schedule_delayed_work(&chg->bat_work,
-		msecs_to_jiffies(chg->polling_interval));
+	ret = enable_irq_wake(iodev->i2c_client->irq);
+	if (ret) {
+		pr_err("Failed to enable pmic irq wake\n");
+		goto err_irq;
+	}
+
+	queue_work(chg->monitor_wqueue, &chg->bat_work.work);
+
+	/* Ensure that the battery gets suspended before the alarm device */
+	device_move(&pdev->dev, pdev->dev.parent, DPM_ORDER_DEV_LAST);
 
 	return 0;
 
+err_irq:
+	free_irq(iodev->i2c_client->irq, NULL);
+err_supply_unreg_ac:
+	power_supply_unregister(&chg->psy_ac);
 err_supply_unreg_usb:
 	power_supply_unregister(&chg->psy_usb);
 err_supply_unreg_bat:
 	power_supply_unregister(&chg->psy_bat);
+err_wqueue:
+	destroy_workqueue(chg->monitor_wqueue);
+	cancel_delayed_work_sync(&chg->bat_work);
+	alarm_cancel(&chg->alarm);
 err_wake_lock:
+	wake_lock_destroy(&chg->work_wake_lock);
 	wake_lock_destroy(&chg->vbus_wake_lock);
 err_kfree:
 	mutex_destroy(&chg->mutex);
@@ -659,7 +855,10 @@ static int __devexit max8998_charger_remove(struct platform_device *pdev)
 {
 	struct chg_data *chg = platform_get_drvdata(pdev);
 
-	cancel_delayed_work_sync(&chg->bat_work);
+	alarm_cancel(&chg->alarm);
+	free_irq(chg->iodev->i2c_client->irq, NULL);
+	flush_workqueue(chg->monitor_wqueue);
+	destroy_workqueue(chg->monitor_wqueue);
 	power_supply_unregister(&chg->psy_bat);
 	power_supply_unregister(&chg->psy_usb);
 	power_supply_unregister(&chg->psy_ac);
@@ -671,10 +870,46 @@ static int __devexit max8998_charger_remove(struct platform_device *pdev)
 	return 0;
 }
 
+static int max8998_charger_suspend(struct device *dev)
+{
+
+	struct chg_data *chg = dev_get_drvdata(dev);
+	if (chg->bat_info.charging_source == CHARGER_BATTERY) {
+		s3c_program_alarm(chg, SLOW_POLL);
+		chg->slow_poll = 1;
+	}
+
+	return 0;
+}
+
+static int max8998_charger_resume(struct device *dev)
+{
+
+	struct chg_data *chg = dev_get_drvdata(dev);
+	/* We might be on a slow sample cycle.  If we're
+	 * resuming we should resample the battery state
+	 * if it's been over a minute since we last did
+	 * so, and move back to sampling every minute until
+	 * we suspend again.
+	 */
+	if (chg->slow_poll) {
+		s3c_program_alarm(chg, FAST_POLL);
+		chg->slow_poll = 0;
+	}
+
+	return 0;
+}
+
+static const struct dev_pm_ops max8998_charger_pm_ops = {
+	.suspend        = max8998_charger_suspend,
+	.resume         = max8998_charger_resume,
+};
+
 static struct platform_driver max8998_charger_driver = {
 	.driver = {
 		.name = "max8998-charger",
 		.owner = THIS_MODULE,
+		.pm = &max8998_charger_pm_ops,
 	},
 	.probe = max8998_charger_probe,
 	.remove = __devexit_p(max8998_charger_remove),
@@ -690,7 +925,7 @@ static void __exit max8998_charger_exit(void)
 	platform_driver_register(&max8998_charger_driver);
 }
 
-module_init(max8998_charger_init);
+late_initcall(max8998_charger_init);
 module_exit(max8998_charger_exit);
 
 MODULE_AUTHOR("Minsung Kim <ms925.kim@samsung.com>");
