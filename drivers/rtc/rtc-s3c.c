@@ -656,23 +656,8 @@ static int __devinit s3c_rtc_probe(struct platform_device *pdev)
 
 	device_init_wakeup(&pdev->dev, 1);
 
-	/* register RTC and exit */
-
-	rtc = rtc_device_register("s3c", &pdev->dev, &s3c_rtcops,
-				  THIS_MODULE);
-
-	if (IS_ERR(rtc)) {
-		dev_err(&pdev->dev, "cannot attach rtc\n");
-		ret = PTR_ERR(rtc);
-		goto err_nortc;
-	}
 
 	s3c_rtc_cpu_type = platform_get_device_id(pdev)->driver_data;
-
-	if (s3c_rtc_cpu_type == TYPE_S3C64XX)
-		rtc->max_user_freq = 32768;
-	else
-		rtc->max_user_freq = 128;
 
 	max8998_rtc_read_time(&tm);
 
@@ -692,7 +677,13 @@ static int __devinit s3c_rtc_probe(struct platform_device *pdev)
 	if (year < 0 || year >= 100) {
 		dev_err(&pdev->dev, "rtc only supports 100 years\n");
 #endif
-		return -EINVAL;
+		/* Set the default time. 2010:1:1:12:0:0 */
+		year = 110;
+		tm.tm_mon = 0;
+		tm.tm_mday = 1;
+		tm.tm_hour = 12;
+		tm.tm_min = 0;
+		tm.tm_sec = 0;
 	}
 
 	s3c_rtc_enable(&pdev->dev, 1);
@@ -723,6 +714,23 @@ static int __devinit s3c_rtc_probe(struct platform_device *pdev)
 	}
 
 	s3c_rtc_enable(&pdev->dev, 0);
+
+	/* register RTC and exit */
+
+	rtc = rtc_device_register("s3c", &pdev->dev, &s3c_rtcops,
+				  THIS_MODULE);
+
+	if (IS_ERR(rtc)) {
+		dev_err(&pdev->dev, "cannot attach rtc\n");
+		ret = PTR_ERR(rtc);
+		goto err_nortc;
+	}
+
+	if (s3c_rtc_cpu_type == TYPE_S3C64XX)
+		rtc->max_user_freq = 32768;
+	else
+		rtc->max_user_freq = 128;
+
 	platform_set_drvdata(pdev, rtc);
 
 	s3c_rtc_setfreq(&pdev->dev, 1);
