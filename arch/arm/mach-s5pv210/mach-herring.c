@@ -3892,6 +3892,8 @@ static void __init herring_map_io(void)
 #endif
 }
 
+unsigned int pm_debug_scratchpad;
+
 static unsigned int ram_console_start;
 static unsigned int ram_console_size;
 
@@ -3914,7 +3916,9 @@ static void __init herring_fixup(struct machine_desc *desc,
 	mi->nr_banks = 3;
 
 	ram_console_start = mi->bank[2].start + mi->bank[2].size;
-	ram_console_size = SZ_1M;
+	ram_console_size = SZ_1M - SZ_4K;
+
+	pm_debug_scratchpad = ram_console_start + ram_console_size;
 }
 
 /* this function are used to detect s5pc110 chip version temporally */

@@ -37,6 +37,76 @@
 
 unsigned long s3c_pm_flags;
 
+/* ---------------------------------------------- */
+extern unsigned int pm_debug_scratchpad;
+#include <linux/slab.h>
+#include <linux/debugfs.h>
+#include <linux/uaccess.h>
+#include <linux/module.h>
+
+#define PMSTATS_MAGIC "*PM*DEBUG*STATS*"
+
+struct pmstats {
+	char magic[16];
+	unsigned sleep_count;
+	unsigned wake_count;
+	unsigned sleep_freq;
+	unsigned wake_freq;
+};
+
+static struct pmstats *pmstats;
+static struct pmstats *pmstats_last;
+
+static ssize_t pmstats_read(struct file *file, char __user *buf,
+			    size_t len, loff_t *offset)
+{
+	if (*offset != 0)
+		return 0;
+	if (len > 4096)
+		len = 4096;
+
+	if (copy_to_user(buf, file->private_data, len))
+		return -EFAULT;
+
+	*offset += len;
+	return len;
+}
+
+static int pmstats_open(struct inode *inode, struct file *file)
+{
+	file->private_data = inode->i_private;
+	return 0;
+}
+
+static const struct file_operations pmstats_ops = {
+	.owner = THIS_MODULE,
+	.read = pmstats_read,
+	.open = pmstats_open,
+};
+
+void __init pmstats_init(void)
+{
+	pr_info("pmstats at %08x\n", pm_debug_scratchpad);
+	if (pm_debug_scratchpad)
+		pmstats = ioremap(pm_debug_scratchpad, 4096);
+	else
+		pmstats = kzalloc(4096, GFP_ATOMIC);
+
+	if (!memcmp(pmstats->magic, PMSTATS_MAGIC, 16)) {
+		pmstats_last = kzalloc(4096, GFP_ATOMIC);
+		if (pmstats_last)
+			memcpy(pmstats_last, pmstats, 4096);
+	}
+
+	memset(pmstats, 0, 4096);
+	memcpy(pmstats->magic, PMSTATS_MAGIC, 16);
+
+	debugfs_create_file("pmstats", 0444, NULL, pmstats, &pmstats_ops);
+	if (pmstats_last)
+		debugfs_create_file("pmstats_last", 0444, NULL, pmstats_last, &pmstats_ops);
+}
+/* ---------------------------------------------- */
+
 /* Debug code:
  *
  * This code supports debug output to the low level UARTs for use on
@@ -304,7 +374,11 @@ static int s3c_pm_enter(suspend_state_t state)
 	 * we resume as it saves its own register state and restores it
 	 * during the resume.  */
 
+	pmstats->sleep_count++;
+	pmstats->sleep_freq = __raw_readl(S5P_CLK_DIV0);
 	s3c_cpu_save(regs_save);
+	pmstats->wake_count++;
+	pmstats->wake_freq = __raw_readl(S5P_CLK_DIV0);
 
 	/* restore the cpu state using the kernel's cpu init code. */
 
@@ -375,6 +449,7 @@ static struct platform_suspend_ops s3c_pm_ops = {
 int __init s3c_pm_init(void)
 {
 	printk("S3C Power Management, Copyright 2004 Simtec Electronics\n");
+	pmstats_init();
 
 	suspend_set_ops(&s3c_pm_ops);
 	return 0;
