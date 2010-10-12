@@ -141,7 +141,10 @@ irqreturn_t bt_host_wake_irq_handler(int irq, void *dev_id)
 {
 	pr_debug("[BT] bt_host_wake_irq_handler start\n");
 
-	wake_lock_timeout(&rfkill_wake_lock, 5*HZ);
+	if (gpio_get_value(GPIO_BT_HOST_WAKE))
+		wake_lock(&rfkill_wake_lock);
+	else
+		wake_lock_timeout(&rfkill_wake_lock, HZ);
 
 	return IRQ_HANDLED;
 }
@@ -167,7 +170,7 @@ static int __init herring_rfkill_probe(struct platform_device *pdev)
 	int ret;
 
 	/* Initialize wake locks */
-	wake_lock_init(&rfkill_wake_lock, WAKE_LOCK_SUSPEND, "board-rfkill");
+	wake_lock_init(&rfkill_wake_lock, WAKE_LOCK_SUSPEND, "bt_host_wake");
 
 	ret = gpio_request(GPIO_WLAN_BT_EN, "GPB");
 	if (ret < 0) {
@@ -184,7 +187,8 @@ static int __init herring_rfkill_probe(struct platform_device *pdev)
 	/* BT Host Wake IRQ */
 	irq = IRQ_BT_HOST_WAKE;
 
-	ret = request_irq(irq, bt_host_wake_irq_handler, IRQF_TRIGGER_RISING,
+	ret = request_irq(irq, bt_host_wake_irq_handler,
+			IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
 			"bt_host_wake_irq_handler", NULL);
 
 	if (ret < 0) {
