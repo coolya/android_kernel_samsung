@@ -299,6 +299,7 @@ static void s3c_pm_show_resume_irqs(int start, unsigned long which,
 
 void (*pm_cpu_prep)(void);
 void (*pm_cpu_sleep)(void);
+void (*pm_cpu_restore)(void);
 
 #define any_allowed(mask, allow) (((mask) & (allow)) != (allow))
 
@@ -384,8 +385,6 @@ static int s3c_pm_enter(suspend_state_t state)
 
 	cpu_init();
 
-	/* restore the system state */
-
 	fiq_glue_resume();
 	local_fiq_enable();
 
@@ -395,6 +394,11 @@ static int s3c_pm_enter(suspend_state_t state)
 	s5pv210_restore_eint_group();
 
 	s3c_pm_debug_init();
+
+        /* restore the system state */
+
+	if (pm_cpu_restore)
+		pm_cpu_restore();
 
 	/* check what irq (if any) restored the system */
 

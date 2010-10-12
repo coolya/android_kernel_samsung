@@ -39,6 +39,7 @@ extern unsigned long s3c_irqwake_eintallow;
 
 extern void (*pm_cpu_prep)(void);
 extern void (*pm_cpu_sleep)(void);
+extern void (*pm_cpu_restore)(void);
 
 /* Flags for PM Control */
 
