@@ -584,6 +584,11 @@ static int s3c_cable_status_update(struct chg_data *chg)
 	}
 
 update:
+	if (chg->cable_status != CHARGER_BATTERY)
+		wake_lock(&chg->vbus_wake_lock);
+	else
+		wake_lock_timeout(&chg->vbus_wake_lock, HZ / 2);
+
 	if (old_cable_status != chg->cable_status) {
 		old_cable_status = chg->cable_status;
 		chg->bat_info.charging_source = chg->cable_status;
