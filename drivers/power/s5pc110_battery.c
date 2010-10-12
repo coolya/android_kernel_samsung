@@ -825,9 +825,6 @@ static __devinit int max8998_charger_probe(struct platform_device *pdev)
 
 	queue_work(chg->monitor_wqueue, &chg->bat_work.work);
 
-	/* Ensure that the battery gets suspended before the alarm device */
-	device_move(&pdev->dev, pdev->dev.parent, DPM_ORDER_DEV_LAST);
-
 	return 0;
 
 err_irq:
@@ -901,8 +898,8 @@ static int max8998_charger_resume(struct device *dev)
 }
 
 static const struct dev_pm_ops max8998_charger_pm_ops = {
-	.suspend        = max8998_charger_suspend,
-	.resume         = max8998_charger_resume,
+	.prepare        = max8998_charger_suspend,
+	.complete       = max8998_charger_resume,
 };
 
 static struct platform_driver max8998_charger_driver = {
