@@ -140,15 +140,7 @@ static void s5pv210_pm_prepare(void)
 	s3c_pm_do_save(core_save, ARRAY_SIZE(core_save));
 }
 
-static int s5pv210_pm_add(struct sys_device *sysdev)
-{
-	pm_cpu_prep = s5pv210_pm_prepare;
-	pm_cpu_sleep = s5pv210_cpu_suspend;
-
-	return 0;
-}
-
-static int s5pv210_pm_resume(struct sys_device *dev)
+static void s5pv210_pm_resume(void)
 {
 	u32 tmp;
 
@@ -158,17 +150,14 @@ static int s5pv210_pm_resume(struct sys_device *dev)
 	__raw_writel(tmp , S5P_OTHERS);
 
 	s3c_pm_do_restore_core(core_save, ARRAY_SIZE(core_save));
-
-	return 0;
 }
-
-static struct sysdev_driver s5pv210_pm_driver = {
-	.add		= s5pv210_pm_add,
-	.resume		= s5pv210_pm_resume,
-};
 
 static __init int s5pv210_pm_drvinit(void)
 {
-	return sysdev_driver_register(&s5pv210_sysclass, &s5pv210_pm_driver);
+	pm_cpu_prep = s5pv210_pm_prepare;
+	pm_cpu_sleep = s5pv210_cpu_suspend;
+	pm_cpu_restore = s5pv210_pm_resume;
+	return 0;
 }
+
 arch_initcall(s5pv210_pm_drvinit);
