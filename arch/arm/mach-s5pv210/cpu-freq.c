@@ -48,6 +48,7 @@ static unsigned int backup_dmc1_reg;
 static unsigned int backup_freq_level;
 static unsigned int mpll_freq; /* in MHz */
 static unsigned int apll_freq_max; /* in MHz */
+static DEFINE_MUTEX(set_freq_lock);
 
 /* frequency */
 static struct cpufreq_frequency_table freq_table[] = {
@@ -335,6 +336,8 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 	unsigned int pll_changing = 0;
 	unsigned int bus_speed_changing = 0;
 
+	mutex_lock(&set_freq_lock);
+
 	cpufreq_debug_printk(CPUFREQ_DEBUG_DRIVER, KERN_INFO,
 			"cpufreq: Entering for %dkHz\n", target_freq);
 
@@ -379,7 +382,7 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 	 * and s3c_freqs.freqs.old are both set by this function.
 	 */
 	if (s3c_freqs.freqs.new == s3c_freqs.freqs.old && !first_run)
-		return 0;
+		goto out;
 
 	arm_volt = dvs_conf[index].arm_volt;
 	int_volt = dvs_conf[index].int_volt;
@@ -569,6 +572,7 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 	if (first_run)
 		first_run = false;
 out:
+	mutex_unlock(&set_freq_lock);
 	return ret;
 }
 
