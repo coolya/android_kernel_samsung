@@ -51,10 +51,16 @@ static const char bt_name[] = "bcm4329";
 
 static int bluetooth_set_power(void *data, enum rfkill_user_states state)
 {
+	int ret = 0;
+	int irq;
+	/* BT Host Wake IRQ */
+	irq = IRQ_BT_HOST_WAKE;
+
 	switch (state) {
 
 	case RFKILL_USER_STATE_UNBLOCKED:
 		pr_debug("[BT] Device Powering ON\n");
+
 		s3c_setup_uart_cfg_gpio(0);
 
 		if (gpio_is_valid(GPIO_WLAN_BT_EN))
@@ -102,10 +108,22 @@ static int bluetooth_set_power(void *data, enum rfkill_user_states state)
 		 */
 		msleep(50);
 
+		ret = enable_irq_wake(irq);
+		if (ret < 0)
+			pr_err("[BT] set wakeup src failed\n");
+
+		enable_irq(irq);
 		break;
 
 	case RFKILL_USER_STATE_SOFT_BLOCKED:
 		pr_debug("[BT] Device Powering OFF\n");
+
+		ret = disable_irq_wake(irq);
+		if (ret < 0)
+			pr_err("[BT] unset wakeup src failed\n");
+
+		disable_irq(irq);
+		wake_unlock(&rfkill_wake_lock);
 
 		s3c_gpio_setpull(GPIO_BT_nRST, S3C_GPIO_PULL_NONE);
 		gpio_set_value(GPIO_BT_nRST, GPIO_LEVEL_LOW);
@@ -196,12 +214,7 @@ static int __init herring_rfkill_probe(struct platform_device *pdev)
 		goto err_req_irq;
 	}
 
-	ret = set_irq_wake(irq, 1);
-
-	if (ret < 0) {
-		pr_err("[BT] set wakeup src failed\n");
-		goto err_set_irq_wake;
-	}
+	disable_irq(irq);
 
 	bt_rfk = rfkill_alloc(bt_name, &pdev->dev, RFKILL_TYPE_BLUETOOTH,
 			&bt_rfkill_ops, NULL);
@@ -231,9 +244,6 @@ static int __init herring_rfkill_probe(struct platform_device *pdev)
 	rfkill_destroy(bt_rfk);
 
  err_alloc:
-	set_irq_wake(irq, 0);
-
- err_set_irq_wake:
 	free_irq(irq, NULL);
 
  err_req_irq:
