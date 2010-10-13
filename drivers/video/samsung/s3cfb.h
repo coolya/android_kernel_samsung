@@ -195,7 +195,7 @@ struct s3cfb_lcd {
 struct s3cfb_window {
 	int			id;
 	int			enabled;
-	atomic_t		in_use;
+	int			in_use;
 	int			x;
 	int			y;
 	enum			s3cfb_data_path_t path;
@@ -228,9 +228,8 @@ struct s3cfb_global {
 	struct clk		*clock;
 	struct regulator	*regulator;
 	int			irq;
-	wait_queue_head_t	wq;
-	unsigned int		wq_count;
 	struct fb_info		**fb;
+	struct completion	fb_complete;
 
 	/* fimd */
 	int			enabled;
