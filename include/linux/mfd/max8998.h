@@ -64,16 +64,15 @@ struct max8998_regulator_data {
 	struct regulator_init_data	*initdata;
 };
 
-enum charger_type_t{
-	CHARGER_BATTERY = 0,
-	CHARGER_USB,
-	CHARGER_AC,
-	CHARGER_DISCHARGE
+enum cable_type_t {
+	CABLE_TYPE_NONE = 0,
+	CABLE_TYPE_USB,
+	CABLE_TYPE_AC,
 };
 
 struct max8998_charger_callbacks {
 	void (*set_cable)(struct max8998_charger_callbacks *ptr,
-		enum charger_type_t status);
+		enum cable_type_t status);
 };
 
 /**

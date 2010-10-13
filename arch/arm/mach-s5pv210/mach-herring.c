@@ -676,7 +676,7 @@ static struct max8998_regulator_data herring_regulators[] = {
 };
 
 struct max8998_charger_callbacks *callbacks;
-static enum charger_type_t set_cable_status;
+static enum cable_type_t set_cable_status;
 
 static void max8998_charger_register_callbacks(
 		struct max8998_charger_callbacks *ptr)
@@ -1893,14 +1893,14 @@ static void fsa9480_usb_cb(bool attached)
 			usb_gadget_vbus_disconnect(gadget);
 	}
 
-	set_cable_status = attached ? CHARGER_USB : CHARGER_DISCHARGE;
+	set_cable_status = attached ? CABLE_TYPE_USB : CABLE_TYPE_NONE;
 	if (callbacks && callbacks->set_cable)
 		callbacks->set_cable(callbacks, set_cable_status);
 }
 
 static void fsa9480_charger_cb(bool attached)
 {
-	set_cable_status = attached ? CHARGER_AC : CHARGER_DISCHARGE;
+	set_cable_status = attached ? CABLE_TYPE_AC : CABLE_TYPE_NONE;
 	if (callbacks && callbacks->set_cable)
 		callbacks->set_cable(callbacks, set_cable_status);
 }
