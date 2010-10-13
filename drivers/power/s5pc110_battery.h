@@ -137,13 +137,6 @@ enum adc_channel_type{
 	ENDOFADC
 };
 
-enum charger_type_t{
-	CHARGER_BATTERY = 0,
-	CHARGER_USB,
-	CHARGER_AC,
-	CHARGER_DISCHARGE
-};
-
 enum {
 	BATT_VOL = 0,
 	BATT_VOL_ADC,

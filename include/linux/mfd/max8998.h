@@ -64,6 +64,18 @@ struct max8998_regulator_data {
 	struct regulator_init_data	*initdata;
 };
 
+enum charger_type_t{
+	CHARGER_BATTERY = 0,
+	CHARGER_USB,
+	CHARGER_AC,
+	CHARGER_DISCHARGE
+};
+
+struct max8998_charger_callbacks {
+	void (*set_cable)(struct max8998_charger_callbacks *ptr,
+		enum charger_type_t status);
+};
+
 /**
  * max8998_charger_data - charger data
  * @id: charger id
@@ -71,7 +83,7 @@ struct max8998_regulator_data {
  */
 struct max8998_charger_data {
 	struct power_supply *psy_fuelgauge;
-	int (*is_usb_cable) (void);
+	void (*register_callbacks)(struct max8998_charger_callbacks *ptr);
 };
 
 /**

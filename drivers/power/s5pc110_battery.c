@@ -125,6 +125,7 @@ struct chg_data {
 	unsigned int		polling_interval;
 	int                     slow_poll;
 	ktime_t                 last_poll;
+	struct max8998_charger_callbacks callbacks;
 };
 
 static char *supply_list[] = {
@@ -144,6 +145,13 @@ static enum power_supply_property max8998_battery_props[] = {
 static enum power_supply_property s3c_power_properties[] = {
 	POWER_SUPPLY_PROP_ONLINE,
 };
+
+static void max8998_set_cable(struct max8998_charger_callbacks *ptr,
+	enum charger_type_t status)
+{
+	struct chg_data *chg = container_of(ptr, struct chg_data, callbacks);
+	chg->cable_status = status;
+}
 
 static void s3c_bat_update_charging_status(struct chg_data *chg)
 {
@@ -557,13 +565,6 @@ static int s3c_cable_status_update(struct chg_data *chg)
 					cur_time.tv_sec + TOTAL_RECHARGING_TIME :
 					cur_time.tv_sec + TOTAL_CHARGING_TIME;
 			}
-
-			/* check USB or TA */
-			if (chg->pdata && chg->pdata->is_usb_cable &&
-					(chg->pdata->is_usb_cable() == ATTACH_USB))
-				chg->cable_status = CHARGER_USB;
-			else
-				chg->cable_status = CHARGER_AC;
 		}
 
 		/* TODO : check recharging, full chg, over time */
@@ -733,6 +734,10 @@ static __devinit int max8998_charger_probe(struct platform_device *pdev)
 
 	chg->current_device_type = PM_CHARGER_NULL;
 	chg->cable_status = CHARGER_BATTERY;
+
+	chg->callbacks.set_cable = max8998_set_cable;
+	if (chg->pdata->register_callbacks)
+		chg->pdata->register_callbacks(&chg->callbacks);
 
 	mutex_init(&chg->mutex);
 
