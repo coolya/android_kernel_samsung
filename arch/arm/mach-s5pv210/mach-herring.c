@@ -675,7 +675,22 @@ static struct max8998_regulator_data herring_regulators[] = {
 	{ MAX8998_BUCK4, &herring_buck4_data },
 };
 
-static struct max8998_charger_data herring_charger;
+struct max8998_charger_callbacks *callbacks;
+static enum charger_type_t set_cable_status;
+
+static void max8998_charger_register_callbacks(
+		struct max8998_charger_callbacks *ptr)
+{
+	callbacks = ptr;
+	/* if there was a cable status change before the charger was
+	ready, send this now */
+	if ((set_cable_status != 0) && callbacks && callbacks->set_cable)
+		callbacks->set_cable(callbacks, set_cable_status);
+}
+
+static struct max8998_charger_data herring_charger = {
+	.register_callbacks = &max8998_charger_register_callbacks,
+};
 
 static struct max8998_platform_data max8998_pdata = {
 	.num_regulators = ARRAY_SIZE(herring_regulators),
@@ -1877,10 +1892,22 @@ static void fsa9480_usb_cb(bool attached)
 		else
 			usb_gadget_vbus_disconnect(gadget);
 	}
+
+	set_cable_status = attached ? CHARGER_USB : CHARGER_DISCHARGE;
+	if (callbacks && callbacks->set_cable)
+		callbacks->set_cable(callbacks, set_cable_status);
+}
+
+static void fsa9480_charger_cb(bool attached)
+{
+	set_cable_status = attached ? CHARGER_AC : CHARGER_DISCHARGE;
+	if (callbacks && callbacks->set_cable)
+		callbacks->set_cable(callbacks, set_cable_status);
 }
 
 static struct fsa9480_platform_data fsa9480_pdata = {
 	.usb_cb = fsa9480_usb_cb,
+	.charger_cb = fsa9480_charger_cb,
 };
 
 static struct i2c_board_info i2c_devs7[] __initdata = {
