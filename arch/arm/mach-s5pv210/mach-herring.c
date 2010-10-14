@@ -3282,8 +3282,7 @@ static void herring_power_off(void)
 {
 	while (1) {
 		/* Check reboot charging */
-		/* TODO : Check not only TA but also USB additionally */
-		if (!gpio_get_value(GPIO_TA_CURRENT_SEL_AP)) {
+		if (set_cable_status) {
 			/* watchdog reset */
 			pr_info("%s: charger connected, rebooting\n", __func__);
 			writel(3, S5P_INFORM6);
