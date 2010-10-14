@@ -1138,29 +1138,19 @@ static int __devexit s3c_onenand_remove(struct platform_device *pdev)
 	return 0;
 }
 
-static int s3c_pm_ops_suspend(struct device *dev)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	struct mtd_info *mtd = platform_get_drvdata(pdev);
-	struct onenand_chip *this = mtd->priv;
-
-	this->wait(mtd, FL_PM_SUSPENDED);
-	return mtd->suspend(mtd);
-}
-
 static  int s3c_pm_ops_resume(struct device *dev)
 {
 	struct platform_device *pdev = to_platform_device(dev);
 	struct mtd_info *mtd = platform_get_drvdata(pdev);
 	struct onenand_chip *this = mtd->priv;
 
-	mtd->resume(mtd);
+	clk_enable(this->clk);
 	this->unlock_all(mtd);
+	clk_disable(this->clk);
 	return 0;
 }
 
 static const struct dev_pm_ops s3c_pm_ops = {
-	.suspend	= s3c_pm_ops_suspend,
 	.resume		= s3c_pm_ops_resume,
 };
 
