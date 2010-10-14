@@ -429,7 +429,7 @@ static int max8998_charging_control(struct chg_data *chg)
 {
 	int ret;
 
-	if (!chg->charging || (chg->cable_status == CABLE_TYPE_NONE)) {
+	if (!chg->charging) {
 		/* disable charging */
 		ret = max8998_update_reg(chg->iodev, MAX8998_REG_CHGR2,
 			(1 << MAX8998_SHIFT_CHGEN), MAX8998_MASK_CHGEN);
@@ -522,6 +522,10 @@ static int s3c_cable_status_update(struct chg_data *chg)
 
 		/* able to charge */
 		chg->charging = true;
+		/* if we have vdcin but we cannot detect the cable type,
+		force to AC so we can charge anyway */
+		if (chg->cable_status == CABLE_TYPE_NONE)
+			chg->cable_status = CABLE_TYPE_AC;
 		ret = max8998_charging_control(chg);
 		if (ret < 0)
 			goto err;
