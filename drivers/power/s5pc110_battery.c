@@ -315,14 +315,14 @@ static int s3c_get_bat_temp(struct chg_data *chg)
 	} else if (temp_adc >= TEMP_IDLE_HIGH_RECOVER &&
 		   temp_adc <= TEMP_LOW_RECOVER) {
 		if (health == POWER_SUPPLY_HEALTH_OVERHEAT ||
-		    health == POWER_SUPPLY_HEALTH_FREEZE)
+		    health == POWER_SUPPLY_HEALTH_COLD)
 			chg->bat_info.batt_health =
 						POWER_SUPPLY_HEALTH_GOOD;
 	} else if (temp_adc >= TEMP_LOW_BLOCK) {
-		if (health != POWER_SUPPLY_HEALTH_FREEZE &&
+		if (health != POWER_SUPPLY_HEALTH_COLD &&
 		    health != POWER_SUPPLY_HEALTH_UNSPEC_FAILURE)
 			chg->bat_info.batt_health =
-						POWER_SUPPLY_HEALTH_FREEZE;
+				POWER_SUPPLY_HEALTH_COLD;
 	}
 
 	while (left_side <= right_side) {
