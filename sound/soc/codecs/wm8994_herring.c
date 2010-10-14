@@ -114,12 +114,12 @@ struct gain_info_t playback_gain_table[PLAYBACK_GAIN_NUM] = {
 		.mode = PLAYBACK_HP,
 		.reg  = WM8994_LEFT_OUTPUT_VOLUME,	/* 1Ch */
 		.mask = WM8994_HPOUT1L_VOL_MASK,
-		.gain = WM8994_HPOUT1_VU | 0x31
+		.gain = WM8994_HPOUT1_VU | 0x39
 	}, {
 		.mode = PLAYBACK_HP,
 		.reg  = WM8994_RIGHT_OUTPUT_VOLUME,	/* 1Dh */
 		.mask = WM8994_HPOUT1R_VOL_MASK,
-		.gain = WM8994_HPOUT1_VU | 0x31
+		.gain = WM8994_HPOUT1_VU | 0x39
 	}, {
 		.mode = PLAYBACK_HP,
 		.reg  = WM8994_LEFT_OPGA_VOLUME,	/* 20h */
