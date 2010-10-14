@@ -83,9 +83,7 @@ enum audio_path	{
 	RING_SPK, RING_HP, RING_SPK_HP
 };
 enum mic_path		{MAIN, SUB, BT_REC, MIC_OFF};
-enum call_state		{DISCONNECT, CONNECT};
 enum power_state	{CODEC_OFF, CODEC_ON };
-enum mic_state		{MIC_NO_USE, MIC_USE};
 enum ringtone_state	{RING_OFF, RING_ON};
 enum recognition	{REC_OFF, REC_ON};
 
@@ -112,9 +110,7 @@ struct wm8994_priv {
 	unsigned int  stream_state;
 	enum audio_path cur_path;
 	enum mic_path rec_path;
-	enum call_state call_state;
 	enum power_state power_state;
-	enum mic_state mic_state;
 	enum recognition recognition_active;
 	enum ringtone_state ringtone_active;
 	select_route *universal_playback_path;
@@ -149,8 +145,7 @@ inline unsigned int wm8994_read(struct snd_soc_codec *codec, unsigned int reg);
 int wm8994_write(struct snd_soc_codec *codec,
 		unsigned int reg, unsigned int value);
 int wm8994_configure_clock(struct snd_soc_codec *codec, int en);
-void wm8994_disable_playback_path(struct snd_soc_codec *codec,
-		enum audio_path path);
+void wm8994_disable_path(struct snd_soc_codec *codec);
 void wm8994_disable_rec_path(struct snd_soc_codec *codec);
 void wm8994_record_main_mic(struct snd_soc_codec *codec);
 void wm8994_record_headset_mic(struct snd_soc_codec *codec);
@@ -158,6 +153,7 @@ void wm8994_record_bluetooth(struct snd_soc_codec *codec);
 void wm8994_set_playback_receiver(struct snd_soc_codec *codec);
 void wm8994_set_playback_headset(struct snd_soc_codec *codec);
 void wm8994_set_playback_speaker(struct snd_soc_codec *codec);
+void wm8994_set_playback_bluetooth(struct snd_soc_codec *codec);
 void wm8994_set_playback_speaker_headset(struct snd_soc_codec *codec);
 void wm8994_set_voicecall_common_setting(struct snd_soc_codec *codec);
 void wm8994_set_voicecall_receiver(struct snd_soc_codec *codec);

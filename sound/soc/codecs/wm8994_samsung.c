@@ -110,20 +110,17 @@ EXPORT_SYMBOL_GPL(soc_codec_dev_pcm_wm8994);
 struct snd_soc_codec_device soc_codec_dev_wm8994;
 EXPORT_SYMBOL_GPL(soc_codec_dev_wm8994);
 
-
-static void wm8994_set_off(struct snd_soc_codec *codec);
-
 /*
  * Definitions of sound path
  */
 select_route universal_wm8994_playback_paths[] = {
-	wm8994_set_off, wm8994_set_playback_receiver,
+	wm8994_disable_path, wm8994_set_playback_receiver,
 	wm8994_set_playback_speaker, wm8994_set_playback_headset,
-	wm8994_set_off, wm8994_set_playback_speaker_headset
+	wm8994_set_playback_bluetooth, wm8994_set_playback_speaker_headset
 };
 
 select_route universal_wm8994_voicecall_paths[] = {
-	wm8994_set_off, wm8994_set_voicecall_receiver,
+	wm8994_disable_path, wm8994_set_voicecall_receiver,
 	wm8994_set_voicecall_speaker, wm8994_set_voicecall_headset,
 	wm8994_set_voicecall_bluetooth
 };
@@ -272,8 +269,10 @@ static const char *playback_path[] = {
 	"RING_SPK", "RING_HP", "RING_SPK_HP"
 };
 static const char *voicecall_path[] = { "OFF", "RCV", "SPK", "HP", "BT" };
-static const char *mic_path[] = { "Main Mic", "Hands Free Mic" };
-static const char *mic_state[] = { "MIC_NO_USE", "MIC_USE" };
+static const char *mic_path[] = { "Main Mic", "Hands Free Mic",
+					"BT Sco Mic", "MIC OFF" };
+static const char *recognition_state[] = { "RECOGNITION_OFF",
+					"RECOGNITION_ON" };
 
 static int wm8994_get_mic_path(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
@@ -444,18 +443,18 @@ static int wm8994_set_voice_path(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-static int wm8994_get_mic_status(struct snd_kcontrol *kcontrol,
+static int wm8994_get_recognition_status(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_codec *codec = snd_kcontrol_chip(kcontrol);
 	struct wm8994_priv *wm8994 = codec->drvdata;
 
-	DEBUG_LOG("mic_state = [%d]", wm8994->mic_state);
+	DEBUG_LOG("recognition_state = [%d]", wm8994->recognition_active);
 
-	return wm8994->mic_state;
+	return wm8994->recognition_active;
 }
 
-static int wm8994_set_mic_status(struct snd_kcontrol *kcontrol,
+static int wm8994_set_recognition_status(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_codec *codec = snd_kcontrol_chip(kcontrol);
@@ -463,23 +462,12 @@ static int wm8994_set_mic_status(struct snd_kcontrol *kcontrol,
 
 	int control_flag = ucontrol->value.integer.value[0];
 
-	DEBUG_LOG("Changed mic state [%d] => [%d]",
-			wm8994->mic_state, control_flag);
+	DEBUG_LOG("Changed recognition state [%d] => [%d]",
+			wm8994->recognition_active, control_flag);
 
-	wm8994->mic_state = control_flag;
+	wm8994->recognition_active = control_flag;
 
 	return 0;
-}
-
-static void wm8994_set_off(struct snd_soc_codec *codec)
-{
-	struct wm8994_priv *wm8994 = codec->drvdata;
-
-	DEBUG_LOG("");
-
-	wm8994_ldo_control(wm8994->pdata, 0);
-
-	wm8994->universal_clock_control(codec, CODEC_OFF);
 }
 
 #define  SOC_WM899X_OUTPGA_DOUBLE_R_TLV(xname, reg_left, reg_right,\
@@ -514,7 +502,7 @@ static const struct soc_enum path_control_enum[] = {
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(playback_path), playback_path),
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(voicecall_path), voicecall_path),
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(mic_path), mic_path),
-	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(mic_state), mic_state),
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(recognition_state), recognition_state),
 };
 
 static const struct snd_kcontrol_new wm8994_snd_controls[] = {
@@ -547,8 +535,9 @@ static const struct snd_kcontrol_new wm8994_snd_controls[] = {
 	SOC_ENUM_EXT("Clock Control", clock_control_enum[0],
 		     s3c_pcmdev_get_clock, s3c_pcmdev_set_clock),
 #endif
-	SOC_ENUM_EXT("Mic Status", path_control_enum[3],
-		     wm8994_get_mic_status, wm8994_set_mic_status),
+	SOC_ENUM_EXT("Recognition Control", path_control_enum[3],
+		     wm8994_get_recognition_status,
+		     wm8994_set_recognition_status),
 
 };
 
@@ -1160,7 +1149,8 @@ static void wm8994_shutdown(struct snd_pcm_substream *substream,
 			val &= ~(WM8994_AIF1DAC1_MUTE_MASK);
 			val |= (WM8994_AIF1DAC1_MUTE);
 			wm8994_write(codec, WM8994_AIF1_DAC1_FILTERS_1, val);
-		}
+		} else
+			wm8994_disable_path(codec);
 	}
 }
 
@@ -1237,7 +1227,6 @@ static int wm8994_init(struct wm8994_priv *wm8994_private,
 	wm8994->power_state = CODEC_OFF;
 	wm8994->recognition_active = REC_OFF;
 	wm8994->ringtone_active = RING_OFF;
-	wm8994->mic_state = MIC_NO_USE;
 	wm8994->pdata = pdata;
 
 	wm8994->universal_clock_control(codec, CODEC_ON);
