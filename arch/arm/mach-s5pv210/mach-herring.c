@@ -2795,7 +2795,9 @@ static struct platform_device *herring_devices[] __initdata = {
 #endif
 #ifdef CONFIG_USB_ANDROID
 	&s3c_device_android_usb,
+#ifdef CONFIG_USB_ANDROID_MASS_STORAGE	
 	&s3c_device_usb_mass_storage,
+#endif
 #endif
 
 #ifdef CONFIG_S3C_DEV_HSMMC
