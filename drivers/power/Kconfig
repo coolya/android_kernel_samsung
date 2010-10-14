@@ -142,6 +142,12 @@ config BATTERY_S3C
 	help
 	  Say Y to enable support for batteries with s5pc110 chip.
 
+config BATTERY_S5PC110
+	tristate "Battery driver for CRESPO(S5PC110)"
+	depends on ARCH_S5PV210  && MACH_S5PC110_CRESPO
+	help
+	  Say Y to enable support for batteries with s5pc110 chip.	  
+
 config CHARGER_PCF50633
 	tristate "NXP PCF50633 MBC"
 	depends on MFD_PCF50633
