@@ -283,6 +283,56 @@ struct usb_ep *usb_ep_autoconfig (
 		if (ep && ep_matches (gadget, ep, desc))
 			return ep;
 #endif
+	} else if (gadget_is_s3c(gadget)) {
+		if (USB_ENDPOINT_XFER_INT == type) {
+			/* single buffering is enough */
+			ep = find_ep (gadget, "ep3-int");
+			if (ep && ep_matches (gadget, ep, desc))
+				return ep;
+			ep = find_ep (gadget, "ep6-int");
+			if (ep && ep_matches (gadget, ep, desc))
+				return ep;
+			ep = find_ep (gadget, "ep9-int");
+			if (ep && ep_matches (gadget, ep, desc))
+				return ep;
+			ep = find_ep (gadget, "ep12-int");
+			if (ep && ep_matches (gadget, ep, desc))
+				return ep;
+		} else if (USB_ENDPOINT_XFER_BULK == type
+				&& (USB_DIR_IN & desc->bEndpointAddress)) {
+			ep = find_ep (gadget, "ep2-bulk");
+			if (ep && ep_matches (gadget, ep, desc))
+				return ep;
+			ep = find_ep (gadget, "ep5-bulk");
+			if (ep && ep_matches (gadget, ep, desc))
+				return ep;
+			ep = find_ep (gadget, "ep8-bulk");
+			if (ep && ep_matches (gadget, ep, desc))
+				return ep;
+			ep = find_ep (gadget, "ep11-bulk");
+			if (ep && ep_matches (gadget, ep, desc))
+				return ep;
+			ep = find_ep (gadget, "ep14-bulk");
+			if (ep && ep_matches (gadget, ep, desc))
+				return ep;
+		} else if (USB_ENDPOINT_XFER_BULK == type
+				&& !(USB_DIR_IN & desc->bEndpointAddress)) {
+			ep = find_ep (gadget, "ep1-bulk");
+			if (ep && ep_matches (gadget, ep, desc))
+				return ep;
+			ep = find_ep (gadget, "ep4-bulk");
+			if (ep && ep_matches (gadget, ep, desc))
+				return ep;
+			ep = find_ep (gadget, "ep7-bulk");
+			if (ep && ep_matches (gadget, ep, desc))
+				return ep;
+			ep = find_ep (gadget, "ep10-bulk");
+			if (ep && ep_matches (gadget, ep, desc))
+				return ep;
+			ep = find_ep (gadget, "ep13-bulk");
+			if (ep && ep_matches (gadget, ep, desc))
+				return ep;
+		}
 	}
 
 	/* Second, look at endpoints until an unclaimed one looks usable */

@@ -67,6 +67,29 @@
 #define S5P_PA_PDMA		S5PV210_PA_PDMA
 /* New */
 
+/* usb */
+#define S5PV210_PA_OTG          (0xEC000000)
+#define S5P_PA_OTG		S5PV210_PA_OTG
+#define S5P_SZ_OTG		S5PV210_SZ_OTG
+
+#define S5PV210_PA_OTGSFR       (0xEC100000)
+#define S5P_PA_OTGSFR		S5PV210_PA_OTGSFR
+
+#define S5PV210_PA_USB_EHCI	(0xEC200000)
+#define S5P_PA_USB_EHCI		S5PV210_PA_USB_EHCI
+#define S5P_SZ_USB_EHCI     	SZ_1M
+
+#define S5PV210_PA_USB_OHCI	(0xEC300000)
+#define S5P_PA_USB_OHCI		S5PV210_PA_USB_OHCI
+#define S5P_SZ_USB_OHCI     	SZ_1M
+
+#define S5PV210_VA_OTG          S3C_ADDR(0x00E00000)
+#define S5PV210_SZ_OTG          SZ_1M
+
+#define S5PV210_VA_OTGSFR       S3C_ADDR(0x00F00000)
+#define S5PV210_SZ_OTGSFR       SZ_1M
+/* end usb */
+
 #define S5PV210_PA_MDMA		0xFA200000
 #define S5PV210_PA_PDMA0	0xE0900000
 #define S5PV210_PA_PDMA1	0xE0A00000
@@ -168,4 +191,14 @@
 
 #define SAMSUNG_PA_ADC		S5PV210_PA_ADC
 
+/* usb */
+#define S3C_VA_OTG              S5PV210_VA_OTG
+#define S3C_PA_OTG              S5PV210_PA_OTG
+#define S3C_SZ_OTG              S5PV210_SZ_OTG
+
+#define S3C_VA_OTGSFR           S5PV210_VA_OTGSFR
+#define S3C_PA_OTGSFR           S5PV210_PA_OTGSFR
+#define S3C_SZ_OTGSFR           S5PV210_SZ_OTGSFR
+
+/* end usb */
 #endif /* __ASM_ARCH_MAP_H */

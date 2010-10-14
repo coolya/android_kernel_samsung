@@ -18,7 +18,9 @@
 #include <linux/i2c-gpio.h>
 #include <linux/regulator/max8998.h>
 #include <linux/i2c/qt602240_ts.h>
+#include <linux/clk.h>
 #include <linux/delay.h>
+#include <linux/usb/ch9.h>
 #include <linux/spi/spi.h>
 #include <linux/spi/spi_gpio.h>
 #include <linux/pwm_backlight.h>
@@ -47,6 +49,7 @@
 #include <plat/sdhci.h>
 #include <plat/fimc.h>
 #include <plat/clock.h>
+#include <plat/regs-otg.h>
 
 struct class *sec_class;
 EXPORT_SYMBOL(sec_class);
