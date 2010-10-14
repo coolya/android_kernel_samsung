@@ -181,6 +181,31 @@ static void gps_gpio_init(void)
 	return;
 }
 
+static void uart_switch_init(void)
+{
+	int ret;
+	struct device *uartswitch_dev;
+
+	uartswitch_dev = device_create(sec_class, NULL, 0, NULL, "uart_switch");
+	if (IS_ERR(uartswitch_dev)) {
+		pr_err("Failed to create device(uart_switch)!\n");
+		return;
+	}
+
+	ret = gpio_request(GPIO_UART_SEL, "UART_SEL");
+	if (ret < 0) {
+		pr_err("Failed to request GPIO_UART_SEL!\n");
+		return;
+	}
+	s3c_gpio_setpull(GPIO_UART_SEL, S3C_GPIO_PULL_NONE);
+	s3c_gpio_cfgpin(GPIO_UART_SEL, S3C_GPIO_OUTPUT);
+	gpio_direction_output(GPIO_UART_SEL, 1);
+
+	gpio_export(GPIO_UART_SEL, 1);
+
+	gpio_export_link(uartswitch_dev, "UART_SEL", GPIO_UART_SEL);
+}
+
 static void herring_switch_init(void)
 {
 	sec_class = class_create(THIS_MODULE, "sec");
@@ -4174,6 +4199,8 @@ static void __init herring_machine_init(void)
 	herring_switch_init();
 
 	gps_gpio_init();
+
+	uart_switch_init();
 
 	herring_init_wifi_mem();
 
