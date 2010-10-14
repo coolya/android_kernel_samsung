@@ -32,6 +32,7 @@
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/onenand.h>
 #include <linux/mtd/partitions.h>
+#include <linux/clk.h>
 
 #include <asm/io.h>
 
@@ -958,7 +959,8 @@ static int onenand_get_device(struct mtd_info *mtd, int new_state)
 		schedule();
 		remove_wait_queue(&this->wq, &wait);
 	}
-
+	if (this->clk)
+		clk_enable(this->clk);
 	return 0;
 }
 
@@ -977,6 +979,8 @@ static void onenand_release_device(struct mtd_info *mtd)
 	this->state = FL_READY;
 	wake_up(&this->wq);
 	spin_unlock(&this->chip_lock);
+	if (this->clk)
+		clk_disable(this->clk);
 }
 
 /**
