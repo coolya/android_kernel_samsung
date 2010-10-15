@@ -33,6 +33,8 @@
 #include <mach/media.h>
 #include <plat/fimc.h>
 #include <linux/videodev2_samsung.h>
+#include <linux/delay.h>
+#include <plat/regs-fimc.h>
 
 #include "fimc.h"
 
@@ -390,9 +392,20 @@ static inline void fimc_irq_cap(struct fimc_control *ctrl)
 {
 	struct fimc_capinfo *cap = ctrl->cap;
 	int pp;
+	u32 cfg;
 
 	fimc_hwset_clear_irq(ctrl);
-	fimc_hwget_overflow_state(ctrl);
+	if (fimc_hwget_overflow_state(ctrl)) {
+		/* s/w reset -- added for recovering module in ESD state*/
+		cfg = readl(ctrl->regs + S3C_CIGCTRL);
+		cfg |= (S3C_CIGCTRL_SWRST);
+		writel(cfg, ctrl->regs + S3C_CIGCTRL);
+		msleep(1);
+
+		cfg = readl(ctrl->regs + S3C_CIGCTRL);
+		cfg &= ~S3C_CIGCTRL_SWRST;
+		writel(cfg, ctrl->regs + S3C_CIGCTRL);
+	}
 	pp = ((fimc_hwget_frame_count(ctrl) + 2) % 4);
 	if (cap->fmt.field == V4L2_FIELD_INTERLACED_TB) {
 		/* odd value of pp means one frame is made with top/bottom */
