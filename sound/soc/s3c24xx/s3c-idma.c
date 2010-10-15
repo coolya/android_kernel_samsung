@@ -138,11 +138,7 @@ static int s3c_idma_enqueue(void *token)
 	pr_debug("%s: %x@%x\n", __func__, MAX_LP_BUFF, LP_TXBUFF_ADDR);
 
 	/* Internal DMA Level0 Interrupt Address */
-	val = LP_TXBUFF_ADDR;
-	writel(val, s3c_idma.regs + S5P_IISADDR1);
-
-	/* Using normal ring buffer,so set interrupt level at half-buffer */
-	val += (s3c_idma.dma_prd << 1);
+	val = LP_TXBUFF_ADDR + s3c_idma.dma_prd;
 	writel(val, s3c_idma.regs + S5P_IISADDR0);
 
 	/* Start address0 of I2S internal DMA operation. */
@@ -184,12 +180,11 @@ static void s3c_idma_ctrl(int op)
 
 	switch (op) {
 	case LPAM_DMA_START:
-		val |= S5P_IISAHB_INTENLVL0 | S5P_IISAHB_DMAEN;
+		val |= (S5P_IISAHB_INTENLVL0 | S5P_IISAHB_DMAEN);
 		break;
 	case LPAM_DMA_STOP:
 		/* Disable LVL Interrupt and DMA Operation */
-		val &= ~(S5P_IISAHB_INTENLVL0 | S5P_IISAHB_INTENLVL1 |
-						S5P_IISAHB_DMAEN);
+		val &= ~(S5P_IISAHB_INTENLVL0 | S5P_IISAHB_DMAEN);
 		break;
 	default:
 		spin_unlock(&s3c_idma.lock);
@@ -313,9 +308,7 @@ static snd_pcm_uframes_t
 	spin_lock(&prtd->lock);
 
 	s3c_idma_getpos(&src);
-	pr_debug("Inside %s src=0x%x..dma_area=0x%x\n",
-		__func__, src, (unsigned int)runtime->dma_area);
-	res = src - runtime->dma_addr;
+	res = src - prtd->start;
 
 	spin_unlock(&prtd->lock);
 
@@ -350,7 +343,7 @@ static int s3c_idma_mmap(struct snd_pcm_substream *substream,
 
 static irqreturn_t s3c_iis_irq(int irqno, void *dev_id)
 {
-	u32 iiscon, iisahb, val;
+	u32 iiscon, iisahb, val, addr;
 
 	/* dump_i2s(); */
 	iisahb  = readl(s3c_idma.regs + S5P_IISAHB);
@@ -377,16 +370,21 @@ static irqreturn_t s3c_iis_irq(int irqno, void *dev_id)
 
 	/* Check internal DMA level interrupt. */
 	if (iisahb & S5P_IISAHB_LVL0INT)
-		val = S5P_IISAHB_CLRLVL0 | S5P_IISAHB_INTENLVL1;
-	else if (iisahb & S5P_IISAHB_LVL1INT)
-		val = S5P_IISAHB_CLRLVL1;
+		val = S5P_IISAHB_CLRLVL0;
 	else
 		val = 0;
 
-	pr_debug("inside %s..val=0x%x\n" , __func__, val);
 	if (val) {
 		iisahb |= val;
 		writel(iisahb, s3c_idma.regs + S5P_IISAHB);
+
+		addr = readl(s3c_idma.regs + S5P_IISADDR0);
+		addr += s3c_idma.dma_prd;
+
+		if (addr >= s3c_idma.dma_end)
+			addr = LP_TXBUFF_ADDR;
+
+		writel(addr, s3c_idma.regs + S5P_IISADDR0);
 
 		/* Finished dma transfer ? */
 		if (iisahb & S5P_IISLVLINTMASK) {
