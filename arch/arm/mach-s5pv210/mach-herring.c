@@ -1882,7 +1882,7 @@ static struct i2c_board_info i2c_devs2[] __initdata = {
 /* I2C2 */
 static struct i2c_board_info i2c_devs10[] __initdata = {
 	{
-		I2C_BOARD_INFO("cypress_touchkey", 0x20),
+		I2C_BOARD_INFO(CYPRESS_TOUCHKEY_DEV_NAME, 0x20),
 		.platform_data  = &touchkey_data,
 		.irq = (IRQ_EINT_GROUP22_BASE + 1),
 	},
