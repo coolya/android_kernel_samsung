@@ -1146,7 +1146,7 @@ static struct gpio_event_direct_entry herring_keypad_key_map[] = {
 
 static struct gpio_event_input_info herring_keypad_key_info = {
 	.info.func = gpio_event_input_func,
-	.info.no_suspend = false,
+	.info.no_suspend = true,
 	.type = EV_KEY,
 	.keymap = herring_keypad_key_map,
 	.keymap_size = ARRAY_SIZE(herring_keypad_key_map)
