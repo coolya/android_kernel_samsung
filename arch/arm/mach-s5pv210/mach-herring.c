@@ -1188,7 +1188,7 @@ static struct s3c_adc_mach_info s3c_adc_platform __initdata = {
 */
 
 
-/* in revisions before 1.0, there is a common mic bias gpio */
+/* in revisions before 0.9, there is a common mic bias gpio */
 
 static DEFINE_SPINLOCK(mic_bias_lock);
 static bool wm8994_mic_bias;
@@ -1200,7 +1200,7 @@ static void set_shared_mic_bias(void)
 
 static void wm8994_set_mic_bias(bool on)
 {
-	if (system_rev <= 0x0a) {
+	if (system_rev < 0x09) {
 		unsigned long flags;
 		spin_lock_irqsave(&mic_bias_lock, flags);
 		wm8994_mic_bias = on;
@@ -1212,7 +1212,7 @@ static void wm8994_set_mic_bias(bool on)
 
 static void sec_jack_set_micbias_state(bool on)
 {
-	if (system_rev <= 0x0a) {
+	if (system_rev < 0x09) {
 		unsigned long flags;
 		spin_lock_irqsave(&mic_bias_lock, flags);
 		jack_mic_bias = on;
@@ -3110,9 +3110,9 @@ static struct gpio_init_data herring_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPJ4(4),
-		.cfg	= S3C_GPIO_INPUT,
-		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_DOWN,
+		.cfg	= S3C_GPIO_OUTPUT,
+		.val	= S3C_GPIO_SETPIN_ZERO,
+		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	},
 
@@ -3485,7 +3485,7 @@ static unsigned int herring_sleep_gpio_table[][3] = {
 	{ S5PV210_GPJ4(1), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
 	{ S5PV210_GPJ4(2), S3C_GPIO_SLP_PREV,	S3C_GPIO_PULL_NONE},
 	{ S5PV210_GPJ4(3), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_NONE},
-	{ S5PV210_GPJ4(4), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ4(4), S3C_GPIO_SLP_PREV,	S3C_GPIO_PULL_NONE},
 
 	/* memory part */
 	{ S5PV210_MP01(0), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
@@ -4086,7 +4086,7 @@ static void __init herring_machine_init(void)
 #endif
 
 	/* headset/earjack detection */
-	if (system_rev >= 0x0a)
+	if (system_rev >= 0x09)
 		gpio_request(GPIO_EAR_MICBIAS_EN, "ear_micbias_enable");
 
 	gpio_request(GPIO_TOUCH_EN, "touch en");
