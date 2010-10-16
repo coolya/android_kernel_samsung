@@ -70,7 +70,7 @@
 static u8 reg_defaults[5] = {
 	0x00, /* PROX: read only register */
 	0x08, /* GAIN: large LED drive level */
-	0x20, /* HYS: receiver sensitivity */
+	0xC2, /* HYS: receiver sensitivity */
 	0x04, /* CYCLE: */
 	0x01, /* OPMOD: normal operating mode */
 };
