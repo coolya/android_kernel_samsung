@@ -74,6 +74,11 @@
 #define ATTACH_USB	1
 #define ATTACH_TA	2
 
+#define HIGH_BLOCK_TEMP			450
+#define HIGH_RECOVER_TEMP		400
+#define LOW_BLOCK_TEMP			0
+#define LOW_RECOVER_TEMP		20
+
 struct battery_info {
 	u32 batt_temp;		/* Battery Temperature (C) from ADC */
 	u32 batt_temp_adc;	/* Battery Temperature ADC value */
@@ -300,52 +305,42 @@ static unsigned long s3c_read_temp(struct chg_data *chg)
 static int s3c_get_bat_temp(struct chg_data *chg)
 {
 	int temp = 0;
-	int array_size = ARRAY_SIZE(temper_table);
 	int temp_adc = s3c_read_temp(chg);
 	int health = chg->bat_info.batt_health;
 	int left_side = 0;
-	int right_side = array_size - 1;
+	int right_side = chg->pdata->adc_array_size - 1;
 	int mid;
 
-	if (temp_adc <= TEMP_IDLE_HIGH_BLOCK) {
+	while (left_side <= right_side) {
+		mid = (left_side + right_side) / 2 ;
+		if (mid == 0 || mid == chg->pdata->adc_array_size - 1 ||
+				(chg->pdata->adc_table[mid].adc_value <= temp_adc &&
+				chg->pdata->adc_table[mid+1].adc_value > temp_adc)) {
+			temp = chg->pdata->adc_table[mid].temperature;
+			break;
+		} else if (temp_adc - chg->pdata->adc_table[mid].adc_value > 0)
+			left_side = mid + 1;
+		else
+			right_side = mid - 1;
+	}
+
+	chg->bat_info.batt_temp = temp;
+	if (temp >= HIGH_BLOCK_TEMP) {
 		if (health != POWER_SUPPLY_HEALTH_OVERHEAT &&
 		    health != POWER_SUPPLY_HEALTH_UNSPEC_FAILURE)
 			chg->bat_info.batt_health =
 					POWER_SUPPLY_HEALTH_OVERHEAT;
-	} else if (temp_adc >= TEMP_IDLE_HIGH_RECOVER &&
-		   temp_adc <= TEMP_LOW_RECOVER) {
+	} else if (temp <= HIGH_RECOVER_TEMP && temp >= LOW_RECOVER_TEMP) {
 		if (health == POWER_SUPPLY_HEALTH_OVERHEAT ||
 		    health == POWER_SUPPLY_HEALTH_COLD)
 			chg->bat_info.batt_health =
-						POWER_SUPPLY_HEALTH_GOOD;
-	} else if (temp_adc >= TEMP_LOW_BLOCK) {
+					POWER_SUPPLY_HEALTH_GOOD;
+	} else if (temp <= LOW_BLOCK_TEMP) {
 		if (health != POWER_SUPPLY_HEALTH_COLD &&
 		    health != POWER_SUPPLY_HEALTH_UNSPEC_FAILURE)
 			chg->bat_info.batt_health =
 				POWER_SUPPLY_HEALTH_COLD;
 	}
-
-	while (left_side <= right_side) {
-		mid = (left_side + right_side) / 2 ;
-		if (mid == 0) {
-			temp = temper_table[0][1];
-			break;
-		} else if (mid == array_size - 1) {
-			temp = temper_table[array_size-1][1];
-			break;
-		}
-
-		if (temper_table[mid][0] <= temp_adc &&
-			temper_table[mid-1][0] > temp_adc) {
-			temp = temper_table[mid][1];
-			break;
-		} else if (temp_adc - temper_table[mid][0] > 0)
-			right_side = mid - 1;
-		else
-			left_side = mid + 1;
-	}
-
-	chg->bat_info.batt_temp = temp;
 
 	pr_debug("%s : temp = %d, adc = %d\n", __func__, temp, temp_adc);
 
@@ -377,11 +372,13 @@ static void s3c_bat_discharge_reason(struct chg_data *chg)
 		chg->bat_info.dis_reason &= ~DISCONNECT_BAT_FULL;
 
 	if (discharge_reason == DISCONNECT_TEMP_OVERHEAT &&
-			chg->bat_info.batt_temp_adc >= TEMP_IDLE_HIGH_RECOVER)
+			chg->bat_info.batt_temp <=
+			HIGH_RECOVER_TEMP)
 		chg->bat_info.dis_reason &= ~DISCONNECT_TEMP_OVERHEAT;
 
 	if (discharge_reason == DISCONNECT_TEMP_FREEZE &&
-			chg->bat_info.batt_temp_adc <= TEMP_LOW_RECOVER)
+			chg->bat_info.batt_temp >=
+			LOW_RECOVER_TEMP)
 		chg->bat_info.dis_reason &= ~DISCONNECT_TEMP_FREEZE;
 
 	if (discharge_reason == DISCONNECT_OVER_TIME &&
@@ -660,6 +657,11 @@ static __devinit int max8998_charger_probe(struct platform_device *pdev)
 	chg->iodev = iodev;
 	chg->pdata = pdata->charger;
 
+	if (!chg->pdata || !chg->pdata->adc_table) {
+		pr_err("%s : No platform data & adc_table supplied\n", __func__);
+		goto err_bat_table;
+	}
+
 	chg->psy_bat.name = "battery",
 	chg->psy_bat.type = POWER_SUPPLY_TYPE_BATTERY,
 	chg->psy_bat.properties = max8998_battery_props,
@@ -808,6 +810,7 @@ err_wake_lock:
 	wake_lock_destroy(&chg->vbus_wake_lock);
 err_kfree:
 	mutex_destroy(&chg->mutex);
+err_bat_table:
 	kfree(chg);
 	return ret;
 }

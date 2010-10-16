@@ -70,6 +70,15 @@ enum cable_type_t {
 	CABLE_TYPE_AC,
 };
 
+/**
+ * max8998_adc_table_data
+ * @adc_value : max8998 adc value
+ * @temperature : temperature(C) * 10
+ */
+struct max8998_adc_table_data {
+	int adc_value;
+	int temperature;
+};
 struct max8998_charger_callbacks {
 	void (*set_cable)(struct max8998_charger_callbacks *ptr,
 		enum cable_type_t status);
@@ -79,10 +88,13 @@ struct max8998_charger_callbacks {
  * max8998_charger_data - charger data
  * @id: charger id
  * @initdata: charger init data (contraints, supplies, ...)
+ * @adc_table: adc_table must be ascending adc value order
  */
 struct max8998_charger_data {
 	struct power_supply *psy_fuelgauge;
 	void (*register_callbacks)(struct max8998_charger_callbacks *ptr);
+	struct max8998_adc_table_data *adc_table;
+	int adc_array_size;
 };
 
 /**
