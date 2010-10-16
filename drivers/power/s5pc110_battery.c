@@ -659,6 +659,7 @@ static __devinit int max8998_charger_probe(struct platform_device *pdev)
 
 	if (!chg->pdata || !chg->pdata->adc_table) {
 		pr_err("%s : No platform data & adc_table supplied\n", __func__);
+		ret = -EINVAL;
 		goto err_bat_table;
 	}
 
