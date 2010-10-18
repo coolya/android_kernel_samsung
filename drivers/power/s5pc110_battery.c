@@ -173,7 +173,6 @@ static int s3c_bat_get_property(struct power_supply *bat_ps,
 		break;
 	case POWER_SUPPLY_PROP_TEMP:
 		val->intval = chg->bat_info.batt_temp;
-		pr_info("psp = %d\n", chg->bat_info.batt_temp);
 		break;
 	case POWER_SUPPLY_PROP_ONLINE:
 		/* battery is always online */
