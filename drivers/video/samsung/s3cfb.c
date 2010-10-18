@@ -885,7 +885,7 @@ static int __devinit s3cfb_probe(struct platform_device *pdev)
 	struct s3c_platform_fb *pdata;
 	struct s3cfb_global *fbdev;
 	struct resource *res;
-	int i, ret = 0;
+	int i, j, ret = 0;
 
 	fbdev = kzalloc(sizeof(struct s3cfb_global), GFP_KERNEL);
 	if (!fbdev) {
@@ -945,14 +945,6 @@ static int __devinit s3cfb_probe(struct platform_device *pdev)
 		goto err_mem;
 	}
 
-	fbdev->irq = platform_get_irq(pdev, 0);
-	if (request_irq(fbdev->irq, s3cfb_irq_frame, IRQF_SHARED,
-			pdev->name, fbdev)) {
-		dev_err(fbdev->dev, "request_irq failed\n");
-		ret = -EINVAL;
-		goto err_irq;
-	}
-
 	s3cfb_set_vsync_interrupt(fbdev, 1);
 	s3cfb_set_global_interrupt(fbdev, 1);
 	s3cfb_init_global(fbdev);
@@ -971,6 +963,14 @@ static int __devinit s3cfb_probe(struct platform_device *pdev)
 	s3cfb_set_window(fbdev, pdata->default_win, 1);
 
 	s3cfb_display_on(fbdev);
+
+	fbdev->irq = platform_get_irq(pdev, 0);
+	if (request_irq(fbdev->irq, s3cfb_irq_frame, IRQF_SHARED,
+			pdev->name, fbdev)) {
+		dev_err(fbdev->dev, "request_irq failed\n");
+		ret = -EINVAL;
+		goto err_irq;
+	}
 
 #ifdef CONFIG_FB_S3C_LCD_INIT
 #if defined(CONFIG_FB_S3C_TL2796)
@@ -997,6 +997,14 @@ static int __devinit s3cfb_probe(struct platform_device *pdev)
 
 	return 0;
 
+err_irq:
+	s3cfb_display_off(fbdev);
+	s3cfb_set_window(fbdev, pdata->default_win, 0);
+	for (i = pdata->default_win;
+			i < pdata->nr_wins + pdata->default_win; i++) {
+		j = i % pdata->nr_wins;
+		unregister_framebuffer(fbdev->fb[j]);
+	}
 err_register:
 	for (i = 0; i < pdata->nr_wins; i++) {
 		if (i == pdata->default_win)
@@ -1006,9 +1014,6 @@ err_register:
 	kfree(fbdev->fb);
 
 err_alloc:
-	free_irq(fbdev->irq, fbdev);
-
-err_irq:
 	iounmap(fbdev->regs);
 
 err_mem:
