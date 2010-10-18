@@ -280,10 +280,7 @@ void mmc_set_data_timeout(struct mmc_data *data, const struct mmc_card *card)
 	 * SDIO cards only define an upper 1 s limit on access.
 	 */
 	if (mmc_card_sdio(card)) {
-		if (card->host->caps & MMC_CAP_ATHEROS_WIFI)
-			data->timeout_ns = 2000000000;
-		else
-			data->timeout_ns = 1000000000;
+		data->timeout_ns = 1000000000;
 		data->timeout_clks = 0;
 		return;
 	}
@@ -924,10 +921,7 @@ static void mmc_power_up(struct mmc_host *host)
 	 * This delay should be sufficient to allow the power supply
 	 * to reach the minimum voltage.
 	 */
-	if (host->caps & MMC_CAP_ATHEROS_WIFI)
-		mmc_delay(400);
-	else
-		mmc_delay(10);
+	mmc_delay(10);
 
 	host->ios.clock = host->f_min;
 

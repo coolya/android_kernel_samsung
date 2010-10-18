@@ -693,15 +693,6 @@ static void sdhci_prepare_data(struct sdhci_host *host, struct mmc_data *data)
 	if (host->flags & (SDHCI_USE_SDMA | SDHCI_USE_ADMA))
 		host->flags |= SDHCI_REQ_USE_DMA;
 
-
-	if (host->mmc->caps & MMC_CAP_ATHEROS_WIFI) {
-		/* for atheros BT/WiFi */
-		if (((data->blocks == 1) && (data->blksz < 64)) ||
-			(data->blocks == 12)) {
-			host->flags &= ~SDHCI_REQ_USE_DMA;
-		}
-	}
-
 	/*
 	 * FIXME: This doesn't account for merging when mapping the
 	 * scatterlist.
@@ -918,10 +909,8 @@ static void sdhci_send_command(struct sdhci_host *host, struct mmc_command *cmd)
 
 	del_timer(&host->busy_check_timer);
 
-	if (host->mmc->caps & MMC_CAP_ATHEROS_WIFI)
-		timeout = 1000;	/* Wait max 1000 ms for atheros BT/WiFi */
-	else
-		timeout = 10;	/* Wait max 10 ms */
+	/* Wait max 10 ms */
+	timeout = 10;
 
 	mask = SDHCI_CMD_INHIBIT;
 	if ((cmd->data != NULL) || (cmd->flags & MMC_RSP_BUSY))
@@ -942,9 +931,6 @@ static void sdhci_send_command(struct sdhci_host *host, struct mmc_command *cmd)
 			return;
 		}
 		timeout--;
-		if (host->mmc->caps & MMC_CAP_ATHEROS_WIFI)
-			udelay(1);
-		else
 		mdelay(1);
 	}
 
@@ -1685,17 +1671,8 @@ static irqreturn_t sdhci_irq(int irq, void *dev_id)
 
 	intmask &= ~SDHCI_INT_BUS_POWER;
 
-	if (host->mmc->caps & MMC_CAP_ATHEROS_WIFI) {
-		if (intmask & SDHCI_INT_CARD_INT) {
-			if (readl(host->ioaddr + SDHCI_INT_ENABLE)
-				& SDHCI_INT_CARD_INT) {
-				cardint = 1;
-			}
-		}
-	} else {
 	if (intmask & SDHCI_INT_CARD_INT)
 		cardint = 1;
-	}
 
 	intmask &= ~SDHCI_INT_CARD_INT;
 
