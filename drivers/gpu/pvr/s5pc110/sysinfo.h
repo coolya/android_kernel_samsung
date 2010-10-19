@@ -28,7 +28,7 @@
 #define __SYSINFO_H__
 
 
-#define MAX_HW_TIME_US				(500000)
+#define MAX_HW_TIME_US				(1000000)
 #if defined (SLSI_S5PC110)
 //#define WAIT_TRY_COUNT				(30000)
 #define WAIT_TRY_COUNT				(10000)
