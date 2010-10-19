@@ -32,7 +32,7 @@
 #include <linux/sec_jack.h>
 
 #define MAX_ZONE_LIMIT		10
-#define SEND_KEY_CHECK_TIME_MS	50		/* 50ms */
+#define SEND_KEY_CHECK_TIME_MS	30		/* 30ms */
 #define DET_CHECK_TIME_MS	200		/* 200ms */
 #define WAKE_LOCK_TIME		(HZ * 5)	/* 5 sec */
 
