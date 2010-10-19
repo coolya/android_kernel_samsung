@@ -60,6 +60,10 @@ static struct regulator_consumer_supply s5pv210_pd_lcd_supply[] = {
 	REGULATOR_SUPPLY("pd", "s3cfb"),
 };
 
+static struct regulator_consumer_supply s5pv210_pd_g3d_supply[] = {
+	REGULATOR_SUPPLY("pd", "pvrsrvkm"),
+};
+
 static struct regulator_consumer_supply s5pv210_pd_mfc_supply[] = {
 	REGULATOR_SUPPLY("pd", "s3c-mfc"),
 };
@@ -98,6 +102,15 @@ static struct regulator_init_data s5pv210_pd_lcd_data = {
 	},
 	.num_consumer_supplies	= ARRAY_SIZE(s5pv210_pd_lcd_supply),
 	.consumer_supplies	= s5pv210_pd_lcd_supply,
+};
+
+static struct regulator_init_data s5pv210_pd_g3d_data = {
+	.constraints = {
+		.valid_modes_mask	= REGULATOR_MODE_NORMAL,
+		.valid_ops_mask		= REGULATOR_CHANGE_STATUS,
+	},
+	.num_consumer_supplies	= ARRAY_SIZE(s5pv210_pd_g3d_supply),
+	.consumer_supplies	= s5pv210_pd_g3d_supply,
 };
 
 static struct regulator_init_data s5pv210_pd_mfc_data = {
@@ -175,6 +188,15 @@ struct clk_should_be_running s5pv210_pd_lcd_clk[] = {
 	},
 };
 
+struct clk_should_be_running s5pv210_pd_g3d_clk[] = {
+	{
+		.clk_name	= "sclk",
+		.dev		= &s3c_device_g3d.dev,
+	}, {
+		/* end of the clock array */
+	},
+};
+
 struct clk_should_be_running s5pv210_pd_mfc_clk[] = {
 	{
 		.clk_name	= "mfc",
@@ -216,6 +238,14 @@ static struct s5pv210_pd_config s5pv210_pd_lcd_pdata = {
 	.ctrlbit = S5PV210_PD_LCD,
 };
 
+static struct s5pv210_pd_config s5pv210_pd_g3d_pdata = {
+	.supply_name = "pd_g3d_supply",
+	.microvolts = 5000000,
+	.init_data = &s5pv210_pd_g3d_data,
+	.clk_run = s5pv210_pd_g3d_clk,
+	.ctrlbit = S5PV210_PD_G3D,
+};
+
 static struct s5pv210_pd_config s5pv210_pd_mfc_pdata = {
 	.supply_name = "pd_mfc_supply",
 	.microvolts = 5000000,
@@ -253,6 +283,14 @@ struct platform_device s5pv210_pd_lcd = {
 	.id            = 3,
 	.dev = {
 		.platform_data = &s5pv210_pd_lcd_pdata,
+	},
+};
+
+struct platform_device s5pv210_pd_g3d = {
+	.name          = "reg-s5pv210-pd",
+	.id            = 4,
+	.dev = {
+		.platform_data = &s5pv210_pd_g3d_pdata,
 	},
 };
 
