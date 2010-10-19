@@ -4018,6 +4018,7 @@ static struct platform_device *herring_devices[] __initdata = {
 	&s5pv210_pd_cam,
 	&s5pv210_pd_tv,
 	&s5pv210_pd_lcd,
+	&s5pv210_pd_g3d,
 	&s5pv210_pd_mfc,
 #endif
 
