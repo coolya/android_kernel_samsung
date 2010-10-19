@@ -3951,7 +3951,6 @@ static struct platform_device *herring_devices[] __initdata = {
 	&herring_input_device,
 
 	&s5pv210_device_iis0,
-	&s5pv210_device_ac97,
 	&s3c_device_wdt,
 
 #ifdef CONFIG_FB_S3C
