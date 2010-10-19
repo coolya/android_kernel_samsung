@@ -575,9 +575,9 @@ static struct regulator_init_data herring_ldo14_data = {
 
 static struct regulator_init_data herring_ldo15_data = {
 	.constraints	= {
-		.name		= "CAM_ISP_HOST_3.0V",
-		.min_uV		= 3000000,
-		.max_uV		= 3000000,
+		.name		= "CAM_ISP_HOST_2.8V",
+		.min_uV		= 2800000,
+		.max_uV		= 2800000,
 		.apply_uV	= 1,
 		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
@@ -1327,23 +1327,23 @@ static struct regulator *cam_af_regulator;
 static bool s5k4ecgx_ldos_enabled;
 static int s5k4ecgx_regulator_init(void)
 {
-	if (cam_isp_core_regulator == NULL) {
+	if (IS_ERR_OR_NULL(cam_isp_core_regulator)) {
 		cam_isp_core_regulator = regulator_get(NULL, "cam_isp_core");
-		if (cam_isp_core_regulator == NULL) {
+		if (IS_ERR_OR_NULL(cam_isp_core_regulator)) {
 			pr_err("failed to get cam_isp_core regulator");
 			return -EINVAL;
 		}
 	}
-	if (cam_isp_host_regulator == NULL) {
+	if (IS_ERR_OR_NULL(cam_isp_host_regulator)) {
 		cam_isp_host_regulator = regulator_get(NULL, "cam_isp_host");
-		if (cam_isp_host_regulator == NULL) {
+		if (IS_ERR_OR_NULL(cam_isp_host_regulator)) {
 			pr_err("failed to get cam_isp_host regulator");
 			return -EINVAL;
 		}
 	}
-	if (cam_af_regulator == NULL) {
+	if (IS_ERR_OR_NULL(cam_af_regulator)) {
 		cam_af_regulator = regulator_get(NULL, "cam_af");
-		if (cam_af_regulator == NULL) {
+		if (IS_ERR_OR_NULL(cam_af_regulator)) {
 			pr_err("failed to get cam_af regulator");
 			return -EINVAL;
 		}
@@ -1384,9 +1384,9 @@ static int s5k4ecgx_ldo_en(bool en)
 	if (en == s5k4ecgx_ldos_enabled)
 		return 0;
 
-	if ((cam_isp_core_regulator == NULL) ||
-		(cam_isp_host_regulator == NULL) ||
-		(cam_af_regulator == NULL)) {
+	if (IS_ERR_OR_NULL(cam_isp_core_regulator) ||
+		IS_ERR_OR_NULL(cam_isp_host_regulator) ||
+		IS_ERR_OR_NULL(cam_af_regulator)) {
 		pr_err("Camera regulators not initialized\n");
 		return -EINVAL;
 	}
