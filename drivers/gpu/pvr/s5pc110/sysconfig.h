@@ -31,6 +31,8 @@
 
 #define VS_PRODUCT_NAME	"s5pc110"
 
+extern struct platform_device *gpsPVRLDMDev;
+
 #define SYS_SGX_USSE_COUNT					(1)
 
 #define SGX_REG_SIZE 	0x4000
@@ -46,11 +48,4 @@
 		#define SYS_SGX_HOSTPORT_BRN23030_OFFSET 0x0
 	#endif
 #endif
-
-#if defined(SLSI_S5PC110)
-
-extern PVRSRV_ERROR EnableSGXClocks(void);
-#endif
-
- 
 #endif	

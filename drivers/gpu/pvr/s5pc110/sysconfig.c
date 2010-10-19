@@ -35,6 +35,8 @@
 
 
 #if defined(SLSI_S5PC110)
+#include <linux/platform_device.h>
+#include <linux/regulator/consumer.h>
 #include <linux/clk.h>
 #include <linux/err.h>
 #endif
@@ -94,24 +96,22 @@ IMG_UINT32   PVRSRV_BridgeDispatchKM( IMG_UINT32  Ioctl,
 									IMG_UINT32 *pdwBytesTransferred);
 
 #if defined(SLSI_S5PC110)
-static struct clk               *g3d_clock;
-PVRSRV_ERROR EnableSGXClocks(void)
+static struct clk		*g3d_clock;
+static struct regulator		*g3d_pd_regulator;
+static PVRSRV_ERROR EnableSGXClocks(void)
 {
+	regulator_enable(g3d_pd_regulator);
+	clk_enable(g3d_clock);
 
- 
-    clk_enable(g3d_clock);
-
-    //printk("\n=== 3D clk enabled dummy\n");
-   
-    return PVRSRV_OK;
-
+	return PVRSRV_OK;
 }
 #if defined(SUPPORT_ACTIVE_POWER_MANAGEMENT)
 static PVRSRV_ERROR DisableSGXClocks(void)
 {
-    clk_disable(g3d_clock);
-    //printk("\n=== 3D clk disabled dummy\n");    
-    return PVRSRV_OK;
+	clk_disable(g3d_clock);
+	regulator_disable(g3d_pd_regulator);
+
+	return PVRSRV_OK;
 }
 #endif
 #endif
@@ -165,28 +165,31 @@ static PVRSRV_ERROR SysLocateDevices(SYS_DATA *psSysData)
 
 
 
-
-PVRSRV_ERROR SysInitialise(IMG_VOID)
+PVRSRV_ERROR SysInitialise()
 {
 	IMG_UINT32			i;
 	PVRSRV_ERROR 		eError;
 	PVRSRV_DEVICE_NODE	*psDeviceNode;
 	SGX_TIMING_INFORMATION*	psTimingInfo;
+	struct platform_device	*pdev;
 
 	gpsSysData = &gsSysData;
 	OSMemSet(gpsSysData, 0, sizeof(SYS_DATA));
 
-               g3d_clock = clk_get(NULL, "sclk_g3d");
-                if (IS_ERR(g3d_clock)) {
-                        printk("\n3D failed to find g3d clock source-enable\n");
+	pdev = gpsPVRLDMDev;
+	g3d_pd_regulator = regulator_get(&pdev->dev, "pd");
+	if (IS_ERR(g3d_pd_regulator)) {
+		printk("\nG3D failed to find g3d power domain\n");
+		return PVRSRV_ERROR_INIT_FAILURE;
+	}
 
-                        return PVRSRV_ERROR_INIT_FAILURE;
-                }
+	g3d_clock = clk_get(&pdev->dev, "sclk");
+	if (IS_ERR(g3d_clock)) {
+		printk("\n3D failed to find g3d clock source-enable\n");
+		return PVRSRV_ERROR_INIT_FAILURE;
+	}
 
-// added by ksoo (2010.03.12)
-#if defined(SUPPORT_ACTIVE_POWER_MANAGEMENT)
 	EnableSGXClocks();
-#endif
 
 	eError = OSInitEnvData(&gpsSysData->pvEnvSpecificData);
 	if (eError != PVRSRV_OK)
