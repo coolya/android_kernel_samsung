@@ -1246,27 +1246,14 @@ static int s3c_udc_remove(struct platform_device *pdev)
 static int s3c_udc_suspend(struct platform_device *pdev, pm_message_t state)
 {
 	struct s3c_udc *dev = the_controller;
-	int i;
 
-	if (dev->driver) {
-		if (dev->driver->suspend)
-			dev->driver->suspend(&dev->gadget);
+	disable_irq(IRQ_OTG);
 
-		/* Terminate any outstanding requests  */
-		for (i = 0; i < S3C_MAX_ENDPOINTS; i++) {
-			struct s3c_ep *ep = &dev->ep[i];
-			if (ep->dev != NULL)
-				spin_lock(&ep->dev->lock);
-			ep->stopped = 1;
-			nuke(ep, -ESHUTDOWN);
-			if (ep->dev != NULL)
-				spin_unlock(&ep->dev->lock);
-		}
+	if (dev->driver && dev->driver->suspend)
+		dev->driver->suspend(&dev->gadget);
 
-		disable_irq(IRQ_OTG);
-		udc_disable(dev);
-		clk_disable(otg_clock);
-	}
+	if (dev->udc_enabled)
+		usb_gadget_vbus_disconnect(&dev->gadget);
 
 	return 0;
 }
@@ -1275,15 +1262,10 @@ static int s3c_udc_resume(struct platform_device *pdev)
 {
 	struct s3c_udc *dev = the_controller;
 
-	if (dev->driver) {
-		clk_enable(otg_clock);
-		udc_reinit(dev);
-		enable_irq(IRQ_OTG);
-		udc_enable(dev);
+	if (dev->driver && dev->driver->resume)
+		dev->driver->resume(&dev->gadget);
 
-		if (dev->driver->resume)
-			dev->driver->resume(&dev->gadget);
-	}
+	enable_irq(IRQ_OTG);
 
 	return 0;
 }
