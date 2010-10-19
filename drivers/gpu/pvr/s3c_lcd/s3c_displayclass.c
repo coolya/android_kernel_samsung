@@ -38,6 +38,7 @@
 #include <asm/memory.h>
 #include <plat/regs-fb.h>
 #include <linux/console.h>
+#include <linux/workqueue.h>
 
 #include "img_defs.h"
 #include "servicesext.h"
@@ -137,10 +138,12 @@ typedef struct S3C_LCD_DEVINFO_TAG
 	S3C_VSYNC_FLIP_ITEM				asVSyncFlips[S3C_MAX_BUFFERS];
 
 	unsigned long					ulInsertIndex;
-	
-
 	unsigned long					ulRemoveIndex;
 	S3C_BOOL						bFlushCommands;
+
+	struct workqueue_struct 		*psWorkQueue;
+	struct work_struct				sWork;
+	struct mutex					sVsyncFlipItemMutex;
 
 }S3C_LCD_DEVINFO;
 
@@ -179,16 +182,6 @@ static IMG_VOID ResetVSyncFlipItems(S3C_LCD_DEVINFO* psDevInfo)
 		psDevInfo->asVSyncFlips[i].bFlipped = S3C_FALSE;
 		psDevInfo->asVSyncFlips[i].bCmdCompleted = S3C_FALSE;
 	}
-}
-
-static IMG_VOID S3C_DisableVSyncInterrupt(void)
-{
-//	disable_irq(VSYCN_IRQ);
-}
-
-static IMG_VOID S3C_EnableVSyncInterrupt(void)
-{
-//	enable_irq(VSYCN_IRQ);
 }
 
 static IMG_VOID S3C_Flip(S3C_LCD_DEVINFO  *psDevInfo,
@@ -235,7 +228,7 @@ static void FlushInternalVSyncQueue(S3C_LCD_DEVINFO*psDevInfo)
 {
 	S3C_VSYNC_FLIP_ITEM*  psFlipItem;
 
-	S3C_DisableVSyncInterrupt();
+	mutex_lock(&psDevInfo->sVsyncFlipItemMutex);
 
 	psFlipItem = &psDevInfo->asVSyncFlips[psDevInfo->ulRemoveIndex];
 
@@ -265,27 +258,21 @@ static void FlushInternalVSyncQueue(S3C_LCD_DEVINFO*psDevInfo)
 	psDevInfo->ulInsertIndex = 0;
 	psDevInfo->ulRemoveIndex = 0;
 
-	S3C_EnableVSyncInterrupt();
+	mutex_unlock(&psDevInfo->sVsyncFlipItemMutex);
 
 }
 
-static irqreturn_t S3C_VSyncISR(int irq, void *dev_id)
+static void VsyncWorkqueueFunc(struct work_struct *psWork)
 {
 
-	S3C_LCD_DEVINFO *psDevInfo = g_psLCDInfo;
 	S3C_VSYNC_FLIP_ITEM *psFlipItem;
+	S3C_LCD_DEVINFO *psDevInfo = container_of(psWork, S3C_LCD_DEVINFO, sWork);
 
-	if( dev_id != g_psLCDInfo)
+	if(psDevInfo == NULL)
 	{
-		return IRQ_NONE;
+		return;
 	}
-
-	S3C_DisableVSyncInterrupt();
-
-	if(psDevInfo == NULL || !psDevInfo->psSwapChain)
-	{
-		goto Handled;
-	}
+	mutex_lock(&psDevInfo->sVsyncFlipItemMutex);
 
 	psFlipItem = &psDevInfo->asVSyncFlips[psDevInfo->ulRemoveIndex];
 	
@@ -299,7 +286,7 @@ static irqreturn_t S3C_VSyncISR(int irq, void *dev_id)
 			{
 				IMG_BOOL bScheduleMISR;
 			
-#if 1
+#if 0
 				bScheduleMISR = IMG_TRUE;
 #else
 				bScheduleMISR = IMG_FALSE;
@@ -330,7 +317,6 @@ static irqreturn_t S3C_VSyncISR(int irq, void *dev_id)
 		}
 		else
 		{
-		
 			S3C_Flip (psDevInfo, psFlipItem->psFb);
 			psFlipItem->bFlipped = S3C_TRUE;
 
@@ -339,9 +325,38 @@ static irqreturn_t S3C_VSyncISR(int irq, void *dev_id)
 	
 		psFlipItem = &psDevInfo->asVSyncFlips[psDevInfo->ulRemoveIndex];
 	}
+	mutex_unlock(&psDevInfo->sVsyncFlipItemMutex);
+}
 
-Handled:
-	S3C_EnableVSyncInterrupt();
+static S3C_BOOL CreateVsyncWorkQueue(S3C_LCD_DEVINFO *psDevInfo)
+{
+	psDevInfo->psWorkQueue = create_rt_workqueue("vsync_workqueue");
+
+	if (psDevInfo->psWorkQueue == IMG_NULL)
+	{
+		printk("fail to create vsync_handler workqueue\n");
+		return S3C_FALSE;
+	}
+
+	INIT_WORK(&psDevInfo->sWork, VsyncWorkqueueFunc);
+	mutex_init(&psDevInfo->sVsyncFlipItemMutex);
+
+	return S3C_TRUE;
+}
+static void destropyVsyncWorkQueue(S3C_LCD_DEVINFO *psDevInfo)
+{
+	destroy_workqueue(psDevInfo->psWorkQueue);
+	mutex_destroy(&psDevInfo->sVsyncFlipItemMutex);
+}
+static irqreturn_t S3C_VSyncISR(int irq, void *dev_id)
+{
+
+	if( dev_id != g_psLCDInfo)
+	{
+		return IRQ_NONE;
+	}
+
+	queue_work(g_psLCDInfo->psWorkQueue, &g_psLCDInfo->sWork);
 
 	return IRQ_HANDLED;
 }
@@ -554,12 +569,9 @@ static PVRSRV_ERROR CreateDCSwapChain(IMG_HANDLE hDevice,
 	
 
 	psDevInfo->psSwapChain = psSwapChain;
-    
-	S3C_DisableVSyncInterrupt();
+
     ResetVSyncFlipItems(psDevInfo);
 	S3C_InstallVsyncISR();
-	
-	S3C_EnableVSyncInterrupt();
 
 	return PVRSRV_OK;
 }
@@ -588,7 +600,6 @@ static PVRSRV_ERROR DestroyDCSwapChain(IMG_HANDLE hDevice,
 	
 	ResetVSyncFlipItems(psLCDInfo);
 
-	S3C_DisableVSyncInterrupt();
 	S3C_UninstallVsyncISR();
 
 	return PVRSRV_OK;
@@ -734,7 +745,6 @@ static IMG_BOOL ProcessFlip(IMG_HANDLE	hCmdCookie,
 	S3C_FRAME_BUFFER *fb;
 	S3C_VSYNC_FLIP_ITEM* psFlipItem;
 
-
 	if(!hCmdCookie || !pvData)
 	{
 		return IMG_FALSE;
@@ -768,9 +778,10 @@ static IMG_BOOL ProcessFlip(IMG_HANDLE	hCmdCookie,
 
 	}
 
+	mutex_lock(&psDevInfo->sVsyncFlipItemMutex);
+
 	psFlipItem = &psDevInfo->asVSyncFlips[psDevInfo->ulInsertIndex];
 	
-
 	if(!psFlipItem->bValid)
 	{
 		if(psDevInfo->ulInsertIndex == psDevInfo->ulRemoveIndex)
@@ -793,9 +804,12 @@ static IMG_BOOL ProcessFlip(IMG_HANDLE	hCmdCookie,
 
 		AdvanceFlipIndex(psDevInfo, &psDevInfo->ulInsertIndex);
 
+		mutex_unlock(&psDevInfo->sVsyncFlipItemMutex);
+
 		return IMG_TRUE;
 
 	}
+	mutex_unlock(&psDevInfo->sVsyncFlipItemMutex);
 
 	return IMG_FALSE;
 }
@@ -1006,6 +1020,12 @@ int s3c_displayclass_init(void)
 			printk("failing register commmand proc list deviceID:%d\n",(int)g_psLCDInfo->ui32DisplayID);
 			return PVRSRV_ERROR_CANT_REGISTER_CALLBACK;
 		}
+
+		if(CreateVsyncWorkQueue(g_psLCDInfo) == S3C_FALSE)
+		{
+			printk("fail to CreateVsyncWorkQueue\n");
+			return 1;
+		}
 	}
 
 	return 0;
@@ -1014,6 +1034,7 @@ int s3c_displayclass_init(void)
 
 void s3c_displayclass_deinit(void)
 {
+	destropyVsyncWorkQueue(g_psLCDInfo);
 	DeInitDev(g_psLCDInfo);
 	g_psLCDInfo->sPVRJTable.pfnPVRSRVRemoveCmdProcList ((IMG_UINT32)g_psLCDInfo->ui32DisplayID,
 														DC_S3C_LCD_COMMAND_COUNT);
