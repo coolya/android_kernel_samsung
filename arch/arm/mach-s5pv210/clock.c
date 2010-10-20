@@ -330,6 +330,12 @@ static struct clk init_clocks_disable[] = {
 		.enable		= s5pv210_clk_ip5_ctrl,
 		.ctrlbit	= S5P_CLKGATE_IP5_JPEG,
 	}, {
+		.name		= "mfc",
+		.id		= -1,
+		.parent		= &clk_hclk_msys.clk,
+		.enable		= s5pv210_clk_ip0_ctrl,
+		.ctrlbit	= (1<<16),
+	}, {
 		.name		= "sclk_fimc_lclk",
 		.id		= 0,
 		.parent		= &clk_hclk_dsys.clk,
@@ -637,12 +643,6 @@ static struct clk init_clocks[] = {
 		.parent		= &clk_pclk_psys.clk,
 		.enable		= s5pv210_clk_ip3_ctrl,
 		.ctrlbit	= (1 << 20),
-	}, {
-		.name		= "mfc",
-		.id		= -1,
-		.parent		= &clk_hclk_msys.clk,
-		.enable		= s5pv210_clk_ip0_ctrl,
-		.ctrlbit	= (1<<16),
 	}, {
 		.name		= "i2s_v50",
 		.id		= 0,
