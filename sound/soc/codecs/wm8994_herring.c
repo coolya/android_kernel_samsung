@@ -481,6 +481,33 @@ struct gain_info_t gain_code_table[VOICECALL_GAIN_NUM] = {
 	},
 };
 
+static void wait_for_dc_servo(struct snd_soc_codec *codec, unsigned int op)
+{
+        unsigned int reg;
+        int count = 0;
+        unsigned int val, start;
+
+        val = op | WM8994_DCS_ENA_CHAN_0 | WM8994_DCS_ENA_CHAN_1;
+
+        /* Trigger the command */
+        snd_soc_write(codec, WM8994_DC_SERVO_1, val);
+
+	start = jiffies;
+        pr_debug("Waiting for DC servo...\n");
+
+        do {
+                count++;
+                msleep(1);
+                reg = snd_soc_read(codec, WM8994_DC_SERVO_1);
+                pr_debug("DC servo: %x\n", reg);
+        } while (reg & op && count < 400);
+
+	pr_info("DC servo took %dms\n", jiffies_to_msecs(jiffies - start));
+
+        if (reg & op)
+                pr_err("Timed out waiting for DC Servo\n");
+}
+
 /* S5P_SLEEP_CONFIG must be controlled by codec if codec use XUSBTI */
 int wm8994_configure_clock(struct snd_soc_codec *codec, int en)
 {
@@ -1379,12 +1406,8 @@ void wm8994_set_playback_headset(struct snd_soc_codec *codec)
 		WM8994_MIXOUTL_ENA | WM8994_MIXOUTR_ENA);
 	wm8994_write(codec, WM8994_POWER_MANAGEMENT_3, 0x0030);
 
-	val = wm8994_read(codec, WM8994_DC_SERVO_1);
-	val &= ~(0x0303);
-	val = 0x0303;
-	wm8994_write(codec, WM8994_DC_SERVO_1, val);
-
-	msleep(160);
+	wait_for_dc_servo(codec,
+			  WM8994_DCS_TRIG_SERIES_0 | WM8994_DCS_TRIG_SERIES_1);
 
 	testreturn1 = wm8994_read(codec, WM8994_DC_SERVO_4);
 
@@ -1396,12 +1419,8 @@ void wm8994_set_playback_headset(struct snd_soc_codec *codec)
 	testreturn2 = testlow1|testhigh1;
 	wm8994_write(codec, WM8994_DC_SERVO_4, testreturn2);
 
-	val = wm8994_read(codec, WM8994_DC_SERVO_1);
-	val &= ~(0x000F);
-	val = 0x000F;
-	wm8994_write(codec, WM8994_DC_SERVO_1, val);
-
-	msleep(20);
+	wait_for_dc_servo(codec,
+			  WM8994_DCS_TRIG_DAC_WR_0 | WM8994_DCS_TRIG_DAC_WR_1);
 
 	/* Intermediate HP settings */
 	val = wm8994_read(codec, WM8994_ANALOGUE_HP_1);
@@ -1674,11 +1693,8 @@ void wm8994_set_playback_speaker_headset(struct snd_soc_codec *codec)
 	wm8994_write(codec, WM8994_POWER_MANAGEMENT_3, val);
 
 	/* DC Servo */
-	val = (WM8994_DCS_TRIG_SERIES_1 | WM8994_DCS_TRIG_SERIES_0 |
-		WM8994_DCS_ENA_CHAN_1 | WM8994_DCS_ENA_CHAN_0);
-	wm8994_write(codec, WM8994_DC_SERVO_1, 0x0303);
-
-	msleep(160);
+	wait_for_dc_servo(codec,
+			  WM8994_DCS_TRIG_SERIES_0 | WM8994_DCS_TRIG_SERIES_1);
 
 	nreadservo4val = wm8994_read(codec, WM8994_DC_SERVO_4);
 	nservo4low = (signed char)(nreadservo4val & 0xff);
@@ -1689,11 +1705,9 @@ void wm8994_set_playback_speaker_headset(struct snd_soc_codec *codec)
 	ncompensationresult = ncompensationresultlow|ncompensationresulthigh;
 	wm8994_write(codec, WM8994_DC_SERVO_4, ncompensationresult);
 
-	val = (WM8994_DCS_TRIG_DAC_WR_1 | WM8994_DCS_TRIG_DAC_WR_0 |
-		WM8994_DCS_ENA_CHAN_1 | WM8994_DCS_ENA_CHAN_0);
-	wm8994_write(codec, WM8994_DC_SERVO_1, val);
-
-	msleep(15);
+	wait_for_dc_servo(codec,
+			  WM8994_DCS_TRIG_DAC_WR_1 | WM8994_DCS_TRIG_DAC_WR_0 |
+			  WM8994_DCS_ENA_CHAN_1 | WM8994_DCS_ENA_CHAN_0);
 
 	val = wm8994_read(codec, WM8994_ANALOGUE_HP_1);
 	val &= ~(WM8994_HPOUT1R_DLY_MASK | WM8994_HPOUT1R_OUTP_MASK |
@@ -2076,9 +2090,8 @@ void wm8994_set_voicecall_headset(struct snd_soc_codec *codec)
 
 	wm8994_write(codec, WM8994_AIF2_CLOCKING_1, 0x0019);
 
-	wm8994_write(codec, WM8994_DC_SERVO_1, 0x303);
-
-	msleep(160);
+	wait_for_dc_servo(codec,
+			  WM8994_DCS_TRIG_SERIES_0 | WM8994_DCS_TRIG_SERIES_1);
 
 	testreturn1 = wm8994_read(codec, WM8994_DC_SERVO_4);
 
@@ -2090,12 +2103,8 @@ void wm8994_set_voicecall_headset(struct snd_soc_codec *codec)
 	testreturn2 = testlow1|testhigh1;
 	wm8994_write(codec, WM8994_DC_SERVO_4, testreturn2);
 
-	val = wm8994_read(codec, WM8994_DC_SERVO_1);
-	val &= ~(0x000F);
-	val = 0x000F;
-	wm8994_write(codec, WM8994_DC_SERVO_1, val);
-
-	msleep(15);
+	wait_for_dc_servo(codec,
+			  WM8994_DCS_TRIG_DAC_WR_0 | WM8994_DCS_TRIG_DAC_WR_1);
 
 	wm8994_write(codec, WM8994_ANALOGUE_HP_1, 0x00EE);
 
