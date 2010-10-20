@@ -551,6 +551,12 @@ static struct clk init_clocks_disable[] = {
 		.id		= -1,
 		.enable		= s5pv210_usbosc_enable,
 		.ctrlbit	= (1 << 1),
+	}, {
+		.name		= "secss",
+		.id		= -1,
+		.parent		= &clk_hclk_psys.clk,
+		.enable		= s5pv210_clk_ip2_ctrl,
+		.ctrlbit	= (1 << 0),
 	},
 };
 
