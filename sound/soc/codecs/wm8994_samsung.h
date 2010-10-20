@@ -143,7 +143,7 @@ struct gain_info_t {
 			__func__, __LINE__, ## __VA_ARGS__);
 
 /* Definitions of function prototype. */
-inline unsigned int wm8994_read(struct snd_soc_codec *codec, unsigned int reg);
+unsigned int wm8994_read(struct snd_soc_codec *codec, unsigned int reg);
 int wm8994_write(struct snd_soc_codec *codec,
 		unsigned int reg, unsigned int value);
 int wm8994_configure_clock(struct snd_soc_codec *codec, int en);
