@@ -88,6 +88,7 @@
 #include <linux/input/mxt224.h>
 #include <linux/max17040_battery.h>
 #include <linux/mfd/max8998.h>
+#include <linux/switch.h>
 
 #include "herring.h"
 
@@ -2018,9 +2019,42 @@ static void fsa9480_charger_cb(bool attached)
 		callbacks->set_cable(callbacks, set_cable_status);
 }
 
+static struct switch_dev switch_dock = {
+	.name = "dock",
+};
+
+static void fsa9480_deskdock_cb(bool attached)
+{
+	if (attached)
+		switch_set_state(&switch_dock, 1);
+	else
+		switch_set_state(&switch_dock, 0);
+}
+
+static void fsa9480_cardock_cb(bool attached)
+{
+	if (attached)
+		switch_set_state(&switch_dock, 2);
+	else
+		switch_set_state(&switch_dock, 0);
+}
+
+static void fsa9480_reset_cb(void)
+{
+	int ret;
+
+	/* for CarDock, DeskDock */
+	ret = switch_dev_register(&switch_dock);
+	if (ret < 0)
+		pr_err("Failed to register dock switch. %d\n", ret);
+}
+
 static struct fsa9480_platform_data fsa9480_pdata = {
 	.usb_cb = fsa9480_usb_cb,
 	.charger_cb = fsa9480_charger_cb,
+	.deskdock_cb = fsa9480_deskdock_cb,
+	.cardock_cb = fsa9480_cardock_cb,
+	.reset_cb = fsa9480_reset_cb,
 };
 
 static struct i2c_board_info i2c_devs7[] __initdata = {
