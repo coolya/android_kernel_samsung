@@ -629,13 +629,6 @@ void wm8994_disable_path(struct snd_soc_codec *codec)
 		break;
 
 	case BT:
-		val = wm8994_read(codec, WM8994_POWER_MANAGEMENT_6);
-		val &= ~(WM8994_AIF3_ADCDAT_SRC_MASK |
-			WM8994_AIF2_ADCDAT_SRC_MASK |
-			WM8994_AIF2_DACDAT_SRC_MASK |
-			WM8994_AIF1_DACDAT_SRC_MASK);
-		wm8994_write(codec, WM8994_POWER_MANAGEMENT_6, val);
-
 		val = wm8994_read(codec, WM8994_AIF1_DAC1_FILTERS_1);
 		val &= ~(WM8994_AIF1DAC1_MUTE_MASK | WM8994_AIF1DAC1_MONO_MASK);
 		val |= (WM8994_AIF1DAC1_MUTE);
