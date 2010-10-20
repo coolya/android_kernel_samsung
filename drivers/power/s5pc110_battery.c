@@ -139,6 +139,7 @@ static enum power_supply_property max8998_battery_props[] = {
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_CAPACITY,
+	POWER_SUPPLY_PROP_TECHNOLOGY,
 };
 
 static enum power_supply_property s3c_power_properties[] = {
@@ -185,6 +186,9 @@ static int s3c_bat_get_property(struct power_supply *bat_ps,
 			chg->pdata->psy_fuelgauge->get_property(chg->pdata->psy_fuelgauge,
 				psp, (union power_supply_propval *)&val->intval) < 0)
 			return -EINVAL;
+		break;
+	case POWER_SUPPLY_PROP_TECHNOLOGY:
+		val->intval = POWER_SUPPLY_TECHNOLOGY_LION;
 		break;
 	default:
 		return -EINVAL;
