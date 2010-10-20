@@ -1936,9 +1936,9 @@ static u8 t7_config[] = {GEN_POWERCONFIG_T7,
 static u8 t8_config[] = {GEN_ACQUISITIONCONFIG_T8,
 				7, 0, 5, 0, 0, 0, 9, 35};
 static u8 t9_config[] = {TOUCH_MULTITOUCHSCREEN_T9,
-				139, 0, 0, 19, 11, 0, 32, 40, 2, 1, 0, 3, 1,
-				46, MXT224_MAX_MT_FINGERS, 5, 40, 10, 255, 3,
-				255, 3, 0, 0, 0, 0, 141, 60, 143, 60, 18};
+				139, 0, 0, 19, 11, 0, 32, 25, 2, 1, 25, 3, 1,
+				46, MXT224_MAX_MT_FINGERS, 5, 14, 10, 255, 3,
+				255, 3, 18, 18, 10, 10, 141, 65, 143, 110, 18};
 static u8 t18_config[] = {SPT_COMCONFIG_T18,
 				0, 1};
 static u8 t20_config[] = {PROCI_GRIPFACESUPPRESSION_T20,
@@ -1965,10 +1965,10 @@ static struct mxt224_platform_data mxt224_data = {
 	.max_finger_touches = MXT224_MAX_MT_FINGERS,
 	.gpio_read_done = GPIO_TOUCH_INT,
 	.config = mxt224_config,
-	.min_x = 39,
-	.max_x = 986,
-	.min_y = 6,
-	.max_y = 1016,
+	.min_x = 0,
+	.max_x = 1023,
+	.min_y = 0,
+	.max_y = 1023,
 	.min_z = 0,
 	.max_z = 255,
 	.min_w = 0,
