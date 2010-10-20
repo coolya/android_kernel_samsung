@@ -447,6 +447,40 @@ struct gain_info_t recording_gain_table[RECORDING_GAIN_NUM] = {
 	},
 };
 
+struct gain_info_t gain_code_table[VOICECALL_GAIN_NUM] = {
+	{	/* RCV */
+		.mode = VOICECALL_RCV | GAIN_DIVISION_BIT,
+		.reg  = WM8994_LEFT_LINE_INPUT_1_2_VOLUME,	/* 18h */
+		.mask = WM8994_IN1L_VOL_MASK,
+		.gain = WM8994_IN1L_VU | 0x18
+	}, {/* SPK */
+		.mode = VOICECALL_SPK | GAIN_DIVISION_BIT,
+		.reg  = WM8994_LEFT_LINE_INPUT_1_2_VOLUME,	/* 18h */
+		.mask = WM8994_IN1L_VOL_MASK,
+		.gain = WM8994_IN1L_VU | 0x11
+	}, {
+		.mode = VOICECALL_SPK | GAIN_DIVISION_BIT,
+		.reg  = WM8994_SPEAKER_VOLUME_LEFT,	/* 26h */
+		.mask = WM8994_SPKOUTL_VOL_MASK,
+		.gain = WM8994_SPKOUT_VU | 0x37
+	}, {/* HP */
+		.mode = VOICECALL_HP | GAIN_DIVISION_BIT,
+		.reg  = WM8994_RIGHT_LINE_INPUT_1_2_VOLUME,	/* 1Ah */
+		.mask = WM8994_IN1R_VOL_MASK,
+		.gain = WM8994_IN1R_VU | 0x1F
+	}, {
+		.mode = VOICECALL_HP | GAIN_DIVISION_BIT,
+		.reg  = WM8994_LEFT_OUTPUT_VOLUME,	/* 1Ch */
+		.mask = WM8994_HPOUT1L_VOL_MASK,
+		.gain = WM8994_HPOUT1_VU | 0x33
+	}, {
+		.mode = VOICECALL_HP | GAIN_DIVISION_BIT,
+		.reg  = WM8994_RIGHT_OUTPUT_VOLUME,	/* 1Dh */
+		.mask = WM8994_HPOUT1R_VOL_MASK,
+		.gain = WM8994_HPOUT1_VU | 0x33
+	},
+};
+
 /* S5P_SLEEP_CONFIG must be controlled by codec if codec use XUSBTI */
 int wm8994_configure_clock(struct snd_soc_codec *codec, int en)
 {
@@ -2252,8 +2286,9 @@ void wm8994_set_voicecall_bluetooth(struct snd_soc_codec *codec)
 
 int wm8994_set_codec_gain(struct snd_soc_codec *codec, u16 mode, u16 device)
 {
+	struct wm8994_priv *wm8994 = codec->drvdata;
 	int i;
-	int gain_set_bits = COMMON_SET_BIT;
+	u32 gain_set_bits = COMMON_SET_BIT;
 	u16 val;
 	struct gain_info_t *default_gain_table_p = NULL;
 	int table_num = 0;
@@ -2342,7 +2377,8 @@ int wm8994_set_codec_gain(struct snd_soc_codec *codec, u16 mode, u16 device)
 	}
 
 	DEBUG_LOG("Set gain mode = 0x%x, device = 0x%x, gain_bits = 0x%x,\
-		table_num=%d\n", mode, device, gain_set_bits, table_num);
+		table_num=%d, gain_code = %d\n",
+		mode, device, gain_set_bits, table_num, wm8994->gain_code);
 
 	/* default gain table setting */
 	for (i = 0; i < table_num; i++) {
@@ -2354,6 +2390,22 @@ int wm8994_set_codec_gain(struct snd_soc_codec *codec, u16 mode, u16 device)
 		}
 	}
 
+	if (wm8994->gain_code) {
+		gain_set_bits &= ~(COMMON_SET_BIT);
+		gain_set_bits |= GAIN_DIVISION_BIT;
+		default_gain_table_p = gain_code_table;
+		table_num = GAIN_CODE_NUM;
+
+		for (i = 0; i < table_num; i++) {
+			if ((default_gain_table_p + i)->mode == gain_set_bits) {
+				val = wm8994_read(codec, (default_gain_table_p + i)->reg);
+				val &= ~((default_gain_table_p + i)->mask);
+				val |= (default_gain_table_p + i)->gain;
+				wm8994_write(codec, (default_gain_table_p + i)->reg, val);
+			}
+		}
+
+	}
 	return 0;
 
 }

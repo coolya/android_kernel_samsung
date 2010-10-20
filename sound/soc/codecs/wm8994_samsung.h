@@ -49,6 +49,7 @@ extern struct snd_soc_dai wm8994_dai;
 #define RECORDING_MODE	(0x01 << 2)
 #define FMRADIO_MODE	(0x01 << 3)
 
+#define GAIN_DIVISION_BIT	(0x01 << 16)
 #define COMMON_SET_BIT		(0x01 << 0)
 #define PLAYBACK_RCV		(0x01 << 1)
 #define PLAYBACK_SPK		(0x01 << 2)
@@ -74,7 +75,7 @@ extern struct snd_soc_dai wm8994_dai;
 #define PLAYBACK_GAIN_NUM 39
 #define VOICECALL_GAIN_NUM 26
 #define RECORDING_GAIN_NUM 16
-
+#define GAIN_CODE_NUM 6
 /*
  * Definitions of enum type
  */
@@ -119,6 +120,7 @@ struct wm8994_priv {
 	select_clock_control universal_clock_control;
 	struct wm8994_platform_data *pdata;
 	struct clk *codec_clk;
+	int gain_code;
 };
 
 struct gain_info_t {
@@ -161,4 +163,5 @@ void wm8994_set_voicecall_headset(struct snd_soc_codec *codec);
 void wm8994_set_voicecall_speaker(struct snd_soc_codec *codec);
 void wm8994_set_voicecall_bluetooth(struct snd_soc_codec *codec);
 int wm8994_set_codec_gain(struct snd_soc_codec *codec, u16 mode, u16 device);
+extern int gain_code_check(void);
 #endif

@@ -133,6 +133,8 @@ select_mic_route universal_wm8994_mic_paths[] = {
 
 select_clock_control universal_clock_controls = wm8994_configure_clock;
 
+int gain_code;
+
 /*
  * Implementation of I2C functions
  */
@@ -1190,6 +1192,28 @@ struct snd_soc_dai wm8994_dai = {
 	.ops = &wm8994_ops,
 };
 
+static int __init gain_code_setup(char *str)
+{
+
+	gain_code = 0;
+
+	if (!strcmp(str, "")) {
+		pr_info("gain_code field is empty. use default value\n");
+		return 0;
+	}
+
+	if (!strcmp(str, "1"))
+		gain_code = 1;
+
+	return 0;
+}
+__setup("gain_code=", gain_code_setup);
+
+int gain_code_check(void)
+{
+	return gain_code;
+}
+
 /*
  * initialise the WM8994 driver
  * register the mixer and dsp interfaces with the kernel
@@ -1228,6 +1252,8 @@ static int wm8994_init(struct wm8994_priv *wm8994_private,
 	wm8994->recognition_active = REC_OFF;
 	wm8994->ringtone_active = RING_OFF;
 	wm8994->pdata = pdata;
+
+	wm8994->gain_code = gain_code_check();
 
 	wm8994->universal_clock_control(codec, CODEC_ON);
 
