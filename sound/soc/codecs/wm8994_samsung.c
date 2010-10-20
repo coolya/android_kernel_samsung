@@ -297,16 +297,19 @@ static int wm8994_set_mic_path(struct snd_kcontrol *kcontrol,
 
 	wm8994->codec_state |= CAPTURE_ACTIVE;
 
-	if (ucontrol->value.integer.value[0] == 0)
+	switch (ucontrol->value.integer.value[0]) {
+	case 0:
 		wm8994->rec_path = MAIN;
-	else if (ucontrol->value.integer.value[0] == 1)
-		wm8994->rec_path = SUB;
-	else if (ucontrol->value.integer.value[0] == 2) {
+		break;
+	case 1:
+		wm8994->rec_path = SUB;	
+		break;
+	case 2:
 		wm8994->rec_path = BT_REC;
-		wm8994->universal_mic_path[wm8994->rec_path] (codec);
-		return 0;
-	} else
+		break;
+	default:
 		return -EINVAL;
+	}
 
 	wm8994->universal_mic_path[wm8994->rec_path] (codec);
 
