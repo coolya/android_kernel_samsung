@@ -153,12 +153,12 @@ PVRSRV_ERROR SGXScheduleCCBCommand(PVRSRV_SGXDEV_INFO 	*psDevInfo,
 								   SGXMKIF_CMD_TYPE		eCmdType,
 								   SGXMKIF_COMMAND		*psCommandData,
 								   IMG_UINT32			ui32CallerID,
-								   IMG_UINT32			ui32PDumpFlags)
+								   IMG_UINT32			ui32PDumpFlags,
+								   IMG_BOOL				bLastInScene)
 {
 	PVRSRV_SGX_CCB_INFO *psKernelCCB;
 	PVRSRV_ERROR eError = PVRSRV_OK;
 	SGXMKIF_COMMAND *psSGXCommand;
-	SYS_DATA *psSysData;
 #if defined(PDUMP)
 	IMG_VOID *pvDumpCommand;
 	IMG_BOOL bPDumpIsSuspended = PDumpIsSuspended();
@@ -187,7 +187,8 @@ PVRSRV_ERROR SGXScheduleCCBCommand(PVRSRV_SGXDEV_INFO 	*psDevInfo,
 									   SGXMKIF_CMD_PROCESS_QUEUES,
 									   &sCacheCommand,
 									   ui32CallerID,
-									   ui32PDumpFlags);
+									   ui32PDumpFlags,
+									   bLastInScene);
 		if (eError != PVRSRV_OK)
 		{
 			goto Exit;
@@ -266,19 +267,23 @@ PVRSRV_ERROR SGXScheduleCCBCommand(PVRSRV_SGXDEV_INFO 	*psDevInfo,
 	}
 
 	
-	SysAcquireData(&psSysData);
-
-	if(psSysData->ePendingCacheOpType == PVRSRV_MISC_INFO_CPUCACHEOP_FLUSH)
+	if((eCmdType == SGXMKIF_CMD_TA) && bLastInScene)
 	{
-		OSFlushCPUCacheKM();
-	}
-	else if(psSysData->ePendingCacheOpType == PVRSRV_MISC_INFO_CPUCACHEOP_CLEAN)
-	{
-		OSCleanCPUCacheKM();
-	}
+		SYS_DATA *psSysData;
 
+		SysAcquireData(&psSysData);
+
+		if(psSysData->ePendingCacheOpType == PVRSRV_MISC_INFO_CPUCACHEOP_FLUSH)
+		{
+			OSFlushCPUCacheKM();
+		}
+		else if(psSysData->ePendingCacheOpType == PVRSRV_MISC_INFO_CPUCACHEOP_CLEAN)
+		{
+			OSCleanCPUCacheKM();
+		}
 	
-	psSysData->ePendingCacheOpType = PVRSRV_MISC_INFO_CPUCACHEOP_NONE;
+		psSysData->ePendingCacheOpType = PVRSRV_MISC_INFO_CPUCACHEOP_NONE;
+	}
 
 	PVR_ASSERT(eCmdType < SGXMKIF_CMD_MAX);
 	psSGXCommand->ui32ServiceAddress = psDevInfo->aui32HostKickAddr[eCmdType];	 
@@ -418,7 +423,8 @@ PVRSRV_ERROR SGXScheduleCCBCommandKM(PVRSRV_DEVICE_NODE		*psDeviceNode,
 									 SGXMKIF_CMD_TYPE		eCmdType,
 									 SGXMKIF_COMMAND		*psCommandData,
 									 IMG_UINT32				ui32CallerID,
-									 IMG_UINT32				ui32PDumpFlags)
+									 IMG_UINT32				ui32PDumpFlags,
+									 IMG_BOOL				bLastInScene)
 {
 	PVRSRV_ERROR		eError;
 	PVRSRV_SGXDEV_INFO 	*psDevInfo = psDeviceNode->pvDevice;
@@ -465,7 +471,7 @@ PVRSRV_ERROR SGXScheduleCCBCommandKM(PVRSRV_DEVICE_NODE		*psDeviceNode,
 		return eError;
 	}
 
-	eError = SGXScheduleCCBCommand(psDevInfo, eCmdType, psCommandData, ui32CallerID, ui32PDumpFlags);
+	eError = SGXScheduleCCBCommand(psDevInfo, eCmdType, psCommandData, ui32CallerID, ui32PDumpFlags, bLastInScene);
 
 	PVRSRVPowerUnlock(ui32CallerID);
 
@@ -497,7 +503,7 @@ PVRSRV_ERROR SGXScheduleProcessQueuesKM(PVRSRV_DEVICE_NODE *psDeviceNode)
 		return PVRSRV_OK;
 	}
 
-	eError = SGXScheduleCCBCommandKM(psDeviceNode, SGXMKIF_CMD_PROCESS_QUEUES, &sCommand, ISR_ID, 0);
+	eError = SGXScheduleCCBCommandKM(psDeviceNode, SGXMKIF_CMD_PROCESS_QUEUES, &sCommand, ISR_ID, 0, IMG_FALSE);
 	if (eError != PVRSRV_OK)
 	{
 		PVR_DPF((PVR_DBG_ERROR,"SGXScheduleProcessQueuesKM failed to schedule CCB command: %u", eError));
@@ -551,7 +557,7 @@ IMG_VOID SGXCleanupRequest(PVRSRV_DEVICE_NODE	*psDeviceNode,
 		sCommand.ui32Data[0] = ui32CleanupType;
 		sCommand.ui32Data[1] = (psHWDataDevVAddr == IMG_NULL) ? 0 : psHWDataDevVAddr->uiAddr;
 
-		eError = SGXScheduleCCBCommandKM(psDeviceNode, SGXMKIF_CMD_CLEANUP, &sCommand, KERNEL_ID, 0);
+		eError = SGXScheduleCCBCommandKM(psDeviceNode, SGXMKIF_CMD_CLEANUP, &sCommand, KERNEL_ID, 0, IMG_FALSE);
 		if (eError != PVRSRV_OK)
 		{
 			PVR_DPF((PVR_DBG_ERROR,"SGXCleanupRequest: Failed to submit clean-up command"));

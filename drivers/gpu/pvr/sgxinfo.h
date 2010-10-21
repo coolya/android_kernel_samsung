@@ -175,7 +175,7 @@ typedef struct _SGX_CCB_KICK_
 #if (defined(NO_HARDWARE) || defined(PDUMP))
 	IMG_BOOL	bTerminateOrAbort;
 #endif
-
+	IMG_BOOL 	bLastInScene;
 	
 	IMG_UINT32	ui32CCBOffset;
 

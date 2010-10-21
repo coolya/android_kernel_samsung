@@ -1989,7 +1989,8 @@ PVRSRV_ERROR SGXGetMiscInfoUkernel(PVRSRV_SGXDEV_INFO	*psDevInfo,
 									 SGXMKIF_CMD_GETMISCINFO,
 									 &sCommandData,
 									 KERNEL_ID,
-									 0);
+									 0,
+									 IMG_FALSE);
 
 	if (eError != PVRSRV_OK)
 	{
@@ -2099,7 +2100,8 @@ PVRSRV_ERROR SGXGetMiscInfoKM(PVRSRV_SGXDEV_INFO	*psDevInfo,
 											 SGXMKIF_CMD_DATABREAKPOINT,
 											 &sCommandData,
 											 KERNEL_ID,
-											 0);
+											 0,
+											 IMG_FALSE);
 
 			if (eError != PVRSRV_OK)
 			{
@@ -2480,7 +2482,8 @@ PVRSRV_ERROR SGXGetMiscInfoKM(PVRSRV_SGXDEV_INFO	*psDevInfo,
 											 SGXMKIF_CMD_SETHWPERFSTATUS,
 											 &sCommandData,
 											 KERNEL_ID,
-											 0);
+											 0,
+											 IMG_FALSE);
 			return eError;
 		}
 #endif 
