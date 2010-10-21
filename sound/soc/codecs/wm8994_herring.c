@@ -914,6 +914,12 @@ void wm8994_record_headset_mic(struct snd_soc_codec *codec)
 
 	wm8994_write(codec, WM8994_ANTIPOP_2, 0x68);
 
+	/* Enable high pass filter to control bounce on startup */
+	val = wm8994_read(codec, WM8994_AIF1_ADC1_FILTERS);
+	val &= ~(WM8994_AIF1ADC1L_HPF_MASK | WM8994_AIF1ADC1R_HPF_MASK);
+	val |= (WM8994_AIF1ADC1L_HPF);
+	wm8994_write(codec, WM8994_AIF1_ADC1_FILTERS, val);
+
 	/* Enable mic bias, vmid, bias generator */
 	val = wm8994_read(codec, WM8994_POWER_MANAGEMENT_1);
 	val &= ~(WM8994_BIAS_ENA_MASK | WM8994_VMID_SEL_MASK);
@@ -980,13 +986,6 @@ void wm8994_record_headset_mic(struct snd_soc_codec *codec)
 	val |= WM8994_ADC1R_TO_AIF1ADC1R;
 	wm8994_write(codec, WM8994_AIF1_ADC1_RIGHT_MIXER_ROUTING, val);
 
-	msleep(10);
-
-	val = wm8994_read(codec, WM8994_AIF1_ADC1_FILTERS);
-	val &= ~(WM8994_AIF1ADC1L_HPF_MASK | WM8994_AIF1ADC1R_HPF_MASK);
-	val |= (WM8994_AIF1ADC1L_HPF);
-	wm8994_write(codec, WM8994_AIF1_ADC1_FILTERS, val);
-
 	val = wm8994_read(codec, WM8994_SPEAKER_MIXER);
 	val &= ~WM8994_MIXINL_TO_SPKMIXL_MASK;
 	wm8994_write(codec, WM8994_SPEAKER_MIXER, val);
@@ -1025,6 +1024,12 @@ void wm8994_record_main_mic(struct snd_soc_codec *codec)
 
 	/* Main mic volume issue fix: requested H/W */
 	wm8994_write(codec, WM8994_ANTIPOP_2, 0x68);
+
+	/* High pass filter to control bounce on enable */
+	val = wm8994_read(codec, WM8994_AIF1_ADC1_FILTERS);
+	val &= ~(WM8994_AIF1ADC1L_HPF_MASK | WM8994_AIF1ADC1R_HPF_MASK);
+	val |= (WM8994_AIF1ADC1L_HPF);
+	wm8994_write(codec, WM8994_AIF1_ADC1_FILTERS, val);
 
 	val = wm8994_read(codec, WM8994_POWER_MANAGEMENT_1);
 	val &= ~(WM8994_BIAS_ENA_MASK | WM8994_VMID_SEL_MASK);
@@ -1086,13 +1091,6 @@ void wm8994_record_main_mic(struct snd_soc_codec *codec)
 	val = wm8994_read(codec, WM8994_AIF1_ADC1_LEFT_MIXER_ROUTING);
 	val |= WM8994_ADC1L_TO_AIF1ADC1L;
 	wm8994_write(codec, WM8994_AIF1_ADC1_LEFT_MIXER_ROUTING, val);
-
-	msleep(10);
-
-	val = wm8994_read(codec, WM8994_AIF1_ADC1_FILTERS);
-	val &= ~(WM8994_AIF1ADC1L_HPF_MASK | WM8994_AIF1ADC1R_HPF_MASK);
-	val |= (WM8994_AIF1ADC1L_HPF);
-	wm8994_write(codec, WM8994_AIF1_ADC1_FILTERS, val);
 
 	val = wm8994_read(codec, WM8994_SPEAKER_MIXER);
 	val &= ~WM8994_MIXINL_TO_SPKMIXL_MASK;
