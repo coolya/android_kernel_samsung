@@ -379,6 +379,7 @@ struct fimc_control {
 
 	/* kernel helpers */
 	struct mutex			lock;		/* controller lock */
+	struct mutex			alloc_lock;
 	struct mutex			v4l2_lock;
 	wait_queue_head_t		wq;
 	struct device			*dev;

@@ -43,7 +43,7 @@ int fimc_dma_alloc(struct fimc_control *ctrl, struct fimc_buf_set *bs,
 {
 	dma_addr_t end, *curr;
 
-	mutex_lock(&ctrl->lock);
+	mutex_lock(&ctrl->alloc_lock);
 
 	end = ctrl->mem.base + ctrl->mem.size;
 	curr = &ctrl->mem.curr;
@@ -69,7 +69,7 @@ int fimc_dma_alloc(struct fimc_control *ctrl, struct fimc_buf_set *bs,
 		}
 	}
 
-	mutex_unlock(&ctrl->lock);
+	mutex_unlock(&ctrl->alloc_lock);
 
 	return 0;
 
@@ -78,7 +78,7 @@ overflow:
 	bs->length[i] = 0;
 	bs->garbage[i] = 0;
 
-	mutex_unlock(&ctrl->lock);
+	mutex_unlock(&ctrl->alloc_lock);
 
 	return -ENOMEM;
 }
@@ -86,7 +86,7 @@ overflow:
 void fimc_dma_free(struct fimc_control *ctrl, struct fimc_buf_set *bs, int i)
 {
 	int total = bs->length[i] + bs->garbage[i];
-	mutex_lock(&ctrl->lock);
+	mutex_lock(&ctrl->alloc_lock);
 
 	if (bs->base[i]) {
 		if (ctrl->mem.curr - total >= ctrl->mem.base)
@@ -97,7 +97,7 @@ void fimc_dma_free(struct fimc_control *ctrl, struct fimc_buf_set *bs, int i)
 		bs->garbage[i] = 0;
 	}
 
-	mutex_unlock(&ctrl->lock);
+	mutex_unlock(&ctrl->alloc_lock);
 }
 
 void fimc_clk_en(struct fimc_control *ctrl, bool on)
@@ -462,6 +462,7 @@ struct fimc_control *fimc_register_controller(struct platform_device *pdev)
 
 	atomic_set(&ctrl->in_use, 0);
 	mutex_init(&ctrl->lock);
+	mutex_init(&ctrl->alloc_lock);
 	mutex_init(&ctrl->v4l2_lock);
 	init_waitqueue_head(&ctrl->wq);
 
@@ -508,6 +509,7 @@ static int fimc_unregister_controller(struct platform_device *pdev)
 
 	free_irq(ctrl->irq, ctrl);
 	mutex_destroy(&ctrl->lock);
+	mutex_destroy(&ctrl->alloc_lock);
 	mutex_destroy(&ctrl->v4l2_lock);
 
 	fimc_clk_en(ctrl, false);
@@ -961,6 +963,7 @@ static int fimc_release(struct file *filp)
 
 	pdata = to_fimc_plat(ctrl->dev);
 
+	mutex_lock(&ctrl->lock);
 	atomic_dec(&ctrl->in_use);
 
 	/* FIXME: turning off actual working camera */
@@ -999,13 +1002,15 @@ static int fimc_release(struct file *filp)
 			ret = fimc_init_in_queue(ctrl, ctx);
 			if (ret < 0) {
 				fimc_err("Fail: fimc_init_in_queue\n");
-				return -EINVAL;
+				ret = -EINVAL;
+				goto release_err;
 			}
 
 			ret = fimc_init_out_queue(ctrl, ctx);
 			if (ret < 0) {
 				fimc_err("Fail: fimc_init_out_queue\n");
-				return -EINVAL;
+				ret = -EINVAL;
+				goto release_err;
 			}
 
 			/* Make all buffers DQUEUED state. */
@@ -1073,15 +1078,23 @@ static int fimc_release(struct file *filp)
 			fimc_err("%s: fb_blank: fb[%d] " \
 					"mode=FB_BLANK_POWERDOWN\n",
 					__func__, ctx->overlay.fb_id);
-			return -EINVAL;
+			ret = -EINVAL;
+			goto release_err;
 		}
 
 		ctrl->fb.is_enable = 0;
 	}
 
+	mutex_unlock(&ctrl->lock);
+
 	fimc_info1("%s released.\n", ctrl->name);
 
 	return 0;
+
+release_err:
+	mutex_unlock(&ctrl->lock);
+	return ret;
+
 }
 
 static const struct v4l2_file_operations fimc_fops = {
