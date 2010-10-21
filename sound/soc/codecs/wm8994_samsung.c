@@ -1522,14 +1522,6 @@ static int wm8994_resume(struct platform_device *pdev)
 		/* Turn on sequence by recommend Wolfson.*/
 		wm8994_ldo_control(wm8994->pdata, 1);
 		wm8994->universal_clock_control(codec, CODEC_ON);
-		wm8994->power_state = CODEC_ON;
-		wm8994_write(codec, WM8994_POWER_MANAGEMENT_1,
-			     0x3 << WM8994_VMID_SEL_SHIFT | WM8994_BIAS_ENA);
-		msleep(50);	/* Wait VMID up */
-		wm8994_write(codec, WM8994_POWER_MANAGEMENT_1,
-			     WM8994_VMID_SEL_NORMAL | WM8994_BIAS_ENA);
-
-		wm8994_write(codec, WM8994_OVERSAMPLING, 0x0000);
 	}
 	return 0;
 }
