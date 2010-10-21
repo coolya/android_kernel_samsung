@@ -1721,8 +1721,7 @@ void wm8994_set_playback_speaker_headset(struct snd_soc_codec *codec)
 	wm8994->dc_servo[DCS_SPK_HP] = ncompensationresult;
 
 	wait_for_dc_servo(codec,
-			  WM8994_DCS_TRIG_DAC_WR_1 | WM8994_DCS_TRIG_DAC_WR_0 |
-			  WM8994_DCS_ENA_CHAN_1 | WM8994_DCS_ENA_CHAN_0);
+			  WM8994_DCS_TRIG_DAC_WR_1 | WM8994_DCS_TRIG_DAC_WR_0);
 
 	val = wm8994_read(codec, WM8994_ANALOGUE_HP_1);
 	val &= ~(WM8994_HPOUT1R_DLY_MASK | WM8994_HPOUT1R_OUTP_MASK |
