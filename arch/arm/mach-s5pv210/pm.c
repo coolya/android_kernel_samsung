@@ -25,6 +25,7 @@
 #include <mach/regs-irq.h>
 #include <mach/regs-clock.h>
 #include <mach/regs-mem.h>
+#include <mach/power-domain.h>
 
 static struct sleep_save core_save[] = {
 	/* PLL Control */
@@ -142,12 +143,27 @@ static void s5pv210_pm_prepare(void)
 
 static void s5pv210_pm_resume(void)
 {
-	u32 tmp;
+	u32 tmp, audiodomain_on;
+
+	tmp = __raw_readl(S5P_NORMAL_CFG);
+	if (tmp & S5PV210_PD_AUDIO)
+		audiodomain_on = 0;
+	else {
+		tmp |= S5PV210_PD_AUDIO;
+		__raw_writel(tmp , S5P_NORMAL_CFG);
+		audiodomain_on = 1;
+	}
 
 	tmp = __raw_readl(S5P_OTHERS);
 	tmp |= (S5P_OTHERS_RET_IO | S5P_OTHERS_RET_CF |\
 		S5P_OTHERS_RET_MMC | S5P_OTHERS_RET_UART);
 	__raw_writel(tmp , S5P_OTHERS);
+
+	if (audiodomain_on) {
+		tmp = __raw_readl(S5P_NORMAL_CFG);
+		tmp &= ~S5PV210_PD_AUDIO;
+		__raw_writel(tmp , S5P_NORMAL_CFG);
+	}
 
 	s3c_pm_do_restore_core(core_save, ARRAY_SIZE(core_save));
 }
