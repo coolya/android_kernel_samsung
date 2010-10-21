@@ -98,6 +98,12 @@ struct wm8994_setup_data {
 	unsigned short i2c_address;
 };
 
+enum wm8994_dc_servo_slots {
+	DCS_MEDIA = 0,
+	DCS_VOICE = 1,
+	DCS_SPK_HP = 2,
+};
+
 struct wm8994_priv {
 	struct snd_soc_codec codec;
 	int master;
@@ -121,6 +127,7 @@ struct wm8994_priv {
 	struct wm8994_platform_data *pdata;
 	struct clk *codec_clk;
 	int gain_code;
+	u16 dc_servo[3];
 };
 
 struct gain_info_t {

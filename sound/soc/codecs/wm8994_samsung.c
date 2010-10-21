@@ -228,12 +228,19 @@ static int wm899x_outpga_put_volsw_vu(struct snd_kcontrol *kcontrol,
 	struct soc_mixer_control *mc =
 	    (struct soc_mixer_control *)kcontrol->private_value;
 	int reg = mc->reg;
+	struct wm8994_priv *wm8994 = codec->drvdata;
 
 	DEBUG_LOG("");
 
 	ret = snd_soc_put_volsw_2r(kcontrol, ucontrol);
 	if (ret < 0)
 		return ret;
+
+	/* Volume changes in the headphone path mean we need to
+	 * recallibrate DC servo */
+	if (strcmp(kcontrol->id.name, "Playback Spkr Volume") == 0 ||
+	    strcmp(kcontrol->id.name, "Playback Volume") == 0)
+		memset(wm8994->dc_servo, 0, sizeof(wm8994->dc_servo));
 
 	val = wm8994_read(codec, reg);
 

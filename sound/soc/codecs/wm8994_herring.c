@@ -1404,18 +1404,25 @@ void wm8994_set_playback_headset(struct snd_soc_codec *codec)
 		WM8994_MIXOUTL_ENA | WM8994_MIXOUTR_ENA);
 	wm8994_write(codec, WM8994_POWER_MANAGEMENT_3, 0x0030);
 
-	wait_for_dc_servo(codec,
-			  WM8994_DCS_TRIG_SERIES_0 | WM8994_DCS_TRIG_SERIES_1);
+	if (!wm8994->dc_servo[DCS_MEDIA]) {
+		wait_for_dc_servo(codec,
+				  WM8994_DCS_TRIG_SERIES_0 |
+				  WM8994_DCS_TRIG_SERIES_1);
 
-	testreturn1 = wm8994_read(codec, WM8994_DC_SERVO_4);
+		testreturn1 = wm8994_read(codec, WM8994_DC_SERVO_4);
 
-	testlow = (signed char)(testreturn1 & 0xff);
-	testhigh = (signed char)((testreturn1>>8) & 0xff);
+		testlow = (signed char)(testreturn1 & 0xff);
+		testhigh = (signed char)((testreturn1>>8) & 0xff);
 
-	testlow1 = ((signed short)(testlow-5)) & 0x00ff;
-	testhigh1 = (((signed short)(testhigh-5)<<8) & 0xff00);
-	testreturn2 = testlow1|testhigh1;
+		testlow1 = ((signed short)(testlow-5)) & 0x00ff;
+		testhigh1 = (((signed short)(testhigh-5)<<8) & 0xff00);
+		testreturn2 = testlow1|testhigh1;
+	} else {
+		testreturn2 = wm8994->dc_servo[DCS_MEDIA];
+	}
+
 	wm8994_write(codec, WM8994_DC_SERVO_4, testreturn2);
+	wm8994->dc_servo[DCS_MEDIA] = testreturn2;
 
 	wait_for_dc_servo(codec,
 			  WM8994_DCS_TRIG_DAC_WR_0 | WM8994_DCS_TRIG_DAC_WR_1);
@@ -1691,17 +1698,27 @@ void wm8994_set_playback_speaker_headset(struct snd_soc_codec *codec)
 	wm8994_write(codec, WM8994_POWER_MANAGEMENT_3, val);
 
 	/* DC Servo */
-	wait_for_dc_servo(codec,
-			  WM8994_DCS_TRIG_SERIES_0 | WM8994_DCS_TRIG_SERIES_1);
+	if (!wm8994->dc_servo[DCS_SPK_HP]) {
+		wait_for_dc_servo(codec,
+				  WM8994_DCS_TRIG_SERIES_0 |
+				  WM8994_DCS_TRIG_SERIES_1);
 
-	nreadservo4val = wm8994_read(codec, WM8994_DC_SERVO_4);
-	nservo4low = (signed char)(nreadservo4val & 0xff);
-	nservo4high = (signed char)((nreadservo4val>>8) & 0xff);
+		nreadservo4val = wm8994_read(codec, WM8994_DC_SERVO_4);
+		nservo4low = (signed char)(nreadservo4val & 0xff);
+		nservo4high = (signed char)((nreadservo4val>>8) & 0xff);
 
-	ncompensationresultlow = ((signed short)nservo4low - 5) & 0x00ff;
-	ncompensationresulthigh = ((signed short)(nservo4high - 5)<<8) & 0xff00;
-	ncompensationresult = ncompensationresultlow|ncompensationresulthigh;
+		ncompensationresultlow = ((signed short)nservo4low - 5)
+			& 0x00ff;
+		ncompensationresulthigh = ((signed short)(nservo4high - 5)<<8)
+			& 0xff00;
+		ncompensationresult = ncompensationresultlow |
+			ncompensationresulthigh;
+	} else {
+		ncompensationresult = wm8994->dc_servo[DCS_SPK_HP];
+	}
+
 	wm8994_write(codec, WM8994_DC_SERVO_4, ncompensationresult);
+	wm8994->dc_servo[DCS_SPK_HP] = ncompensationresult;
 
 	wait_for_dc_servo(codec,
 			  WM8994_DCS_TRIG_DAC_WR_1 | WM8994_DCS_TRIG_DAC_WR_0 |
@@ -2088,21 +2105,29 @@ void wm8994_set_voicecall_headset(struct snd_soc_codec *codec)
 
 	wm8994_write(codec, WM8994_AIF2_CLOCKING_1, 0x0019);
 
-	wait_for_dc_servo(codec,
-			  WM8994_DCS_TRIG_SERIES_0 | WM8994_DCS_TRIG_SERIES_1);
+	if (!wm8994->dc_servo[DCS_VOICE]) {
+		wait_for_dc_servo(codec,
+				  WM8994_DCS_TRIG_SERIES_0 |
+				  WM8994_DCS_TRIG_SERIES_1);
 
-	testreturn1 = wm8994_read(codec, WM8994_DC_SERVO_4);
+		testreturn1 = wm8994_read(codec, WM8994_DC_SERVO_4);
 
-	testlow = (signed char)(testreturn1 & 0xff);
-	testhigh = (signed char)((testreturn1>>8) & 0xff);
+		testlow = (signed char)(testreturn1 & 0xff);
+		testhigh = (signed char)((testreturn1>>8) & 0xff);
 
-	testlow1 = ((signed short)testlow - 5) & 0x00ff;
-	testhigh1 = (((signed short)(testhigh - 5)<<8) & 0xff00);
-	testreturn2 = testlow1|testhigh1;
+		testlow1 = ((signed short)testlow - 5) & 0x00ff;
+		testhigh1 = (((signed short)(testhigh - 5)<<8) & 0xff00);
+		testreturn2 = testlow1|testhigh1;
+	} else {
+		testreturn2 = wm8994->dc_servo[DCS_VOICE];
+	}
+
 	wm8994_write(codec, WM8994_DC_SERVO_4, testreturn2);
 
 	wait_for_dc_servo(codec,
 			  WM8994_DCS_TRIG_DAC_WR_0 | WM8994_DCS_TRIG_DAC_WR_1);
+
+	wm8994->dc_servo[DCS_VOICE] = testreturn2;
 
 	wm8994_write(codec, WM8994_ANALOGUE_HP_1, 0x00EE);
 
