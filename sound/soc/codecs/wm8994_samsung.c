@@ -116,13 +116,14 @@ EXPORT_SYMBOL_GPL(soc_codec_dev_wm8994);
 select_route universal_wm8994_playback_paths[] = {
 	wm8994_disable_path, wm8994_set_playback_receiver,
 	wm8994_set_playback_speaker, wm8994_set_playback_headset,
-	wm8994_set_playback_bluetooth, wm8994_set_playback_speaker_headset
+	wm8994_set_playback_headset, wm8994_set_playback_bluetooth,
+	wm8994_set_playback_speaker_headset
 };
 
 select_route universal_wm8994_voicecall_paths[] = {
 	wm8994_disable_path, wm8994_set_voicecall_receiver,
 	wm8994_set_voicecall_speaker, wm8994_set_voicecall_headset,
-	wm8994_set_voicecall_bluetooth
+	wm8994_set_voicecall_headphone, wm8994_set_voicecall_bluetooth
 };
 
 select_mic_route universal_wm8994_mic_paths[] = {
@@ -271,13 +272,14 @@ static int wm899x_inpga_put_volsw_vu(struct snd_kcontrol *kcontrol,
 /*
  * Implementation of sound path
  */
-#define MAX_PLAYBACK_PATHS 8
-#define MAX_VOICECALL_PATH 4
+#define MAX_PLAYBACK_PATHS 10
+#define MAX_VOICECALL_PATH 5
 static const char *playback_path[] = {
-	"OFF", "RCV", "SPK", "HP", "BT", "SPK_HP",
-	"RING_SPK", "RING_HP", "RING_SPK_HP"
+	"OFF", "RCV", "SPK", "HP", "HP_NO_MIC", "BT", "SPK_HP",
+	"RING_SPK", "RING_HP", "RING_NO_MIC", "RING_SPK_HP"
 };
-static const char *voicecall_path[] = { "OFF", "RCV", "SPK", "HP", "BT" };
+static const char *voicecall_path[] = { "OFF", "RCV", "SPK", "HP",
+					"HP_NO_MIC", "BT" };
 static const char *mic_path[] = { "Main Mic", "Hands Free Mic",
 					"BT Sco Mic", "MIC OFF" };
 static const char *recognition_state[] = { "RECOGNITION_OFF",
@@ -309,7 +311,7 @@ static int wm8994_set_mic_path(struct snd_kcontrol *kcontrol,
 		wm8994->rec_path = MAIN;
 		break;
 	case 1:
-		wm8994->rec_path = SUB;	
+		wm8994->rec_path = SUB;
 		break;
 	case 2:
 		wm8994->rec_path = BT_REC;
@@ -360,21 +362,23 @@ static int wm8994_set_path(struct snd_kcontrol *kcontrol,
 	case RCV:
 	case SPK:
 	case HP:
-	case SPK_HP:
+	case HP_NO_MIC:
 	case BT:
+	case SPK_HP:
 		DEBUG_LOG("routing to %s\n", mc->texts[path_num]);
 		wm8994->ringtone_active = RING_OFF;
 		break;
 	case RING_SPK:
 	case RING_HP:
+	case RING_NO_MIC:
 		DEBUG_LOG("routing to %s\n", mc->texts[path_num]);
 		wm8994->ringtone_active = RING_ON;
-		path_num -= 4;
+		path_num -= 5;
 		break;
 	case RING_SPK_HP:
 		DEBUG_LOG("routing to %s\n", mc->texts[path_num]);
 		wm8994->ringtone_active = RING_ON;
-		path_num -= 3;
+		path_num -= 4;
 		break;
 	default:
 		DEBUG_LOG_ERR("audio path[%d] does not exists!!\n", path_num);
@@ -430,6 +434,7 @@ static int wm8994_set_voice_path(struct snd_kcontrol *kcontrol,
 	case RCV:
 	case SPK:
 	case HP:
+	case HP_NO_MIC:
 	case BT:
 		DEBUG_LOG("routing  voice path to %s\n", mc->texts[path_num]);
 		break;
