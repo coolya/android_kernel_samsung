@@ -98,11 +98,14 @@ static int s3c_adc_open(struct inode *inode, struct file *file)
 	return 0;
 }
 
-unsigned int s3c_adc_convert(void)
+static unsigned int s3c_adc_convert(void)
 {
 	unsigned int adc_return = 0;
 	unsigned long data0;
 	unsigned long data1;
+
+	writel((readl(base_addr + S3C_ADCCON) | S3C_ADCCON_PRSCEN) & ~S3C_ADCCON_STDBM,
+		base_addr + S3C_ADCCON);
 
 	writel((adc_port & 0xF), base_addr + S3C_ADCMUX);
 
@@ -116,6 +119,9 @@ unsigned int s3c_adc_convert(void)
 	} while (!(data0 & S3C_ADCCON_ECFLG));
 
 	data1 = readl(base_addr + S3C_ADCDAT0);
+
+	writel((readl(base_addr + S3C_ADCCON) | S3C_ADCCON_STDBM) & ~S3C_ADCCON_PRSCEN,
+		base_addr + S3C_ADCCON);
 
 	if (plat_data->resolution == 12)
 		adc_return = data1 & S3C_ADCDAT0_XPDATA_MASK_12BIT;
@@ -300,6 +306,9 @@ static int __devinit s3c_adc_probe(struct platform_device *pdev)
 	if (plat_data->resolution == 12)
 		writel(readl(base_addr + S3C_ADCCON) |
 		       S3C_ADCCON_RESSEL_12BIT, base_addr + S3C_ADCCON);
+
+	writel((readl(base_addr + S3C_ADCCON) | S3C_ADCCON_STDBM) & ~S3C_ADCCON_PRSCEN,
+		base_addr + S3C_ADCCON);
 
 	ret = misc_register(&s3c_adc_miscdev);
 	if (ret) {
