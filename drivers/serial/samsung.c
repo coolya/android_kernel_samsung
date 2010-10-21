@@ -458,6 +458,9 @@ static void s3c24xx_serial_pm(struct uart_port *port, unsigned int level,
 
 	switch (level) {
 	case 3:
+		disable_irq(ourport->tx_irq);
+		disable_irq(ourport->rx_irq);
+
 		if (!IS_ERR(ourport->baudclk) && ourport->baudclk != NULL)
 			clk_disable(ourport->baudclk);
 
@@ -470,6 +473,8 @@ static void s3c24xx_serial_pm(struct uart_port *port, unsigned int level,
 		if (!IS_ERR(ourport->baudclk) && ourport->baudclk != NULL)
 			clk_enable(ourport->baudclk);
 
+		enable_irq(ourport->tx_irq);
+		enable_irq(ourport->rx_irq);
 		break;
 	default:
 		printk(KERN_ERR "s3c24xx_serial: unknown pm %d\n", level);
