@@ -192,208 +192,133 @@ const u16 s6e63m0_SEQ_SETTING[] = {
 	ENDDEF, 0x0000
 };
 
-const u16 s6e63m0_22gamma_300cd[] = {
-	0x0FA,
-	0x102,
-	0x118,
-	0x108,
-	0x124,
-	0x150,
-	0x14E,
-	0x12B,
-	0x1B0,
-	0x1B7,
-	0x1A5,
-	0x1AB,
-	0x1B1,
-	0x1A0,
-	0x1C0,
-	0x1C2,
-	0x1B7,
-	0x100,
-	0x1CD,
-	0x100,
-	0x1C5,
-	0x101,
-	0x10C,
-	0x0FA,
-	0x103,
-	ENDDEF, 0x0000
+enum {
+	BV_0   =          0,
+	BV_1   =     0x552D,
+	BV_19  =   0xD8722A,
+	BV_43  =  0x51955E1,
+	BV_87  = 0x18083FB0,
+	BV_171 = 0x6A472534,
+	BV_255 = 0xFFFFFFFF,
 };
 
-const u16 s6e63m0_22gamma_260cd[] = {
-	0x0FA,
-	0x102,
-	0x118,
-	0x108,
-	0x124,
-	0x151,
-	0x14E,
-	0x12B,
-	0x1B0,
-	0x1B9,
-	0x1A6,
-	0x1AD,
-	0x1B4,
-	0x1A1,
-	0x1C2,
-	0x1C4,
-	0x1B8,
-	0x100,
-	0x1C3,
-	0x100,
-	0x1B9,
-	0x101,
-	0x100,
-	0x0FA,
-	0x103,
-	ENDDEF, 0x0000
+static struct gamma_entry {
+	u32 brightness;
+	u32 v[3];
+} gamma_table[] = {
+	{    BV_0, { 1000000, 1000000, 1000000, }, },
+	{    BV_1, {  951000,  978000,  931000, }, },
+	{ BV_19/7, {  900000,  925000,  866000, }, },
+	{   BV_19, {  852000,  871000,  856000, }, },
+	{   BV_43, {  732000,  738000,  706000, }, },
+	{   BV_87, {  660000,  668000,  617000, }, },
+	{  BV_171, {  556000,  568000,  484000, }, },
+	{  BV_255, {  458000,  471000,  353000, }, },
 };
 
-const u16 s6e63m0_22gamma_220cd[] = {
-	0x0FA,
-	0x102,
-	0x118,
-	0x108,
-	0x124,
-	0x151,
-	0x14E,
-	0x12D,
-	0x1B4,
-	0x1B9,
-	0x1A8,
-	0x1AF,
-	0x1B5,
-	0x1A4,
-	0x1C2,
-	0x1C8,
-	0x1B9,
-	0x100,
-	0x1B7,
-	0x100,
-	0x1AC,
-	0x100,
-	0x1EF,
-	0x0FA,
-	0x103,
-	ENDDEF, 0x0000
-};
+static u32 gamma_lookup(u8 brightness, u32 val, int c)
+{
+	int i;
+	u32 bl = 0;
+	u32 bh = 0;
+	u32 vl = 0, vh;
+	u32 b;
+	u32 ret;
+	u64 tmp;
 
-const u16 s6e63m0_22gamma_180cd[] = {
-	0x0FA,
-	0x102,
-	0x118,
-	0x108,
-	0x124,
-	0x154,
-	0x14B,
-	0x130,
-	0x1B4,
-	0x1BB,
-	0x1A9,
-	0x1B1,
-	0x1B7,
-	0x1A6,
-	0x1C4,
-	0x1CA,
-	0x1BB,
-	0x100,
-	0x1AA,
-	0x100,
-	0x19F,
-	0x100,
-	0x1DD,
-	0x0FA,
-	0x103,
-	ENDDEF, 0x0000
-};
+	if (!val) {
+		b = 0;
+	} else {
+		tmp = BV_255 - BV_1;
+		tmp *= brightness;
+		do_div(tmp, 255);
 
-const u16 s6e63m0_22gamma_140cd[] = {
-	0x0FA,
-	0x102,
-	0x118,
-	0x108,
-	0x124,
-	0x15A,
-	0x148,
-	0x133,
-	0x1B7,
-	0x1BC,
-	0x1AC,
-	0x1B2,
-	0x1B9,
-	0x1A8,
-	0x1C8,
-	0x1CD,
-	0x1BF,
-	0x100,
-	0x19A,
-	0x100,
-	0x190,
-	0x100,
-	0x1C7,
-	0x0FA,
-	0x103,
-	ENDDEF, 0x0000
-};
+		tmp *= (val - BV_1);
+		do_div(tmp, BV_255 - BV_1);
+		b = tmp + BV_1;
+	}
 
-const u16 s6e63m0_22gamma_100cd[] = {
-	0x0FA,
-	0x102,
-	0x118,
-	0x108,
-	0x124,
-	0x161,
-	0x140,
-	0x13A,
-	0x1B9,
-	0x1BE,
-	0x1AD,
-	0x1B5,
-	0x1BB,
-	0x1AB,
-	0x1CB,
-	0x1D1,
-	0x1C3,
-	0x100,
-	0x188,
-	0x100,
-	0x17F,
-	0x100,
-	0x1B0,
-	0x0FA,
-	0x103,
-	ENDDEF, 0x0000
-};
+	for (i = 0; i < ARRAY_SIZE(gamma_table); i++) {
+		bl = bh;
+		bh = gamma_table[i].brightness;
+		if (bh >= b)
+			break;
+	}
+	vh = gamma_table[i].v[c];
+	if (i == 0 || (b - bl) == 0) {
+		ret = vl = vh;
+	} else {
+		vl = gamma_table[i - 1].v[c];
+		tmp = (u64)vh * (b - bl) + (u64)vl * (bh - b);
+		do_div(tmp, bh - bl);
+		ret = tmp;
+	}
 
-const u16 s6e63m0_22gamma_50cd[] = {
-	0x0FA,
-	0x102,
-	0x118,
-	0x108,
-	0x124,
-	0x16E,
-	0x11A,
-	0x13A,
-	0x1BD,
-	0x1BE,
-	0x1B2,
-	0x1BB,
-	0x1C0,
-	0x1B1,
-	0x1CF,
-	0x1D5,
-	0x1C8,
-	0x100,
-	0x16A,
-	0x100,
-	0x163,
-	0x100,
-	0x189,
-	0x0FA,
-	0x103,
-	ENDDEF, 0x0000
-};
+	pr_debug("%s: looking for %3d %08x c %d, %08x, "
+		"found %08x:%08x, v %7d:%7d, ret %7d\n",
+		__func__, brightness, val, c, b, bl, bh, vl, vh, ret);
+	
+	return ret;
+}
+
+static void setup_gamma_regs(u16 gamma_regs[], u8 brightness)
+{
+	int c, i;
+	for(c = 0; c < 3; c++) {
+		u32 adj;
+		u32 v0 = gamma_lookup(brightness, BV_0, c);
+		u32 vx[6];
+		u32 v1, v255;
+
+		v1 = vx[0] = gamma_lookup(brightness, BV_1, c);
+		adj = 600 - 5 - DIV_ROUND_CLOSEST(600 * v1, v0);
+		if (adj > 140) {
+			pr_err("%s: bad adj value %d, v0 %d, v1 %d, c %d\n",
+				__func__, adj, v0, v1, c);
+			if ((int)adj < 0)
+				adj = 0;
+			else
+				adj = 140;
+		}
+		gamma_regs[c] = adj | 0x100;
+
+		v255 = vx[5] = gamma_lookup(brightness, BV_255, c);
+		adj = 600 - 120 - DIV_ROUND_CLOSEST(600 * v255, v0);
+		if (adj > 380) {
+			pr_err("%s: bad adj value %d, v0 %d, v255 %d, c %d\n",
+				__func__, adj, v0, v255, c);
+			if ((int)adj < 0)
+				adj = 0;
+			else
+				adj = 380;
+		}
+		gamma_regs[3 * 5 + 2 * c] = adj >> 8 | 0x100;
+		gamma_regs[3 * 5 + 2 * c + 1] = (adj & 0xff) | 0x100;
+
+		vx[1] = gamma_lookup(brightness,  BV_19, c);
+		vx[2] = gamma_lookup(brightness,  BV_43, c);
+		vx[3] = gamma_lookup(brightness,  BV_87, c);
+		vx[4] = gamma_lookup(brightness, BV_171, c);
+
+		for (i = 4; i >= 1; i--) {
+			if (v1 <= vx[i + 1])
+				adj = -1;
+			else
+				adj = DIV_ROUND_CLOSEST(320 * (v1 - vx[i]),
+							v1 - vx[i + 1]) - 65;
+			if (adj > 255) {
+				pr_err("%s: bad adj value %d, "
+					"vh %d, v %d, c %d\n",
+					__func__, adj, vx[i + 1], vx[i], c);
+				if ((int)adj < 0)
+					adj = 0;
+				else
+					adj = 255;
+			}
+			gamma_regs[3 * i + c] = adj | 0x100;
+		}
+	}
+}
 
 static int s6e63m0_spi_write_driver(struct s5p_lcd *lcd, u16 reg)
 {
@@ -452,43 +377,29 @@ static int s5p_bl_update_status(struct backlight_device *bd)
 {
 
 	struct s5p_lcd *lcd = bl_get_data(bd);
-	int bl = 255 - bd->props.brightness;
+	int bl = bd->props.brightness;
+	u16 gamma_regs[] = {
+		[0] = 0x0FA,
+		[1] = 0x102,
+		[23] = 0x0FA,
+		[24] = 0x103,
+		[25] = ENDDEF,
+		[26] = 0x0000,
+	};
 
 	pr_debug("\nupdate status brightness %d\n",
 				bd->props.brightness);
 	if (!lcd->ldi_enable)
 		return 0;
 
+	if (bl < 0 || bl > 255)
+		return -EINVAL;
+
 	pr_debug("\n bl :%d\n", bl);
 
-	switch (bl) {
-	case  0 ... 50:
-		s6e63m0_panel_send_sequence
-				(lcd, s6e63m0_22gamma_300cd);
-		break;
-	case  51 ... 100:
-		s6e63m0_panel_send_sequence
-				(lcd, s6e63m0_22gamma_260cd);
-		break;
-	case  101 ... 150:
-		s6e63m0_panel_send_sequence
-				(lcd, s6e63m0_22gamma_180cd);
-		break;
-	case  151 ... 200:
-		s6e63m0_panel_send_sequence
-				(lcd, s6e63m0_22gamma_140cd);
-		break;
-	case  201 ... 230:
-		s6e63m0_panel_send_sequence
-				(lcd, s6e63m0_22gamma_100cd);
-		break;
-	case  231 ... 255:
-		s6e63m0_panel_send_sequence
-				(lcd, s6e63m0_22gamma_50cd);
-		break;
-	default:
-		return -EINVAL;
-	}
+	setup_gamma_regs(gamma_regs + 2, bl);
+	s6e63m0_panel_send_sequence(lcd, gamma_regs);
+
 	return 0;
 }
 
