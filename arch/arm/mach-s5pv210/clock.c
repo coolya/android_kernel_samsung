@@ -1104,8 +1104,8 @@ static struct clksrc_clk clksrcs[] = {
 		.clk		= {
 			.name		= "sclk_fimd",
 			.id		= -1,
-			.enable		= s5pv210_clk_mask0_ctrl,
-			.ctrlbit	= (1 << 5),
+			.enable		= s5pv210_clk_ip1_ctrl,
+			.ctrlbit	= (1 << 0),
 		},
 		.sources = &clkset_group2,
 		.reg_src = { .reg = S5P_CLK_SRC1, .shift = 20, .size = 4 },

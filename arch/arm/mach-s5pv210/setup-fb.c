@@ -65,7 +65,6 @@ int s3cfb_clk_on(struct platform_device *pdev, struct clk **s3cfb_clk)
 {
 	struct clk *sclk = NULL;
 	struct clk *mout_mpll = NULL;
-	struct clk *lcd = NULL;
 	u32 rate = 0;
 
 	sclk = clk_get(&pdev->dev, "sclk_fimd");
@@ -77,7 +76,7 @@ int s3cfb_clk_on(struct platform_device *pdev, struct clk **s3cfb_clk)
 	mout_mpll = clk_get(&pdev->dev, "mout_mpll");
 	if (IS_ERR(mout_mpll)) {
 		dev_err(&pdev->dev, "failed to get mout_mpll\n");
-		goto err_clk1;
+		goto err_clk2;
 	}
 
 	clk_set_parent(sclk, mout_mpll);
@@ -92,24 +91,14 @@ int s3cfb_clk_on(struct platform_device *pdev, struct clk **s3cfb_clk)
 
 	clk_enable(sclk);
 
-	lcd = clk_get(&pdev->dev, "lcd");
-	if (IS_ERR(lcd)) {
-		dev_err(&pdev->dev, "failed to get IP clock for fimd\n");
-		goto err_clk2;
-	}
-
-	clk_enable(lcd);
-
 	*s3cfb_clk = sclk;
 
 	return 0;
 
 err_clk2:
-	clk_put(mout_mpll);
-
-err_clk1:
 	clk_put(sclk);
 
+err_clk1:
 	return -EINVAL;
 }
 
