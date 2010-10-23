@@ -1166,10 +1166,11 @@ static struct clksrc_clk clksrcs[] = {
 		.reg_div = { .reg = S5P_CLK_DIV2, .shift = 8, .size = 4 },
 	}, {
 		.clk		= {
-			.name		= "sclk_g3d",
+			.name		= "sclk",
 			.id		= -1,
 			.enable		= s5pv210_clk_ip0_ctrl,
 			.ctrlbit	= (1 << 8),
+			.dev		= &s3c_device_g3d.dev,
 		},
 		.sources = &clkset_group1,
 		.reg_src = { .reg = S5P_CLK_SRC2, .shift = 0, .size = 2 },
