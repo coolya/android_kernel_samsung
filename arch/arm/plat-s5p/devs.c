@@ -620,6 +620,17 @@ struct platform_device s3c_device_jpeg = {
 	.resource         = s3c_jpeg_resource,
 };
 
+/* G3D */
+struct platform_device s3c_device_g3d = {
+	.name		= "pvrsrvkm",
+	.id		= -1,
+};
+
+struct platform_device s3c_device_lcd = {
+	.name		= "s3c_lcd",
+	.id		= -1,
+};
+
 /* rotator interface */
 static struct resource s5p_rotator_resource[] = {
 	[0] = {

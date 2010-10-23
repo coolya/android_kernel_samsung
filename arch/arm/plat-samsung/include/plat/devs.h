@@ -58,6 +58,7 @@ extern struct platform_device s3c_device_csis;
 extern struct platform_device s3c_device_ipc;
 extern struct platform_device s3c_device_mfc;
 extern struct platform_device s3c_device_jpeg;
+extern struct platform_device s3c_device_g3d;
 
 extern struct platform_device s3c_device_ohci;
 extern struct platform_device s3c_device_lcd;
