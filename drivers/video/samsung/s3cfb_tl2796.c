@@ -37,6 +37,7 @@
 
 struct s5p_lcd{
 	int ldi_enable;
+	int bl;
 	struct device *dev;
 	struct spi_device *g_spi;
 	struct backlight_device *bl_dev;
@@ -63,7 +64,7 @@ const u16 s6e63m0_SEQ_STANDBY_OFF[] = {
 	ENDDEF, 0x0000
 };
 
-const u16 s6e63m0_SEQ_SETTING[] = {
+const u16 s6e63m0_SEQ_DISPLAY_SETTING[] = {
 	SLEEPMSEC, 120,
 	0x0F8,
 	0x101,	0x127,
@@ -80,31 +81,10 @@ const u16 s6e63m0_SEQ_SETTING[] = {
 	0x0F7,
 	0x103,	0x100,
 	0x100,
-	0x0FA,
-	0x102,
-	0x118,
-	0x108,
-	0x124,
-	0x15F,
-	0x150,
-	0x12D,
-	0x1B6,
-	0x1B9,
-	0x1A7,
-	0x1AD,
-	0x1B1,
-	0x19F,
-	0x1BE,
-	0x1C0,
-	0x1B5,
-	0x100,
-	0x1A0,
-	0x100,
-	0x1A4,
-	0x100,
-	0x1DB,
-	0x0FA,
-	0x103,
+	ENDDEF, 0x0000
+};
+
+const u16 s6e63m0_SEQ_ETC_SETTING[] = {
 	0x0F6,
 	0x100,	0x18C,
 	0x107,
@@ -257,14 +237,14 @@ static u32 gamma_lookup(u8 brightness, u32 val, int c)
 	pr_debug("%s: looking for %3d %08x c %d, %08x, "
 		"found %08x:%08x, v %7d:%7d, ret %7d\n",
 		__func__, brightness, val, c, b, bl, bh, vl, vh, ret);
-	
+
 	return ret;
 }
 
 static void setup_gamma_regs(u16 gamma_regs[], u8 brightness)
 {
 	int c, i;
-	for(c = 0; c < 3; c++) {
+	for (c = 0; c < 3; c++) {
 		u32 adj;
 		u32 v0 = gamma_lookup(brightness, BV_0, c);
 		u32 vx[6];
@@ -361,12 +341,31 @@ static void s6e63m0_panel_send_sequence(struct s5p_lcd *lcd,
 		}
 	}
 }
+
+static void update_brightness(struct s5p_lcd *lcd)
+{
+	u16 gamma_regs[27];
+
+	gamma_regs[0] = 0x0FA;
+	gamma_regs[1] = 0x102;
+	gamma_regs[23] = 0x0FA;
+	gamma_regs[24] = 0x103;
+	gamma_regs[25] = ENDDEF;
+	gamma_regs[26] = 0x0000;
+
+	setup_gamma_regs(gamma_regs + 2, lcd->bl);
+	s6e63m0_panel_send_sequence(lcd, gamma_regs);
+}
+
 static void tl2796_ldi_enable(struct s5p_lcd *lcd)
 {
-	s6e63m0_panel_send_sequence(lcd, s6e63m0_SEQ_SETTING);
-	s6e63m0_panel_send_sequence(lcd, s6e63m0_SEQ_STANDBY_OFF);
+	s6e63m0_panel_send_sequence(lcd, s6e63m0_SEQ_DISPLAY_SETTING);
+	update_brightness(lcd);
+	s6e63m0_panel_send_sequence(lcd, s6e63m0_SEQ_ETC_SETTING);
+
 	lcd->ldi_enable = 1;
 }
+
 static void tl2796_ldi_disable(struct s5p_lcd *lcd)
 {
 	s6e63m0_panel_send_sequence(lcd, s6e63m0_SEQ_STANDBY_ON);
@@ -378,27 +377,21 @@ static int s5p_bl_update_status(struct backlight_device *bd)
 
 	struct s5p_lcd *lcd = bl_get_data(bd);
 	int bl = bd->props.brightness;
-	u16 gamma_regs[] = {
-		[0] = 0x0FA,
-		[1] = 0x102,
-		[23] = 0x0FA,
-		[24] = 0x103,
-		[25] = ENDDEF,
-		[26] = 0x0000,
-	};
 
 	pr_debug("\nupdate status brightness %d\n",
 				bd->props.brightness);
-	if (!lcd->ldi_enable)
-		return 0;
 
 	if (bl < 0 || bl > 255)
 		return -EINVAL;
 
+	lcd->bl = bl;
+
+	if (!lcd->ldi_enable)
+		return 0;
+
 	pr_debug("\n bl :%d\n", bl);
 
-	setup_gamma_regs(gamma_regs + 2, bl);
-	s6e63m0_panel_send_sequence(lcd, gamma_regs);
+	update_brightness(lcd);
 
 	return 0;
 }
