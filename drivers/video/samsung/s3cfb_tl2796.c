@@ -439,6 +439,7 @@ static int __devinit tl2796_probe(struct spi_device *spi)
 
 	lcd->g_spi = spi;
 	lcd->dev = &spi->dev;
+	lcd->bl = 255;
 	lcd->bl_dev = backlight_device_register("s5p_bl",
 			&spi->dev, lcd, &s5p_bl_ops, NULL);
 	if (!lcd->bl_dev) {
