@@ -1108,7 +1108,7 @@ void s3cfb_late_resume(struct early_suspend *h)
 	struct s3cfb_window *win;
 	int i, j, ret;
 
-	pr_debug("s3cfb_late_resume is called\n");
+	pr_info("s3cfb_late_resume is called\n");
 
 	ret = regulator_enable(fbdev->regulator);
 	if (ret < 0)
@@ -1147,7 +1147,7 @@ void s3cfb_late_resume(struct early_suspend *h)
 
 	s3cfb_set_vsync_interrupt(fbdev, 1);
 	s3cfb_set_global_interrupt(fbdev, 1);
-
+	pr_info("s3cfb_late_resume is complete\n");
 	return ;
 }
 
