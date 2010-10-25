@@ -58,8 +58,6 @@
 #define GPIO_GPB6			S5PV210_GPB(6)
 
 #define GPIO_GPB7			S5PV210_GPB(7)
-/* define : isx006 */
-#define CAM_IO_EN			S5PV210_GPB(7)
 
 #define GPIO_REC_PCM_CLK		S5PV210_GPC0(0)
 #define GPIO_REC_PCM_CLK_AF		3

@@ -1273,11 +1273,6 @@ static struct s3c_adc_mach_info s3c_adc_platform __initdata = {
 };
 #endif
 
-/*
- * Guide for Camera Configuration for Aries
-*/
-
-
 /* in revisions before 0.9, there is a common mic bias gpio */
 
 static DEFINE_SPINLOCK(mic_bias_lock);
@@ -4266,10 +4261,7 @@ static void __init herring_machine_init(void)
 
 	s5ka3dfx_request_gpio();
 
-	if (system_rev < 0x6)
-		fimc_plat_lsi.camera[0] = &isx006;
-	else
-		s5k4ecgx_init();
+	s5k4ecgx_init();
 
 #ifdef CONFIG_VIDEO_FIMC
 	/* fimc */
