@@ -117,6 +117,7 @@ struct chg_data {
 
 	enum cable_type_t	cable_status;
 	bool			charging;
+	bool			set_charge_timeout;
 	int			present;
 	int			timestamp;
 	int			set_batt_full;
@@ -400,8 +401,10 @@ static void s3c_bat_discharge_reason(struct chg_data *chg)
 	cur_time = ktime_to_timespec(ktime);
 
 	if (chg->discharging_time &&
-			cur_time.tv_sec > chg->discharging_time)
+			cur_time.tv_sec > chg->discharging_time) {
+		chg->set_charge_timeout = true;
 		chg->bat_info.dis_reason |= DISCONNECT_OVER_TIME;
+	}
 
 	pr_debug("%s : Current Voltage : %d\n			\
 		Current time : %ld  discharging_time : %ld\n	\
@@ -515,7 +518,8 @@ static int s3c_cable_status_update(struct chg_data *chg)
 			ktime = alarm_get_elapsed_realtime();
 			cur_time = ktime_to_timespec(ktime);
 			chg->discharging_time =
-				chg->bat_info.batt_is_full ?
+				chg->bat_info.batt_is_full ||
+				chg->set_charge_timeout ?
 				cur_time.tv_sec + TOTAL_RECHARGING_TIME :
 				cur_time.tv_sec + TOTAL_CHARGING_TIME;
 		}
@@ -543,6 +547,7 @@ static int s3c_cable_status_update(struct chg_data *chg)
 		chg->bat_info.charging_status = POWER_SUPPLY_STATUS_DISCHARGING;
 
 		chg->bat_info.batt_is_full = false;
+		chg->set_charge_timeout = false;
 		chg->set_batt_full = 0;
 		chg->bat_info.dis_reason = 0;
 		chg->discharging_time = 0;
@@ -692,6 +697,7 @@ static __devinit int max8998_charger_probe(struct platform_device *pdev)
 	chg->polling_interval = POLLING_INTERVAL;
 	chg->bat_info.batt_health = POWER_SUPPLY_HEALTH_GOOD;
 	chg->bat_info.batt_is_full = false;
+	chg->set_charge_timeout = false;
 
 	chg->cable_status = CABLE_TYPE_NONE;
 
