@@ -963,7 +963,7 @@ void wm8994_record_headset_mic(struct snd_soc_codec *codec)
 	/* Enable high pass filter to control bounce on startup */
 	val = wm8994_read(codec, WM8994_AIF1_ADC1_FILTERS);
 	val &= ~(WM8994_AIF1ADC1L_HPF_MASK | WM8994_AIF1ADC1R_HPF_MASK);
-	val |= (WM8994_AIF1ADC1L_HPF);
+	val |= (WM8994_AIF1ADC1R_HPF);
 	wm8994_write(codec, WM8994_AIF1_ADC1_FILTERS, val);
 
 	/* Enable mic bias, vmid, bias generator */
@@ -1003,7 +1003,7 @@ void wm8994_record_headset_mic(struct snd_soc_codec *codec)
 
 	val = wm8994_read(codec, WM8994_AIF1_ADC1_FILTERS);
 	val &= ~(WM8994_AIF1ADC1L_HPF_MASK | WM8994_AIF1ADC1R_HPF_MASK);
-	val |= (WM8994_AIF1ADC1L_HPF | 0x2000);
+	val |= (WM8994_AIF1ADC1R_HPF | 0x2000);
 	wm8994_write(codec, WM8994_AIF1_ADC1_FILTERS, val);
 
 	val = wm8994_read(codec, WM8994_AIF1_MASTER_SLAVE);
