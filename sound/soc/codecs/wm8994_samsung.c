@@ -1270,9 +1270,9 @@ static int wm8994_init(struct wm8994_priv *wm8994_private,
 
 	wm8994->gain_code = gain_code_check();
 
-	wm8994->universal_clock_control(codec, CODEC_ON);
-
 	wm8994->codec_clk = clk_get(NULL, "usb_osc");
+
+	wm8994->universal_clock_control(codec, CODEC_ON);
 
 	if (IS_ERR(wm8994->codec_clk)) {
 		pr_err("failed to get MCLK clock from AP\n");
