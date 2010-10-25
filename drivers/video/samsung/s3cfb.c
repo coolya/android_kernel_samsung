@@ -46,6 +46,10 @@ struct s3c_platform_fb *to_fb_plat(struct device *dev)
 	return (struct s3c_platform_fb *)pdev->dev.platform_data;
 }
 
+static unsigned int bootloaderfb;
+module_param_named(bootloaderfb, bootloaderfb, uint, 0444);
+MODULE_PARM_DESC(bootloaderfb, "Address of booting logo image in Bootloader");
+
 #ifndef CONFIG_FRAMEBUFFER_CONSOLE
 static int s3cfb_draw_logo(struct fb_info *fb)
 {
@@ -87,6 +91,15 @@ static int s3cfb_draw_logo(struct fb_info *fb)
 		}
 	}
 #endif
+	if (bootloaderfb) {
+		u8 *logo_virt_buf;
+		logo_virt_buf = ioremap_nocache(bootloaderfb,
+				fb->var.yres * fb->fix.line_length);
+
+		memcpy(fb->screen_base, logo_virt_buf,
+				fb->var.yres * fb->fix.line_length);
+		iounmap(logo_virt_buf);
+	}
 	return 0;
 }
 #endif
@@ -977,8 +990,7 @@ static int __devinit s3cfb_probe(struct platform_device *pdev)
 	if (pdata->backlight_on)
 		pdata->backlight_on(pdev);
 #endif
-
-	if (pdata->reset_lcd)
+	if (!bootloaderfb && pdata->reset_lcd)
 		pdata->reset_lcd(pdev);
 #endif
 
