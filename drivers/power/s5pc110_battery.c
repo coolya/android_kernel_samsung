@@ -605,6 +605,8 @@ static void s3c_bat_work(struct work_struct *work)
 	local_irq_restore(flags);
 	return;
 err:
+	mutex_unlock(&chg->mutex);
+	wake_unlock(&chg->work_wake_lock);
 	pr_err("battery workqueue fail\n");
 }
 
