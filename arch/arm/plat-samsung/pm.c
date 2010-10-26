@@ -367,6 +367,9 @@ static int s3c_pm_enter(suspend_state_t state)
 
 	s3c_pm_check_store();
 
+	/* clear wakeup_stat register for next wakeup reason */
+	__raw_writel(__raw_readl(S5P_WAKEUP_STAT), S5P_WAKEUP_STAT);
+
 	/* send the cpu to sleep... */
 
 	s3c_pm_arch_stop_clocks();
