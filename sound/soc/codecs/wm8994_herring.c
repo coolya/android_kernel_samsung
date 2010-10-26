@@ -931,8 +931,6 @@ void wm8994_set_bluetooth_common_setting(struct snd_soc_codec *codec)
 	val |= (WM8994_DSP_FS2CLK_ENA | WM8994_SYSCLK_SRC);
 	wm8994_write(codec, WM8994_CLOCKING_1, val);
 
-	wm8994_write(codec, WM8994_POWER_MANAGEMENT_6, 0x0);
-
 	/* AIF1 & AIF2 Output is connected to DAC1 */
 	val = wm8994_read(codec, WM8994_DAC1_LEFT_MIXER_ROUTING);
 	val &= ~(WM8994_AIF1DAC1L_TO_DAC1L_MASK |
@@ -945,9 +943,6 @@ void wm8994_set_bluetooth_common_setting(struct snd_soc_codec *codec)
 		WM8994_AIF2DACR_TO_DAC1R_MASK);
 	val |= (WM8994_AIF1DAC1R_TO_DAC1R | WM8994_AIF2DACR_TO_DAC1R);
 	wm8994_write(codec, WM8994_DAC1_RIGHT_MIXER_ROUTING, val);
-
-	wm8994_write(codec, 0x6, 0x0);
-
 }
 
 void wm8994_record_headset_mic(struct snd_soc_codec *codec)
