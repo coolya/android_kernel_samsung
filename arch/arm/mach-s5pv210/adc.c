@@ -338,6 +338,8 @@ err_req:
 
 static int s3c_adc_remove(struct platform_device *dev)
 {
+	clk_disable(adc_clock);
+	clk_put(adc_clock);
 	return 0;
 }
 
@@ -350,15 +352,11 @@ static int s3c_adc_suspend(struct platform_device *dev, pm_message_t state)
 	adctsc = readl(base_addr + S3C_ADCTSC);
 	adcdly = readl(base_addr + S3C_ADCDLY);
 
-	clk_disable(adc_clock);
-
 	return 0;
 }
 
 static int s3c_adc_resume(struct platform_device *pdev)
 {
-	clk_enable(adc_clock);
-
 	writel(adccon, base_addr + S3C_ADCCON);
 	writel(adctsc, base_addr + S3C_ADCTSC);
 	writel(adcdly, base_addr + S3C_ADCDLY);
