@@ -3931,7 +3931,13 @@ static struct platform_device sec_device_wifi = {
 	},
 };
 
+static struct platform_device watchdog_device = {
+	.name = "watchdog",
+	.id = -1,
+};
+
 static struct platform_device *herring_devices[] __initdata = {
+	&watchdog_device,
 #ifdef CONFIG_FIQ_DEBUGGER
 	&s5pv210_device_fiqdbg_uart2,
 #endif
@@ -4169,6 +4175,7 @@ static void __init sound_init(void)
 
 	gpio_request(GPIO_MICBIAS_EN, "micbias_enable");
 }
+
 static void __init herring_machine_init(void)
 {
 	setup_ram_console_mem();
