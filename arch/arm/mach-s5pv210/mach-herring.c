@@ -2266,35 +2266,39 @@ static struct platform_device sec_device_btsleep = {
 
 static struct sec_jack_zone sec_jack_zones[] = {
 	{
-		/* adc == 0, 3 pole */
+		/* adc == 0, unstable zone, default to 3pole if it stays
+		 * in this range for a half second (20ms delays, 25 samples)
+		 */
 		.adc_high = 0,
-		.delay_ms = 0,
-		.check_count = 0,
-		.jack_type = SEC_HEADSET_3POLE,
-	},
-	{
-		/* 0 < adc <= 600, unstable zone, default to 3pole if it stays
-		 * in this range for a 200ms (20ms delays, 10 samples)
-		 */
-		.adc_high = 600,
 		.delay_ms = 20,
-		.check_count = 10,
+		.check_count = 25,
 		.jack_type = SEC_HEADSET_3POLE,
 	},
 	{
-		/* 600 < adc <= 2000, unstable zone, default to 3pole if it
-		 * stays in this range for a second (10ms delays, 100 samples)
+		/* 0 < adc <= 1000, unstable zone, default to 3pole if it stays
+		 * in this range for a second (10ms delays, 100 samples)
 		 */
-		.adc_high = 2000,
+		.adc_high = 1000,
 		.delay_ms = 10,
 		.check_count = 100,
 		.jack_type = SEC_HEADSET_3POLE,
 	},
 	{
-		/* 2000 < adc <= 3700, 4 pole zone */
+		/* 1000 < adc <= 2000, unstable zone, default to 4pole if it
+		 * stays in this range for a second (10ms delays, 100 samples)
+		 */
+		.adc_high = 2000,
+		.delay_ms = 10,
+		.check_count = 100,
+		.jack_type = SEC_HEADSET_4POLE,
+	},
+	{
+		/* 2000 < adc <= 3700, 4 pole zone, default to 4pole if it
+		 * stays in this range for 200ms (20ms delays, 10 samples)
+		 */
 		.adc_high = 3700,
-		.delay_ms = 0,
-		.check_count = 0,
+		.delay_ms = 20,
+		.check_count = 10,
 		.jack_type = SEC_HEADSET_4POLE,
 	},
 	{
