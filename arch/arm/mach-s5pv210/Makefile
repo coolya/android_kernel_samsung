@@ -27,6 +27,7 @@ obj-$(CONFIG_MACH_GONI)		+= mach-goni.o
 obj-$(CONFIG_MACH_HERRING)	+= mach-herring.o herring-rfkill.o
 obj-$(CONFIG_MACH_HERRING)	+= herring-vibrator.o
 obj-$(CONFIG_MACH_HERRING)	+= herring-btlpm.o
+obj-$(CONFIG_MACH_HERRING)	+= herring-watchdog.o
 
 obj-$(CONFIG_MACH_HERRING)	+= dev-herring-phone.o
 
