@@ -563,6 +563,12 @@ static struct clk init_clocks_disable[] = {
 		.parent		= &clk_hclk_psys.clk,
 		.enable		= s5pv210_clk_ip2_ctrl,
 		.ctrlbit	= (1 << 0),
+	}, {
+		.name		= "seckey",
+		.id		= -1,
+		.parent		= &clk_pclk_psys.clk,
+		.enable		= s5pv210_clk_ip4_ctrl,
+		.ctrlbit	= (1 << 3),
 	},
 };
 
