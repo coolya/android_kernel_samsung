@@ -1009,7 +1009,7 @@ static struct s3c_platform_fb tl2796_data __initdata = {
 static struct spi_board_info spi_board_info[] __initdata = {
 	{
 		.modalias	= "tl2796",
-		.platform_data	= NULL,
+		.platform_data	= &herring_panel_data,
 		.max_speed_hz	= 1200000,
 		.bus_num	= LCD_BUS_NUM,
 		.chip_select	= 0,
