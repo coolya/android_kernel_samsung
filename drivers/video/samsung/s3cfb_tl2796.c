@@ -25,6 +25,7 @@
 #include <linux/spi/spi.h>
 #include <linux/lcd.h>
 #include <linux/backlight.h>
+#include <linux/tl2796.h>
 #include <plat/gpio-cfg.h>
 #include <plat/regs-fb.h>
 #include <linux/earlysuspend.h>
@@ -32,186 +33,28 @@
 #define SLEEPMSEC		0x1000
 #define ENDDEF			0x2000
 #define DEFMASK		0xFF00
-#define COMMAND_ONLY		0xFE
-#define DATA_ONLY		0xFF
 
 struct s5p_lcd{
 	int ldi_enable;
 	int bl;
 	struct device *dev;
 	struct spi_device *g_spi;
+	struct s5p_panel_data	*data;
 	struct backlight_device *bl_dev;
 	struct early_suspend    early_suspend;
 };
 
-const u16 s6e63m0_SEQ_DISPLAY_ON[] = {
-	ENDDEF, 0x0000
-};
-
-const u16 s6e63m0_SEQ_DISPLAY_OFF[] = {
-	ENDDEF, 0x0000
-};
-
-const u16 s6e63m0_SEQ_STANDBY_ON[] = {
-	0x010,
-	SLEEPMSEC, 120,
-	ENDDEF, 0x0000
-};
-
-const u16 s6e63m0_SEQ_STANDBY_OFF[] = {
-	0x011,
-	SLEEPMSEC, 120,
-	ENDDEF, 0x0000
-};
-
-const u16 s6e63m0_SEQ_DISPLAY_SETTING[] = {
-	SLEEPMSEC, 120,
-	0x0F8,
-	0x101,	0x127,
-	0x127,	0x107,
-	0x107,	0x154,
-	0x19F,	0x163,
-	0x186,	0x11A,
-	0x133,	0x10D,
-	0x100,	0x100,
-	0x0F2,
-	0x102,	0x103,
-	0x11C,	0x110,
-	0x110,
-	0x0F7,
-	0x103,	0x100,
-	0x100,
-	ENDDEF, 0x0000
-};
-
-const u16 s6e63m0_SEQ_ETC_SETTING[] = {
-	0x0F6,
-	0x100,	0x18C,
-	0x107,
-	0x0B5,
-	0x12C,	0x112,
-	0x10C,	0x10A,
-	0x110,	0x10E,
-	0x117,	0x113,
-	0x11F,	0x11A,
-	0x12A,	0x124,
-	0x11F,	0x11B,
-	0x11A,	0x117,
-	0x12B,	0x126,
-	0x122,	0x120,
-	0x13A,	0x134,
-	0x130,	0x12C,
-	0x129,	0x126,
-	0x125,	0x123,
-	0x121,	0x120,
-	0x11E,	0x11E,
-	0x0B6,
-	0x100,	0x100,
-	0x111,	0x122,
-	0x133,	0x144,
-	0x144,	0x144,
-	0x155,	0x155,
-	0x166,	0x166,
-	0x166,	0x166,
-	0x166,	0x166,
-	0x0B7,
-	0x12C,	0x112,
-	0x10C,	0x10A,
-	0x110,	0x10E,
-	0x117,	0x113,
-	0x11F,	0x11A,
-	0x12A,	0x124,
-	0x11F,	0x11B,
-	0x11A,	0x117,
-	0x12B,	0x126,
-	0x122,	0x120,
-	0x13A,	0x134,
-	0x130,	0x12C,
-	0x129,	0x126,
-	0x125,	0x123,
-	0x121,	0x120,
-	0x11E,	0x11E,
-	0x0B8,
-	0x100,	0x100,
-	0x111,	0x122,
-	0x133,	0x144,
-	0x144,	0x144,
-	0x155,	0x155,
-	0x166,	0x166,
-	0x166,	0x166,
-	0x166,	0x166,
-	0x0B9,
-	0x12C,	0x112,
-	0x10C,	0x10A,
-	0x110,	0x10E,
-	0x117,	0x113,
-	0x11F,	0x11A,
-	0x12A,	0x124,
-	0x11F,	0x11B,
-	0x11A,	0x117,
-	0x12B,	0x126,
-	0x122,	0x120,
-	0x13A,	0x134,
-	0x130,	0x12C,
-	0x129,	0x126,
-	0x125,	0x123,
-	0x121,	0x120,
-	0x11E,	0x11E,
-	0x0BA,
-	0x100,	0x100,
-	0x111,	0x122,
-	0x133,	0x144,
-	0x144,	0x144,
-	0x155,	0x155,
-	0x166,	0x166,
-	0x166,	0x166,
-	0x166,	0x166,
-	0x011,
-	SLEEPMSEC, 120,
-	0x029,
-	ENDDEF, 0x0000
-};
-
-enum {
-	BV_0   =          0,
-	BV_1   =     0x552D,
-	BV_19  =   0xD8722A,
-	BV_43  =  0x51955E1,
-	BV_87  = 0x18083FB0,
-	BV_171 = 0x6A472534,
-	BV_255 = 0xFFFFFFFF,
-};
-
-static struct gamma_entry {
-	u32 brightness;
-	u32 v[3];
-} gamma_table[] = {
-	{       BV_0, { 1000000, 1000000, 1000000, }, },
-	{       BV_1, {  951000,  978000,  931000, }, },
-	{    0x73701, {  825516,  902183,  830517, }, },
-	{   0x418937, {  788233,  811428,  781118, }, },
-	{   0xF04C75, {  760795,  767228,  744214, }, },
-	{  0x1B4E81B, {  749934,  753360,  728062, }, },
-	{  0x2673991, {  740080,  742551,  715727, }, },
-	{  0x46508DF, {  723760,  725000,  698000, }, },
-	{  0x71529A4, {  710792,  711698,  678151, }, },
-	{  0xA3D70A3, {  696667,  699000,  660000, }, },
-	{ 0x11111111, {  678333,  680000,  636667, }, },
-	{ 0x22222222, {  648333,  650000,  596667, }, },
-	{ 0x44444444, {  608333,  610000,  543333, }, },
-	{ 0x7FFFFFFF, {  561667,  565000,  476667, }, },
-	{     BV_255, {  491667,  493333,  380000, }, },
-};
-
-static u32 gamma_lookup(u8 brightness, u32 val, int c)
+static u32 gamma_lookup(struct s5p_lcd *lcd, u8 brightness, u32 val, int c)
 {
 	int i;
 	u32 bl = 0;
 	u32 bh = 0;
-	u32 vl = 0, vh;
+	u32 vl = 0;
+	u32 vh;
 	u32 b;
 	u32 ret;
 	u64 tmp;
+	struct s5p_panel_data *pdata = lcd->data;
 
 	if (!val) {
 		b = 0;
@@ -225,17 +68,17 @@ static u32 gamma_lookup(u8 brightness, u32 val, int c)
 		b = tmp + BV_1;
 	}
 
-	for (i = 0; i < ARRAY_SIZE(gamma_table); i++) {
+	for (i = 0; i < pdata->gamma_table_size; i++) {
 		bl = bh;
-		bh = gamma_table[i].brightness;
+		bh = pdata->gamma_table[i].brightness;
 		if (bh >= b)
 			break;
 	}
-	vh = gamma_table[i].v[c];
+	vh = pdata->gamma_table[i].v[c];
 	if (i == 0 || (b - bl) == 0) {
 		ret = vl = vh;
 	} else {
-		vl = gamma_table[i - 1].v[c];
+		vl = pdata->gamma_table[i - 1].v[c];
 		tmp = (u64)vh * (b - bl) + (u64)vl * (bh - b);
 		do_div(tmp, bh - bl);
 		ret = tmp;
@@ -248,16 +91,19 @@ static u32 gamma_lookup(u8 brightness, u32 val, int c)
 	return ret;
 }
 
-static void setup_gamma_regs(u16 gamma_regs[], u8 brightness)
+static void setup_gamma_regs(struct s5p_lcd *lcd, u16 gamma_regs[])
 {
 	int c, i;
+	u8 brightness = lcd->bl;
+
 	for (c = 0; c < 3; c++) {
 		u32 adj;
-		u32 v0 = gamma_lookup(brightness, BV_0, c);
+		u32 v0 = gamma_lookup(lcd, brightness, BV_0, c);
 		u32 vx[6];
-		u32 v1, v255;
+		u32 v1;
+		u32 v255;
 
-		v1 = vx[0] = gamma_lookup(brightness, BV_1, c);
+		v1 = vx[0] = gamma_lookup(lcd, brightness, BV_1, c);
 		adj = 600 - 5 - DIV_ROUND_CLOSEST(600 * v1, v0);
 		if (adj > 140) {
 			pr_err("%s: bad adj value %d, v0 %d, v1 %d, c %d\n",
@@ -269,7 +115,7 @@ static void setup_gamma_regs(u16 gamma_regs[], u8 brightness)
 		}
 		gamma_regs[c] = adj | 0x100;
 
-		v255 = vx[5] = gamma_lookup(brightness, BV_255, c);
+		v255 = vx[5] = gamma_lookup(lcd, brightness, BV_255, c);
 		adj = 600 - 120 - DIV_ROUND_CLOSEST(600 * v255, v0);
 		if (adj > 380) {
 			pr_err("%s: bad adj value %d, v0 %d, v255 %d, c %d\n",
@@ -282,10 +128,10 @@ static void setup_gamma_regs(u16 gamma_regs[], u8 brightness)
 		gamma_regs[3 * 5 + 2 * c] = adj >> 8 | 0x100;
 		gamma_regs[3 * 5 + 2 * c + 1] = (adj & 0xff) | 0x100;
 
-		vx[1] = gamma_lookup(brightness,  BV_19, c);
-		vx[2] = gamma_lookup(brightness,  BV_43, c);
-		vx[3] = gamma_lookup(brightness,  BV_87, c);
-		vx[4] = gamma_lookup(brightness, BV_171, c);
+		vx[1] = gamma_lookup(lcd, brightness,  BV_19, c);
+		vx[2] = gamma_lookup(lcd, brightness,  BV_43, c);
+		vx[3] = gamma_lookup(lcd, brightness,  BV_87, c);
+		vx[4] = gamma_lookup(lcd, brightness, BV_171, c);
 
 		for (i = 4; i >= 1; i--) {
 			if (v1 <= vx[i + 1])
@@ -323,14 +169,12 @@ static int s6e63m0_spi_write_driver(struct s5p_lcd *lcd, u16 reg)
 	spi_message_init(&msg);
 	spi_message_add_tail(&xfer, &msg);
 
-
 	ret = spi_sync(lcd->g_spi, &msg);
 
 	if (ret < 0)
 		pr_err("%s error\n", __func__);
 
 	return ret ;
-
 }
 
 static void s6e63m0_panel_send_sequence(struct s5p_lcd *lcd,
@@ -360,28 +204,31 @@ static void update_brightness(struct s5p_lcd *lcd)
 	gamma_regs[25] = ENDDEF;
 	gamma_regs[26] = 0x0000;
 
-	setup_gamma_regs(gamma_regs + 2, lcd->bl);
+	setup_gamma_regs(lcd, gamma_regs + 2);
 	s6e63m0_panel_send_sequence(lcd, gamma_regs);
 }
 
 static void tl2796_ldi_enable(struct s5p_lcd *lcd)
 {
-	s6e63m0_panel_send_sequence(lcd, s6e63m0_SEQ_DISPLAY_SETTING);
+	struct s5p_panel_data *pdata = lcd->data;
+
+	s6e63m0_panel_send_sequence(lcd, pdata->seq_display_set);
 	update_brightness(lcd);
-	s6e63m0_panel_send_sequence(lcd, s6e63m0_SEQ_ETC_SETTING);
+	s6e63m0_panel_send_sequence(lcd, pdata->seq_etc_set);
 
 	lcd->ldi_enable = 1;
 }
 
 static void tl2796_ldi_disable(struct s5p_lcd *lcd)
 {
-	s6e63m0_panel_send_sequence(lcd, s6e63m0_SEQ_STANDBY_ON);
+	struct s5p_panel_data *pdata = lcd->data;
+
+	s6e63m0_panel_send_sequence(lcd, pdata->standby_on);
 	lcd->ldi_enable = 0;
 }
 
 static int s5p_bl_update_status(struct backlight_device *bd)
 {
-
 	struct s5p_lcd *lcd = bl_get_data(bd);
 	int bl = bd->props.brightness;
 
@@ -447,10 +294,26 @@ static int __devinit tl2796_probe(struct spi_device *spi)
 	lcd->g_spi = spi;
 	lcd->dev = &spi->dev;
 	lcd->bl = 255;
+
+	if (!spi->dev.platform_data) {
+		dev_err(lcd->dev, "failed to get platform data\n");
+		ret = -EINVAL;
+		goto err_setup;
+	}
+	lcd->data = (struct s5p_panel_data *)spi->dev.platform_data;
+
+	if (!lcd->data->gamma_table || !lcd->data->seq_display_set ||
+		!lcd->data->seq_etc_set || !lcd->data->standby_on ||
+		!lcd->data->standby_off) {
+		dev_err(lcd->dev, "Invalid platform data\n");
+		ret = -EINVAL;
+		goto err_setup;
+	}
+
 	lcd->bl_dev = backlight_device_register("s5p_bl",
 			&spi->dev, lcd, &s5p_bl_ops, NULL);
 	if (!lcd->bl_dev) {
-		pr_err("failed to register backlight\n");
+		dev_err(lcd->dev, "failed to register backlight\n");
 		ret = -EINVAL;
 		goto err_setup;
 	}
