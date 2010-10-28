@@ -1676,7 +1676,8 @@ static int s5ka3dfx_power_init(void)
 
 static int s5ka3dfx_power_on(void)
 {
-	int err;
+	int err = 0;
+	int result;
 
 	if (s5ka3dfx_power_init()) {
 		pr_err("Failed to get all regulator\n");
@@ -1691,21 +1692,21 @@ static int s5ka3dfx_power_on(void)
 	}
 	msleep(3);
 
-	/* Turn VGA_DVDD_1.8V on */
-	err = regulator_enable(s5ka3dfx_vga_dvdd);
-	if (err) {
-		pr_err("Failed to enable regulator vga_dvdd\n");
-		return -EINVAL;
-	}
-	udelay(20);
-
 	/* Turn VGA_VDDIO_2.8V on */
 	err = regulator_enable(s5ka3dfx_vga_vddio);
 	if (err) {
 		pr_err("Failed to enable regulator vga_vddio\n");
-		return -EINVAL;
+		goto off_vga_vddio;
 	}
 	udelay(20);
+
+	/* Turn VGA_DVDD_1.8V on */
+	err = regulator_enable(s5ka3dfx_vga_dvdd);
+	if (err) {
+		pr_err("Failed to enable regulator vga_dvdd\n");
+		goto off_vga_dvdd;
+	}
+	udelay(100);
 
 	/* CAM_VGA_nSTBY HIGH */
 	gpio_direction_output(GPIO_CAM_VGA_nSTBY, 0);
@@ -1717,20 +1718,46 @@ static int s5ka3dfx_power_on(void)
 	s3c_gpio_cfgpin(GPIO_CAM_MCLK, S3C_GPIO_SFN(0x02));
 	udelay(430);
 
-	/* CAM_VGA_nRST HIGH */
-	gpio_direction_output(GPIO_CAM_VGA_nRST, 0);
-	gpio_set_value(GPIO_CAM_VGA_nRST, 1);
-
-	udelay(30);
-
 	/* Turn CAM_ISP_HOST_2.8V on */
 	err = regulator_enable(s5ka3dfx_cam_isp_host);
 	if (err) {
 		pr_err("Failed to enable regulator cam_isp_host\n");
-		return -EINVAL;
+		goto off_cam_isp_host;
+	}
+	udelay(150);
+
+	/* CAM_VGA_nRST HIGH */
+	gpio_direction_output(GPIO_CAM_VGA_nRST, 0);
+	gpio_set_value(GPIO_CAM_VGA_nRST, 1);
+	mdelay(5);
+
+	return 0;
+off_cam_isp_host:
+	s3c_gpio_cfgpin(GPIO_CAM_MCLK, 0);
+	udelay(1);
+	gpio_direction_output(GPIO_CAM_VGA_nSTBY, 1);
+	gpio_set_value(GPIO_CAM_VGA_nSTBY, 0);
+	udelay(1);
+	err = regulator_disable(s5ka3dfx_vga_dvdd);
+	if (err) {
+		pr_err("Failed to disable regulator vga_dvdd\n");
+		result = err;
+	}
+off_vga_dvdd:
+	err = regulator_disable(s5ka3dfx_vga_vddio);
+	if (err) {
+		pr_err("Failed to disable regulator vga_vddio\n");
+		result = err;
+	}
+off_vga_vddio:
+	err = regulator_disable(s5ka3dfx_vga_avdd);
+	if (err) {
+		pr_err("Failed to disable regulator vga_avdd\n");
+		result = err;
 	}
 
-	return err;
+	pr_info("camera power disabled\n");
+	return result;
 }
 
 static int s5ka3dfx_power_off(void)

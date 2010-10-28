@@ -36,7 +36,7 @@ void s3c_fimc0_cfg_gpio(struct platform_device *pdev)
 		s3c_gpio_setpull(S5PV210_GPE0(i), S3C_GPIO_PULL_NONE);
 	}
 	/* CAM A port(b0010) : DATA[5-7], CLKOUT(MIPI CAM also), FIELD */
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < 3; i++) {
 		s3c_gpio_cfgpin(S5PV210_GPE1(i), S3C_GPIO_SFN(2));
 		s3c_gpio_setpull(S5PV210_GPE1(i), S3C_GPIO_PULL_NONE);
 	}
