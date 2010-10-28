@@ -1739,6 +1739,7 @@ int fimc_streamoff_output(void *fh)
 	if (ctx_id == ctrl->out->last_ctx)
 		ctrl->out->last_ctx = -1;
 
+	mutex_lock(&ctrl->lock);
 	if (ctx->overlay.mode == FIMC_OVLY_DMA_AUTO && ctrl->fb.is_enable == 1) {
 		fimc_info2("WIN_OFF for FIMC%d\n", ctrl->id);
 		ret = fb_blank(registered_fb[ctx->overlay.fb_id],
@@ -1747,11 +1748,13 @@ int fimc_streamoff_output(void *fh)
 			fimc_err("%s: fb_blank: fb[%d] " \
 					"mode=FB_BLANK_POWERDOWN\n",
 					__func__, ctx->overlay.fb_id);
+			mutex_unlock(&ctrl->lock);
 			return -EINVAL;
 		}
 
 		ctrl->fb.is_enable = 0;
 	}
+	mutex_unlock(&ctrl->lock);
 
 	return 0;
 }
@@ -2123,6 +2126,7 @@ int fimc_dqbuf_output(void *fh, struct v4l2_buffer *b)
 		}
 	}
 
+	mutex_lock(&ctrl->lock);
 	if (ctx->overlay.mode == FIMC_OVLY_DMA_AUTO && ctrl->fb.is_enable == 0) {
 		ret = fb_blank(registered_fb[ctx->overlay.fb_id],
 						FB_BLANK_UNBLANK);
@@ -2130,10 +2134,12 @@ int fimc_dqbuf_output(void *fh, struct v4l2_buffer *b)
 			fimc_err("%s: fb_blank: fb[%d] " \
 					"mode=FB_BLANK_UNBLANK\n",
 					__func__, ctx->overlay.fb_id);
+			mutex_unlock(&ctrl->lock);
 			return -EINVAL;
 		}
 		ctrl->fb.is_enable = 1;
 	}
+	mutex_unlock(&ctrl->lock);
 
 	b->index = idx;
 
