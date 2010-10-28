@@ -43,11 +43,16 @@ extern struct snd_soc_dai wm8994_dai;
 #define PCM_STREAM_PLAYBACK	0x01
 #define PCM_STREAM_CAPTURE	0x02
 
-/* Codec Output Path BIT */
-#define PLAYBACK_MODE	0x01
-#define VOICECALL_MODE	(0x01 << 1)
-#define RECORDING_MODE	(0x01 << 2)
-#define FMRADIO_MODE	(0x01 << 3)
+/*
+Codec Output Path BIT
+[0:11]		: For output device
+[12:15]	: For mode
+[16]		: For gain code
+*/
+#define PLAYBACK_MODE	(0x01 << 12)
+#define VOICECALL_MODE	(0x01 << 13)
+#define RECORDING_MODE	(0x01 << 14)
+#define FMRADIO_MODE	(0x01 << 15)
 
 #define GAIN_DIVISION_BIT	(0x01 << 16)
 #define COMMON_SET_BIT		(0x01 << 0)
@@ -76,7 +81,7 @@ extern struct snd_soc_dai wm8994_dai;
 #define PLAYBACK_GAIN_NUM 39
 #define VOICECALL_GAIN_NUM 32
 #define RECORDING_GAIN_NUM 16
-#define GAIN_CODE_NUM 9
+#define GAIN_CODE_NUM 11
 /*
  * Definitions of enum type
  */
