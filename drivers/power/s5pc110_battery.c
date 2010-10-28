@@ -445,7 +445,7 @@ static int max8998_charging_control(struct chg_data *chg)
 		if (chg->cable_status == CABLE_TYPE_AC) {
 			/* ac */
 			ret = max8998_update_reg(chg->iodev, MAX8998_REG_CHGR1,
-				(1 << MAX8998_SHIFT_TOPOFF), MAX8998_MASK_TOPOFF);
+				(2 << MAX8998_SHIFT_TOPOFF), MAX8998_MASK_TOPOFF);
 			if (ret < 0)
 				goto err;
 
@@ -464,7 +464,7 @@ static int max8998_charging_control(struct chg_data *chg)
 		} else {
 			/* usb */
 			ret = max8998_update_reg(chg->iodev, MAX8998_REG_CHGR1,
-				(3 << MAX8998_SHIFT_TOPOFF), MAX8998_MASK_TOPOFF);
+				(6 << MAX8998_SHIFT_TOPOFF), MAX8998_MASK_TOPOFF);
 			if (ret < 0)
 				goto err;
 
