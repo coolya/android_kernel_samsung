@@ -3829,9 +3829,6 @@ static int wlan_power_en(int onoff)
 		if (gpio_get_value(GPIO_BT_nRST) == 0) {
 			gpio_set_value(GPIO_WLAN_BT_EN, GPIO_LEVEL_LOW);
 			s3c_gpio_slp_cfgpin(GPIO_WLAN_BT_EN, S3C_GPIO_SLP_OUT0);
-			s3c_gpio_slp_cfgpin(GPIO_WLAN_nRST, S3C_GPIO_SLP_OUT1);
-			s3c_gpio_slp_setpull_updown(GPIO_WLAN_nRST,
-						S3C_GPIO_PULL_NONE);
 			s3c_gpio_slp_setpull_updown(GPIO_WLAN_BT_EN,
 						S3C_GPIO_PULL_NONE);
 		}
