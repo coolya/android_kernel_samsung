@@ -16,11 +16,22 @@ struct gamma_entry {
 	u32 v[3];
 };
 
+struct tl2796_gamma_adj_points {
+	const u32 v0;
+	const u32 v1;
+	const u32 v19;
+	const u32 v43;
+	const u32 v87;
+	const u32 v171;
+	const u32 v255;
+};
+
 struct s5p_panel_data {
 	const u16 *seq_display_set;
 	const u16 *seq_etc_set;
 	const u16 *standby_on;
 	const u16 *standby_off;
+	const struct tl2796_gamma_adj_points *gamma_adj_points;
 	const struct gamma_entry *gamma_table;
 	int gamma_table_size;
 };

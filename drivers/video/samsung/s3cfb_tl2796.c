@@ -34,9 +34,20 @@
 #define ENDDEF			0x2000
 #define DEFMASK		0xFF00
 
+static const struct tl2796_gamma_adj_points default_gamma_adj_points = {
+	.v0 = BV_0,
+	.v1 = BV_1,
+	.v19 = BV_19,
+	.v43 = BV_43,
+	.v87 = BV_87,
+	.v171 = BV_171,
+	.v255 = BV_255,
+};
+
 struct s5p_lcd{
 	int ldi_enable;
 	int bl;
+	const struct tl2796_gamma_adj_points *gamma_adj_points;
 	struct device *dev;
 	struct spi_device *g_spi;
 	struct s5p_panel_data	*data;
@@ -55,17 +66,18 @@ static u32 gamma_lookup(struct s5p_lcd *lcd, u8 brightness, u32 val, int c)
 	u32 ret;
 	u64 tmp;
 	struct s5p_panel_data *pdata = lcd->data;
+	const struct tl2796_gamma_adj_points *bv = lcd->gamma_adj_points;
 
 	if (!val) {
 		b = 0;
 	} else {
-		tmp = BV_255 - BV_1;
+		tmp = bv->v255 - bv->v0;
 		tmp *= brightness;
 		do_div(tmp, 255);
 
-		tmp *= (val - BV_1);
-		do_div(tmp, BV_255 - BV_1);
-		b = tmp + BV_1;
+		tmp *= (val - bv->v0);
+		do_div(tmp, bv->v255 - bv->v0);
+		b = tmp + bv->v0;
 	}
 
 	for (i = 0; i < pdata->gamma_table_size; i++) {
@@ -95,6 +107,7 @@ static void setup_gamma_regs(struct s5p_lcd *lcd, u16 gamma_regs[])
 {
 	int c, i;
 	u8 brightness = lcd->bl;
+	const struct tl2796_gamma_adj_points *bv = lcd->gamma_adj_points;
 
 	for (c = 0; c < 3; c++) {
 		u32 adj;
@@ -103,7 +116,7 @@ static void setup_gamma_regs(struct s5p_lcd *lcd, u16 gamma_regs[])
 		u32 v1;
 		u32 v255;
 
-		v1 = vx[0] = gamma_lookup(lcd, brightness, BV_1, c);
+		v1 = vx[0] = gamma_lookup(lcd, brightness, bv->v1, c);
 		adj = 600 - 5 - DIV_ROUND_CLOSEST(600 * v1, v0);
 		if (adj > 140) {
 			pr_err("%s: bad adj value %d, v0 %d, v1 %d, c %d\n",
@@ -115,7 +128,7 @@ static void setup_gamma_regs(struct s5p_lcd *lcd, u16 gamma_regs[])
 		}
 		gamma_regs[c] = adj | 0x100;
 
-		v255 = vx[5] = gamma_lookup(lcd, brightness, BV_255, c);
+		v255 = vx[5] = gamma_lookup(lcd, brightness, bv->v255, c);
 		adj = 600 - 120 - DIV_ROUND_CLOSEST(600 * v255, v0);
 		if (adj > 380) {
 			pr_err("%s: bad adj value %d, v0 %d, v255 %d, c %d\n",
@@ -128,10 +141,10 @@ static void setup_gamma_regs(struct s5p_lcd *lcd, u16 gamma_regs[])
 		gamma_regs[3 * 5 + 2 * c] = adj >> 8 | 0x100;
 		gamma_regs[3 * 5 + 2 * c + 1] = (adj & 0xff) | 0x100;
 
-		vx[1] = gamma_lookup(lcd, brightness,  BV_19, c);
-		vx[2] = gamma_lookup(lcd, brightness,  BV_43, c);
-		vx[3] = gamma_lookup(lcd, brightness,  BV_87, c);
-		vx[4] = gamma_lookup(lcd, brightness, BV_171, c);
+		vx[1] = gamma_lookup(lcd, brightness,  bv->v19, c);
+		vx[2] = gamma_lookup(lcd, brightness,  bv->v43, c);
+		vx[3] = gamma_lookup(lcd, brightness,  bv->v87, c);
+		vx[4] = gamma_lookup(lcd, brightness, bv->v171, c);
 
 		for (i = 4; i >= 1; i--) {
 			if (v1 <= vx[i + 1])
@@ -309,6 +322,8 @@ static int __devinit tl2796_probe(struct spi_device *spi)
 		ret = -EINVAL;
 		goto err_setup;
 	}
+	lcd->gamma_adj_points =
+		lcd->data->gamma_adj_points ?: &default_gamma_adj_points;
 
 	lcd->bl_dev = backlight_device_register("s5p_bl",
 			&spi->dev, lcd, &s5p_bl_ops, NULL);
