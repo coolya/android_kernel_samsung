@@ -153,12 +153,22 @@ static const u16 s6e63m0_SEQ_ETC_SETTING[] = {
 	ENDDEF, 0x0000
 };
 
+static const struct tl2796_gamma_adj_points gamma_adj_points = {
+	.v0 = 1,
+	.v1 = 1,
+	.v19 = BV_1,
+	.v43 = 0x4595438,
+	.v87 = BV_87,
+	.v171 = BV_171,
+	.v255 = BV_255,
+};
+
 static const struct gamma_entry gamma_table[] = {
 	{       BV_0, { 4200000, 4200000, 4200000, }, },
-	{       BV_1, { 3994200, 4107600, 3910200, }, },
-	{    2000000, { 3467167, 3789169, 3488171, }, },
-	{    7500000, { 3310578, 3407998, 3280696, }, },
-	{   14500000, { 3234532, 3291183, 3181487, }, },
+	{          1, { 3994200, 4107600, 3910200, }, },
+	{          2, { 3467167, 3789169, 3488171, }, },
+	{    7000000, { 3310578, 3407998, 3280696, }, },
+	{   14000000, { 3234532, 3291183, 3181487, }, },
 	{   22000000, { 3195339, 3222358, 3125699, }, },
 	{   37000000, { 3149722, 3164112, 3057860, }, },
 	{   55000000, { 3108336, 3118714, 3006053, }, },
@@ -177,6 +187,7 @@ struct s5p_panel_data herring_panel_data = {
 	.seq_etc_set = s6e63m0_SEQ_ETC_SETTING,
 	.standby_on = s6e63m0_SEQ_STANDBY_ON,
 	.standby_off = s6e63m0_SEQ_STANDBY_OFF,
+	.gamma_adj_points = &gamma_adj_points,
 	.gamma_table = gamma_table,
 	.gamma_table_size = ARRAY_SIZE(gamma_table),
 };
