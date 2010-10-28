@@ -48,6 +48,7 @@ struct s5p_lcd{
 	int ldi_enable;
 	int bl;
 	const struct tl2796_gamma_adj_points *gamma_adj_points;
+	struct mutex	lock;
 	struct device *dev;
 	struct spi_device *g_spi;
 	struct s5p_panel_data	*data;
@@ -218,6 +219,7 @@ static void update_brightness(struct s5p_lcd *lcd)
 	gamma_regs[26] = 0x0000;
 
 	setup_gamma_regs(lcd, gamma_regs + 2);
+
 	s6e63m0_panel_send_sequence(lcd, gamma_regs);
 }
 
@@ -225,19 +227,26 @@ static void tl2796_ldi_enable(struct s5p_lcd *lcd)
 {
 	struct s5p_panel_data *pdata = lcd->data;
 
+	mutex_lock(&lcd->lock);
+
 	s6e63m0_panel_send_sequence(lcd, pdata->seq_display_set);
 	update_brightness(lcd);
 	s6e63m0_panel_send_sequence(lcd, pdata->seq_etc_set);
-
 	lcd->ldi_enable = 1;
+
+	mutex_unlock(&lcd->lock);
 }
 
 static void tl2796_ldi_disable(struct s5p_lcd *lcd)
 {
 	struct s5p_panel_data *pdata = lcd->data;
 
-	s6e63m0_panel_send_sequence(lcd, pdata->standby_on);
+	mutex_lock(&lcd->lock);
+
 	lcd->ldi_enable = 0;
+	s6e63m0_panel_send_sequence(lcd, pdata->standby_on);
+
+	mutex_unlock(&lcd->lock);
 }
 
 static int s5p_bl_update_status(struct backlight_device *bd)
@@ -251,14 +260,16 @@ static int s5p_bl_update_status(struct backlight_device *bd)
 	if (bl < 0 || bl > 255)
 		return -EINVAL;
 
+	mutex_lock(&lcd->lock);
+
 	lcd->bl = bl;
 
-	if (!lcd->ldi_enable)
-		return 0;
+	if (lcd->ldi_enable) {
+		pr_debug("\n bl :%d\n", bl);
+		update_brightness(lcd);
+	}
 
-	pr_debug("\n bl :%d\n", bl);
-
-	update_brightness(lcd);
+	mutex_unlock(&lcd->lock);
 
 	return 0;
 }
@@ -296,6 +307,7 @@ static int __devinit tl2796_probe(struct spi_device *spi)
 		ret = -ENOMEM;
 		goto err_alloc;
 	}
+	mutex_init(&lcd->lock);
 
 	spi->bits_per_word = 9;
 	if (spi_setup(spi)) {
@@ -348,6 +360,7 @@ static int __devinit tl2796_probe(struct spi_device *spi)
 	return 0;
 
 err_setup:
+	mutex_destroy(&lcd->lock);
 	kfree(lcd);
 
 err_alloc:
