@@ -119,7 +119,7 @@ static void setup_gamma_regs(struct s5p_lcd *lcd, u16 gamma_regs[])
 		v1 = vx[0] = gamma_lookup(lcd, brightness, bv->v1, c);
 		adj = 600 - 5 - DIV_ROUND_CLOSEST(600 * v1, v0);
 		if (adj > 140) {
-			pr_err("%s: bad adj value %d, v0 %d, v1 %d, c %d\n",
+			pr_debug("%s: bad adj value %d, v0 %d, v1 %d, c %d\n",
 				__func__, adj, v0, v1, c);
 			if ((int)adj < 0)
 				adj = 0;
@@ -131,7 +131,7 @@ static void setup_gamma_regs(struct s5p_lcd *lcd, u16 gamma_regs[])
 		v255 = vx[5] = gamma_lookup(lcd, brightness, bv->v255, c);
 		adj = 600 - 120 - DIV_ROUND_CLOSEST(600 * v255, v0);
 		if (adj > 380) {
-			pr_err("%s: bad adj value %d, v0 %d, v255 %d, c %d\n",
+			pr_debug("%s: bad adj value %d, v0 %d, v255 %d, c %d\n",
 				__func__, adj, v0, v255, c);
 			if ((int)adj < 0)
 				adj = 0;
@@ -153,7 +153,7 @@ static void setup_gamma_regs(struct s5p_lcd *lcd, u16 gamma_regs[])
 				adj = DIV_ROUND_CLOSEST(320 * (v1 - vx[i]),
 							v1 - vx[i + 1]) - 65;
 			if (adj > 255) {
-				pr_err("%s: bad adj value %d, "
+				pr_debug("%s: bad adj value %d, "
 					"vh %d, v %d, c %d\n",
 					__func__, adj, vx[i + 1], vx[i], c);
 				if ((int)adj < 0)
