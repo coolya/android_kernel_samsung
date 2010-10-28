@@ -1132,13 +1132,6 @@ void s3cfb_late_resume(struct early_suspend *h)
 	dev_dbg(fbdev->dev, "wake up from suspend\n");
 	if (pdata->cfg_gpio)
 		pdata->cfg_gpio(pdev);
-#if defined(CONFIG_FB_S3C_TL2796)
-	if (pdata->backlight_on)
-		pdata->backlight_on(pdev);
-#endif
-
-	if (pdata->reset_lcd)
-		pdata->reset_lcd(pdev);
 
 	clk_enable(fbdev->clock);
 	s3cfb_init_global(fbdev);
@@ -1159,6 +1152,13 @@ void s3cfb_late_resume(struct early_suspend *h)
 
 	s3cfb_set_vsync_interrupt(fbdev, 1);
 	s3cfb_set_global_interrupt(fbdev, 1);
+
+	if (pdata->backlight_on)
+		pdata->backlight_on(pdev);
+
+	if (pdata->reset_lcd)
+		pdata->reset_lcd(pdev);
+
 	pr_info("s3cfb_late_resume is complete\n");
 	return ;
 }
