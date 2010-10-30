@@ -1293,10 +1293,11 @@ static struct wm8994_platform_data wm8994_pdata = {
  * Guide for Camera Configuration for Crespo board
  * ITU CAM CH A: LSI s5k4ecgx
  */
+static DEFINE_MUTEX(s5k4ecgx_lock);
 static struct regulator *cam_isp_core_regulator;
 static struct regulator *cam_isp_host_regulator;
 static struct regulator *cam_af_regulator;
-static bool s5k4ecgx_ldos_enabled;
+static bool s5k4ecgx_powered_on;
 static int s5k4ecgx_regulator_init(void)
 {
 	if (IS_ERR_OR_NULL(cam_isp_core_regulator)) {
@@ -1350,20 +1351,12 @@ static int s5k4ecgx_ldo_en(bool en)
 	int err = 0;
 	int result;
 
-	/* can happen if something odd happens and we are closed
-	 * by camera framework before we even completely opened.
-	 */
-	if (en == s5k4ecgx_ldos_enabled)
-		return 0;
-
 	if (IS_ERR_OR_NULL(cam_isp_core_regulator) ||
 		IS_ERR_OR_NULL(cam_isp_host_regulator) ||
 		IS_ERR_OR_NULL(cam_af_regulator)) {
 		pr_err("Camera regulators not initialized\n");
 		return -EINVAL;
 	}
-
-	s5k4ecgx_ldos_enabled = en;
 
 	if (!en)
 		goto off;
@@ -1395,7 +1388,6 @@ static int s5k4ecgx_ldo_en(bool en)
 		goto off;
 	}
 	udelay(50);
-	pr_info("camera ldos enabled\n");
 	return 0;
 
 off:
@@ -1416,7 +1408,6 @@ off:
 		pr_err("Failed to disable regulator cam_isp_core\n");
 		result = err;
 	}
-	pr_info("camera ldos disabled\n");
 	return result;
 }
 
@@ -1450,7 +1441,6 @@ static int s5k4ecgx_power_on(void)
 	gpio_set_value(GPIO_CAM_MEGA_nRST, 1);
 	mdelay(1);
 
-	pr_info("camera powered on\n");
 	return 0;
 }
 
@@ -1471,16 +1461,27 @@ static int s5k4ecgx_power_off(void)
 	s5k4ecgx_ldo_en(false);
 	mdelay(1);
 
-	pr_info("camera powered off\n");
 	return 0;
 }
 
 static int s5k4ecgx_power_en(int onoff)
 {
-	if (onoff)
-		return s5k4ecgx_power_on();
-
-	return s5k4ecgx_power_off();
+	int err = 0;
+	mutex_lock(&s5k4ecgx_lock);
+	/* we can be asked to turn off even if we never were turned
+	 * on if something odd happens and we are closed
+	 * by camera framework before we even completely opened.
+	 */
+	if (onoff != s5k4ecgx_powered_on) {
+		if (onoff)
+			err = s5k4ecgx_power_on();
+		else
+			err = s5k4ecgx_power_off();
+		if (!err)
+			s5k4ecgx_powered_on = onoff;
+	}
+	mutex_unlock(&s5k4ecgx_lock);
+	return err;
 }
 
 #define FLASH_MOVIE_MODE_CURRENT_50_PERCENT	7
@@ -1586,10 +1587,12 @@ static struct s3c_platform_camera s5k4ecgx = {
 
 
 /* External camera module setting */
+static DEFINE_MUTEX(s5ka3dfx_lock);
 static struct regulator *s5ka3dfx_vga_avdd;
 static struct regulator *s5ka3dfx_vga_vddio;
 static struct regulator *s5ka3dfx_cam_isp_host;
 static struct regulator *s5ka3dfx_vga_dvdd;
+static bool s5ka3dfx_powered_on;
 
 static int s5ka3dfx_request_gpio(void)
 {
@@ -1732,7 +1735,6 @@ off_vga_vddio:
 		result = err;
 	}
 
-	pr_info("camera power disabled\n");
 	return result;
 }
 
@@ -1795,14 +1797,25 @@ static int s5ka3dfx_power_off(void)
 
 static int s5ka3dfx_power_en(int onoff)
 {
-	if (onoff) {
-		s5ka3dfx_power_on();
-	} else {
-		s5ka3dfx_power_off();
-		s3c_i2c0_force_stop();
+	int err = 0;
+	mutex_lock(&s5ka3dfx_lock);
+	/* we can be asked to turn off even if we never were turned
+	 * on if something odd happens and we are closed
+	 * by camera framework before we even completely opened.
+	 */
+	if (onoff != s5ka3dfx_powered_on) {
+		if (onoff)
+			err = s5ka3dfx_power_on();
+		else {
+			err = s5ka3dfx_power_off();
+			s3c_i2c0_force_stop();
+		}
+		if (!err)
+			s5ka3dfx_powered_on = onoff;
 	}
+	mutex_unlock(&s5ka3dfx_lock);
 
-	return 0;
+	return err;
 }
 
 static struct s5ka3dfx_platform_data s5ka3dfx_plat = {
