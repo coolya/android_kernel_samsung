@@ -20,8 +20,10 @@
 
 #include <linux/wait.h>
 #include <linux/fb.h>
+#include <linux/debugfs.h>
 #include <linux/delay.h>
 #include <linux/gpio.h>
+#include <linux/seq_file.h>
 #include <linux/spi/spi.h>
 #include <linux/lcd.h>
 #include <linux/backlight.h>
@@ -33,6 +35,8 @@
 #define SLEEPMSEC		0x1000
 #define ENDDEF			0x2000
 #define DEFMASK		0xFF00
+
+#define NUM_GAMMA_REGS	21
 
 static const struct tl2796_gamma_adj_points default_gamma_adj_points = {
 	.v0 = BV_0,
@@ -60,6 +64,7 @@ struct s5p_lcd{
 	struct s5p_panel_data	*data;
 	struct backlight_device *bl_dev;
 	struct early_suspend    early_suspend;
+	struct dentry *debug_dir;
 };
 
 static u32 gamma_lookup(struct s5p_lcd *lcd, u8 brightness, u32 val, int c)
@@ -309,6 +314,78 @@ void tl2796_late_resume(struct early_suspend *h)
 
 	return ;
 }
+
+static void seq_print_gamma_regs(struct seq_file *m, const u16 gamma_regs[])
+{
+	struct s5p_lcd *lcd = m->private;
+	int c, i;
+	const int adj_points[] = { 1, 19, 43, 87, 171, 255 };
+	const char color[] = { 'R', 'G', 'B' };
+	u8 brightness = lcd->bl;
+	const struct tl2796_gamma_adj_points *bv = lcd->gamma_adj_points;
+	const struct tl2796_gamma_reg_offsets *offset = &lcd->gamma_reg_offsets;
+
+	for (c = 0; c < 3; c++) {
+		u32 adj[6];
+		u32 vt[6];
+		u32 v[6];
+		int scale = gamma_lookup(lcd, brightness, BV_0, c);
+
+		vt[0] = gamma_lookup(lcd, brightness, bv->v1, c);
+		vt[1] = gamma_lookup(lcd, brightness, bv->v19, c);
+		vt[2] = gamma_lookup(lcd, brightness, bv->v43, c);
+		vt[3] = gamma_lookup(lcd, brightness, bv->v87, c);
+		vt[4] = gamma_lookup(lcd, brightness, bv->v171, c);
+		vt[5] = gamma_lookup(lcd, brightness, bv->v255, c);
+
+		adj[0] = gamma_regs[c] & 0xff;
+		v[0] = DIV_ROUND_CLOSEST(
+			(600 - 5 - adj[0] - offset->v[c][0]) * scale, 600);
+
+		adj[5] = gamma_regs[3 * 5 + 2 * c] & 0xff;
+		adj[5] = adj[5] << 8 | (gamma_regs[3 * 5 + 2 * c + 1] & 0xff);
+		v[5] = DIV_ROUND_CLOSEST(
+			(600 - 120 - adj[5] - offset->v[c][5]) * scale, 600);
+
+		for (i = 4; i >= 1; i--) {
+			adj[i] = gamma_regs[3 * i + c] & 0xff;
+			v[i] = v[0] - DIV_ROUND_CLOSEST((v[0] - v[i + 1]) *
+					(65 + adj[i] + offset->v[c][i]), 320);
+		}
+		seq_printf(m, "%c                   v0   %7d\n",
+			   color[c], scale);
+		for (i = 0; i < 6; i++) {
+			seq_printf(m, "%c adj %3d (%02x) %+4d "
+				   "v%-3d %7d - %7d %+8d\n",
+				   color[c], adj[i], adj[i], offset->v[c][i],
+				   adj_points[i], v[i], vt[i], v[i] - vt[i]);
+		}
+	}
+}
+
+static int tl2796_current_gamma_show(struct seq_file *m, void *unused)
+{
+	struct s5p_lcd *lcd = m->private;
+	u16 gamma_regs[NUM_GAMMA_REGS];
+
+	mutex_lock(&lcd->lock);
+	setup_gamma_regs(lcd, gamma_regs);
+	seq_printf(m, "brightness %3d:\n", lcd->bl);
+	seq_print_gamma_regs(m, gamma_regs);
+	mutex_unlock(&lcd->lock);
+	return 0;
+}
+
+static int tl2796_current_gamma_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, tl2796_current_gamma_show, inode->i_private);
+}
+
+static const struct file_operations tl2796_current_gamma_fops = {
+	.open = tl2796_current_gamma_open,
+	.read = seq_read,
+	.release = single_release,
+};
 
 static void tl2796_parallel_read(struct s5p_lcd *lcd, u8 cmd,
 				 u8 *data, size_t len)
@@ -567,6 +644,14 @@ static int __devinit tl2796_probe(struct spi_device *spi)
 	lcd->early_suspend.level = EARLY_SUSPEND_LEVEL_DISABLE_FB - 1;
 	register_early_suspend(&lcd->early_suspend);
 #endif
+
+	lcd->debug_dir = debugfs_create_dir("s5p_bl", NULL);
+	if (!lcd->debug_dir)
+		dev_err(lcd->dev, "failed to create debug dir\n");
+	else
+		debugfs_create_file("current_gamma", S_IRUGO,
+			lcd->debug_dir, lcd, &tl2796_current_gamma_fops);
+
 	pr_info("tl2796_probe successfully proved\n");
 
 	return 0;
@@ -582,6 +667,8 @@ err_alloc:
 static int __devexit tl2796_remove(struct spi_device *spi)
 {
 	struct s5p_lcd *lcd = spi_get_drvdata(spi);
+
+	debugfs_remove_recursive(lcd->debug_dir);
 
 	unregister_early_suspend(&lcd->early_suspend);
 
