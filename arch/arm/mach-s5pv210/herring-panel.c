@@ -22,7 +22,7 @@
 
 static const u16 s6e63m0_SEQ_STANDBY_ON[] = {
 	0x010,	/* Stand-by On Command */
-	SLEEPMSEC, 120,
+	SLEEPMSEC, 160,
 	ENDDEF, 0x0000
 };
 
