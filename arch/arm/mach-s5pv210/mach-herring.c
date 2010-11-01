@@ -2116,6 +2116,8 @@ static struct i2c_board_info i2c_devs6[] __initdata = {
 
 static struct pn544_i2c_platform_data pn544_pdata = {
 	.irq_gpio = NFC_IRQ,
+	.ven_gpio = NFC_EN,
+	.firm_gpio = NFC_FIRM,
 };
 
 static struct i2c_board_info i2c_devs14[] __initdata = {
@@ -2900,11 +2902,11 @@ static struct gpio_init_data herring_init_gpios[] = {
 		.val	= S3C_GPIO_SETPIN_ONE,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
-	}, {
+	}, { /* NFC_FIRM */
 		.num	= S5PV210_GPH1(6),
-		.cfg	= S3C_GPIO_INPUT,
-		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_DOWN,
+		.cfg	= S3C_GPIO_OUTPUT,
+		.val	= S3C_GPIO_SETPIN_ZERO,
+		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPH1(7),
