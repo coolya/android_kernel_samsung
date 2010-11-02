@@ -691,9 +691,9 @@ static PVRSRV_ERROR GetDCBuffers(IMG_HANDLE hDevice,
 		return PVRSRV_ERROR_INVALID_PARAMS;
 	}
 
-	*pui32BufferCount = psLCDInfo->ui32NumFrameBuffers;
+	*pui32BufferCount = psLCDInfo->psSwapChain->ulBufferCount;
 	phBuffer[0] = (IMG_HANDLE)(&(psLCDInfo->sSysBuffer));
-	for (i=0; i < psLCDInfo->ui32NumFrameBuffers - 1; i++)
+	for (i=0; i < (*pui32BufferCount) - 1; i++)
 	{
 		phBuffer[i+1] = (IMG_HANDLE)(&(psLCDInfo->asBackBuffers[i]));
 	}
