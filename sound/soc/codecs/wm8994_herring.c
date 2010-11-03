@@ -493,12 +493,12 @@ struct gain_info_t gain_code_table[GAIN_CODE_NUM] = {
 		.mode = VOICECALL_RCV | VOICECALL_MODE | GAIN_DIVISION_BIT,
 		.reg  = WM8994_LEFT_LINE_INPUT_1_2_VOLUME,	/* 18h */
 		.mask = WM8994_IN1L_VOL_MASK,
-		.gain = WM8994_IN1L_VU | 0x18
+		.gain = WM8994_IN1L_VU | 0x14		/* +13.5dB */
 	}, {/* SPK */
 		.mode = VOICECALL_SPK | VOICECALL_MODE | GAIN_DIVISION_BIT,
 		.reg  = WM8994_LEFT_LINE_INPUT_1_2_VOLUME,	/* 18h */
 		.mask = WM8994_IN1L_VOL_MASK,
-		.gain = WM8994_IN1L_VU | 0x11
+		.gain = WM8994_IN1L_VU | 0x0D		/* +3dB */
 	}, {
 		.mode = VOICECALL_SPK | VOICECALL_MODE | GAIN_DIVISION_BIT,
 		.reg  = WM8994_SPEAKER_VOLUME_LEFT,	/* 26h */
@@ -508,17 +508,17 @@ struct gain_info_t gain_code_table[GAIN_CODE_NUM] = {
 		.mode = VOICECALL_HP | VOICECALL_MODE | GAIN_DIVISION_BIT,
 		.reg  = WM8994_RIGHT_LINE_INPUT_1_2_VOLUME,	/* 1Ah */
 		.mask = WM8994_IN1R_VOL_MASK,
-		.gain = WM8994_IN1R_VU | 0x1F
+		.gain = WM8994_IN1R_VU | 0x18		/* +19.5dB */
 	}, {
 		.mode = VOICECALL_HP | VOICECALL_MODE | GAIN_DIVISION_BIT,
 		.reg  = WM8994_LEFT_OUTPUT_VOLUME,	/* 1Ch */
 		.mask = WM8994_HPOUT1L_VOL_MASK,
-		.gain = WM8994_HPOUT1_VU | 0x37		/* -2dB */
+		.gain = WM8994_HPOUT1_VU | 0x3a		/* +1dB */
 	}, {
 		.mode = VOICECALL_HP | VOICECALL_MODE | GAIN_DIVISION_BIT,
 		.reg  = WM8994_RIGHT_OUTPUT_VOLUME,	/* 1Dh */
 		.mask = WM8994_HPOUT1R_VOL_MASK,
-		.gain = WM8994_HPOUT1_VU | 0x37		/* -2dB */
+		.gain = WM8994_HPOUT1_VU | 0x3a		/* +1dB */
 	}, {/* HP_NO_MIC */
 		.mode = VOICECALL_HP_NO_MIC | VOICECALL_MODE | GAIN_DIVISION_BIT,
 		.reg  = WM8994_LEFT_LINE_INPUT_1_2_VOLUME,	/* 18h */
@@ -528,12 +528,12 @@ struct gain_info_t gain_code_table[GAIN_CODE_NUM] = {
 		.mode = VOICECALL_HP_NO_MIC | VOICECALL_MODE | GAIN_DIVISION_BIT,
 		.reg  = WM8994_LEFT_OUTPUT_VOLUME,	/* 1Ch */
 		.mask = WM8994_HPOUT1L_VOL_MASK,
-		.gain = WM8994_HPOUT1_VU | 0x37		/* -2dB */
+		.gain = WM8994_HPOUT1_VU | 0x3a		/* +1dB */
 	}, {
 		.mode = VOICECALL_HP_NO_MIC | VOICECALL_MODE | GAIN_DIVISION_BIT,
 		.reg  = WM8994_RIGHT_OUTPUT_VOLUME,	/* 1Dh */
 		.mask = WM8994_HPOUT1R_VOL_MASK,
-		.gain = WM8994_HPOUT1_VU | 0x37		/* -2dB */
+		.gain = WM8994_HPOUT1_VU | 0x3a		/* +1dB */
 	},
 };
 
