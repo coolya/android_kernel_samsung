@@ -147,6 +147,7 @@ static int s3cfb_map_video_memory(struct fb_info *fb)
 	struct s3cfb_window *win = fb->par;
 	struct s3cfb_global *fbdev =
 		platform_get_drvdata(to_platform_device(fb->device));
+	struct s3c_platform_fb *pdata = to_fb_plat(fbdev->dev);
 
 	if (win->owner == DMA_MEM_OTHER) {
 		fix->smem_start = win->other_mem_addr;
@@ -157,7 +158,11 @@ static int s3cfb_map_video_memory(struct fb_info *fb)
 	if (fb->screen_base)
 		return 0;
 
-	fb->screen_base = dma_alloc_writecombine(fbdev->dev,
+	if (pdata && pdata->pmem_start && (pdata->pmem_size >= fix->smem_len)) {
+		fix->smem_start = pdata->pmem_start;
+		fb->screen_base = ioremap_wc(fix->smem_start, pdata->pmem_size);
+	} else
+		fb->screen_base = dma_alloc_writecombine(fbdev->dev,
 						 PAGE_ALIGN(fix->smem_len),
 						 (unsigned int *)
 						 &fix->smem_start, GFP_KERNEL);
@@ -209,13 +214,19 @@ static int s3cfb_unmap_video_memory(struct fb_info *fb)
 {
 	struct s3cfb_global *fbdev =
 		platform_get_drvdata(to_platform_device(fb->device));
+	struct s3c_platform_fb *pdata = to_fb_plat(fbdev->dev);
 	struct fb_fix_screeninfo *fix = &fb->fix;
 	struct s3cfb_window *win = fb->par;
 
 	if (fix->smem_start) {
-		if (win->owner == DMA_MEM_FIMD)
-			dma_free_writecombine(fbdev->dev, fix->smem_len,
+		if (win->owner == DMA_MEM_FIMD) {
+			if (pdata && pdata->pmem_start &&
+					(pdata->pmem_size >= fix->smem_len))
+				iounmap(fb->screen_base);
+			else
+				dma_free_writecombine(fbdev->dev, fix->smem_len,
 					      fb->screen_base, fix->smem_start);
+		}
 		fix->smem_start = 0;
 		fix->smem_len = 0;
 		dev_info(fbdev->dev,
