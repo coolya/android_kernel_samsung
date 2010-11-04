@@ -114,12 +114,12 @@ struct gain_info_t playback_gain_table[PLAYBACK_GAIN_NUM] = {
 		.mode = PLAYBACK_HP,
 		.reg  = WM8994_LEFT_OUTPUT_VOLUME,	/* 1Ch */
 		.mask = WM8994_HPOUT1L_VOL_MASK,
-		.gain = WM8994_HPOUT1_VU | 0x36 /* -3dB */
+		.gain = WM8994_HPOUT1_VU | 0x31 /* -8dB */
 	}, {
 		.mode = PLAYBACK_HP,
 		.reg  = WM8994_RIGHT_OUTPUT_VOLUME,	/* 1Dh */
 		.mask = WM8994_HPOUT1R_VOL_MASK,
-		.gain = WM8994_HPOUT1_VU | 0x36 /* -3dB */
+		.gain = WM8994_HPOUT1_VU | 0x31 /* -8dB */
 	}, {
 		.mode = PLAYBACK_HP,
 		.reg  = WM8994_LEFT_OPGA_VOLUME,	/* 20h */
@@ -225,7 +225,27 @@ struct gain_info_t playback_gain_table[PLAYBACK_GAIN_NUM] = {
 		.reg  = WM8994_RIGHT_OUTPUT_VOLUME,	/* 1Dh */
 		.mask = WM8994_HPOUT1R_VOL_MASK,
 		.gain = WM8994_HPOUT1_VU | 0x1E
-	},
+	}, { /* HP_NO_MIC */
+		.mode = PLAYBACK_HP_NO_MIC,
+		.reg  = WM8994_LEFT_OUTPUT_VOLUME,  /* 1Ch */
+		.mask = WM8994_HPOUT1L_VOL_MASK,
+		.gain = WM8994_HPOUT1_VU | 0x36   /* -3dB */
+	}, {
+		.mode = PLAYBACK_HP_NO_MIC,
+		.reg  = WM8994_RIGHT_OUTPUT_VOLUME, /* 1Dh */
+		.mask = WM8994_HPOUT1R_VOL_MASK,
+		.gain = WM8994_HPOUT1_VU | 0x36   /* -3dB */
+	}, {
+		.mode = PLAYBACK_HP_NO_MIC,
+		.reg  = WM8994_LEFT_OPGA_VOLUME,	/* 20h */
+		.mask = WM8994_MIXOUTL_VOL_MASK,
+		.gain = WM8994_MIXOUT_VU | 0x39
+	}, {
+		.mode = PLAYBACK_HP_NO_MIC,
+		.reg  = WM8994_RIGHT_OPGA_VOLUME,   /* 21h */
+		.mask = WM8994_MIXOUTR_VOL_MASK,
+		.gain = WM8994_MIXOUT_VU | 0x39
+    },
 };
 
 struct gain_info_t voicecall_gain_table[VOICECALL_GAIN_NUM] = {
@@ -489,7 +509,17 @@ struct gain_info_t gain_code_table[GAIN_CODE_NUM] = {
 		.reg  = WM8994_RIGHT_OUTPUT_VOLUME,	/* 1Dh */
 		.mask = WM8994_HPOUT1R_VOL_MASK,
 		.gain = WM8994_HPOUT1_VU | 0x31		/* -8dB */
-	}, {/* Voicecall RCV */
+	}, {/* HP_NO_MIC */
+		.mode = PLAYBACK_HP_NO_MIC | PLAYBACK_MODE | GAIN_DIVISION_BIT,
+	        .reg  = WM8994_LEFT_OUTPUT_VOLUME,  /* 1Ch */
+		.mask = WM8994_HPOUT1L_VOL_MASK,
+		.gain = WM8994_HPOUT1_VU | 0x31	 /* -8dB */
+	}, {
+		.mode = PLAYBACK_HP_NO_MIC | PLAYBACK_MODE | GAIN_DIVISION_BIT,
+		.reg  = WM8994_RIGHT_OUTPUT_VOLUME, /* 1Dh */
+		.mask = WM8994_HPOUT1R_VOL_MASK,
+		.gain = WM8994_HPOUT1_VU | 0x31	 /* -8dB */
+	},	{/* Voicecall RCV */
 		.mode = VOICECALL_RCV | VOICECALL_MODE | GAIN_DIVISION_BIT,
 		.reg  = WM8994_LEFT_LINE_INPUT_1_2_VOLUME,	/* 18h */
 		.mask = WM8994_IN1L_VOL_MASK,
@@ -1397,6 +1427,8 @@ void wm8994_set_playback_headset(struct snd_soc_codec *codec)
 
 	if (wm8994->ringtone_active)
 		wm8994_set_codec_gain(codec, PLAYBACK_MODE, PLAYBACK_RING_HP);
+	else if (wm8994->cur_path == HP_NO_MIC)
+		wm8994_set_codec_gain(codec, PLAYBACK_MODE, PLAYBACK_HP_NO_MIC);
 	else
 		wm8994_set_codec_gain(codec, PLAYBACK_MODE, PLAYBACK_HP);
 
@@ -2552,6 +2584,9 @@ int wm8994_set_codec_gain(struct snd_soc_codec *codec, u16 mode, u16 device)
 		case PLAYBACK_RING_SPK_HP:
 			gain_set_bits |= (PLAYBACK_SPK_HP |
 					PLAYBACK_RING_SPK_HP);
+			break;
+		case PLAYBACK_HP_NO_MIC:
+			gain_set_bits |= PLAYBACK_HP_NO_MIC;
 			break;
 		default:
 			pr_err("playback modo gain flag is wrong\n");

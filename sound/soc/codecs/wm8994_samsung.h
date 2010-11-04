@@ -64,6 +64,7 @@ Codec Output Path BIT
 #define PLAYBACK_RING_SPK	(0x01 << 6)
 #define PLAYBACK_RING_HP	(0x01 << 7)
 #define PLAYBACK_RING_SPK_HP	(0x01 << 8)
+#define PLAYBACK_HP_NO_MIC  (0x01 << 9)
 
 #define VOICECALL_RCV		(0x01 << 1)
 #define VOICECALL_SPK		(0x01 << 2)
@@ -78,10 +79,10 @@ Codec Output Path BIT
 #define RECORDING_REC_HP	(0x01 << 5)
 #define RECORDING_REC_BT	(0x01 << 6)
 
-#define PLAYBACK_GAIN_NUM 39
+#define PLAYBACK_GAIN_NUM 43
 #define VOICECALL_GAIN_NUM 32
 #define RECORDING_GAIN_NUM 16
-#define GAIN_CODE_NUM 11
+#define GAIN_CODE_NUM 13
 /*
  * Definitions of enum type
  */
