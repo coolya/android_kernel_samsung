@@ -518,6 +518,8 @@ static int s3c_cable_status_update(struct chg_data *chg)
 			if (ret < 0)
 				goto err;
 			chg->bat_info.charging_status =
+				chg->bat_info.batt_is_full ?
+				POWER_SUPPLY_STATUS_FULL :
 				POWER_SUPPLY_STATUS_NOT_CHARGING;
 			chg->discharging_time = 0;
 			chg->set_batt_full = 0;
