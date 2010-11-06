@@ -44,10 +44,16 @@ static const struct tl2796_gamma_adj_points default_gamma_adj_points = {
 	.v255 = BV_255,
 };
 
+struct tl2796_gamma_reg_offsets {
+	s16 v[3][6];
+};
+
 struct s5p_lcd{
 	int ldi_enable;
 	int bl;
 	const struct tl2796_gamma_adj_points *gamma_adj_points;
+	struct tl2796_gamma_reg_offsets gamma_reg_offsets;
+	u32 color_mult[3];
 	struct mutex	lock;
 	struct device *dev;
 	struct spi_device *g_spi;
@@ -75,6 +81,9 @@ static u32 gamma_lookup(struct s5p_lcd *lcd, u8 brightness, u32 val, int c)
 		tmp = bv->v255 - bv->v0;
 		tmp *= brightness;
 		do_div(tmp, 255);
+
+		tmp *= lcd->color_mult[c];
+		do_div(tmp, 0xffffffff);
 
 		tmp *= (val - bv->v0);
 		do_div(tmp, bv->v255 - bv->v0);
@@ -119,6 +128,7 @@ static void setup_gamma_regs(struct s5p_lcd *lcd, u16 gamma_regs[])
 
 		v1 = vx[0] = gamma_lookup(lcd, brightness, bv->v1, c);
 		adj = 600 - 5 - DIV_ROUND_CLOSEST(600 * v1, v0);
+		adj -= lcd->gamma_reg_offsets.v[c][0];
 		if (adj > 140) {
 			pr_debug("%s: bad adj value %d, v0 %d, v1 %d, c %d\n",
 				__func__, adj, v0, v1, c);
@@ -131,6 +141,7 @@ static void setup_gamma_regs(struct s5p_lcd *lcd, u16 gamma_regs[])
 
 		v255 = vx[5] = gamma_lookup(lcd, brightness, bv->v255, c);
 		adj = 600 - 120 - DIV_ROUND_CLOSEST(600 * v255, v0);
+		adj -= lcd->gamma_reg_offsets.v[c][5];
 		if (adj > 380) {
 			pr_debug("%s: bad adj value %d, v0 %d, v255 %d, c %d\n",
 				__func__, adj, v0, v255, c);
@@ -148,11 +159,13 @@ static void setup_gamma_regs(struct s5p_lcd *lcd, u16 gamma_regs[])
 		vx[4] = gamma_lookup(lcd, brightness, bv->v171, c);
 
 		for (i = 4; i >= 1; i--) {
-			if (v1 <= vx[i + 1])
+			if (v1 <= vx[i + 1]) {
 				adj = -1;
-			else
+			} else {
 				adj = DIV_ROUND_CLOSEST(320 * (v1 - vx[i]),
 							v1 - vx[i + 1]) - 65;
+				adj -= lcd->gamma_reg_offsets.v[c][i];
+			}
 			if (adj > 255) {
 				pr_debug("%s: bad adj value %d, "
 					"vh %d, v %d, c %d\n",
@@ -296,10 +309,205 @@ void tl2796_late_resume(struct early_suspend *h)
 
 	return ;
 }
+
+static void tl2796_parallel_read(struct s5p_lcd *lcd, u8 cmd,
+				 u8 *data, size_t len)
+{
+	int i;
+	struct s5p_panel_data *pdata = lcd->data;
+	int delay = 10;
+
+	gpio_set_value(pdata->gpio_dcx, 0);
+	udelay(delay);
+	gpio_set_value(pdata->gpio_wrx, 0);
+	for (i = 0; i < 8; i++)
+		gpio_direction_output(pdata->gpio_db[i], (cmd >> i) & 1);
+	udelay(delay);
+	gpio_set_value(pdata->gpio_wrx, 1);
+	udelay(delay);
+	gpio_set_value(pdata->gpio_dcx, 1);
+	for (i = 0; i < 8; i++)
+		gpio_direction_input(pdata->gpio_db[i]);
+
+	udelay(delay);
+	gpio_set_value(pdata->gpio_rdx, 0);
+	udelay(delay);
+	gpio_set_value(pdata->gpio_rdx, 1);
+	udelay(delay);
+
+	while (len--) {
+		u8 d = 0;
+		gpio_set_value(pdata->gpio_rdx, 0);
+		udelay(delay);
+		for (i = 0; i < 8; i++)
+			d |= gpio_get_value(pdata->gpio_db[i]) << i;
+		*data++ = d;
+		gpio_set_value(pdata->gpio_rdx, 1);
+		udelay(delay);
+	}
+	gpio_set_value(pdata->gpio_rdx, 1);
+}
+
+static int tl2796_parallel_setup_gpios(struct s5p_lcd *lcd, bool init)
+{
+	int ret;
+	struct s5p_panel_data *pdata = lcd->data;
+
+	if (!pdata->configure_mtp_gpios)
+		return -EINVAL;
+
+	if (init) {
+		ret = pdata->configure_mtp_gpios(pdata, true);
+		if (ret)
+			return ret;
+
+		gpio_direction_output(pdata->gpio_wrx, 1);
+		gpio_direction_output(pdata->gpio_rdx, 1);
+		gpio_direction_output(pdata->gpio_dcx, 0);
+		gpio_direction_output(pdata->gpio_csx, 0);
+	} else {
+		gpio_set_value(pdata->gpio_csx, 1);
+		pdata->configure_mtp_gpios(pdata, false);
+	}
+	return 0;
+}
+
+static u64 tl2796_voltage_lookup(struct s5p_lcd *lcd, int c, u32 v)
+{
+	int i;
+	u32 vh = ~0, vl = ~0;
+	u32 bl, bh = 0;
+	u64 ret;
+	struct s5p_panel_data *pdata = lcd->data;
+
+	for (i = 0; i < pdata->gamma_table_size; i++) {
+		vh = vl;
+		vl = pdata->gamma_table[i].v[c];
+		bh = bl;
+		bl = pdata->gamma_table[i].brightness;
+		if (vl <= v)
+			break;
+	}
+	if (i == 0 || (v - vl) == 0) {
+		ret = bl;
+	} else {
+		ret = (u64)bh * (s32)(v - vl) + (u64)bl * (vh - v);
+		do_div(ret, vh - vl);
+	}
+	pr_debug("%s: looking for %7d c %d, "
+		"found %7d:%7d, b %08x:%08x, ret %08llx\n",
+		__func__, v, c, vl, vh, bl, bh, ret);
+	return ret;
+}
+
+static void tl2796_adjust_brightness_from_mtp(struct s5p_lcd *lcd)
+{
+	int c;
+	u32 v255[3];
+	u64 bc[3];
+	u64 bcmax;
+	int shift;
+	const struct tl2796_gamma_reg_offsets *offset = &lcd->gamma_reg_offsets;
+	const u16 *factory_v255_regs = lcd->data->factory_v255_regs;
+
+	for (c = 0; c < 3; c++) {
+		int scale = gamma_lookup(lcd, 255, BV_0, c);
+		v255[c] = DIV_ROUND_CLOSEST((600 - 120 - factory_v255_regs[c] -
+						offset->v[c][5]) * scale, 600);
+		bc[c] = tl2796_voltage_lookup(lcd, c, v255[c]);
+	}
+
+	shift = lcd->data->color_adj.rshift;
+	if (shift)
+		for (c = 0; c < 3; c++)
+			bc[c] = bc[c] * lcd->data->color_adj.mult[c] >> shift;
+
+	bcmax = 0xffffffff;
+	for (c = 0; c < 3; c++)
+		if (bc[c] > bcmax)
+			bcmax = bc[c];
+
+	if (bcmax != 0xffffffff) {
+		pr_warn("tl2796: factory calibration info is out of range: "
+			"scale to 0x%llx\n", bcmax);
+		bcmax += 1;
+		shift = fls(bcmax >> 32);
+		for (c = 0; c < 3; c++) {
+			bc[c] <<= 32 - shift;
+			do_div(bc[c], bcmax >> shift);
+		}
+	}
+
+	for (c = 0; c < 3; c++) {
+		lcd->color_mult[c] = bc[c];
+		pr_info("tl2796: c%d, b-%08llx, got v %d, factory wants %d\n",
+			c, bc[c], gamma_lookup(lcd, 255, BV_255, c), v255[c]);
+	}
+}
+
+static s16 s9_to_s16(s16 v)
+{
+	return (s16)(v << 7) >> 7;
+}
+
+static void tl2796_read_mtp_info(struct s5p_lcd *lcd)
+{
+	int c, i;
+	u8 data[21];
+	u16 prepare_mtp_read[] = {
+		/* LV2, LV3, MTP lock release code */
+		0xf0, 0x15a, 0x15a,
+		0xf1, 0x15a, 0x15a,
+		0xfc, 0x15a, 0x15a,
+		/* MTP cell enable */
+		0xd1, 0x180,
+		/* Sleep out */
+		0x11,
+		/* Sleep in  (start to read seq) */
+		0x10,
+		SLEEPMSEC, 40,
+
+		ENDDEF, 0x0000
+	};
+	u16 start_mtp_read[] = {
+		/* MPU  8bit read mode start */
+		0xfc, 0x10c,
+
+		ENDDEF, 0x0000
+	};
+
+	s6e63m0_panel_send_sequence(lcd, prepare_mtp_read);
+
+	if (tl2796_parallel_setup_gpios(lcd, true)) {
+		pr_err("%s: could not configure gpios\n", __func__);
+		return;
+	}
+
+	s6e63m0_panel_send_sequence(lcd, start_mtp_read);
+
+	tl2796_parallel_read(lcd, 0xd3, data, sizeof(data));
+
+	for (c = 0; c < 3; c++) {
+		for (i = 0; i < 5; i++)
+			lcd->gamma_reg_offsets.v[c][i] = (s8)data[c * 7 + i];
+
+		lcd->gamma_reg_offsets.v[c][5] =
+			s9_to_s16(data[c * 7 + 5] << 8 | data[c * 7 + 6]);
+	}
+
+	tl2796_parallel_read(lcd, 0xfc, data, 0);
+	msleep(5);
+
+	tl2796_parallel_setup_gpios(lcd, false);
+
+	tl2796_adjust_brightness_from_mtp(lcd);
+}
+
 static int __devinit tl2796_probe(struct spi_device *spi)
 {
 	struct s5p_lcd *lcd;
 	int ret;
+	int c;
 
 	lcd = kzalloc(sizeof(struct s5p_lcd), GFP_KERNEL);
 	if (!lcd) {
@@ -319,6 +527,8 @@ static int __devinit tl2796_probe(struct spi_device *spi)
 	lcd->g_spi = spi;
 	lcd->dev = &spi->dev;
 	lcd->bl = 255;
+	for (c = 0; c < 3; c++)
+		lcd->color_mult[c] = 0xffffffff;
 
 	if (!spi->dev.platform_data) {
 		dev_err(lcd->dev, "failed to get platform data\n");
@@ -337,6 +547,9 @@ static int __devinit tl2796_probe(struct spi_device *spi)
 	lcd->gamma_adj_points =
 		lcd->data->gamma_adj_points ?: &default_gamma_adj_points;
 
+	spi_set_drvdata(spi, lcd);
+	tl2796_read_mtp_info(lcd);
+
 	lcd->bl_dev = backlight_device_register("s5p_bl",
 			&spi->dev, lcd, &s5p_bl_ops, NULL);
 	if (!lcd->bl_dev) {
@@ -346,7 +559,6 @@ static int __devinit tl2796_probe(struct spi_device *spi)
 	}
 
 	lcd->bl_dev->props.max_brightness = 255;
-	spi_set_drvdata(spi, lcd);
 
 	tl2796_ldi_enable(lcd);
 #ifdef CONFIG_HAS_EARLYSUSPEND
