@@ -1180,8 +1180,7 @@ static void touch_keypad_onoff(int onoff)
 		msleep(25);
 }
 
-static const int touch_keypad_code[5] = {
-	0,
+static const int touch_keypad_code[] = {
 	KEY_MENU,
 	KEY_HOME,
 	KEY_BACK,
@@ -1189,8 +1188,8 @@ static const int touch_keypad_code[5] = {
 };
 
 static struct touchkey_platform_data touchkey_data = {
-	.keycode_cnt = 5,
-	.keycode = &touch_keypad_code,
+	.keycode_cnt = ARRAY_SIZE(touch_keypad_code),
+	.keycode = touch_keypad_code,
 	.touchkey_onoff = touch_keypad_onoff,
 };
 
