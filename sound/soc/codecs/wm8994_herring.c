@@ -578,7 +578,7 @@ struct gain_info_t gain_code_table[GAIN_CODE_NUM] = {
 		.mode = VOICECALL_HP | VOICECALL_MODE | GAIN_DIVISION_BIT,
 		.reg  = WM8994_RIGHT_LINE_INPUT_1_2_VOLUME,	/* 1Ah */
 		.mask = WM8994_IN1R_VOL_MASK,
-		.gain = WM8994_IN1R_VU | 0x18		/* +19.5dB */
+		.gain = WM8994_IN1R_VU | 0x1D		/* +27dB */
 	}, {
 		.mode = VOICECALL_HP | VOICECALL_MODE | GAIN_DIVISION_BIT,
 		.reg  = WM8994_LEFT_OUTPUT_VOLUME,	/* 1Ch */
