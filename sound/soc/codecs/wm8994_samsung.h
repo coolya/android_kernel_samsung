@@ -78,10 +78,13 @@ Codec Output Path BIT
 #define RECORDING_REC_MAIN	(0x01 << 4)
 #define RECORDING_REC_HP	(0x01 << 5)
 #define RECORDING_REC_BT	(0x01 << 6)
+#define RECORDING_CAM_MAIN	(0x01 << 7)
+#define RECORDING_CAM_HP	(0x01 << 8)
+#define RECORDING_CAM_BT	(0x01 << 9)
 
 #define PLAYBACK_GAIN_NUM 43
 #define VOICECALL_GAIN_NUM 32
-#define RECORDING_GAIN_NUM 16
+#define RECORDING_GAIN_NUM 24
 #define GAIN_CODE_NUM 13
 /*
  * Definitions of enum type
@@ -93,7 +96,7 @@ enum audio_path	{
 enum mic_path		{MAIN, SUB, BT_REC, MIC_OFF};
 enum power_state	{CODEC_OFF, CODEC_ON };
 enum ringtone_state	{RING_OFF, RING_ON};
-enum recognition	{REC_OFF, REC_ON};
+enum input_source_state	{DEFAULT, RECOGNITION, CAMCORDER};
 
 typedef void (*select_route)(struct snd_soc_codec *);
 typedef void (*select_mic_route)(struct snd_soc_codec *);
@@ -125,7 +128,7 @@ struct wm8994_priv {
 	enum audio_path cur_path;
 	enum mic_path rec_path;
 	enum power_state power_state;
-	enum recognition recognition_active;
+	enum input_source_state input_source;
 	enum ringtone_state ringtone_active;
 	select_route *universal_playback_path;
 	select_route *universal_voicecall_path;

@@ -494,6 +494,46 @@ struct gain_info_t recording_gain_table[RECORDING_GAIN_NUM] = {
 		.reg  = WM8994_AIF1_ADC1_RIGHT_VOLUME,	/* 401h */
 		.mask = WM8994_AIF1ADC1R_VOL_MASK,
 		.gain = WM8994_AIF1ADC1_VU | 0xC0
+	}, { /* CAMCORDER_MAIN */
+		.mode = RECORDING_CAM_MAIN,
+		.reg  = WM8994_LEFT_LINE_INPUT_1_2_VOLUME,	/* 18h */
+		.mask = WM8994_IN1L_VOL_MASK,
+		.gain = WM8994_IN1L_VU | 0x18    /* +19.5dB */
+	}, {
+		.mode = RECORDING_CAM_MAIN,
+		.reg  = WM8994_INPUT_MIXER_3,		/* 29h */
+		.mask = WM8994_IN1L_MIXINL_VOL_MASK | WM8994_MIXOUTL_MIXINL_VOL_MASK,
+		.gain = 0x10  /* 30dB */
+	}, {
+		.mode = RECORDING_CAM_MAIN,
+		.reg  = WM8994_AIF1_ADC1_LEFT_VOLUME,	/* 400h */
+		.mask = WM8994_AIF1ADC1L_VOL_MASK,
+		.gain = WM8994_AIF1ADC1_VU | 0xC0   /* +0dB */
+	}, {
+		.mode = RECORDING_CAM_MAIN,
+		.reg  = WM8994_AIF1_ADC1_RIGHT_VOLUME,	/* 401h */
+		.mask = WM8994_AIF1ADC1R_VOL_MASK,
+		.gain = WM8994_AIF1ADC1_VU | 0xC0   /* +0dB */
+	}, { /* CAMCORDER_HP */
+		.mode = RECORDING_CAM_HP,
+		.reg  = WM8994_RIGHT_LINE_INPUT_1_2_VOLUME,	/* 1Ah */
+		.mask = WM8994_IN1R_VOL_MASK,
+		.gain = WM8994_IN1R_VU | 0x15    /* +15dB */
+	}, {
+		.mode = RECORDING_CAM_HP,
+		.reg  = WM8994_INPUT_MIXER_4,		/* 2Ah */
+		.mask = WM8994_IN1R_MIXINR_VOL_MASK | WM8994_MIXOUTR_MIXINR_VOL_MASK,
+		.gain = 0x10   /* +30dB */
+	}, {
+		.mode = RECORDING_CAM_HP,
+		.reg  = WM8994_AIF1_ADC1_LEFT_VOLUME,	/* 400h */
+		.mask = WM8994_AIF1ADC1L_VOL_MASK,
+		.gain = WM8994_AIF1ADC1_VU | 0xC0
+	}, {
+		.mode = RECORDING_CAM_HP,
+		.reg  = WM8994_AIF1_ADC1_RIGHT_VOLUME,	/* 401h */
+		.mask = WM8994_AIF1ADC1R_VOL_MASK,
+		.gain = WM8994_AIF1ADC1_VU | 0xC0
 	},
 };
 
@@ -1088,8 +1128,10 @@ void wm8994_record_headset_mic(struct snd_soc_codec *codec)
 	val &= ~(WM8994_ADC1_TO_DAC2R_MASK);
 	wm8994_write(codec, WM8994_DAC2_RIGHT_MIXER_ROUTING, val);
 
-	if (wm8994->recognition_active == REC_ON)
+	if (wm8994->input_source == RECOGNITION)
 		wm8994_set_codec_gain(codec, RECORDING_MODE, RECORDING_REC_HP);
+	else if (wm8994->input_source == CAMCORDER)
+		wm8994_set_codec_gain(codec, RECORDING_MODE, RECORDING_CAM_HP);
 	else
 		wm8994_set_codec_gain(codec, RECORDING_MODE, RECORDING_HP);
 
@@ -1194,9 +1236,12 @@ void wm8994_record_main_mic(struct snd_soc_codec *codec)
 	val &= ~(WM8994_ADC1_TO_DAC2R_MASK);
 	wm8994_write(codec, WM8994_DAC2_RIGHT_MIXER_ROUTING, val);
 
-	if (wm8994->recognition_active == REC_ON)
+	if (wm8994->input_source == RECOGNITION)
 		wm8994_set_codec_gain(codec, RECORDING_MODE,
 				RECORDING_REC_MAIN);
+	else if (wm8994->input_source == CAMCORDER)
+		wm8994_set_codec_gain(codec, RECORDING_MODE,
+				RECORDING_CAM_MAIN);
 	else
 		wm8994_set_codec_gain(codec, RECORDING_MODE, RECORDING_MAIN);
 
@@ -2637,6 +2682,15 @@ int wm8994_set_codec_gain(struct snd_soc_codec *codec, u16 mode, u16 device)
 			break;
 		case RECORDING_REC_BT:
 			gain_set_bits |= RECORDING_REC_BT;
+			break;
+		case RECORDING_CAM_MAIN:
+			gain_set_bits |= RECORDING_CAM_MAIN;
+			break;
+		case RECORDING_CAM_HP:
+			gain_set_bits |= RECORDING_CAM_HP;
+			break;
+		case RECORDING_CAM_BT:
+			gain_set_bits |= RECORDING_CAM_BT;
 			break;
 		default:
 			pr_err("recording gain flag is wrong\n");

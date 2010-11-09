@@ -282,8 +282,8 @@ static const char *voicecall_path[] = { "OFF", "RCV", "SPK", "HP",
 					"HP_NO_MIC", "BT" };
 static const char *mic_path[] = { "Main Mic", "Hands Free Mic",
 					"BT Sco Mic", "MIC OFF" };
-static const char *recognition_state[] = { "RECOGNITION_OFF",
-					"RECOGNITION_ON" };
+static const char *input_source_state[] = { "Default", "Voice Recognition",
+					"Camcorder" };
 
 static int wm8994_get_mic_path(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
@@ -460,18 +460,18 @@ static int wm8994_set_voice_path(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-static int wm8994_get_recognition_status(struct snd_kcontrol *kcontrol,
+static int wm8994_get_input_source(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_codec *codec = snd_kcontrol_chip(kcontrol);
 	struct wm8994_priv *wm8994 = codec->drvdata;
 
-	DEBUG_LOG("recognition_state = [%d]", wm8994->recognition_active);
+	DEBUG_LOG("input_source_state = [%d]", wm8994->input_source);
 
-	return wm8994->recognition_active;
+	return wm8994->input_source;
 }
 
-static int wm8994_set_recognition_status(struct snd_kcontrol *kcontrol,
+static int wm8994_set_input_source(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_codec *codec = snd_kcontrol_chip(kcontrol);
@@ -479,10 +479,10 @@ static int wm8994_set_recognition_status(struct snd_kcontrol *kcontrol,
 
 	int control_flag = ucontrol->value.integer.value[0];
 
-	DEBUG_LOG("Changed recognition state [%d] => [%d]",
-			wm8994->recognition_active, control_flag);
+	DEBUG_LOG("Changed input_source state [%d] => [%d]",
+			wm8994->input_source, control_flag);
 
-	wm8994->recognition_active = control_flag;
+	wm8994->input_source = control_flag;
 
 	return 0;
 }
@@ -519,7 +519,7 @@ static const struct soc_enum path_control_enum[] = {
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(playback_path), playback_path),
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(voicecall_path), voicecall_path),
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(mic_path), mic_path),
-	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(recognition_state), recognition_state),
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(input_source_state), input_source_state),
 };
 
 static const struct snd_kcontrol_new wm8994_snd_controls[] = {
@@ -552,9 +552,8 @@ static const struct snd_kcontrol_new wm8994_snd_controls[] = {
 	SOC_ENUM_EXT("Clock Control", clock_control_enum[0],
 		     s3c_pcmdev_get_clock, s3c_pcmdev_set_clock),
 #endif
-	SOC_ENUM_EXT("Recognition Control", path_control_enum[3],
-		     wm8994_get_recognition_status,
-		     wm8994_set_recognition_status),
+	SOC_ENUM_EXT("Input Source", path_control_enum[3],
+		     wm8994_get_input_source, wm8994_set_input_source),
 
 };
 
@@ -2868,7 +2867,7 @@ static int wm8994_init(struct wm8994_priv *wm8994_private,
 	wm8994->cur_path = OFF;
 	wm8994->rec_path = MIC_OFF;
 	wm8994->power_state = CODEC_OFF;
-	wm8994->recognition_active = REC_OFF;
+	wm8994->input_source = DEFAULT;
 	wm8994->ringtone_active = RING_OFF;
 	wm8994->pdata = pdata;
 
