@@ -17,6 +17,7 @@
 #include <linux/types.h>
 #include <linux/tl2796.h>
 #include <linux/nt35580.h>
+#include <mach/gpio.h>
 
 static const u16 s6e63m0_SEQ_STANDBY_ON[] = {
 	0x010,	/* Stand-by On Command */
@@ -180,11 +181,82 @@ static const struct gamma_entry gamma_table[] = {
 	{     BV_255, { 2065000, 2072000, 1596000, }, },
 };
 
+static int configure_mtp_gpios(struct s5p_panel_data *pdata, bool enable)
+{
+	int i;
+	int ret = 0;
+	if (enable) {
+		/* wrx and csx are already requested by the spi driver */
+		ret = gpio_request(pdata->gpio_rdx, "tl2796_rdx");
+		if (ret)
+			goto err_rdx;
+		ret = gpio_request(pdata->gpio_dcx, "tl2796_dcx");
+		if (ret)
+			goto err_dcx;
+		for (i = 0; i < 8; i++) {
+			ret = gpio_request(pdata->gpio_db[i], "tl2796_dbx");
+			if (ret)
+				goto err_dbx;
+		}
+		for (i = 0; i < 8; i++) {
+			s3c_gpio_cfgpin(S5PV210_GPF0(i), S3C_GPIO_OUTPUT);
+			s3c_gpio_setpull(S5PV210_GPF0(i), S3C_GPIO_PULL_NONE);
+			gpio_set_value(S5PV210_GPF0(i), 0);
+		}
+		for (i = 0; i < 8; i++) {
+			s3c_gpio_cfgpin(S5PV210_GPF1(i), S3C_GPIO_OUTPUT);
+			s3c_gpio_setpull(S5PV210_GPF1(i), S3C_GPIO_PULL_UP);
+			gpio_set_value(S5PV210_GPF1(i), 0);
+		}
+		return 0;
+	}
+
+	for (i = 0; i < 8; i++) {
+		s3c_gpio_cfgpin(S5PV210_GPF0(i), S3C_GPIO_SFN(2));
+		s3c_gpio_setpull(S5PV210_GPF0(i), S3C_GPIO_PULL_NONE);
+	}
+	for (i = 0; i < 8; i++) {
+		s3c_gpio_cfgpin(S5PV210_GPF1(i), S3C_GPIO_SFN(2));
+		s3c_gpio_setpull(S5PV210_GPF1(i), S3C_GPIO_PULL_NONE);
+	}
+	for (i = 7; i >= 0; i--) {
+		gpio_free(pdata->gpio_db[i]);
+err_dbx:
+		;
+	}
+	gpio_free(pdata->gpio_dcx);
+err_dcx:
+	gpio_free(pdata->gpio_rdx);
+err_rdx:
+	return ret;
+}
+
 struct s5p_panel_data herring_panel_data = {
 	.seq_display_set = s6e63m0_SEQ_DISPLAY_SETTING,
 	.seq_etc_set = s6e63m0_SEQ_ETC_SETTING,
 	.standby_on = s6e63m0_SEQ_STANDBY_ON,
 	.standby_off = s6e63m0_SEQ_STANDBY_OFF,
+	.gpio_dcx = S5PV210_GPF0(0), /* H_SYNC pad */
+	.gpio_rdx = S5PV210_GPF0(2), /* Enable */
+	.gpio_csx = S5PV210_MP01(1),
+	.gpio_wrx = S5PV210_MP04(1), /* SCL pad */
+	.gpio_db = {
+		S5PV210_GPF0(4),
+		S5PV210_GPF0(5),
+		S5PV210_GPF0(6),
+		S5PV210_GPF0(7),
+		S5PV210_GPF1(0),
+		S5PV210_GPF1(1),
+		S5PV210_GPF1(2),
+		S5PV210_GPF1(3),
+	},
+	.configure_mtp_gpios = configure_mtp_gpios,
+	.factory_v255_regs = {
+		0x0b9,
+		0x0b8,
+		0x0fc,
+	},
+
 	.gamma_adj_points = &gamma_adj_points,
 	.gamma_table = gamma_table,
 	.gamma_table_size = ARRAY_SIZE(gamma_table),
