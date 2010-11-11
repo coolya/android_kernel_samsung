@@ -934,6 +934,7 @@ void wm8994_disable_rec_path(struct snd_soc_codec *codec)
 		break;
 
 	case BT_REC:
+		DEBUG_LOG("Disbaling BT Mic path..\n");
 		val = wm8994_read(codec, WM8994_AIF1_ADC1_LEFT_MIXER_ROUTING);
 		val &= ~(WM8994_AIF2DACL_TO_AIF1ADC1L_MASK |
 			WM8994_ADC1L_TO_AIF1ADC1L_MASK);
@@ -952,6 +953,7 @@ void wm8994_disable_rec_path(struct snd_soc_codec *codec)
 
 	case MIC_OFF:
 		DEBUG_LOG("Mic is already OFF!\n");
+		break;
 
 	default:
 		DEBUG_LOG_ERR("Path[%d] is not invaild!\n", mic);

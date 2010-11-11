@@ -316,6 +316,9 @@ static int wm8994_set_mic_path(struct snd_kcontrol *kcontrol,
 	case 2:
 		wm8994->rec_path = BT_REC;
 		break;
+	case 3:
+		wm8994_disable_rec_path(codec);
+		return 0;
 	default:
 		return -EINVAL;
 	}
