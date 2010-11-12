@@ -383,7 +383,7 @@ struct gain_info_t voicecall_gain_table[VOICECALL_GAIN_NUM] = {
 		.mode = VOICECALL_HP_NO_MIC,
 		.reg  = WM8994_LEFT_LINE_INPUT_1_2_VOLUME,	/* 18h */
 		.mask = WM8994_IN1L_VOL_MASK,
-		.gain = WM8994_IN1L_VU | 0x18
+		.gain = WM8994_IN1L_VU | 0x12	/* +10.5dB */
 	}, {
 		.mode = VOICECALL_HP_NO_MIC,
 		.reg  = WM8994_INPUT_MIXER_3,		/* 29h */
@@ -593,7 +593,7 @@ struct gain_info_t gain_code_table[GAIN_CODE_NUM] = {
 		.mode = VOICECALL_HP_NO_MIC | VOICECALL_MODE | GAIN_DIVISION_BIT,
 		.reg  = WM8994_LEFT_LINE_INPUT_1_2_VOLUME,	/* 18h */
 		.mask = WM8994_IN1L_VOL_MASK,
-		.gain = WM8994_IN1L_VU | 0x18
+		.gain = WM8994_IN1L_VU | 0x12	/* +10.5dB */
 	}, {
 		.mode = VOICECALL_HP_NO_MIC | VOICECALL_MODE | GAIN_DIVISION_BIT,
 		.reg  = WM8994_LEFT_OUTPUT_VOLUME,	/* 1Ch */
