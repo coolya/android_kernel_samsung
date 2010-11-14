@@ -812,8 +812,9 @@ static int s5ka3dfx_get_shutterspeed(struct v4l2_subdev *sd,
 		return read_value;
 	cintr |= read_value & 0xFF;
 
-	/* A3D Shutter Speed (Sec.) = MCLK / (2 * (cintr - 1) * 814) */
-	ctrl->value =  ((cintr - 1) * 1628) / (state->freq / 1000);
+	/* A3D Shutter Speed (Micro Sec.) =
+		(2 * (cintr - 1) * 814) / MCLK  * 1000 */
+	ctrl->value =  ((cintr - 1) * 1628) / (state->freq / 1000) * 1000;
 
 	dev_dbg(&client->dev,
 			"%s: get shutterspeed == %d\n", __func__, ctrl->value);
