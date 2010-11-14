@@ -1987,7 +1987,7 @@ static int s5k4ecgx_get_iso(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	/* restore write mode */
 	s5k4ecgx_i2c_write_twobyte(client, 0x0028, 0x7000);
 
-	read_value = read_value1 * read_value2 / 0x100 / 2;
+	read_value = read_value1 * read_value2 / 384;
 
 	if (read_value > 0x400)
 		ctrl->value = ISO_400;
@@ -2011,16 +2011,20 @@ static int s5k4ecgx_get_shutterspeed(struct v4l2_subdev *sd,
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	struct s5k4ecgx_state *state =
 		container_of(sd, struct s5k4ecgx_state, sd);
-	u16 read_value = 0;
+	u16 read_value_1;
+	u16 read_value_2;
+	u32 read_value;
 
 	err = s5k4ecgx_set_from_table(sd, "get shutterspeed",
 				&state->regs->get_shutterspeed, 1, 0);
-	err |= s5k4ecgx_i2c_read_twobyte(client, 0x0F12, &read_value);
+	err |= s5k4ecgx_i2c_read_twobyte(client, 0x0F12, &read_value_1);
+	err |= s5k4ecgx_i2c_read_twobyte(client, 0x0F12, &read_value_2);
 
+	read_value = (read_value_2 << 16) | (read_value_1 & 0xffff);
 	/* restore write mode */
 	s5k4ecgx_i2c_write_twobyte(client, 0x0028, 0x7000);
 
-	ctrl->value = read_value / 400;
+	ctrl->value = read_value * 1000 / 400;
 	dev_dbg(&client->dev,
 			"%s: get shutterspeed == %d\n", __func__, ctrl->value);
 
