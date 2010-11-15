@@ -338,6 +338,13 @@ config SENSORS_AK8975
 	  If you say yes here you get support for Asahi Kasei's
 	  orientation sensor AK8975.
 
+config SENSORS_KR3DM
+	tristate "KR3DM acceleration sensor support"
+	depends on I2C
+	default n
+	help
+	  Driver for STMicro KR3DM accelerometer - digital motion sensor.
+
 config EP93XX_PWM
 	tristate "EP93xx PWM support"
 	depends on ARCH_EP93XX
