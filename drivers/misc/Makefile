@@ -41,4 +41,5 @@ obj-$(CONFIG_SENSORS_AK8975)	+= akm8975.o
 obj-$(CONFIG_SENSORS_KR3DM)	+= kr3dm.o
 obj-$(CONFIG_PN544)		+= pn544.o
 obj-$(CONFIG_SAMSUNG_JACK)	+= sec_jack.o
+obj-$(CONFIG_USB_SWITCH_FSA9480)	+= fsa9480.o
 obj-$(CONFIG_SAMSUNG_MODEMCTL) += samsung_modemctl/
