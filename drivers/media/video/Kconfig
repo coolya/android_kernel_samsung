@@ -1133,6 +1133,33 @@ config VIDEO_S5KA3DFX
         ---help---
           This driver supports S5KA3DFX SoC camera module
 
+config VIDEO_S5K4ECGX
+        tristate "S5K4ECGX Camera Sensor"
+        depends on I2C && VIDEO_V4L2
+        ---help---
+          This driver supports S5K4ECGX SoC camera module
+
+config VIDEO_S5K4ECGX_DEBUG
+	bool "S5K4ECGX Camera Sensor Debugging"
+	depends on VIDEO_S5K4ECGX
+	default n
+	---help---
+	  Enable extra debug messages for S5K4ECGX camera driver
+
+config VIDEO_S5K4ECGX_V_1_0
+	bool "S5K4ECGX Camera Sensor Version 1.0 Support"
+	depends on VIDEO_S5K4ECGX
+	default y
+	---help---
+	  Enabled support for Rev 1.0 sensor
+
+config VIDEO_S5K4ECGX_V_1_1
+	bool "S5K4ECGX Camera Sensor Version 1.1 Support"
+	depends on VIDEO_S5K4ECGX
+	default y
+	---help---
+	  Enabled support for Rev 1.1 sensor
+
 source "drivers/media/video/samsung/Kconfig"
 
 endif # VIDEO_CAPTURE_DRIVERS

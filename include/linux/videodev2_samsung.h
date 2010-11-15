@@ -1,7 +1,7 @@
 /*
  * Video for Linux Two header file for samsung
  *
- * Copyright (C) 2009, Dongsoo Nathaniel Kim<dongsoo45.kim@samsung.com>
+ * Copyright (C) 2009, Samsung Electronics
  *
  * This header file contains several v4l2 APIs to be proposed to v4l2
  * community and until bein accepted, will be used restrictly in Samsung's
@@ -387,10 +387,11 @@ enum v4l2_face_lock {
 enum v4l2_focusmode {
 	FOCUS_MODE_AUTO = 0,
 	FOCUS_MODE_MACRO,
-	FOCUS_MODE_FD,
+	FOCUS_MODE_FACEDETECT,
 	FOCUS_MODE_AUTO_DEFAULT,
 	FOCUS_MODE_MACRO_DEFAULT,
-	FOCUS_MODE_FD_DEFAULT,
+	FOCUS_MODE_FACEDETECT_DEFAULT,
+	FOCUS_MODE_INFINITY,
 	FOCUS_MODE_MAX,
 };
 
@@ -461,6 +462,8 @@ enum v4l2_slow_ae_mode {
 #define V4L2_CID_CAMERA_GET_ISO			(V4L2_CID_PRIVATE_BASE + 114)
 #define V4L2_CID_CAMERA_GET_SHT_TIME		(V4L2_CID_PRIVATE_BASE + 115)
 #define V4L2_CID_CAMERA_SENSOR_MODE		(V4L2_CID_PRIVATE_BASE + 116)
+#define V4L2_CID_ESD_INT			(V4L2_CID_PRIVATE_BASE + 117)
+#define V4L2_CID_CAMERA_GET_FLASH_ONOFF		(V4L2_CID_PRIVATE_BASE + 118)
 
 /* Pixel format FOURCC depth Description */
 /* 12  Y/CbCr 4:2:0 64x32 macroblocks */
@@ -595,5 +598,24 @@ struct v4l2_recognition {
 
 #define VIDIOC_S_RECOGNITION	_IOWR('V', 85, struct v4l2_recognition)
 #define VIDIOC_G_RECOGNITION	_IOR('V', 86, struct v4l2_recognition)
+
+/* We use this struct as the v4l2_streamparm raw_data for
+ * VIDIOC_G_PARM and VIDIOC_S_PARM
+ */
+struct sec_cam_parm {
+	struct v4l2_captureparm capture;
+	int contrast;
+	int effects;
+	int brightness;
+	int flash_mode;
+	int focus_mode;
+	int iso;
+	int metering;
+	int saturation;
+	int scene_mode;
+	int sharpness;
+	int white_balance;
+	int fps;
+};
 
 #endif /* __LINUX_VIDEODEV2_SAMSUNG_H */
