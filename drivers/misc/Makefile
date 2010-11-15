@@ -37,3 +37,7 @@ obj-$(CONFIG_VMWARE_BALLOON)	+= vmware_balloon.o
 obj-$(CONFIG_WL127X_RFKILL)	+= wl127x-rfkill.o
 obj-$(CONFIG_APANIC)		+= apanic.o
 obj-$(CONFIG_SENSORS_AK8975)	+= akm8975.o
+obj-$(CONFIG_SENSORS_KR3DM)	+= kr3dm.o
+obj-$(CONFIG_PN544)		+= pn544.o
+obj-$(CONFIG_SAMSUNG_JACK)	+= sec_jack.o
+obj-$(CONFIG_SAMSUNG_MODEMCTL) += samsung_modemctl/

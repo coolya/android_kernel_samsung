@@ -419,4 +419,13 @@ source "drivers/misc/eeprom/Kconfig"
 source "drivers/misc/cb710/Kconfig"
 source "drivers/misc/iwmc3200top/Kconfig"
 
+config SAMSUNG_MODEMCTL
+	bool "Samsung Modem Control/IO Driver"
+
+config PN544
+	bool "NXP PN544 NFC Controller Driver"
+	default n
+	help
+	  NXP PN544 Near Field Communication controller support.
+
 endif # MISC_DEVICES
