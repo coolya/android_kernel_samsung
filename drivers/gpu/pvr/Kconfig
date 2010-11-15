@@ -1,0 +1,93 @@
+config PVR_SGX
+	tristate "PowerVR SGX support"
+	depends on ARCH_S5PV210
+	help
+	  Enable this option to build support for the PowerVR SGX 3D core.
+
+	  To compile this driver as a module, choose M here:
+	  this will generate two modules, called pvrsrvkm and s3c_lcd.
+
+choice
+	prompt "PowerVR build type"
+	depends on PVR_SGX
+	default PVR_BUILD_RELEASE
+
+config PVR_BUILD_RELEASE
+	bool "Release"
+
+config PVR_BUILD_DEBUG
+	bool "Debug"
+
+endchoice
+
+# Release build debugging options
+
+config PVR_NEED_PVR_DPF
+	bool "Enable debugging messages in release build"
+	depends on PVR_BUILD_RELEASE
+
+config PVR_NEED_PVR_ASSERT
+	bool "Enable assertions in release build"
+	depends on PVR_BUILD_RELEASE
+
+# Debugging options
+
+config PVR_DEBUG_MEMORY
+	bool "Record memory-related debugging information"
+	depends on PVR_BUILD_DEBUG
+	default y
+
+config PVR_DEBUG_BRIDGE_KM
+	bool "Collect bridge statistics"
+	depends on PVR_BUILD_DEBUG
+	default y
+
+config PVR_DEBUG_TRACE_BRIDGE_KM
+	bool "Trace bridge calls"
+	depends on PVR_DEBUG_BRIDGE_KM
+	default n
+
+config PVR_DEBUG_BRIDGE_KM_DISPATCH_TABLE
+	bool "Dump bridge dispatch table entries"
+	depends on PVR_BUILD_DEBUG
+	default n
+
+
+#
+# General options
+#
+
+config PVR_PERCONTEXT_PB
+	bool "Per-context parameter buffer (recommended)"
+	depends on PVR_SGX
+	default y
+
+config PVR_ACTIVE_POWER_MANAGEMENT
+	bool "Support for active power management (recommended)"
+	depends on PVR_SGX
+	default y
+
+config PVR_ACTIVE_POWER_LATENCY_MS
+	int "Active power event latency (ms)"
+	depends on PVR_ACTIVE_POWER_MANAGEMENT
+	default 100
+
+config PVR_SGX_LOW_LATENCY_SCHEDULING
+	bool "Enable low-latency scheduling"
+	depends on PVR_SGX
+	default y
+
+config PVR_USSE_EDM_STATUS_DEBUG
+	bool "Trace microkernel status"
+	depends on PVR_SGX
+	default y if PVR_BUILD_DEBUG
+
+config PVR_DUMP_MK_TRACE
+	bool "Dump microkernel trace on HW recovery"
+	depends on PVR_USSE_EDM_STATUS_DEBUG
+	default y
+
+config PVR_PDUMP
+	bool "Support for parameter dumping (Pdump)"
+	depends on PVR_SGX
+	default n
