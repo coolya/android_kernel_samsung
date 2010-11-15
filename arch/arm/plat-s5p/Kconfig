@@ -64,3 +64,17 @@ config HRT_RTC
 	default y
 	help
 	  RTC and System timer are used as HRT
+
+# MFC part
+config S5P_DEV_MFC
+	bool
+	default n
+	help
+	  Compile in platform device definitions for MFC
+
+config S5P_SETUP_MFC
+	bool
+	default n
+	help
+	  Common setup code for MFC
+

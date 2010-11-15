@@ -1,0 +1,23 @@
+#
+# Configuration for Multi Format Codecs (MFC)
+#
+#
+config VIDEO_MFC50
+	bool "Samsung MFC (Multi Format Codec - FIMV 5.0) Driver" 
+	depends on VIDEO_SAMSUNG && CPU_S5PV210
+	default n
+	select	S5P_SETUP_MFC 
+	select	S5P_DEV_MFC 
+	---help---
+	  This is a Samsung Multi Format Codecs (MFC) FIMV V5.0 - driver for Samsung S5PC110
+
+config VIDEO_MFC_MAX_INSTANCE
+	int "Maximum size of MFC instance (1-4)"
+	range 1 4
+	depends on VIDEO_MFC50
+	default 4
+
+config VIDEO_MFC50_DEBUG
+	bool "print MFC debug message"
+	depends on VIDEO_MFC50
+	default n

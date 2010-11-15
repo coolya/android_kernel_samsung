@@ -20,6 +20,8 @@ obj-y				+= devs.o
 obj-y				+= bootmem.o
 obj-$(CONFIG_S5P_EXT_INT)	+= irq-eint.o irq-eint-group.o
 
+# PM support
+
 obj-$(CONFIG_PM)		+= pm.o
 obj-$(CONFIG_PM)		+= irq-pm.o
 obj-$(CONFIG_PM)		+= sleep.o
@@ -31,3 +33,6 @@ ifdef CONFIG_HRT_RTC
 obj-y				+= hr-time-rtc.o
 endif
 endif
+
+obj-$(CONFIG_S5P_DEV_MFC)	+= dev-mfc.o
+obj-$(CONFIG_S5P_SETUP_MFC)	+= setup-mfc.o

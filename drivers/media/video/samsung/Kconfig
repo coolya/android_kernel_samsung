@@ -15,7 +15,7 @@ config VIDEO_SAMSUNG_V4L2
 
 if CPU_S5PV210
 source "drivers/media/video/samsung/fimc/Kconfig"
-#source "drivers/media/video/samsung/mfc50/Kconfig"
+source "drivers/media/video/samsung/mfc50/Kconfig"
 #source "drivers/media/video/samsung/jpeg_v2/Kconfig"
 #source "drivers/media/video/samsung/tv20/Kconfig"
 #source "drivers/media/video/samsung/tsi/Kconfig"
