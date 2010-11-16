@@ -498,7 +498,7 @@ struct gain_info_t recording_gain_table[RECORDING_GAIN_NUM] = {
 		.mode = RECORDING_CAM_MAIN,
 		.reg  = WM8994_LEFT_LINE_INPUT_1_2_VOLUME,	/* 18h */
 		.mask = WM8994_IN1L_VOL_MASK,
-		.gain = WM8994_IN1L_VU | 0x18    /* +19.5dB */
+		.gain = WM8994_IN1L_VU | 0x17    /* +18dB */
 	}, {
 		.mode = RECORDING_CAM_MAIN,
 		.reg  = WM8994_INPUT_MIXER_3,		/* 29h */
