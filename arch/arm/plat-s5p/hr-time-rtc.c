@@ -431,6 +431,7 @@ unsigned long long sched_clock(void)
 static void s5p_timer_setup(void)
 {
 	unsigned long rate;
+	unsigned int tmp;
 
 	/* Setup event timer using XrtcXTI */
 	if (clk_event == NULL)
@@ -440,6 +441,13 @@ static void s5p_timer_setup(void)
 		panic("failed to get clock for event timer");
 
 	rate = clk_get_rate(clk_event);
+
+	tmp = readl(rtc_base + S3C2410_RTCCON) &
+		~(S3C_RTCCON_TICEN);
+
+	/* We only support 32768 Hz : [7:4] = 0x0 */
+	writel(tmp & ~0xf0, rtc_base + S3C2410_RTCCON);
+
 	s5p_init_dynamic_tick_timer(rate);
 
 	/* Setup sched-timer using XusbXTI */
