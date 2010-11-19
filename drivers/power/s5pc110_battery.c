@@ -101,7 +101,7 @@ struct adc_sample_info {
 struct chg_data {
 	struct device		*dev;
 	struct max8998_dev	*iodev;
-	struct delayed_work	bat_work;
+	struct work_struct	bat_work;
 	struct max8998_charger_data *pdata;
 
 	struct power_supply	psy_bat;
@@ -154,6 +154,7 @@ static void max8998_set_cable(struct max8998_charger_callbacks *ptr,
 	chg->cable_status = status;
 	power_supply_changed(&chg->psy_ac);
 	power_supply_changed(&chg->psy_usb);
+	queue_work(chg->monitor_wqueue, &chg->bat_work);
 }
 
 static int s3c_bat_get_property(struct power_supply *bat_ps,
@@ -536,10 +537,6 @@ static int s3c_cable_status_update(struct chg_data *chg)
 
 		/* able to charge */
 		chg->charging = true;
-		/* if we have vdcin but we cannot detect the cable type,
-		force to AC so we can charge anyway */
-		if (chg->cable_status == CABLE_TYPE_NONE)
-			chg->cable_status = CABLE_TYPE_AC;
 		ret = max8998_charging_control(chg);
 		if (ret < 0)
 			goto err;
@@ -587,7 +584,7 @@ static void s3c_program_alarm(struct chg_data *chg, int seconds)
 static void s3c_bat_work(struct work_struct *work)
 {
 	struct chg_data *chg =
-		container_of(work, struct chg_data, bat_work.work);
+		container_of(work, struct chg_data, bat_work);
 	int ret;
 	struct timespec ts;
 	unsigned long flags;
@@ -626,7 +623,7 @@ static void s3c_battery_alarm(struct alarm *alarm)
 			container_of(alarm, struct chg_data, alarm);
 
 	wake_lock(&chg->work_wake_lock);
-	queue_work(chg->monitor_wqueue, &chg->bat_work.work);
+	queue_work(chg->monitor_wqueue, &chg->bat_work);
 }
 
 static irqreturn_t max8998_int_work_func(int irq, void *max8998_chg)
@@ -652,8 +649,7 @@ static irqreturn_t max8998_int_work_func(int irq, void *max8998_chg)
 	}
 
 	wake_lock(&chg->work_wake_lock);
-	queue_delayed_work(chg->monitor_wqueue,
-		&chg->bat_work, msecs_to_jiffies(200));
+	queue_work(chg->monitor_wqueue, &chg->bat_work);
 
 	return IRQ_HANDLED;
 err:
@@ -760,7 +756,7 @@ static __devinit int max8998_charger_probe(struct platform_device *pdev)
 	wake_lock_init(&chg->work_wake_lock, WAKE_LOCK_SUSPEND,
 		"max8998-charger");
 
-	INIT_DELAYED_WORK(&chg->bat_work, s3c_bat_work);
+	INIT_WORK(&chg->bat_work, s3c_bat_work);
 
 	chg->monitor_wqueue =
 		create_singlethread_workqueue(dev_name(&pdev->dev));
@@ -811,7 +807,7 @@ static __devinit int max8998_charger_probe(struct platform_device *pdev)
 	if (chg->pdata->register_callbacks)
 		chg->pdata->register_callbacks(&chg->callbacks);
 
-	queue_work(chg->monitor_wqueue, &chg->bat_work.work);
+	queue_work(chg->monitor_wqueue, &chg->bat_work);
 
 	return 0;
 
@@ -825,7 +821,7 @@ err_supply_unreg_bat:
 	power_supply_unregister(&chg->psy_bat);
 err_wqueue:
 	destroy_workqueue(chg->monitor_wqueue);
-	cancel_delayed_work_sync(&chg->bat_work);
+	cancel_work_sync(&chg->bat_work);
 	alarm_cancel(&chg->alarm);
 err_wake_lock:
 	wake_lock_destroy(&chg->work_wake_lock);
@@ -868,7 +864,7 @@ static int max8998_charger_suspend(struct device *dev)
 	return 0;
 }
 
-static int max8998_charger_resume(struct device *dev)
+static void max8998_charger_resume(struct device *dev)
 {
 
 	struct chg_data *chg = dev_get_drvdata(dev);
@@ -882,8 +878,6 @@ static int max8998_charger_resume(struct device *dev)
 		s3c_program_alarm(chg, FAST_POLL);
 		chg->slow_poll = 0;
 	}
-
-	return 0;
 }
 
 static const struct dev_pm_ops max8998_charger_pm_ops = {
