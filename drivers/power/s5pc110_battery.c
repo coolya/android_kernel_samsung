@@ -154,6 +154,7 @@ static void max8998_set_cable(struct max8998_charger_callbacks *ptr,
 	chg->cable_status = status;
 	power_supply_changed(&chg->psy_ac);
 	power_supply_changed(&chg->psy_usb);
+	wake_lock(&chg->work_wake_lock);
 	queue_work(chg->monitor_wqueue, &chg->bat_work);
 }
 
@@ -759,9 +760,9 @@ static __devinit int max8998_charger_probe(struct platform_device *pdev)
 	INIT_WORK(&chg->bat_work, s3c_bat_work);
 
 	chg->monitor_wqueue =
-		create_singlethread_workqueue(dev_name(&pdev->dev));
+		create_freezeable_workqueue(dev_name(&pdev->dev));
 	if (!chg->monitor_wqueue) {
-		pr_err("Failed to create single workqueu\n");
+		pr_err("Failed to create freezeable workqueue\n");
 		ret = -ENOMEM;
 		goto err_wake_lock;
 	}
@@ -807,6 +808,7 @@ static __devinit int max8998_charger_probe(struct platform_device *pdev)
 	if (chg->pdata->register_callbacks)
 		chg->pdata->register_callbacks(&chg->callbacks);
 
+	wake_lock(&chg->work_wake_lock);
 	queue_work(chg->monitor_wqueue, &chg->bat_work);
 
 	return 0;
