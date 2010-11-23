@@ -4090,7 +4090,6 @@ static struct platform_device *herring_devices[] __initdata = {
 	&s3c_device_i2c2,
 #endif
 	&s3c_device_i2c4,
-	&s3c_device_i2c5,  /* accel sensor */
 	&s3c_device_i2c6,
 	&s3c_device_i2c7,
 	&s3c_device_i2c8,  /* gyro sensor */
@@ -4318,6 +4317,8 @@ static void __init herring_machine_init(void)
 	setup_ram_console_mem();
 	s3c_usb_set_serial();
 	platform_add_devices(herring_devices, ARRAY_SIZE(herring_devices));
+	if (system_rev < 0x10)
+		platform_device_register(&s3c_device_i2c5);
 
 	/* Find out S5PC110 chip version */
 	_hw_version_check();
@@ -4377,9 +4378,11 @@ static void __init herring_machine_init(void)
 	if (system_rev == 0x04)
 		i2c_register_board_info(5, i2c_devs5, ARRAY_SIZE(i2c_devs5));
 	i2c_register_board_info(6, i2c_devs6, ARRAY_SIZE(i2c_devs6));
-	/* Touch Key */
-	touch_keypad_gpio_init();
-	i2c_register_board_info(10, i2c_devs10, ARRAY_SIZE(i2c_devs10));
+	if (system_rev < 0x10) {
+		/* Touch Key */
+		touch_keypad_gpio_init();
+		i2c_register_board_info(10, i2c_devs10, ARRAY_SIZE(i2c_devs10));
+	}
 	/* FSA9480 */
 	fsa9480_gpio_init();
 	i2c_register_board_info(7, i2c_devs7, ARRAY_SIZE(i2c_devs7));
