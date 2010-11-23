@@ -634,6 +634,7 @@ struct s5k4ecgx_state {
 	int check_dataline;
 	int check_previewdata;
 	bool flash_on;
+	bool torch_on;
 	bool sensor_af_in_low_light_mode;
 	bool flash_state_on_previous_capture;
 	bool initialized;
@@ -1679,9 +1680,9 @@ static void s5k4ecgx_enable_torch(struct v4l2_subdev *sd)
 		container_of(sd, struct s5k4ecgx_state, sd);
 	struct s5k4ecgx_platform_data *pdata = client->dev.platform_data;
 
-	s5k4ecgx_set_from_table(sd, "flash start",
+	s5k4ecgx_set_from_table(sd, "torch start",
 				&state->regs->flash_start, 1, 0);
-	state->flash_on = true;
+	state->torch_on = true;
 	pdata->torch_onoff(1);
 }
 
@@ -1692,10 +1693,10 @@ static void s5k4ecgx_disable_torch(struct v4l2_subdev *sd)
 		container_of(sd, struct s5k4ecgx_state, sd);
 	struct s5k4ecgx_platform_data *pdata = client->dev.platform_data;
 
-	if (state->flash_on) {
-		state->flash_on = false;
+	if (state->torch_on) {
+		state->torch_on = false;
 		pdata->torch_onoff(0);
-		s5k4ecgx_set_from_table(sd, "flash end",
+		s5k4ecgx_set_from_table(sd, "torch end",
 					&state->regs->flash_end, 1, 0);
 	}
 }
