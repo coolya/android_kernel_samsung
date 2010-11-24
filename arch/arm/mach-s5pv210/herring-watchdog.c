@@ -28,19 +28,19 @@
 #include <linux/io.h>
 
 /* reset timeout in PCLK/256/128 (~2048:1s) */
-static unsigned watchdog_reset = (5 * 2048);
+static unsigned watchdog_reset = (30 * 2048);
 
 /* pet timeout in jiffies */
-static unsigned watchdog_pet = (4 * HZ);
+static unsigned watchdog_pet = (10 * HZ);
 
-struct workqueue_struct *watchdog_wq;
+static struct workqueue_struct *watchdog_wq;
 static void watchdog_workfunc(struct work_struct *work);
 static DECLARE_DELAYED_WORK(watchdog_work, watchdog_workfunc);
 
 static void watchdog_workfunc(struct work_struct *work)
 {
 	writel(watchdog_reset, S3C2410_WTCNT);
-	schedule_delayed_work(&watchdog_work, watchdog_pet);
+	queue_delayed_work(watchdog_wq, &watchdog_work, watchdog_pet);
 }
 
 static void watchdog_start(void)
@@ -61,7 +61,7 @@ static void watchdog_start(void)
 	writel(val, S3C2410_WTCON);
 
 	/* make sure we're ready to pet the dog */
-	schedule_delayed_work(&watchdog_work, watchdog_pet);
+	queue_delayed_work(watchdog_wq, &watchdog_work, watchdog_pet);
 }
 
 static void watchdog_stop(void)
