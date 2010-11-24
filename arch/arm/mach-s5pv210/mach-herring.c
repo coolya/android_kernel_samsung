@@ -2059,6 +2059,62 @@ static struct i2c_board_info i2c_devs2[] __initdata = {
 	},
 };
 
+static void mxt224_init(void)
+{
+	if (system_rev < 0x10)
+		return;
+	mxt224_data.max_y = 939;
+	t9_config[24] = 0;
+	t9_config[27] = 0;
+	t9_config[28] = 0;
+	t9_config[29] = 0;
+	t9_config[30] = 0;
+}
+
+static ssize_t herring_virtual_keys_show(struct kobject *kobj,
+					struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf,
+		__stringify(EV_KEY) ":" __stringify(KEY_BACK) ":71:854:45:49"
+		":" __stringify(EV_KEY) ":"
+					__stringify(KEY_MENU) ":183:854:45:49"
+		":" __stringify(EV_KEY) ":"
+					__stringify(KEY_SEARCH) ":294:854:45:49"
+		":" __stringify(EV_KEY) ":"
+					__stringify(KEY_HOME) ":406:854:45:49"
+		"\n");
+}
+
+static struct kobj_attribute herring_virtual_keys_attr = {
+	.attr = {
+		.name = "virtualkeys.mxt224_ts_input",
+		.mode = S_IRUGO,
+	},
+	.show = &herring_virtual_keys_show,
+};
+
+static struct attribute *herring_properties_attrs[] = {
+	&herring_virtual_keys_attr.attr,
+	NULL,
+};
+
+static struct attribute_group herring_properties_attr_group = {
+	.attrs = herring_properties_attrs,
+};
+
+static void herring_virtual_keys_init(void)
+{
+	struct kobject *properties_kobj;
+	int ret;
+
+	properties_kobj = kobject_create_and_add("board_properties", NULL);
+	if (properties_kobj)
+		ret = sysfs_create_group(properties_kobj,
+						&herring_properties_attr_group);
+	if (!properties_kobj || ret)
+		pr_err("failed to create board_properties\n");
+}
+
 /* I2C2 */
 static struct i2c_board_info i2c_devs10[] __initdata = {
 	{
@@ -4369,6 +4425,7 @@ static void __init herring_machine_init(void)
 		/* magnetic and accel sensor */
 		i2c_register_board_info(1, i2c_devs1, ARRAY_SIZE(i2c_devs1));
 	}
+	mxt224_init();
 	i2c_register_board_info(2, i2c_devs2, ARRAY_SIZE(i2c_devs2));
 
 	/* wm8994 codec */
@@ -4382,6 +4439,8 @@ static void __init herring_machine_init(void)
 		/* Touch Key */
 		touch_keypad_gpio_init();
 		i2c_register_board_info(10, i2c_devs10, ARRAY_SIZE(i2c_devs10));
+	} else {
+		herring_virtual_keys_init();
 	}
 	/* FSA9480 */
 	fsa9480_gpio_init();
