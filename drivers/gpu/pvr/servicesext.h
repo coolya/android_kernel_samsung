@@ -804,6 +804,16 @@ typedef struct PVRSRV_CURSOR_INFO_TAG
 
 } PVRSRV_CURSOR_INFO;
 
+#if defined(PDUMP_SUSPEND_IS_PER_THREAD)
+typedef struct {
+	IMG_UINT32 threadId;
+	int suspendCount;
+} PVRSRV_THREAD_SUSPEND_COUNT;
+
+#define PVRSRV_PDUMP_SUSPEND_Q_NAME "PVRSRVPDumpSuspendMsgQ"
+#define PVRSRV_PDUMP_SUSPEND_Q_LENGTH 8
+
+#endif 
 
 typedef struct _PVRSRV_REGISTRY_INFO_
 {
