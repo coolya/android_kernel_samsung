@@ -132,11 +132,18 @@ static int mmio_owner_p(struct modemctl *mc)
 
 int modem_acquire_mmio(struct modemctl *mc)
 {
-	if (modem_request_mmio(mc) == 0)
-		if (wait_event_interruptible(mc->wq, mmio_owner_p(mc))) {
+	if (modem_request_mmio(mc) == 0) {
+		int ret = wait_event_interruptible_timeout(
+			mc->wq, mmio_owner_p(mc), 5 * HZ);
+		if (ret == 0) {
+			pr_err("modem_acquire_mmio() TIMEOUT\n");
+			return -ENODEV;
+		}
+		if (ret < 0) {
 			modem_release_mmio(mc, 0);
 			return -ERESTARTSYS;
 		}
+	}
 	if (!modem_running(mc)) {
 		modem_release_mmio(mc, 0);
 		return -ENODEV;
@@ -205,7 +212,7 @@ static ssize_t modemctl_read(struct file *filp, char __user *buf,
 			pr_info("[MODEM] requesting more ram\n");
 			writel(0, mc->mmio + OFF_SEM);
 			writel(MODEM_CMD_RAMDUMP_MORE, mc->mmio + OFF_MBOX_AP);
-			wait_event(mc->wq, mc->ramdump_size != 0); /* TODO: timeout */
+			wait_event_timeout(mc->wq, mc->ramdump_size != 0, 10 * HZ);
 		} else {
 			pr_info("[MODEM] no more ram to dump\n");
 			mc->ramdump_size = 0;
@@ -275,6 +282,8 @@ done:
 
 static int modem_start(struct modemctl *mc, int ramdump)
 {
+	int ret;
+
 	pr_info("[MODEM] modem_start() %s\n",
 		ramdump ? "ramdump" : "normal");
 
@@ -300,16 +309,17 @@ static int modem_start(struct modemctl *mc, int ramdump)
 		mc->ramdump_pos = 0;
 		writel(MODEM_CMD_RAMDUMP_START, mc->mmio + OFF_MBOX_AP);
 
-		/* TODO: timeout and fail */
-		wait_event(mc->wq, mc->status == MODEM_DUMPING);
+		ret = wait_event_timeout(mc->wq, mc->status == MODEM_DUMPING, 25 * HZ);
+		if (ret == 0)
+			return -ENODEV;
 	} else {
 		mc->status = MODEM_BOOTING_NORMAL;
 		writel(MODEM_CMD_BINARY_LOAD, mc->mmio + OFF_MBOX_AP);
 
-		/* TODO: timeout and fail */
-		wait_event(mc->wq, modem_running(mc));
+		ret = wait_event_timeout(mc->wq, modem_running(mc), 25 * HZ);
+		if (ret == 0)
+			return -ENODEV;
 	}
-
 
 	pr_info("[MODEM] modem_start() DONE\n");
 	return 0;

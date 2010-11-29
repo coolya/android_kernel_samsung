@@ -235,10 +235,13 @@ static int modem_pipe_send(struct m_pipe *pipe, struct modem_io *io)
 		MODEM_COUNT(pipe->mc, pipe_tx_delayed);
 		modem_release_mmio(pipe->mc, 0);
 
-		ret = wait_event_interruptible(pipe->mc->wq,
-					       (pipe->tx->avail >= size)
-					       || modem_offline(pipe->mc));
-		if (ret)
+		ret = wait_event_interruptible_timeout(
+			pipe->mc->wq,
+			(pipe->tx->avail >= size) || modem_offline(pipe->mc),
+			5 * HZ);
+		if (ret == 0)
+			return -ENODEV;
+		if (ret < 0)
 			return ret;
 	}
 }
