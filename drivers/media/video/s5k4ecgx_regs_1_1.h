@@ -3928,11 +3928,6 @@ static const u32 s5k4ecgx_Night_Capture[] = {
 	0x0F120000,	/*#lt_ExpGain_uNonSubsampling*/
 };
 
-static const u32 s5k4ecgx_AF_Return_Inf_pos[] = {
-	0x002A15D6,
-	0x0F12D000,
-};
-
 static const u32 s5k4ecgx_AF_Return_Macro_pos[] = {
 	0x002A15E8,
 	0x0F120018,

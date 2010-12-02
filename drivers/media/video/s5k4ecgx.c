@@ -257,7 +257,6 @@ struct s5k4ecgx_regs {
 	struct s5k4ecgx_regset_table af_normal_mode_1;
 	struct s5k4ecgx_regset_table af_normal_mode_2;
 	struct s5k4ecgx_regset_table af_normal_mode_3;
-	struct s5k4ecgx_regset_table af_return_infinite_position;
 	struct s5k4ecgx_regset_table af_return_macro_position;
 	struct s5k4ecgx_regset_table single_af_start;
 	struct s5k4ecgx_regset_table single_af_off_1;
@@ -421,8 +420,6 @@ static const struct s5k4ecgx_regs regs_for_fw_version_1_0 = {
 	.af_normal_mode_1 = S5K4ECGX_REGSET_TABLE(s5k4ecgx_AF_Normal_mode_1_v1),
 	.af_normal_mode_2 = S5K4ECGX_REGSET_TABLE(s5k4ecgx_AF_Normal_mode_2_v1),
 	.af_normal_mode_3 = S5K4ECGX_REGSET_TABLE(s5k4ecgx_AF_Normal_mode_3_v1),
-	.af_return_infinite_position =
-		S5K4ECGX_REGSET_TABLE(s5k4ecgx_AF_Return_Inf_pos_v1),
 	.af_return_macro_position =
 		S5K4ECGX_REGSET_TABLE(s5k4ecgx_AF_Return_Macro_pos_v1),
 	.single_af_start = S5K4ECGX_REGSET_TABLE(s5k4ecgx_Single_AF_Start_v1),
@@ -586,8 +583,6 @@ static const struct s5k4ecgx_regs regs_for_fw_version_1_1 = {
 	.af_normal_mode_1 = S5K4ECGX_REGSET_TABLE(s5k4ecgx_AF_Normal_mode_1),
 	.af_normal_mode_2 = S5K4ECGX_REGSET_TABLE(s5k4ecgx_AF_Normal_mode_2),
 	.af_normal_mode_3 = S5K4ECGX_REGSET_TABLE(s5k4ecgx_AF_Normal_mode_3),
-	.af_return_infinite_position =
-		S5K4ECGX_REGSET_TABLE(s5k4ecgx_AF_Return_Inf_pos),
 	.af_return_macro_position =
 		S5K4ECGX_REGSET_TABLE(s5k4ecgx_AF_Return_Macro_pos),
 	.single_af_start = S5K4ECGX_REGSET_TABLE(s5k4ecgx_Single_AF_Start),
@@ -1139,18 +1134,7 @@ static int s5k4ecgx_set_focus_mode(struct v4l2_subdev *sd, int value)
 		break;
 
 	case FOCUS_MODE_INFINITY:
-		err = s5k4ecgx_set_from_table(sd,
-			"af return infinite position",
-			&state->regs->af_return_infinite_position, 1, 0);
-		if (err < 0)
-			goto fail;
-		parms->focus_mode = FOCUS_MODE_INFINITY;
-		break;
-
 	case FOCUS_MODE_AUTO:
-	default:
-		dev_dbg(&client->dev,
-			"%s: FOCUS_MODE_AUTO\n", __func__);
 		err = s5k4ecgx_set_from_table(sd,
 			"af normal mode 1",
 			&state->regs->af_normal_mode_1, 1, 0);
@@ -1168,7 +1152,10 @@ static int s5k4ecgx_set_focus_mode(struct v4l2_subdev *sd, int value)
 			&state->regs->af_normal_mode_3, 1, 0);
 		if (err < 0)
 			goto fail;
-		parms->focus_mode = FOCUS_MODE_AUTO;
+		parms->focus_mode = value;
+		break;
+	default:
+		return -EINVAL;
 		break;
 	}
 
