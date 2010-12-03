@@ -2184,10 +2184,23 @@ static struct switch_dev switch_dock = {
 
 static void fsa9480_deskdock_cb(bool attached)
 {
+	struct usb_gadget *gadget = platform_get_drvdata(&s3c_device_usbgadget);
+
 	if (attached)
 		switch_set_state(&switch_dock, 1);
 	else
 		switch_set_state(&switch_dock, 0);
+
+	if (gadget) {
+		if (attached)
+			usb_gadget_vbus_connect(gadget);
+		else
+			usb_gadget_vbus_disconnect(gadget);
+	}
+
+	set_cable_status = attached ? CABLE_TYPE_USB : CABLE_TYPE_NONE;
+	if (callbacks && callbacks->set_cable)
+		callbacks->set_cable(callbacks, set_cable_status);
 }
 
 static void fsa9480_cardock_cb(bool attached)
