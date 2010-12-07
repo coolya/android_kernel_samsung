@@ -1098,6 +1098,38 @@ static int s5k4ecgx_set_face_detection(struct v4l2_subdev *sd, int value)
 				&state->regs->face_detection_off, 1, 0);
 }
 
+static int s5k4ecgx_return_focus(struct v4l2_subdev *sd)
+{
+	int err;
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct s5k4ecgx_state *state =
+			container_of(sd, struct s5k4ecgx_state, sd);
+
+	err = s5k4ecgx_set_from_table(sd,
+		"af normal mode 1",
+		&state->regs->af_normal_mode_1, 1, 0);
+	if (err < 0)
+		goto fail;
+	msleep(FIRST_SETTING_FOCUS_MODE_DELAY_MS);
+	err = s5k4ecgx_set_from_table(sd,
+		"af normal mode 2",
+		&state->regs->af_normal_mode_2, 1, 0);
+	if (err < 0)
+		goto fail;
+	msleep(SECOND_SETTING_FOCUS_MODE_DELAY_MS);
+	err = s5k4ecgx_set_from_table(sd,
+		"af normal mode 3",
+		&state->regs->af_normal_mode_3, 1, 0);
+	if (err < 0)
+		goto fail;
+
+	return 0;
+fail:
+	dev_err(&client->dev,
+		"%s: i2c_write failed\n", __func__);
+	return -EIO;
+}
+
 static int s5k4ecgx_set_focus_mode(struct v4l2_subdev *sd, int value)
 {
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -2330,6 +2362,10 @@ static int s5k4ecgx_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		break;
 	case V4L2_CID_CAMERA_CHECK_DATALINE_STOP:
 		err = s5k4ecgx_check_dataline_stop(sd);
+		break;
+	case V4L2_CID_CAMERA_RETURN_FOCUS:
+		if (parms->focus_mode != FOCUS_MODE_MACRO)
+			err = s5k4ecgx_return_focus(sd);
 		break;
 	default:
 		dev_err(&client->dev, "%s: unknown set ctrl id 0x%x\n",
