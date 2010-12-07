@@ -3224,9 +3224,9 @@ static struct gpio_init_data herring_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, { /* GPIO_EAR_ADC_SEL */
 		.num	= S5PV210_GPJ3(3),
-		.cfg	= S3C_GPIO_OUTPUT,
-		.val	= S3C_GPIO_SETPIN_ONE,
-		.pud	= S3C_GPIO_PULL_NONE,
+		.cfg	= S3C_GPIO_INPUT,
+		.val	= S3C_GPIO_SETPIN_NONE,
+		.pud	= S3C_GPIO_PULL_DOWN,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPJ3(4),
@@ -3435,7 +3435,10 @@ void s3c_config_gpio_table(void)
 
 	for (i = 0; i < ARRAY_SIZE(herring_init_gpios); i++) {
 		gpio = herring_init_gpios[i].num;
-		if (gpio <= S5PV210_MP05(7)) {
+		if (system_rev <= 0x07 && gpio == S5PV210_GPJ3(3)) {
+			s3c_gpio_cfgpin(gpio, S3C_GPIO_OUTPUT);
+			gpio_set_value(gpio, S3C_GPIO_SETPIN_ONE);
+		} else if (gpio <= S5PV210_MP05(7)) {
 			s3c_gpio_cfgpin(gpio, herring_init_gpios[i].cfg);
 			s3c_gpio_setpull(gpio, herring_init_gpios[i].pud);
 
