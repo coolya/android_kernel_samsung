@@ -48,6 +48,10 @@
 #include <asm/uaccess.h>
 #include <asm/unaligned.h>
 
+#ifdef CONFIG_HAS_WAKELOCK
+#include <linux/wakelock.h>
+#endif
+
 /* The kernel threading is sdio-specific */
 #else /* LINUX */
 #define ENOMEM		1
@@ -168,6 +172,9 @@ typedef struct dhd_pub {
 	uint8 country_code[WLC_CNTRY_BUF_SZ];
 	char eventmask[WL_EVENTING_MASK_LEN];
 
+#ifdef CONFIG_HAS_WAKELOCK
+	struct wake_lock 	wow_wakelock;
+#endif
 } dhd_pub_t;
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27)) && defined(CONFIG_PM_SLEEP)
