@@ -2061,7 +2061,7 @@ static struct i2c_board_info i2c_devs2[] __initdata = {
 
 static void mxt224_init(void)
 {
-	if (system_rev < 0x10)
+	if (system_rev < 0x30)
 		return;
 	mxt224_data.max_y = 939;
 	t9_config[24] = 0;
@@ -4373,7 +4373,7 @@ static void __init herring_machine_init(void)
 	setup_ram_console_mem();
 	s3c_usb_set_serial();
 	platform_add_devices(herring_devices, ARRAY_SIZE(herring_devices));
-	if (system_rev < 0x10)
+	if (system_rev < 0x30)
 		platform_device_register(&s3c_device_i2c5);
 
 	/* Find out S5PC110 chip version */
@@ -4435,7 +4435,7 @@ static void __init herring_machine_init(void)
 	if (system_rev == 0x04)
 		i2c_register_board_info(5, i2c_devs5, ARRAY_SIZE(i2c_devs5));
 	i2c_register_board_info(6, i2c_devs6, ARRAY_SIZE(i2c_devs6));
-	if (system_rev < 0x10) {
+	if (system_rev < 0x30) {
 		/* Touch Key */
 		touch_keypad_gpio_init();
 		i2c_register_board_info(10, i2c_devs10, ARRAY_SIZE(i2c_devs10));
@@ -4461,7 +4461,7 @@ static void __init herring_machine_init(void)
        /* nfc sensor */
 	i2c_register_board_info(14, i2c_devs14, ARRAY_SIZE(i2c_devs14));
 
-	if (system_rev < 0x10) {
+	if (system_rev < 0x30) {
 		spi_register_board_info(spi_board_info, ARRAY_SIZE(spi_board_info));
 		s3cfb_set_platdata(&tl2796_data);
 	} else {
