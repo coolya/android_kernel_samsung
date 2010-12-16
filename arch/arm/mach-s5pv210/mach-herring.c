@@ -1179,7 +1179,7 @@ static void touch_keypad_onoff(int onoff)
 	if (onoff == TOUCHKEY_OFF)
 		msleep(30);
 	else
-		msleep(25);
+		msleep(50);
 }
 
 static const int touch_keypad_code[] = {
