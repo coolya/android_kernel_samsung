@@ -871,6 +871,12 @@ static void panel_cfg_gpio(struct platform_device *pdev)
 	s3c_gpio_setpull(S5PV210_MP04(2), S3C_GPIO_PULL_NONE);
 	/* DISPLAY_SI */
 	s3c_gpio_setpull(S5PV210_MP04(3), S3C_GPIO_PULL_NONE);
+
+	/* OLED_ID */
+	if (system_rev >= 0x30) {
+		s3c_gpio_cfgpin(GPIO_OLED_ID, S3C_GPIO_INPUT);
+		s3c_gpio_setpull(GPIO_OLED_ID, S3C_GPIO_PULL_DOWN);
+	}
 }
 
 void lcd_cfg_gpio_early_suspend(void)
@@ -938,9 +944,11 @@ void lcd_cfg_gpio_early_suspend(void)
 	gpio_set_value(GPIO_DISPLAY_SI, 0);
 
 	/* OLED_ID */
-	s3c_gpio_cfgpin(GPIO_OLED_ID, S3C_GPIO_INPUT);
-	s3c_gpio_setpull(GPIO_OLED_ID, S3C_GPIO_PULL_DOWN);
-	/* gpio_set_value(GPIO_OLED_ID, 0); */
+	if (system_rev < 0x30) {
+		s3c_gpio_cfgpin(GPIO_OLED_ID, S3C_GPIO_INPUT);
+		s3c_gpio_setpull(GPIO_OLED_ID, S3C_GPIO_PULL_DOWN);
+		/* gpio_set_value(GPIO_OLED_ID, 0); */
+	}
 
 	/* DIC_ID */
 	s3c_gpio_cfgpin(GPIO_DIC_ID, S3C_GPIO_INPUT);
@@ -955,9 +963,11 @@ void lcd_cfg_gpio_late_resume(void)
 	s3c_gpio_cfgpin(GPIO_OLED_DET, S3C_GPIO_INPUT);
 	s3c_gpio_setpull(GPIO_OLED_DET, S3C_GPIO_PULL_NONE);
 	/* OLED_ID */
-	s3c_gpio_cfgpin(GPIO_OLED_ID, S3C_GPIO_OUTPUT);
-	s3c_gpio_setpull(GPIO_OLED_ID, S3C_GPIO_PULL_NONE);
-	/* gpio_set_value(GPIO_OLED_ID, 0); */
+	if (system_rev < 0x30) {
+		s3c_gpio_cfgpin(GPIO_OLED_ID, S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(GPIO_OLED_ID, S3C_GPIO_PULL_NONE);
+		/* gpio_set_value(GPIO_OLED_ID, 0); */
+	}
 	/* DIC_ID */
 	s3c_gpio_cfgpin(GPIO_DIC_ID, S3C_GPIO_OUTPUT);
 	s3c_gpio_setpull(GPIO_DIC_ID, S3C_GPIO_PULL_NONE);
