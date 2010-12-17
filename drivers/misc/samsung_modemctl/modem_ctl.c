@@ -135,13 +135,14 @@ int modem_acquire_mmio(struct modemctl *mc)
 	if (modem_request_mmio(mc) == 0) {
 		int ret = wait_event_interruptible_timeout(
 			mc->wq, mmio_owner_p(mc), 5 * HZ);
-		if (ret == 0) {
-			pr_err("modem_acquire_mmio() TIMEOUT\n");
-			return -ENODEV;
-		}
-		if (ret < 0) {
+		if (ret <= 0) {
 			modem_release_mmio(mc, 0);
-			return -ERESTARTSYS;
+			if (ret == 0) {
+				pr_err("modem_acquire_mmio() TIMEOUT\n");
+				return -ENODEV;
+			} else {
+				return -ERESTARTSYS;
+			}
 		}
 	}
 	if (!modem_running(mc)) {
