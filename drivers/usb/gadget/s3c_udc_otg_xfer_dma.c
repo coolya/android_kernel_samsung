@@ -498,7 +498,15 @@ static irqreturn_t s3c_udc_irq(int irq, void *_dev)
 				reset_available = 0;
 				s3c_udc_pre_setup();
 			}
-
+		} else if (!(usb_status & B_SESSION_VALID)) {
+			if (dev->udc_enabled) {
+				DEBUG_ISR("Reset without B_SESSION\n");
+				if (dev->driver) {
+					spin_unlock(&dev->lock);
+					dev->driver->disconnect(&dev->gadget);
+					spin_lock(&dev->lock);
+				}
+			}
 		} else {
 			reset_available = 1;
 			DEBUG_ISR("\t\tRESET handling skipped\n");
