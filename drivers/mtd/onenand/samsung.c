@@ -42,42 +42,60 @@ enum soc_type {
 };
 
 struct mtd_partition s3c_partition_info[] = {
-	{
-		.name		= "misc",
-		.offset		= (768*SZ_1K),          /* for bootloader */
-		.size		= (256*SZ_1K),
-		.mask_flags	= MTD_CAP_NANDFLASH,
+
+ /*This is partition layout from the oneNAND it SHOULD match the pitfile on the second page of the NAND.
+   It will work if it doesn't but beware to write below the adress 0x01200000 there are the bootloaders.
+   Currently we won't map them, but we should keep that in mind for later things like flashing bootloader
+   from Linux. There is a partition 'efs' starting @ 0x00080000 40 256K pages long, it contains data for
+   the modem like IMSI we don't touch it for now, but we need the data from it, we create a partition
+   for that and copy the data from it. For this you need a image from it and mount it as vfat or copy
+   it on a kernel with rfs support on the phone.
+   
+   Partitions on the lower NAND adresses:
+   
+   0x00000000 - 0x00040000 = first stage bootloader
+   0x00040000 - 0x00080000 = PIT for second stage bootloader
+   0x00080000 - 0x00A80000 = EFS: IMSI and NVRAM for the modem
+   0x00A80000 - 0x00BC0000 = second stage bootloader
+   0x00BC0000 - 0x00D00000 = backup of the second stage bootloader (should be loaded if the other fails, unconfirmed!)
+   0x00D00000 - 0x01200000 = PARAM.lfs config the bootloader 
+   
+   #########################################################################################
+   #########################################################################################
+   ###### NEVER TOUCH THE FIRST 2 256k PAGES! THEY CONTAIN THE FIRST STAGE BOOTLOADER ######
+   #########################################################################################
+   #########################################################################################*/ 
+                                                                   
+        {
+		.name		= "kernel",
+		.offset		= (72*SZ_256K),
+		.size		= (30*SZ_256K),
 	},
 	{
 		.name		= "recovery",
-		.offset		= MTDPART_OFS_APPEND,
-		.size		= (5*SZ_1M),
+		.offset		= (102*SZ_256K),
+		.size		= (30*SZ_256K),
 	},
-	{
-		.name		= "kernel",
-		.offset		= MTDPART_OFS_APPEND,
-		.size		= (5*SZ_1M),
-	},
-	{
-		.name		= "ramdisk",
-		.offset		= MTDPART_OFS_APPEND,
-		.size		= (3*SZ_1M),
-	},
-	{
+	{	
 		.name		= "system",
-		.offset		= MTDPART_OFS_APPEND,
-		.size		= (90*SZ_1M),
+		.offset		=  (132*SZ_256K), //2100000 (104*SZ_1M), ///109051904 bytes, /* skip bootloader and things like that */		                        
+		.size		= (600*SZ_256K),		
 	},
 	{
 		.name		= "cache",
-		.offset		= MTDPART_OFS_APPEND,
-		.size		= (80*SZ_1M),
+		.offset		= (732*SZ_256K),
+		.size		= (320*SZ_256K),
 	},
 	{
 		.name		= "userdata",
-		.offset		= MTDPART_OFS_APPEND,
-		.size		= MTDPART_SIZ_FULL,
-	}
+		.offset		= (1052*SZ_256K),
+		.size		= (900*SZ_256K),
+	},
+	{
+		.name		= "modem",
+		.offset		= (1954*SZ_256K),
+		.size		= (50*SZ_256K),
+	},		
 };
 
 #define ONENAND_ERASE_STATUS		0x00
