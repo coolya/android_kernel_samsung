@@ -435,4 +435,10 @@ config KEYPAD_CYPRESS_TOUCH
 	  To compile this driver as a module, choose M here: the
 	  module will be called cypress-touchkey.
 
+config KEYPAD_CYPRESS_TOUCH_HAS_LEGACY_KEYCODE
+	tristate "Cypress touch legacy keycode support"
+	depends on KEYPAD_CYPRESS_TOUCH
+	default n
+	help
+	 Say Y here if your device uses legacy keycodes.
 endif
