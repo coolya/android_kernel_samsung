@@ -1207,6 +1207,12 @@ static struct gpio_event_direct_entry aries_keypad_key_map[] = {
 		.gpio	= S5PV210_GPH2(6),
 		.code	= KEY_POWER,
 	},
+#ifdef CONFIG_SAMSUNG_GALAXYS
+	{
+		.gpio	= S5PV210_GPH3(5),
+		.code	= KEY_HOME,
+	},
+#endif
 #ifdef CONFIG_SAMSUNG_VIBRANT
 	{
 		.gpio	= S5PV210_GPH3(2),
@@ -3016,11 +3022,19 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.pud	= S3C_GPIO_PULL_DOWN,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
+#ifdef CONFIG_SAMSUNG_GALAXYS /* HOME Key */
+		.num	= S5PV210_GPH3(5),
+		.cfg	= S3C_GPIO_SFN(0xF),
+		.val	= S3C_GPIO_SETPIN_NONE,
+		.pud	= S3C_GPIO_PULL_DOWN,
+		.drv	= S3C_GPIO_DRVSTR_1X,
+#else
 		.num	= S5PV210_GPH3(5),
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_DOWN,
 		.drv	= S3C_GPIO_DRVSTR_1X,
+#endif
 	}, { /* GPIO_EAR_SEND_END */
 		.num	= S5PV210_GPH3(6),
 		.cfg	= S3C_GPIO_SFN(GPIO_EAR_SEND_END_AF),
