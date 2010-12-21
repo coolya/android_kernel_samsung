@@ -182,7 +182,7 @@ static const struct gamma_entry gamma_table[] = {
 	{     BV_255, { 2065000, 2072000, 1596000, }, },
 };
 
-struct s5p_panel_data herring_panel_data = {
+struct s5p_panel_data aries_panel_data = {
 	.seq_display_set = s6e63m0_SEQ_DISPLAY_SETTING,
 	.seq_etc_set = s6e63m0_SEQ_ETC_SETTING,
 	.standby_on = s6e63m0_SEQ_STANDBY_ON,

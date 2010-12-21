@@ -31,11 +31,11 @@
 #include <linux/interrupt.h>
 #include <linux/init.h>
 #include <mach/gpio.h>
-#include <mach/gpio-herring.h>
+#include <mach/gpio-aries.h>
 #include <mach/hardware.h>
 #include <plat/gpio-cfg.h>
 #include <plat/irqs.h>
-#include "herring.h"
+#include "aries.h"
 
 #define IRQ_BT_HOST_WAKE      IRQ_EINT(21)
 
@@ -182,7 +182,7 @@ static const struct rfkill_ops bt_rfkill_ops = {
 	.set_block = bt_rfkill_set_block,
 };
 
-static int __init herring_rfkill_probe(struct platform_device *pdev)
+static int __init aries_rfkill_probe(struct platform_device *pdev)
 {
 	int irq;
 	int ret;
@@ -256,22 +256,22 @@ static int __init herring_rfkill_probe(struct platform_device *pdev)
 	return ret;
 }
 
-static struct platform_driver herring_device_rfkill = {
-	.probe = herring_rfkill_probe,
+static struct platform_driver aries_device_rfkill = {
+	.probe = aries_rfkill_probe,
 	.driver = {
 		.name = "bt_rfkill",
 		.owner = THIS_MODULE,
 	},
 };
 
-static int __init herring_rfkill_init(void)
+static int __init aries_rfkill_init(void)
 {
 	int rc = 0;
-	rc = platform_driver_register(&herring_device_rfkill);
+	rc = platform_driver_register(&aries_device_rfkill);
 
 	return rc;
 }
 
-module_init(herring_rfkill_init);
-MODULE_DESCRIPTION("herring rfkill");
+module_init(aries_rfkill_init);
+MODULE_DESCRIPTION("aries rfkill");
 MODULE_LICENSE("GPL");

@@ -1,4 +1,4 @@
-/* linux/arch/arm/mach-s5pv210/dev-herring-phone.c
+/* linux/arch/arm/mach-s5pv210/dev-aries-phone.c
  * Copyright (C) 2010 Samsung Electronics. All rights reserved.
  *
  * This software is licensed under the terms of the GNU General Public
@@ -18,7 +18,7 @@
 
 #include <mach/map.h>
 #include <mach/gpio.h>
-#include <mach/gpio-herring.h>
+#include <mach/gpio-aries.h>
 
 #include "../../../drivers/misc/samsung_modemctl/modem_ctl.h"
 
@@ -61,9 +61,9 @@ static struct platform_device modemctl = {
 	},
 };
 
-static int __init herring_init_phone_interface(void)
+static int __init aries_init_phone_interface(void)
 {
 	platform_device_register(&modemctl);
 	return 0;
 }
-device_initcall(herring_init_phone_interface);
+device_initcall(aries_init_phone_interface);
