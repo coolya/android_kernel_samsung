@@ -1,4 +1,4 @@
-/* linux/arch/arm/mach-s5pv210/mach-herring.c
+/* linux/arch/arm/mach-s5pv210/mach-aries.c
  *
  * Copyright (c) 2010 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com/
@@ -42,7 +42,7 @@
 #include <mach/map.h>
 #include <mach/regs-clock.h>
 #include <mach/gpio.h>
-#include <mach/gpio-herring.h>
+#include <mach/gpio-aries.h>
 #include <mach/adc.h>
 #include <mach/param.h>
 #include <mach/system.h>
@@ -92,7 +92,7 @@
 #include <linux/mfd/max8998.h>
 #include <linux/switch.h>
 
-#include "herring.h"
+#include "aries.h"
 
 struct class *sec_class;
 EXPORT_SYMBOL(sec_class);
@@ -127,7 +127,7 @@ struct wifi_mem_prealloc {
 	unsigned long size;
 };
 
-static int herring_notifier_call(struct notifier_block *this,
+static int aries_notifier_call(struct notifier_block *this,
 					unsigned long code, void *_cmd)
 {
 	int mode = REBOOT_MODE_NONE;
@@ -149,8 +149,8 @@ static int herring_notifier_call(struct notifier_block *this,
 	return NOTIFY_DONE;
 }
 
-static struct notifier_block herring_reboot_notifier = {
-	.notifier_call = herring_notifier_call,
+static struct notifier_block aries_reboot_notifier = {
+	.notifier_call = aries_notifier_call,
 };
 
 static void gps_gpio_init(void)
@@ -209,7 +209,7 @@ static void uart_switch_init(void)
 	gpio_export_link(uartswitch_dev, "UART_SEL", GPIO_UART_SEL);
 }
 
-static void herring_switch_init(void)
+static void aries_switch_init(void)
 {
 	sec_class = class_create(THIS_MODULE, "sec");
 
@@ -236,14 +236,14 @@ static void herring_switch_init(void)
 				 S5PV210_UFCON_TXTRIG4 |	\
 				 S5PV210_UFCON_RXTRIG4)
 
-static struct s3c2410_uartcfg herring_uartcfgs[] __initdata = {
+static struct s3c2410_uartcfg aries_uartcfgs[] __initdata = {
 	{
 		.hwport		= 0,
 		.flags		= 0,
 		.ucon		= S5PV210_UCON_DEFAULT,
 		.ulcon		= S5PV210_ULCON_DEFAULT,
 		.ufcon		= S5PV210_UFCON_DEFAULT,
-		.wake_peer	= herring_bt_uart_wake_peer,
+		.wake_peer	= aries_bt_uart_wake_peer,
 	},
 	{
 		.hwport		= 1,
@@ -304,7 +304,7 @@ static struct s3cfb_lcd s6e63m0 = {
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMD (4800 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_JPEG (8192 * SZ_1K)
 
-static struct s5p_media_device herring_media_devs[] = {
+static struct s5p_media_device aries_media_devs[] = {
 	[0] = {
 		.id = S5P_MDEV_MFC,
 		.name = "mfc",
@@ -408,7 +408,7 @@ static struct regulator_consumer_supply buck4_consumer[] = {
 	{	.supply	= "cam_isp_core", },
 };
 
-static struct regulator_init_data herring_ldo2_data = {
+static struct regulator_init_data aries_ldo2_data = {
 	.constraints	= {
 		.name		= "VALIVE_1.2V",
 		.min_uV		= 1200000,
@@ -421,7 +421,7 @@ static struct regulator_init_data herring_ldo2_data = {
 	},
 };
 
-static struct regulator_init_data herring_ldo3_data = {
+static struct regulator_init_data aries_ldo3_data = {
 	.constraints	= {
 		.name		= "VUSB_1.1V",
 		.min_uV		= 1100000,
@@ -436,7 +436,7 @@ static struct regulator_init_data herring_ldo3_data = {
 	.consumer_supplies	= ldo3_consumer,
 };
 
-static struct regulator_init_data herring_ldo4_data = {
+static struct regulator_init_data aries_ldo4_data = {
 	.constraints	= {
 		.name		= "VADC_3.3V",
 		.min_uV		= 3300000,
@@ -450,7 +450,7 @@ static struct regulator_init_data herring_ldo4_data = {
 	},
 };
 
-static struct regulator_init_data herring_ldo7_data = {
+static struct regulator_init_data aries_ldo7_data = {
 	.constraints	= {
 		.name		= "VLCD_1.8V",
 		.min_uV		= 1800000,
@@ -466,7 +466,7 @@ static struct regulator_init_data herring_ldo7_data = {
 	.consumer_supplies	= ldo7_consumer,
 };
 
-static struct regulator_init_data herring_ldo8_data = {
+static struct regulator_init_data aries_ldo8_data = {
 	.constraints	= {
 		.name		= "VUSB_3.3V",
 		.min_uV		= 3300000,
@@ -481,7 +481,7 @@ static struct regulator_init_data herring_ldo8_data = {
 	.consumer_supplies	= ldo8_consumer,
 };
 
-static struct regulator_init_data herring_ldo9_data = {
+static struct regulator_init_data aries_ldo9_data = {
 	.constraints	= {
 		.name		= "VCC_2.8V_PDA",
 		.min_uV		= 2800000,
@@ -491,7 +491,7 @@ static struct regulator_init_data herring_ldo9_data = {
 	},
 };
 
-static struct regulator_init_data herring_ldo11_data = {
+static struct regulator_init_data aries_ldo11_data = {
 	.constraints	= {
 		.name		= "CAM_AF_3.0V",
 		.min_uV		= 3000000,
@@ -506,7 +506,7 @@ static struct regulator_init_data herring_ldo11_data = {
 	.consumer_supplies	= ldo11_consumer,
 };
 
-static struct regulator_init_data herring_ldo12_data = {
+static struct regulator_init_data aries_ldo12_data = {
 	.constraints	= {
 		.name		= "CAM_SENSOR_CORE_1.2V",
 		.min_uV		= 1200000,
@@ -521,7 +521,7 @@ static struct regulator_init_data herring_ldo12_data = {
 	.consumer_supplies	= ldo12_consumer,
 };
 
-static struct regulator_init_data herring_ldo13_data = {
+static struct regulator_init_data aries_ldo13_data = {
 	.constraints	= {
 		.name		= "VGA_VDDIO_2.8V",
 		.min_uV		= 2800000,
@@ -536,7 +536,7 @@ static struct regulator_init_data herring_ldo13_data = {
 	.consumer_supplies	= ldo13_consumer,
 };
 
-static struct regulator_init_data herring_ldo14_data = {
+static struct regulator_init_data aries_ldo14_data = {
 	.constraints	= {
 		.name		= "VGA_DVDD_1.8V",
 		.min_uV		= 1800000,
@@ -551,7 +551,7 @@ static struct regulator_init_data herring_ldo14_data = {
 	.consumer_supplies	= ldo14_consumer,
 };
 
-static struct regulator_init_data herring_ldo15_data = {
+static struct regulator_init_data aries_ldo15_data = {
 	.constraints	= {
 		.name		= "CAM_ISP_HOST_2.8V",
 		.min_uV		= 2800000,
@@ -566,7 +566,7 @@ static struct regulator_init_data herring_ldo15_data = {
 	.consumer_supplies	= ldo15_consumer,
 };
 
-static struct regulator_init_data herring_ldo16_data = {
+static struct regulator_init_data aries_ldo16_data = {
 	.constraints	= {
 		.name		= "VGA_AVDD_2.8V",
 		.min_uV		= 2800000,
@@ -581,7 +581,7 @@ static struct regulator_init_data herring_ldo16_data = {
 	.consumer_supplies	= ldo16_consumer,
 };
 
-static struct regulator_init_data herring_ldo17_data = {
+static struct regulator_init_data aries_ldo17_data = {
 	.constraints	= {
 		.name		= "VCC_3.0V_LCD",
 		.min_uV		= 3000000,
@@ -597,7 +597,7 @@ static struct regulator_init_data herring_ldo17_data = {
 	.consumer_supplies	= ldo17_consumer,
 };
 
-static struct regulator_init_data herring_buck1_data = {
+static struct regulator_init_data aries_buck1_data = {
 	.constraints	= {
 		.name		= "VDD_ARM",
 		.min_uV		= 750000,
@@ -616,7 +616,7 @@ static struct regulator_init_data herring_buck1_data = {
 };
 
 
-static struct regulator_init_data herring_buck2_data = {
+static struct regulator_init_data aries_buck2_data = {
 	.constraints	= {
 		.name		= "VDD_INT",
 		.min_uV		= 750000,
@@ -634,7 +634,7 @@ static struct regulator_init_data herring_buck2_data = {
 	.consumer_supplies	= buck2_consumer,
 };
 
-static struct regulator_init_data herring_buck3_data = {
+static struct regulator_init_data aries_buck3_data = {
 	.constraints	= {
 		.name		= "VCC_1.8V",
 		.min_uV		= 1800000,
@@ -644,7 +644,7 @@ static struct regulator_init_data herring_buck3_data = {
 	},
 };
 
-static struct regulator_init_data herring_buck4_data = {
+static struct regulator_init_data aries_buck4_data = {
 	.constraints	= {
 		.name		= "CAM_ISP_CORE_1.2V",
 		.min_uV		= 1200000,
@@ -659,24 +659,24 @@ static struct regulator_init_data herring_buck4_data = {
 	.consumer_supplies	= buck4_consumer,
 };
 
-static struct max8998_regulator_data herring_regulators[] = {
-	{ MAX8998_LDO2,  &herring_ldo2_data },
-	{ MAX8998_LDO3,  &herring_ldo3_data },
-	{ MAX8998_LDO4,  &herring_ldo4_data },
-	{ MAX8998_LDO7,  &herring_ldo7_data },
-	{ MAX8998_LDO8,  &herring_ldo8_data },
-	{ MAX8998_LDO9,  &herring_ldo9_data },
-	{ MAX8998_LDO11, &herring_ldo11_data },
-	{ MAX8998_LDO12, &herring_ldo12_data },
-	{ MAX8998_LDO13, &herring_ldo13_data },
-	{ MAX8998_LDO14, &herring_ldo14_data },
-	{ MAX8998_LDO15, &herring_ldo15_data },
-	{ MAX8998_LDO16, &herring_ldo16_data },
-	{ MAX8998_LDO17, &herring_ldo17_data },
-	{ MAX8998_BUCK1, &herring_buck1_data },
-	{ MAX8998_BUCK2, &herring_buck2_data },
-	{ MAX8998_BUCK3, &herring_buck3_data },
-	{ MAX8998_BUCK4, &herring_buck4_data },
+static struct max8998_regulator_data aries_regulators[] = {
+	{ MAX8998_LDO2,  &aries_ldo2_data },
+	{ MAX8998_LDO3,  &aries_ldo3_data },
+	{ MAX8998_LDO4,  &aries_ldo4_data },
+	{ MAX8998_LDO7,  &aries_ldo7_data },
+	{ MAX8998_LDO8,  &aries_ldo8_data },
+	{ MAX8998_LDO9,  &aries_ldo9_data },
+	{ MAX8998_LDO11, &aries_ldo11_data },
+	{ MAX8998_LDO12, &aries_ldo12_data },
+	{ MAX8998_LDO13, &aries_ldo13_data },
+	{ MAX8998_LDO14, &aries_ldo14_data },
+	{ MAX8998_LDO15, &aries_ldo15_data },
+	{ MAX8998_LDO16, &aries_ldo16_data },
+	{ MAX8998_LDO17, &aries_ldo17_data },
+	{ MAX8998_BUCK1, &aries_buck1_data },
+	{ MAX8998_BUCK2, &aries_buck2_data },
+	{ MAX8998_BUCK3, &aries_buck3_data },
+	{ MAX8998_BUCK4, &aries_buck4_data },
 };
 
 static struct max8998_adc_table_data temper_table[] =  {
@@ -776,16 +776,16 @@ static void max8998_charger_register_callbacks(
 		callbacks->set_cable(callbacks, set_cable_status);
 }
 
-static struct max8998_charger_data herring_charger = {
+static struct max8998_charger_data aries_charger = {
 	.register_callbacks = &max8998_charger_register_callbacks,
 	.adc_table		= temper_table,
 	.adc_array_size		= ARRAY_SIZE(temper_table),
 };
 
 static struct max8998_platform_data max8998_pdata = {
-	.num_regulators = ARRAY_SIZE(herring_regulators),
-	.regulators     = herring_regulators,
-	.charger        = &herring_charger,
+	.num_regulators = ARRAY_SIZE(aries_regulators),
+	.regulators     = aries_regulators,
+	.charger        = &aries_charger,
 };
 
 struct platform_device sec_device_dpram = {
@@ -987,7 +987,7 @@ static struct s3c_platform_fb tl2796_data __initdata = {
 static struct spi_board_info spi_board_info[] __initdata = {
 	{
 		.modalias	= "tl2796",
-		.platform_data	= &herring_panel_data,
+		.platform_data	= &aries_panel_data,
 		.max_speed_hz	= 1200000,
 		.bus_num	= LCD_BUS_NUM,
 		.chip_select	= 0,
@@ -1195,7 +1195,7 @@ static struct touchkey_platform_data touchkey_data = {
 	.touchkey_onoff = touch_keypad_onoff,
 };
 
-static struct gpio_event_direct_entry herring_keypad_key_map[] = {
+static struct gpio_event_direct_entry aries_keypad_key_map[] = {
 	{
 		.gpio	= S5PV210_GPH2(6),
 		.code	= KEY_POWER,
@@ -1210,34 +1210,34 @@ static struct gpio_event_direct_entry herring_keypad_key_map[] = {
 	}
 };
 
-static struct gpio_event_input_info herring_keypad_key_info = {
+static struct gpio_event_input_info aries_keypad_key_info = {
 	.info.func = gpio_event_input_func,
 	.info.no_suspend = true,
 	.debounce_time.tv.nsec = 5 * NSEC_PER_MSEC,
 	.type = EV_KEY,
-	.keymap = herring_keypad_key_map,
-	.keymap_size = ARRAY_SIZE(herring_keypad_key_map)
+	.keymap = aries_keypad_key_map,
+	.keymap_size = ARRAY_SIZE(aries_keypad_key_map)
 };
 
-static struct gpio_event_info *herring_input_info[] = {
-	&herring_keypad_key_info.info,
+static struct gpio_event_info *aries_input_info[] = {
+	&aries_keypad_key_info.info,
 };
 
 
-static struct gpio_event_platform_data herring_input_data = {
+static struct gpio_event_platform_data aries_input_data = {
 	.names = {
-		"herring-keypad",
+		"aries-keypad",
 		NULL,
 	},
-	.info = herring_input_info,
-	.info_count = ARRAY_SIZE(herring_input_info),
+	.info = aries_input_info,
+	.info_count = ARRAY_SIZE(aries_input_info),
 };
 
-static struct platform_device herring_input_device = {
+static struct platform_device aries_input_device = {
 	.name = GPIO_EVENT_DEV_NAME,
 	.id = 0,
 	.dev = {
-		.platform_data = &herring_input_data,
+		.platform_data = &aries_input_data,
 	},
 };
 
@@ -2132,13 +2132,13 @@ static struct i2c_board_info i2c_devs14[] __initdata = {
 static int max17040_power_supply_register(struct device *parent,
 	struct power_supply *psy)
 {
-	herring_charger.psy_fuelgauge = psy;
+	aries_charger.psy_fuelgauge = psy;
 	return 0;
 }
 
 static void max17040_power_supply_unregister(struct power_supply *psy)
 {
-	herring_charger.psy_fuelgauge = NULL;
+	aries_charger.psy_fuelgauge = NULL;
 }
 
 static struct max17040_platform_data max17040_pdata = {
@@ -2364,7 +2364,7 @@ struct gpio_init_data {
 	uint drv;
 };
 
-static struct gpio_init_data herring_init_gpios[] = {
+static struct gpio_init_data aries_init_gpios[] = {
 	{
 		.num	= S5PV210_GPB(0),
 		.cfg	= S3C_GPIO_OUTPUT,
@@ -3428,22 +3428,22 @@ void s3c_config_gpio_table(void)
 {
 	u32 i, gpio;
 
-	for (i = 0; i < ARRAY_SIZE(herring_init_gpios); i++) {
-		gpio = herring_init_gpios[i].num;
+	for (i = 0; i < ARRAY_SIZE(aries_init_gpios); i++) {
+		gpio = aries_init_gpios[i].num;
 		if (gpio <= S5PV210_MP05(7)) {
-			s3c_gpio_cfgpin(gpio, herring_init_gpios[i].cfg);
-			s3c_gpio_setpull(gpio, herring_init_gpios[i].pud);
+			s3c_gpio_cfgpin(gpio, aries_init_gpios[i].cfg);
+			s3c_gpio_setpull(gpio, aries_init_gpios[i].pud);
 
-			if (herring_init_gpios[i].val != S3C_GPIO_SETPIN_NONE)
-				gpio_set_value(gpio, herring_init_gpios[i].val);
+			if (aries_init_gpios[i].val != S3C_GPIO_SETPIN_NONE)
+				gpio_set_value(gpio, aries_init_gpios[i].val);
 
-			s3c_gpio_set_drvstrength(gpio, herring_init_gpios[i].drv);
+			s3c_gpio_set_drvstrength(gpio, aries_init_gpios[i].drv);
 		}
 	}
 }
 
 #define S5PV210_PS_HOLD_CONTROL_REG (S3C_VA_SYS+0xE81C)
-static void herring_power_off(void)
+static void aries_power_off(void)
 {
 	while (1) {
 		/* Check reboot charging */
@@ -3474,7 +3474,7 @@ static void herring_power_off(void)
 }
 
 /* this table only for B4 board */
-static unsigned int herring_sleep_gpio_table[][3] = {
+static unsigned int aries_sleep_gpio_table[][3] = {
 	{ S5PV210_GPA0(0), S3C_GPIO_SLP_PREV,	S3C_GPIO_PULL_NONE},
 	{ S5PV210_GPA0(1), S3C_GPIO_SLP_PREV,	S3C_GPIO_PULL_NONE},
 	{ S5PV210_GPA0(2), S3C_GPIO_SLP_PREV,	S3C_GPIO_PULL_NONE},
@@ -3908,7 +3908,7 @@ static struct wifi_mem_prealloc wifi_mem_array[PREALLOC_WLAN_SEC_NUM] = {
 	{NULL, (WLAN_SECTION_SIZE_3 + PREALLOC_WLAN_SECTION_HEADER)}
 };
 
-static void *herring_mem_prealloc(int section, unsigned long size)
+static void *aries_mem_prealloc(int section, unsigned long size)
 {
 	if (section == PREALLOC_WLAN_SEC_NUM)
 		return wlan_static_skb;
@@ -3922,7 +3922,7 @@ static void *herring_mem_prealloc(int section, unsigned long size)
 	return wifi_mem_array[section].mem_ptr;
 }
 
-int __init herring_init_wifi_mem(void)
+int __init aries_init_wifi_mem(void)
 {
 	int i;
 	int j;
@@ -3962,7 +3962,7 @@ static struct wifi_platform_data wifi_pdata = {
 	.set_power		= wlan_power_en,
 	.set_reset		= wlan_reset_en,
 	.set_carddetect		= wlan_carddetect_en,
-	.mem_prealloc		= herring_mem_prealloc,
+	.mem_prealloc		= aries_mem_prealloc,
 };
 
 static struct platform_device sec_device_wifi = {
@@ -3980,7 +3980,7 @@ static struct platform_device watchdog_device = {
 	.id = -1,
 };
 
-static struct platform_device *herring_devices[] __initdata = {
+static struct platform_device *aries_devices[] __initdata = {
 	&watchdog_device,
 #ifdef CONFIG_FIQ_DEBUGGER
 	&s5pv210_device_fiqdbg_uart2,
@@ -3989,7 +3989,7 @@ static struct platform_device *herring_devices[] __initdata = {
 #ifdef CONFIG_RTC_DRV_S3C
 	&s5p_device_rtc,
 #endif
-	&herring_input_device,
+	&aries_input_device,
 
 	&s5pv210_device_iis0,
 	&s3c_device_wdt,
@@ -4098,13 +4098,13 @@ static struct platform_device *herring_devices[] __initdata = {
 unsigned int HWREV;
 EXPORT_SYMBOL(HWREV);
 
-static void __init herring_map_io(void)
+static void __init aries_map_io(void)
 {
 	s5p_init_io(NULL, 0, S5P_VA_CHIPID);
 	s3c24xx_init_clocks(24000000);
 	s5pv210_gpiolib_init();
-	s3c24xx_init_uarts(herring_uartcfgs, ARRAY_SIZE(herring_uartcfgs));
-	s5p_reserve_bootmem(herring_media_devs, ARRAY_SIZE(herring_media_devs));
+	s3c24xx_init_uarts(aries_uartcfgs, ARRAY_SIZE(aries_uartcfgs));
+	s5p_reserve_bootmem(aries_media_devs, ARRAY_SIZE(aries_media_devs));
 #ifdef CONFIG_MTD_ONENAND
 	s5pc110_device_onenand.name = "s5pc110-onenand";
 #endif
@@ -4115,7 +4115,7 @@ unsigned int pm_debug_scratchpad;
 static unsigned int ram_console_start;
 static unsigned int ram_console_size;
 
-static void __init herring_fixup(struct machine_desc *desc,
+static void __init aries_fixup(struct machine_desc *desc,
 		struct tag *tags, char **cmdline,
 		struct meminfo *mi)
 {
@@ -4174,11 +4174,11 @@ int hw_version_check(void)
 }
 EXPORT_SYMBOL(hw_version_check);
 
-static void herring_init_gpio(void)
+static void aries_init_gpio(void)
 {
 	s3c_config_gpio_table();
-	s3c_config_sleep_gpio_table(ARRAY_SIZE(herring_sleep_gpio_table),
-			herring_sleep_gpio_table);
+	s3c_config_sleep_gpio_table(ARRAY_SIZE(aries_sleep_gpio_table),
+			aries_sleep_gpio_table);
 }
 
 static void __init fsa9480_gpio_init(void)
@@ -4246,24 +4246,24 @@ static void flush_console(void)
 	release_console_sem();
 }
 
-static void herring_pm_restart(char mode, const char *cmd)
+static void aries_pm_restart(char mode, const char *cmd)
 {
 	flush_console();
 	arm_machine_restart(mode, cmd);
 }
 
-static void __init herring_machine_init(void)
+static void __init aries_machine_init(void)
 {
-	arm_pm_restart = herring_pm_restart;
+	arm_pm_restart = aries_pm_restart;
 
 	setup_ram_console_mem();
 	s3c_usb_set_serial();
-	platform_add_devices(herring_devices, ARRAY_SIZE(herring_devices));
+	platform_add_devices(aries_devices, ARRAY_SIZE(aries_devices));
 
 	/* Find out S5PC110 chip version */
 	_hw_version_check();
 
-	pm_power_off = herring_power_off ;
+	pm_power_off = aries_power_off ;
 
 	s3c_gpio_cfgpin(GPIO_HWREV_MODE0, S3C_GPIO_INPUT);
 	s3c_gpio_setpull(GPIO_HWREV_MODE0, S3C_GPIO_PULL_NONE);
@@ -4280,7 +4280,7 @@ static void __init herring_machine_init(void)
 	printk(KERN_INFO "HWREV is 0x%x\n", HWREV);
 
 	/*initialise the gpio's*/
-	herring_init_gpio();
+	aries_init_gpio();
 
 #ifdef CONFIG_ANDROID_PMEM
 	android_pmem_set_platdata();
@@ -4391,15 +4391,15 @@ static void __init herring_machine_init(void)
 
 	regulator_has_full_constraints();
 
-	register_reboot_notifier(&herring_reboot_notifier);
+	register_reboot_notifier(&aries_reboot_notifier);
 
-	herring_switch_init();
+	aries_switch_init();
 
 	gps_gpio_init();
 
 	uart_switch_init();
 
-	herring_init_wifi_mem();
+	aries_init_wifi_mem();
 }
 
 #ifdef CONFIG_USB_SUPPORT
@@ -4482,10 +4482,10 @@ MACHINE_START(SMDKC110, "SMDKC110")
 	.phys_io	= S3C_PA_UART & 0xfff00000,
 	.io_pg_offst	= (((u32)S3C_VA_UART) >> 18) & 0xfffc,
 	.boot_params	= S5P_PA_SDRAM + 0x100,
-	.fixup		= herring_fixup,
+	.fixup		= aries_fixup,
 	.init_irq	= s5pv210_init_irq,
-	.map_io		= herring_map_io,
-	.init_machine	= herring_machine_init,
+	.map_io		= aries_map_io,
+	.init_machine	= aries_machine_init,
 #if	defined(CONFIG_S5P_HIGH_RES_TIMERS)
 	.timer		= &s5p_systimer,
 #else
@@ -4493,14 +4493,14 @@ MACHINE_START(SMDKC110, "SMDKC110")
 #endif
 MACHINE_END
 
-MACHINE_START(HERRING, "herring")
+MACHINE_START(ARIES, "aries")
 	.phys_io	= S3C_PA_UART & 0xfff00000,
 	.io_pg_offst	= (((u32)S3C_VA_UART) >> 18) & 0xfffc,
 	.boot_params	= S5P_PA_SDRAM + 0x100,
-	.fixup		= herring_fixup,
+	.fixup		= aries_fixup,
 	.init_irq	= s5pv210_init_irq,
-	.map_io		= herring_map_io,
-	.init_machine	= herring_machine_init,
+	.map_io		= aries_map_io,
+	.init_machine	= aries_machine_init,
 	.timer		= &s5p_systimer,
 MACHINE_END
 

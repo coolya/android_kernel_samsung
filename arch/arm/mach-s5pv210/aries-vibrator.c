@@ -1,4 +1,4 @@
-/* arch/arm/mach-s5pv210/herring-vibrator.c
+/* arch/arm/mach-s5pv210/aries-vibrator.c
  *
  * Copyright (C) 2010 Samsung Electronics Co. Ltd. All Rights Reserved.
  * Author: Rom Lemarchand <rlemarchand@sta.samsung.com>
@@ -27,7 +27,7 @@
 
 #include <../../../drivers/staging/android/timed_output.h>
 
-#include <mach/gpio-herring.h>
+#include <mach/gpio-aries.h>
 
 #define GPD0_TOUT_1		2 << 4
 
@@ -43,14 +43,14 @@ static struct vibrator {
 	struct work_struct work;
 } vibdata;
 
-static void herring_vibrator_off(void)
+static void aries_vibrator_off(void)
 {
 	pwm_disable(vibdata.pwm_dev);
 	gpio_direction_output(GPIO_VIBTONE_EN1, GPIO_LEVEL_LOW);
 	wake_unlock(&vibdata.wklock);
 }
 
-static int herring_vibrator_get_time(struct timed_output_dev *dev)
+static int aries_vibrator_get_time(struct timed_output_dev *dev)
 {
 	if (hrtimer_active(&vibdata.timer)) {
 		ktime_t r = hrtimer_get_remaining(&vibdata.timer);
@@ -60,7 +60,7 @@ static int herring_vibrator_get_time(struct timed_output_dev *dev)
 	return 0;
 }
 
-static void herring_vibrator_enable(struct timed_output_dev *dev, int value)
+static void aries_vibrator_enable(struct timed_output_dev *dev, int value)
 {
 	mutex_lock(&vibdata.lock);
 
@@ -82,39 +82,39 @@ static void herring_vibrator_enable(struct timed_output_dev *dev, int value)
 				HRTIMER_MODE_REL);
 		}
 	} else
-		herring_vibrator_off();
+		aries_vibrator_off();
 
 	mutex_unlock(&vibdata.lock);
 }
 
 static struct timed_output_dev to_dev = {
 	.name		= "vibrator",
-	.get_time	= herring_vibrator_get_time,
-	.enable		= herring_vibrator_enable,
+	.get_time	= aries_vibrator_get_time,
+	.enable		= aries_vibrator_enable,
 };
 
-static enum hrtimer_restart herring_vibrator_timer_func(struct hrtimer *timer)
+static enum hrtimer_restart aries_vibrator_timer_func(struct hrtimer *timer)
 {
 	schedule_work(&vibdata.work);
 	return HRTIMER_NORESTART;
 }
 
-static void herring_vibrator_work(struct work_struct *work)
+static void aries_vibrator_work(struct work_struct *work)
 {
-	herring_vibrator_off();
+	aries_vibrator_off();
 }
 
-static int __init herring_init_vibrator(void)
+static int __init aries_init_vibrator(void)
 {
 	int ret = 0;
 
-#ifdef CONFIG_MACH_HERRING
-	if (!machine_is_herring())
+#ifdef CONFIG_MACH_ARIES
+	if (!machine_is_aries())
 		return 0;
 #endif
 	hrtimer_init(&vibdata.timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	vibdata.timer.function = herring_vibrator_timer_func;
-	INIT_WORK(&vibdata.work, herring_vibrator_work);
+	vibdata.timer.function = aries_vibrator_timer_func;
+	INIT_WORK(&vibdata.work, aries_vibrator_work);
 
 	ret = gpio_request(GPIO_VIBTONE_EN1, "vibrator-en");
 	if (ret < 0)
@@ -146,4 +146,4 @@ err_pwm_req:
 	return ret;
 }
 
-device_initcall(herring_init_vibrator);
+device_initcall(aries_init_vibrator);

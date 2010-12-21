@@ -1,4 +1,4 @@
-/* linux/arch/arm/mach-s5pv210/herring-btlpm.c
+/* linux/arch/arm/mach-s5pv210/aries-btlpm.c
  * Copyright (C) 2010 Samsung Electronics. All rights reserved.
  *
  * This software is licensed under the terms of the GNU General Public
@@ -17,11 +17,11 @@
 
 #include <asm/mach-types.h>
 
-#include <mach/gpio-herring.h>
+#include <mach/gpio-aries.h>
 
-#include "herring.h"
+#include "aries.h"
 
-static struct herring_bt_lpm {
+static struct aries_bt_lpm {
 	struct hrtimer bt_lpm_timer;
 	ktime_t bt_lpm_delay;
 } bt_lpm;
@@ -33,7 +33,7 @@ static enum hrtimer_restart bt_enter_lpm(struct hrtimer *timer)
 	return HRTIMER_NORESTART;
 }
 
-void herring_bt_uart_wake_peer(struct uart_port *port)
+void aries_bt_uart_wake_peer(struct uart_port *port)
 {
 	if (!bt_lpm.bt_lpm_timer.function)
 		return;
@@ -47,7 +47,7 @@ static int __init bt_lpm_init(void)
 {
 	int ret;
 
-	if (!machine_is_herring())
+	if (!machine_is_aries())
 		return 0;
 
 	ret = gpio_request(GPIO_BT_WAKE, "gpio_bt_wake");

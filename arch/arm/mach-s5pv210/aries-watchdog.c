@@ -1,4 +1,4 @@
-/* herring-watchdog.c
+/* aries-watchdog.c
  *
  * Copyright (C) 2010 Google, Inc.
  *
