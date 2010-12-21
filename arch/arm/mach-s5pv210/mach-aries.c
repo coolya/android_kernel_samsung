@@ -1183,10 +1183,17 @@ static void touch_keypad_onoff(int onoff)
 }
 
 static const int touch_keypad_code[] = {
+#ifdef CONFIG_SAMSUNG_GALAXYS
+	KEY_MENU,
+	KEY_BACK,
+	0,
+	0
+#else
 	KEY_MENU,
 	KEY_HOME,
 	KEY_BACK,
 	KEY_SEARCH
+#endif
 };
 
 static struct touchkey_platform_data touchkey_data = {
