@@ -137,6 +137,24 @@ config MACH_HERRING
 	help
 	  Machine support for Herring
 
+config MACH_ARIES
+	bool "Aries"
+	select CPU_S5PV210
+	select ARCH_DISCONTIGMEM_ENABLE
+	select S3C_DEV_WDT
+	select HAVE_S3C2410_WATCHDOG
+	select S3C_DEV_I2C1
+	select S3C_DEV_I2C2
+	select HAVE_PWM
+	select ARCH_HAS_CPUFREQ
+	select S3C_DEV_HSMMC
+	select S3C_DEV_HSMMC1 if !S5PV210_SD_CH0_8BIT
+	select S3C_DEV_HSMMC3 if !S5PV210_SD_CH2_8BIT
+	select S5PV210_SETUP_SDHCI
+	select S5PV210_POWER_DOMAIN
+	help
+	  Machine support for Aries
+
 config S5PV210_SETUP_FB
 	bool
 	depends on FB_S3C
