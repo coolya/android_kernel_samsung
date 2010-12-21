@@ -72,6 +72,11 @@ void s5pv210_setup_sdhci0_cfg_gpio(struct platform_device *dev, int width)
 		s3c_gpio_setpull(S5PV210_GPJ2(7), S3C_GPIO_PULL_NONE);
 		gpio_set_value(S5PV210_GPJ2(7), 1);
 	}
+        if (machine_is_aries()) {
+		s3c_gpio_cfgpin(S5PV210_GPJ2(7), S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(S5PV210_GPJ2(7), S3C_GPIO_PULL_NONE);
+		gpio_set_value(S5PV210_GPJ2(7), 1);
+	}
 }
 
 void s5pv210_setup_sdhci1_cfg_gpio(struct platform_device *dev, int width)
@@ -318,11 +323,19 @@ void s3c_sdhci_set_platdata(void)
 		hsmmc2_platdata.cfg_ext_cd = universal_sdhci2_cfg_ext_cd;
 		hsmmc2_platdata.detect_ext_cd = universal_sdhci2_detect_ext_cd;
 	}
+        if (machine_is_aries()) {
+		hsmmc2_platdata.ext_cd = IRQ_EINT(28);
+		hsmmc2_platdata.cfg_ext_cd = universal_sdhci2_cfg_ext_cd;
+		hsmmc2_platdata.detect_ext_cd = universal_sdhci2_detect_ext_cd;
+	}
 
 	s3c_sdhci2_set_platdata(&hsmmc2_platdata);
 #endif
 #if defined(CONFIG_S3C_DEV_HSMMC3)
 	if (machine_is_herring())
+		hsmmc3_platdata.built_in = 1;
+	s3c_sdhci3_set_platdata(&hsmmc3_platdata);
+        if (machine_is_aries())
 		hsmmc3_platdata.built_in = 1;
 	s3c_sdhci3_set_platdata(&hsmmc3_platdata);
 #endif

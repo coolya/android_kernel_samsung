@@ -36,7 +36,15 @@
 #include <linux/wakelock.h>
 #include <linux/workqueue.h>
 #include <mach/battery.h>
+
+#ifdef CONFIG_MACH_HERRING
 #include <mach/gpio-herring.h>
+#endif
+
+#ifdef CONFIG_MACH_ARIES
+#include <mach/gpio-aries.h>
+#endif
+
 #include <mach/hardware.h>
 #include <mach/map.h>
 #include <mach/regs-clock.h>
