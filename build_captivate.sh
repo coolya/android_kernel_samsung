@@ -8,6 +8,6 @@ case "$1" in
 	*)
 esac
 
-	make aries_galaxys_defconfig
+	make aries_captivate_defconfig
 	export KBUILD_BUILD_VERSION="1"
 	make -j`grep 'processor' /proc/cpuinfo | wc -l`
