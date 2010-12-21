@@ -402,6 +402,13 @@ static int cypress_touchkey_probe(struct i2c_client *client,
 
 	set_device_params(devdata, data);
 
+#ifdef CONFIG_KEYPAD_CYPRESS_TOUCH_HAS_LEGACY_KEYCODE
+	devdata->has_legacy_keycode = true;
+#else
+	devdata->has_legacy_keycode = data[1] >= 0xc4 || data[1] < 0x9 ||
+			(data[1] == 0x9 && data[2] < 0x9);
+#endif
+
 	err = i2c_touchkey_write_byte(devdata, devdata->backlight_on);
 	if (err) {
 		dev_err(dev, "%s: touch keypad backlight on failed\n",
