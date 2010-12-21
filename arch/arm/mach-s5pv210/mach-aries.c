@@ -1207,6 +1207,16 @@ static struct gpio_event_direct_entry aries_keypad_key_map[] = {
 		.gpio	= S5PV210_GPH2(6),
 		.code	= KEY_POWER,
 	},
+#ifdef CONFIG_SAMSUNG_VIBRANT
+	{
+		.gpio	= S5PV210_GPH3(2),
+		.code	= KEY_VOLUMEDOWN,
+	},
+	{
+		.gpio	= S5PV210_GPH3(1),
+		.code	= KEY_VOLUMEUP,
+	}
+#else
 	{
 		.gpio	= S5PV210_GPH3(1),
 		.code	= KEY_VOLUMEDOWN,
@@ -1215,6 +1225,7 @@ static struct gpio_event_direct_entry aries_keypad_key_map[] = {
 		.gpio	= S5PV210_GPH3(2),
 		.code	= KEY_VOLUMEUP,
 	}
+#endif
 };
 
 static struct gpio_event_input_info aries_keypad_key_info = {
