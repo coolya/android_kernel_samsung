@@ -2212,8 +2212,12 @@ static struct i2c_board_info i2c_devs11[] __initdata = {
 
 static struct i2c_board_info i2c_devs12[] __initdata = {
 	{
+#if defined(CONFIG_SENSORS_YAMAHA_MS3C)
+		I2C_BOARD_INFO("yamaha", 0x2e),
+#else
 		I2C_BOARD_INFO("ak8973", 0x1c),
 		.platform_data = &akm8973_pdata,
+#endif
 	},
 };
 
@@ -4366,8 +4370,10 @@ static void __init aries_machine_init(void)
 	gp2a_gpio_init();
 	i2c_register_board_info(11, i2c_devs11, ARRAY_SIZE(i2c_devs11));
 	/* magnetic sensor for rev04 */
+#ifndef(CONFIG_SENSORS_YAMAHA_MS3C)
 	if (system_rev == 0x04)
-		i2c_register_board_info(12, i2c_devs12, ARRAY_SIZE(i2c_devs12));
+#endif
+	i2c_register_board_info(12, i2c_devs12, ARRAY_SIZE(i2c_devs12));
 
        /* nfc sensor */
 	i2c_register_board_info(14, i2c_devs14, ARRAY_SIZE(i2c_devs14));
