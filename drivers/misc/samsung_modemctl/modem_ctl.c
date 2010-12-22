@@ -2,6 +2,7 @@
  *
  * Copyright (C) 2010 Google, Inc.
  * Copyright (C) 2010 Samsung Electronics.
+ * Copyright (C) 2010 Kolja Dummann (k.dummann@gmail.com)
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -292,10 +293,23 @@ static int modem_start(struct modemctl *mc, int ramdump)
 		return -EINVAL;
 	}
 
+#ifdef CONFIG_MODEM_HAS_CRAPPY_BOOTLOADER
+
+        /* we do this as the BP bootloader from the SGS is a little bit
+           crapy it does not send the magic data MODEM_MSG_SBL_DONE when
+           it has finished loading. so we wait some amount of time */
+
+        pr_info("[MODEM] we have a crappy bootloader an wait for it");
+
+        //waiting 1500 ms should be enough, maybe we can decrease this but unsure
+	msleep(1500);
+
+#else
 	if (readl(mc->mmio + OFF_MBOX_BP) != MODEM_MSG_SBL_DONE) {
 		pr_err("[MODEM] bootloader not ready\n");
 		return -EIO;
 	}
+#endif
 
 	if (mmio_sem(mc) != 1) {
 		pr_err("[MODEM] we do not own the semaphore\n");
