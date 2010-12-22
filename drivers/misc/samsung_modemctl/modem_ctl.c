@@ -295,13 +295,13 @@ static int modem_start(struct modemctl *mc, int ramdump)
 
 #ifdef CONFIG_MODEM_HAS_CRAPPY_BOOTLOADER
 
-        /* we do this as the BP bootloader from the SGS is a little bit
-           crapy it does not send the magic data MODEM_MSG_SBL_DONE when
-           it has finished loading. so we wait some amount of time */
+	/* we do this as the BP bootloader from the SGS is a little bit
+	   crapy it does not send the magic data MODEM_MSG_SBL_DONE when
+	   it has finished loading. so we wait some amount of time */
 
-        pr_info("[MODEM] we have a crappy bootloader an wait for it");
+	pr_info("[MODEM] we have a crappy bootloader an wait for it");
 
-        //waiting 1500 ms should be enough, maybe we can decrease this but unsure
+	//waiting 1500 ms should be enough, maybe we can decrease this but unsure
 	msleep(1500);
 
 #else
