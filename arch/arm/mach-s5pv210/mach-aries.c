@@ -4370,7 +4370,7 @@ static void __init aries_machine_init(void)
 	gp2a_gpio_init();
 	i2c_register_board_info(11, i2c_devs11, ARRAY_SIZE(i2c_devs11));
 	/* magnetic sensor for rev04 */
-#ifndef(CONFIG_SENSORS_YAMAHA_MS3C)
+#ifndef CONFIG_SENSORS_YAMAHA_MS3C
 	if (system_rev == 0x04)
 #endif
 	i2c_register_board_info(12, i2c_devs12, ARRAY_SIZE(i2c_devs12));

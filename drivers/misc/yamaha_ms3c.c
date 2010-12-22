@@ -8,39 +8,40 @@
 
 //#include <linux/interrupt.h>
 #include <linux/i2c.h>
-//#include <linux/slab.h>
+#include <linux/slab.h>
 //#include <linux/irq.h>
 #include <linux/miscdevice.h>
 #include <mach/hardware.h>
 #include <asm/uaccess.h>
 #include <linux/delay.h>
+#include <linux/fs.h>
 
 #if defined(CONFIG_SAMSUNG_CAPTIVATE)
 #define YAMAHA_GSENSOR_TRANSFORMATION    \
-	{ { 0,  1,  0}, \
-	  { -1,  0,  0}, \
-	  { 0,  0,  -1} }
+    { { 0,  1,  0}, \
+      { -1,  0,  0}, \
+      { 0,  0,  -1} }
 #else
 #define YAMAHA_GSENSOR_TRANSFORMATION    \
-	{ { -1,  0,  0}, \
-	  { 0,  -1,  0}, \
-	  { 0,  0,  -1} }
+    { { -1,  0,  0}, \
+      { 0,  -1,  0}, \
+      { 0,  0,  -1} }
 #endif
 
 #if defined(CONFIG_SAMSUNG_CAPTIVATE)
 #define YAMAHA_MSENSOR_TRANSFORMATION    \
-	{ { 0,  1,  0}, \
-	  { -1,  0,   0}, \
-	  { 0,  0,  1} }
+    { { 0,  1,  0}, \
+      { -1,  0,   0}, \
+      { 0,  0,  1} }
 #else
 #define YAMAHA_MSENSOR_TRANSFORMATION    \
     { { -1,  0,  0}, \
       { 0,  1,   0}, \
       { 0 , 0 ,  -1} }
 #endif
-
-#define YAMAHA_IOCTL_GET_MARRAY            _IOR('Y', 0x01, char[9])
-#define YAMAHA_IOCTL_GET_GARRAY            _IOR('Y', 0x02, char[9])
+      
+#define YAMAHA_IOCTL_GET_MARRAY            _IOR('Y', 0x01, char [9])
+#define YAMAHA_IOCTL_GET_GARRAY            _IOR('Y', 0x02, char [9])
 
 static struct i2c_client *g_client;
 struct yamaha_state *yamaha_state;
@@ -48,7 +49,7 @@ struct yamaha_state{
 	struct i2c_client	*client;	
 };
 
-static 
+static int
 yamaha_i2c_write(int len, const uint8_t *buf)
 {
     return i2c_master_send(g_client, buf, len);
@@ -160,7 +161,7 @@ yamaha_ioctl(struct inode *inode, struct file *file,
 	return 0;
 }
 
-static struct file_operations yamaha_fops = {
+static const struct file_operations yamaha_fops = {
 	.owner = THIS_MODULE,
 	.open = yamaha_open,
 	.read = yamaha_read,
@@ -238,7 +239,7 @@ static int __init yamaha_init(void)
 
 static void __exit yamaha_exit(void)
 {
-	misc_deregister(&yamaha_device);
+	i2c_del_driver(&yamaha_device);
 	printk("__exit\n");
 }
 
@@ -246,5 +247,5 @@ module_init(yamaha_init);
 module_exit(yamaha_exit);
 
 MODULE_AUTHOR("SAMSUNG");
-MODULE_DESCRIPTION("yamaha ms3c compass driver");
+MODULE_DESCRIPTION("yamaha compass driver");
 MODULE_LICENSE("GPL");
