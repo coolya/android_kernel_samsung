@@ -462,6 +462,15 @@ source "drivers/misc/iwmc3200top/Kconfig"
 
 config SAMSUNG_MODEMCTL
 	bool "Samsung Modem Control/IO Driver"
+	
+config MODEM_HAS_CRAPPY_BOOTLOADER
+	bool "Samsung Modem Control/IO Driver Bootloader is crap"
+	depends on SAMSUNG_MODEMCTL
+	help
+	  If you use the Samsung Modem Control driver on the older
+	  SGS devices the bootloader won't tell you that it finished
+	  loading. This is a workaround for that, it only waits some 
+	  time and tries to to continue.
 
 config PN544
 	bool "NXP PN544 NFC Controller Driver"
