@@ -53,12 +53,12 @@ struct mtd_partition s3c_partition_info[] = {
    
    Partitions on the lower NAND adresses:
    
-   0x00000000 - 0x00040000 = first stage bootloader
-   0x00040000 - 0x00080000 = PIT for second stage bootloader
-   0x00080000 - 0x00A80000 = EFS: IMSI and NVRAM for the modem
-   0x00A80000 - 0x00BC0000 = second stage bootloader
-   0x00BC0000 - 0x00D00000 = backup of the second stage bootloader (should be loaded if the other fails, unconfirmed!)
-   0x00D00000 - 0x01200000 = PARAM.lfs config the bootloader 
+   0x00000000 - 0x0003FFFF = first stage bootloader
+   0x00040000 - 0x0007FFFF = PIT for second stage bootloader
+   0x00080000 - 0x00A7FFFF = EFS: IMSI and NVRAM for the modem
+   0x00A80000 - 0x00BBFFFF = second stage bootloader
+   0x00BC0000 - 0x00CFFFFF = backup of the second stage bootloader (should be loaded if the other fails, unconfirmed!)
+   0x00D00000 - 0x011FFFFF = PARAM.lfs config the bootloader
    
    #########################################################################################
    #########################################################################################
@@ -69,33 +69,42 @@ struct mtd_partition s3c_partition_info[] = {
         {
 		.name		= "kernel",
 		.offset		= (72*SZ_256K),
-		.size		= (30*SZ_256K),
+		.size		= (30*SZ_256K), //101
 	},
 	{
 		.name		= "recovery",
 		.offset		= (102*SZ_256K),
-		.size		= (30*SZ_256K),
+		.size		= (30*SZ_256K), //131
 	},
 	{	
 		.name		= "system",
-		.offset		=  (132*SZ_256K), //2100000 (104*SZ_1M), ///109051904 bytes, /* skip bootloader and things like that */		                        
-		.size		= (600*SZ_256K),		
+		.offset		=  (132*SZ_256K),
+		.size		= (600*SZ_256K), //731
 	},
 	{
 		.name		= "cache",
 		.offset		= (732*SZ_256K),
-		.size		= (320*SZ_256K),
+		.size		= (320*SZ_256K), //1051
+	},
+	{       /* we should consider moving this before the modem at the end
+	           that would allow us to change the partitions before without
+	           loosing ths sensible data*/
+		.name		= "efs",
+		.offset		= (1052*SZ_256K),
+		.size		= (50*SZ_256K), //1101
+	},
+	{       /* the modem firmware has to be mtd5 as the userspace samsung ril uses
+	           this device hardcoded, but I placed it at the end of the NAND to be
+	           able to change the other partition layout without moving it */
+		.name		= "modem",
+		.offset		= (1940*SZ_256K),
+		.size		= (54*SZ_256K), //1993
 	},
 	{
 		.name		= "userdata",
-		.offset		= (1052*SZ_256K),
-		.size		= (900*SZ_256K),
+		.offset		= (1102*SZ_256K),
+		.size		= (800*SZ_256K), //1901
 	},
-	{
-		.name		= "modem",
-		.offset		= (1954*SZ_256K),
-		.size		= (50*SZ_256K),
-	},		
 };
 
 #define ONENAND_ERASE_STATUS		0x00
