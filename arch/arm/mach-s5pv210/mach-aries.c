@@ -1072,22 +1072,6 @@ static struct platform_device s3c_device_i2c7 = {
 	.dev.platform_data      = &i2c7_platdata,
 };
 
-static  struct  i2c_gpio_platform_data  i2c8_platdata = {
-	.sda_pin                = GYRO_SDA_28V,
-	.scl_pin                = GYRO_SCL_28V,
-	.udelay                 = 2,    /* 250KHz */
-	.sda_is_open_drain      = 0,
-	.scl_is_open_drain      = 0,
-	.scl_is_output_only     = 0,
-};
-
-static struct platform_device s3c_device_i2c8 = {
-	.name			= "i2c-gpio",
-	.id			= 8,
-	.dev.platform_data      = &i2c8_platdata,
-};
-
-
 static  struct  i2c_gpio_platform_data  i2c9_platdata = {
 	.sda_pin                = FUEL_SDA_18V,
 	.scl_pin                = FUEL_SCL_18V,
@@ -1146,21 +1130,6 @@ static struct platform_device s3c_device_i2c12 = {
 	.name			= "i2c-gpio",
 	.id			= 12,
 	.dev.platform_data	= &i2c12_platdata,
-};
-
-static struct i2c_gpio_platform_data i2c14_platdata = {
-	.sda_pin		= NFC_SDA_18V,
-	.scl_pin		= NFC_SCL_18V,
-	.udelay			= 2,
-	.sda_is_open_drain      = 0,
-	.scl_is_open_drain      = 0,
-	.scl_is_output_only     = 0,
-};
-
-static struct platform_device s3c_device_i2c14 = {
-	.name			= "i2c-gpio",
-	.id			= 14,
-	.dev.platform_data	= &i2c14_platdata,
 };
 
 static void touch_keypad_gpio_init(void)
@@ -1304,13 +1273,15 @@ static void sec_jack_set_micbias_state(bool on)
 		jack_mic_bias = on;
 		set_shared_mic_bias();
 		spin_unlock_irqrestore(&mic_bias_lock, flags);
-	} else
-		gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
+	} //else
+	        //FIXME
+		//gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
 }
 
 static struct wm8994_platform_data wm8994_pdata = {
 	.ldo = GPIO_CODEC_LDO_EN,
-	.ear_sel = GPIO_EAR_SEL,
+	//FIXME
+	//.ear_sel = GPIO_EAR_SEL,
 	.set_mic_bias = wm8994_set_mic_bias,
 };
 
@@ -1362,13 +1333,7 @@ static void s5k4ecgx_init(void)
 		pr_err("failed gpio_request(GPJ1) for camera control\n");
 	/* CAM_MEGA_EN - GPJ0(6) */
 	if (gpio_request(GPIO_CAM_MEGA_EN, "GPJ0") < 0)
-		pr_err("failed gpio_request(GPJ0) for camera control\n");
-	/* FLASH_EN - GPJ1(2) */
-	if (gpio_request(GPIO_FLASH_EN, "GPIO_FLASH_EN") < 0)
-		pr_err("failed gpio_request(GPIO_FLASH_EN)\n");
-	/* FLASH_EN_SET - GPJ1(0) */
-	if (gpio_request(GPIO_CAM_FLASH_EN_SET, "GPIO_CAM_FLASH_EN_SET") < 0)
-		pr_err("failed gpio_request(GPIO_CAM_FLASH_EN_SET)\n");
+		pr_err("failed gpio_request(GPJ0) for camera control\n");	
 }
 
 static int s5k4ecgx_ldo_en(bool en)
@@ -1514,64 +1479,11 @@ static int s5k4ecgx_power_en(int onoff)
 #define FLASH_TIME_LATCH_US			500
 #define FLASH_TIME_EN_SET_US			1
 
-/* The AAT1274 uses a single wire interface to write data to its
- * control registers. An incoming value is written by sending a number
- * of rising edges to EN_SET. Data is 4 bits, or 1-16 pulses, and
- * addresses are 17 pulses or more. Data written without an address
- * controls the current to the LED via the default address 17. */
-static void aat1274_write(int value)
-{
-	while (value--) {
-		gpio_set_value(GPIO_CAM_FLASH_EN_SET, 0);
-		udelay(FLASH_TIME_EN_SET_US);
-		gpio_set_value(GPIO_CAM_FLASH_EN_SET, 1);
-		udelay(FLASH_TIME_EN_SET_US);
-	}
-	udelay(FLASH_TIME_LATCH_US);
-	/* At this point, the LED will be on */
-}
-
-static int aat1274_flash(int enable)
-{
-	/* Turn main flash on or off by asserting a value on the EN line. */
-	gpio_set_value(GPIO_FLASH_EN, !!enable);
-
-	return 0;
-}
-
-static int aat1274_af_assist(int enable)
-{
-	/* Turn assist light on or off by asserting a value on the EN_SET
-	 * line. The default illumination level of 1/7.3 at 100% is used */
-	gpio_set_value(GPIO_CAM_FLASH_EN_SET, !!enable);
-	if (!enable)
-		gpio_set_value(GPIO_FLASH_EN, 0);
-
-	return 0;
-}
-
-static int aat1274_torch(int enable)
-{
-	/* Turn torch mode on or off by writing to the EN_SET line. A level
-	 * of 1/7.3 and 50% is used (half AF assist brightness). */
-	if (enable) {
-		aat1274_write(FLASH_MOVIE_MODE_CURRENT_50_PERCENT);
-	} else {
-		gpio_set_value(GPIO_CAM_FLASH_EN_SET, 0);
-		gpio_set_value(GPIO_FLASH_EN, 0);
-	}
-
-	return 0;
-}
-
 static struct s5k4ecgx_platform_data s5k4ecgx_plat = {
 	.default_width = 640,
 	.default_height = 480,
 	.pixelformat = V4L2_PIX_FMT_UYVY,
 	.freq = 24000000,
-	.flash_onoff = &aat1274_flash,
-	.af_assist_onoff = &aat1274_af_assist,
-	.torch_onoff = &aat1274_torch,
 };
 
 static struct i2c_board_info  s5k4ecgx_i2c_info = {
@@ -2137,20 +2049,6 @@ static struct i2c_board_info i2c_devs6[] __initdata = {
 		I2C_BOARD_INFO("rtc_max8998", (0x0D >> 1)),
 	},
 #endif
-};
-
-static struct pn544_i2c_platform_data pn544_pdata = {
-	.irq_gpio = NFC_IRQ,
-	.ven_gpio = NFC_EN,
-	.firm_gpio = NFC_FIRM,
-};
-
-static struct i2c_board_info i2c_devs14[] __initdata = {
-	{
-		I2C_BOARD_INFO("pn544", 0x2b),
-		.irq = IRQ_EINT(12),
-		.platform_data = &pn544_pdata,
-	},
 };
 
 static int max17040_power_supply_register(struct device *parent,
@@ -4070,11 +3968,9 @@ static struct platform_device *aries_devices[] __initdata = {
 	&s3c_device_i2c5,  /* accel sensor */
 	&s3c_device_i2c6,
 	&s3c_device_i2c7,
-	&s3c_device_i2c8,  /* gyro sensor */
 	&s3c_device_i2c9,  /* max1704x:fuel_guage */
 	&s3c_device_i2c11, /* optical sensor */
 	&s3c_device_i2c12, /* magnetic sensor */
-	&s3c_device_i2c14, /* nfc sensor */
 #ifdef CONFIG_USB_GADGET
 	&s3c_device_usbgadget,
 #endif
@@ -4323,8 +4219,9 @@ static void __init aries_machine_init(void)
 #endif
 
 	/* headset/earjack detection */
-	if (system_rev >= 0x09)
-		gpio_request(GPIO_EAR_MICBIAS_EN, "ear_micbias_enable");
+	//FIXME
+	//if (system_rev >= 0x09)	        
+		//gpio_request(GPIO_EAR_MICBIAS_EN, "ear_micbias_enable");
 
 	gpio_request(GPIO_TOUCH_EN, "touch en");
 
@@ -4361,10 +4258,6 @@ static void __init aries_machine_init(void)
 	fsa9480_gpio_init();
 	i2c_register_board_info(7, i2c_devs7, ARRAY_SIZE(i2c_devs7));
 
-	/* gyro sensor for rev04 */
-	if (system_rev == 0x04)
-		i2c_register_board_info(8, i2c_devs8, ARRAY_SIZE(i2c_devs8));
-
 	i2c_register_board_info(9, i2c_devs9, ARRAY_SIZE(i2c_devs9));
 	/* optical sensor */
 	gp2a_gpio_init();
@@ -4374,9 +4267,6 @@ static void __init aries_machine_init(void)
 	if (system_rev == 0x04)
 #endif
 	i2c_register_board_info(12, i2c_devs12, ARRAY_SIZE(i2c_devs12));
-
-       /* nfc sensor */
-	i2c_register_board_info(14, i2c_devs14, ARRAY_SIZE(i2c_devs14));
 
 #ifdef CONFIG_FB_S3C_TL2796
 	spi_register_board_info(spi_board_info, ARRAY_SIZE(spi_board_info));
