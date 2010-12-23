@@ -3723,19 +3723,17 @@ void s3c_config_sleep_gpio(void)
 }
 EXPORT_SYMBOL(s3c_config_sleep_gpio);
 
+static unsigned long wlan_reglock_flags = 0;
+static spinlock_t wlan_reglock = SPIN_LOCK_UNLOCKED;
+
+
 static unsigned int wlan_sdio_on_table[][4] = {
-	{GPIO_WLAN_SDIO_CLK, GPIO_WLAN_SDIO_CLK_AF, GPIO_LEVEL_NONE,
-		S3C_GPIO_PULL_NONE},
-	{GPIO_WLAN_SDIO_CMD, GPIO_WLAN_SDIO_CMD_AF, GPIO_LEVEL_NONE,
-		S3C_GPIO_PULL_NONE},
-	{GPIO_WLAN_SDIO_D0, GPIO_WLAN_SDIO_D0_AF, GPIO_LEVEL_NONE,
-		S3C_GPIO_PULL_NONE},
-	{GPIO_WLAN_SDIO_D1, GPIO_WLAN_SDIO_D1_AF, GPIO_LEVEL_NONE,
-		S3C_GPIO_PULL_NONE},
-	{GPIO_WLAN_SDIO_D2, GPIO_WLAN_SDIO_D2_AF, GPIO_LEVEL_NONE,
-		S3C_GPIO_PULL_NONE},
-	{GPIO_WLAN_SDIO_D3, GPIO_WLAN_SDIO_D3_AF, GPIO_LEVEL_NONE,
-		S3C_GPIO_PULL_NONE},
+	{GPIO_WLAN_SDIO_CLK, GPIO_WLAN_SDIO_CLK_AF, GPIO_LEVEL_NONE, S3C_GPIO_PULL_NONE},
+	{GPIO_WLAN_SDIO_CMD, GPIO_WLAN_SDIO_CMD_AF, GPIO_LEVEL_NONE, S3C_GPIO_PULL_NONE},
+	{GPIO_WLAN_SDIO_D0, GPIO_WLAN_SDIO_D0_AF, GPIO_LEVEL_NONE, S3C_GPIO_PULL_NONE},
+	{GPIO_WLAN_SDIO_D1, GPIO_WLAN_SDIO_D1_AF, GPIO_LEVEL_NONE, S3C_GPIO_PULL_NONE},
+	{GPIO_WLAN_SDIO_D2, GPIO_WLAN_SDIO_D2_AF, GPIO_LEVEL_NONE, S3C_GPIO_PULL_NONE},
+	{GPIO_WLAN_SDIO_D3, GPIO_WLAN_SDIO_D3_AF, GPIO_LEVEL_NONE, S3C_GPIO_PULL_NONE},
 };
 
 static unsigned int wlan_sdio_off_table[][4] = {
@@ -3747,45 +3745,69 @@ static unsigned int wlan_sdio_off_table[][4] = {
 	{GPIO_WLAN_SDIO_D3, 0, GPIO_LEVEL_NONE, S3C_GPIO_PULL_NONE},
 };
 
+static unsigned int wlan_gpio_table[][4] = {
+	{GPIO_WLAN_nRST, GPIO_WLAN_nRST_AF, GPIO_LEVEL_LOW, S3C_GPIO_PULL_NONE},
+	{GPIO_WLAN_HOST_WAKE, GPIO_WLAN_HOST_WAKE_AF, GPIO_LEVEL_NONE, S3C_GPIO_PULL_DOWN},
+	{GPIO_WLAN_WAKE, GPIO_WLAN_WAKE_AF, GPIO_LEVEL_LOW, S3C_GPIO_PULL_NONE},
+};
+
+
+void s3c_config_gpio_alive_table(int array_size, int (*gpio_table)[4])
+{
+	u32 i, gpio;
+
+	for (i = 0; i < array_size; i++) {
+		gpio = gpio_table[i][0];
+		s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(gpio_table[i][1]));
+		s3c_gpio_setpull(gpio, gpio_table[i][3]);
+		if (gpio_table[i][2] != GPIO_LEVEL_NONE)
+			gpio_set_value(gpio, gpio_table[i][2]);
+	}
+}
+
 static int wlan_power_en(int onoff)
 {
 	if (onoff) {
-		s3c_gpio_cfgpin(GPIO_WLAN_HOST_WAKE,
-				S3C_GPIO_SFN(GPIO_WLAN_HOST_WAKE_AF));
-		s3c_gpio_setpull(GPIO_WLAN_HOST_WAKE, S3C_GPIO_PULL_DOWN);
+		s3c_config_gpio_alive_table(ARRAY_SIZE(wlan_gpio_table), wlan_gpio_table);
+		s3c_config_gpio_alive_table(ARRAY_SIZE(wlan_sdio_on_table), wlan_sdio_on_table);
 
-		s3c_gpio_cfgpin(GPIO_WLAN_WAKE,
-				S3C_GPIO_SFN(GPIO_WLAN_WAKE_AF));
-		s3c_gpio_setpull(GPIO_WLAN_WAKE, S3C_GPIO_PULL_NONE);
-		gpio_set_value(GPIO_WLAN_WAKE, GPIO_LEVEL_LOW);
+		/* PROTECT this check under spinlock.. No other thread should be touching
+		 * GPIO_BT_REG_ON at this time.. If BT is operational, don't touch it. */
+		spin_lock_irqsave(&wlan_reglock, wlan_reglock_flags);
+		/* need delay between v_bat & reg_on for 2 cycle @ 38.4MHz */
+		udelay(5);
 
-		s3c_gpio_cfgpin(GPIO_WLAN_nRST,
-				S3C_GPIO_SFN(GPIO_WLAN_nRST_AF));
-		s3c_gpio_setpull(GPIO_WLAN_nRST, S3C_GPIO_PULL_NONE);
-		gpio_set_value(GPIO_WLAN_nRST, GPIO_LEVEL_HIGH);
-		s3c_gpio_slp_cfgpin(GPIO_WLAN_nRST, S3C_GPIO_SLP_OUT1);
-		s3c_gpio_slp_setpull_updown(GPIO_WLAN_nRST, S3C_GPIO_PULL_NONE);
-
-		s3c_gpio_cfgpin(GPIO_WLAN_BT_EN, S3C_GPIO_OUTPUT);
-		s3c_gpio_setpull(GPIO_WLAN_BT_EN, S3C_GPIO_PULL_NONE);
 		gpio_set_value(GPIO_WLAN_BT_EN, GPIO_LEVEL_HIGH);
 		s3c_gpio_slp_cfgpin(GPIO_WLAN_BT_EN, S3C_GPIO_SLP_OUT1);
-		s3c_gpio_slp_setpull_updown(GPIO_WLAN_BT_EN,
-					S3C_GPIO_PULL_NONE);
 
-		msleep(80);
-	} else {
-		gpio_set_value(GPIO_WLAN_nRST, GPIO_LEVEL_LOW);
-		s3c_gpio_slp_cfgpin(GPIO_WLAN_nRST, S3C_GPIO_SLP_OUT0);
-		s3c_gpio_slp_setpull_updown(GPIO_WLAN_nRST, S3C_GPIO_PULL_NONE);
+		gpio_set_value(GPIO_WLAN_nRST, GPIO_LEVEL_HIGH);
+		s3c_gpio_slp_cfgpin(GPIO_WLAN_nRST, S3C_GPIO_SLP_OUT1);
+
+		spin_unlock_irqrestore(&wlan_reglock, wlan_reglock_flags);
+	}
+	else {
+		/* PROTECT this check under spinlock.. No other thread should be touching
+		 * GPIO_BT_REG_ON at this time.. If BT is operational, don't touch it. */
+		spin_lock_irqsave(&wlan_reglock, wlan_reglock_flags);
+		/* need delay between v_bat & reg_on for 2 cycle @ 38.4MHz */
+		udelay(5);
 
 		if (gpio_get_value(GPIO_BT_nRST) == 0) {
 			gpio_set_value(GPIO_WLAN_BT_EN, GPIO_LEVEL_LOW);
 			s3c_gpio_slp_cfgpin(GPIO_WLAN_BT_EN, S3C_GPIO_SLP_OUT0);
-			s3c_gpio_slp_setpull_updown(GPIO_WLAN_BT_EN,
-						S3C_GPIO_PULL_NONE);
 		}
+
+		gpio_set_value(GPIO_WLAN_nRST, GPIO_LEVEL_LOW);
+		s3c_gpio_slp_cfgpin(GPIO_WLAN_nRST, S3C_GPIO_SLP_OUT0);
+
+		spin_unlock_irqrestore(&wlan_reglock, wlan_reglock_flags);
+
+		s3c_config_gpio_alive_table(ARRAY_SIZE(wlan_sdio_off_table), wlan_sdio_off_table);
 	}
+
+	/* mmc_rescan*/
+	sdhci_s3c_force_presence_change(&s3c_device_hsmmc1);
+
 	return 0;
 }
 
