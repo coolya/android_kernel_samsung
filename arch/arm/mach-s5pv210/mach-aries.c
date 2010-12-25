@@ -1072,6 +1072,24 @@ static struct platform_device s3c_device_i2c7 = {
 	.dev.platform_data      = &i2c7_platdata,
 };
 
+// For FM radio
+#if !defined(CONFIG_SAMSUNG_GALAXYS)
+static  struct  i2c_gpio_platform_data  i2c8_platdata = {
+        .sda_pin                = GPIO_FM_SDA_28V,
+        .scl_pin                = GPIO_FM_SCL_28V,
+        .udelay                 = 2,    /* 250KHz */
+        .sda_is_open_drain      = 0,
+        .scl_is_open_drain      = 0,
+        .scl_is_output_only     = 0,
+};
+
+static struct platform_device s3c_device_i2c8 = {
+        .name                           = "i2c-gpio",
+        .id                                     = 8,
+        .dev.platform_data      = &i2c8_platdata,
+};
+#endif
+
 static  struct  i2c_gpio_platform_data  i2c9_platdata = {
 	.sda_pin                = FUEL_SDA_18V,
 	.scl_pin                = FUEL_SCL_18V,
