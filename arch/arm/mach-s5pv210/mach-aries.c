@@ -1880,15 +1880,6 @@ static struct s3c_platform_jpeg jpeg_plat __initdata = {
 };
 #endif
 
-static struct k3g_platform_data k3g_pdata = {
-	.axis_map_x = 1,
-	.axis_map_y = 1,
-	.axis_map_z = 1,
-	.negate_x = 0,
-	.negate_y = 0,
-	.negate_z = 0,
-};
-
 /* I2C0 */
 static struct i2c_board_info i2c_devs0[] __initdata = {
 
@@ -1991,9 +1982,7 @@ static struct i2c_board_info i2c_devs5[] __initdata = {
 
 static struct i2c_board_info i2c_devs8[] __initdata = {
 	{
-		I2C_BOARD_INFO("k3g", 0x69),
-		.platform_data = &k3g_pdata,
-		.irq = -1,
+		I2C_BOARD_INFO("Si4709", (0x20 >> 1)),
 	},
 };
 
@@ -4293,6 +4282,7 @@ static void __init aries_machine_init(void)
 	fsa9480_gpio_init();
 	i2c_register_board_info(7, i2c_devs7, ARRAY_SIZE(i2c_devs7));
 
+	i2c_register_board_info(8, i2c_devs8, ARRAY_SIZE(i2c_devs8));
 	i2c_register_board_info(9, i2c_devs9, ARRAY_SIZE(i2c_devs9));
 
 	/* Touch Key */
