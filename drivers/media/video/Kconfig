@@ -1127,6 +1127,13 @@ config USB_S2255
 
 endif # V4L_USB_DRIVERS
 
+config VIDEO_CE147
+        tristate "CE147 Camera Sensor"
+        depends on I2C && VIDEO_V4L2
+        ---help---
+          This driver supports CE147 SoC camera module
+          
+
 config VIDEO_S5KA3DFX
         tristate "S5KA3DFX Camera Sensor"
         depends on I2C && VIDEO_V4L2
