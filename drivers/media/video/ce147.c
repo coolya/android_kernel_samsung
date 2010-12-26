@@ -26,7 +26,6 @@
 #include <mach/regs-gpio.h>
 #include <mach/regs-clock.h>
 
-
 //#define MDNIE_TUNING
 
 #define CE147_DRIVER_NAME	"CE147"
@@ -454,6 +453,31 @@ static int ce147_i2c_read_multi(struct i2c_client *client, unsigned char cmd,
 
 	return (ret == 1) ? 0 : -EIO;
 }
+
+#ifdef CE147_CAM_POWER
+
+
+/**
+ * ce147_power_en: Enable or disable the camera sensor power
+ * Use only for updating camera firmware
+ * Returns 0 forever
+ */
+static int ce147_power_en(int onoff, struct v4l2_subdev *sd)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct ce147_platform_data *pdata;
+
+	pdata = client->dev.platform_data;
+
+	if (pdata->cam_power) {
+	        pdata->cam_power(onoff);
+	        msleep(5);
+	}
+
+	return 0;
+}
+
+#endif //ifdef CE147_CAM_POWER
 
 /**
  *  This function checks the status of the camera sensor by polling
@@ -883,7 +907,7 @@ static int ce147_update_fw(struct v4l2_subdev *sd)
 		dev_err(&client->dev, "%s: [%d] fw_size = %d, fw_buf = 0x%p\n", __func__, i, fw_size[i], fw_buf[i]);
 	}
 
-	//err = ce147_power_en(1);
+	err = ce147_power_en(1,sd);
     if(err < 0){	
 			dev_err(&client->dev, "%s: failed: ce147_power_en(on)\n", __func__);
 		err = -EIO;
@@ -993,7 +1017,7 @@ static int ce147_update_fw(struct v4l2_subdev *sd)
 
 	vfree(mbuf);
 	
-	//err = ce147_power_en(0);
+	err = ce147_power_en(0,sd);
     if(err < 0){	
 			dev_err(&client->dev, "%s: failed: ce147_power_en(off)\n", __func__);
 	        return -EIO;
@@ -1124,7 +1148,7 @@ static int ce147_dump_fw(struct v4l2_subdev *sd)
 		dev_err(&client->dev, "%s: [%d] fw_size = %d, fw_buf = 0x%p\n", __func__, i, fw_size[i], fw_buf[i]);
 	}
 
-	//err = ce147_power_en(1);
+	err = ce147_power_en(1, sd);
     if(err < 0){	
 			dev_err(&client->dev, "%s: failed: ce147_power_en(on)\n", __func__);
 		err = -EIO;
@@ -1246,7 +1270,7 @@ static int ce147_dump_fw(struct v4l2_subdev *sd)
 	
 	vfree(mbuf);
 	
-	//err = ce147_power_en(0);
+	err = ce147_power_en(0, sd);
     if(err < 0){	
 			dev_err(&client->dev, "%s: failed: ce147_power_en(off)\n", __func__);
 	        return -EIO;
@@ -3822,18 +3846,12 @@ static int ce147_get_fw_data(struct v4l2_subdev *sd)
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	struct ce147_state *state = to_state(sd);
 	int err = -EINVAL;
-        
-	struct ce147_platform_data *pdata;
 
-	pdata = client->dev.platform_data;
-	
-	pdata->cam_power(1);
-	msleep(5);
-	//err = ce147_power_en(1);
-        if(err < 0){	
-	        dev_err(&client->dev, "%s: failed: ce147_power_en(on)\n", __func__);
+	err = ce147_power_en(1, sd);
+    if(err < 0){
+			dev_err(&client->dev, "%s: failed: ce147_power_en(on)\n", __func__);
 	        return -EIO;
-        }	
+    }
 
 	err = ce147_load_fw(sd);
 	if(err < 0){
@@ -3889,8 +3907,7 @@ static int ce147_get_fw_data(struct v4l2_subdev *sd)
 		return -EIO;
 	}
 
-	pdata->cam_power(0);
-	msleep(5);
+	err = ce147_power_en(0, sd);
     if(err < 0){	
 			dev_err(&client->dev, "%s: failed: ce147_power_en(off)\n", __func__);
 	        return -EIO;
@@ -3911,15 +3928,23 @@ static int ce147_reset(struct v4l2_subdev *sd)
 {
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	int err = -EINVAL;
-        
-	struct ce147_platform_data *pdata;
 
-	pdata = client->dev.platform_data;
-	
-	pdata->cam_power(0);
-	msleep(5);
-	pdata->cam_power(1);
-	
+	dev_err(&client->dev, "%s: Enter \n", __func__);
+
+	err = ce147_power_en(0, sd);
+	if(err < 0){
+		dev_err(&client->dev, "%s: failed: ce147_power_en(off)\n", __func__);
+		return -EIO;
+    	}
+
+	mdelay(5);
+
+	err = ce147_power_en(1, sd);
+	if(err < 0){
+		dev_err(&client->dev, "%s: failed: ce147_power_en(off)\n", __func__);
+		return -EIO;
+    	}
+
 	err = ce147_load_fw(sd);		//ce147_init(sd);
 	if(err < 0){
 		dev_err(&client->dev, "%s: Failed: Camera Initialization\n", __func__);
@@ -4944,17 +4969,11 @@ static int ce147_init(struct v4l2_subdev *sd, u32 val)
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	struct ce147_state *state = to_state(sd);
 	int err = -EINVAL;
-	
-	struct ce147_platform_data *pdata;
-
-	pdata = client->dev.platform_data;
-	
-	pdata->cam_power(1);
-
+        ce147_power_en(1, sd);
 	err = ce147_load_fw(sd);
 	if(err < 0){
 		dev_err(&client->dev, "%s: Failed: Camera Initialization\n", __func__);
-		//return -EIO;
+		return -EIO;
 	}
 	
 	ce147_init_parameters(sd);
@@ -4984,6 +5003,8 @@ static int ce147_init(struct v4l2_subdev *sd, u32 val)
 		dev_err(&client->dev, "%s: Failed: Reading Main SW Version\n",__func__);
 		return -EIO;
 	}
+	
+        ce147_power_en(0, sd);
 
 	printk(KERN_DEBUG "FW  Version: %d.%d\n", state->fw.major, state->fw.minor);
 	printk(KERN_DEBUG "PRM Version: %d.%d\n", state->prm.major, state->prm.minor);
