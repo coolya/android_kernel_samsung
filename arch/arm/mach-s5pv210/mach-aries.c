@@ -4296,8 +4296,8 @@ static void __init aries_machine_init(void)
 	sound_init();
 	i2c_register_board_info(4, i2c_devs4, ARRAY_SIZE(i2c_devs4));
 	/* accel sensor for rev04 */
-	if (system_rev == 0x04)
-		i2c_register_board_info(5, i2c_devs5, ARRAY_SIZE(i2c_devs5));
+	i2c_register_board_info(5, i2c_devs5, ARRAY_SIZE(i2c_devs5));
+	
 	i2c_register_board_info(6, i2c_devs6, ARRAY_SIZE(i2c_devs6));
 	/* Touch Key */
 	touch_keypad_gpio_init();
