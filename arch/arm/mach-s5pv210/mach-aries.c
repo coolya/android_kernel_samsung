@@ -1304,263 +1304,6 @@ static struct wm8994_platform_data wm8994_pdata = {
 	.set_mic_bias = wm8994_set_mic_bias,
 };
 
-/*
- * Guide for Camera Configuration for Crespo board
- * ITU CAM CH A: LSI s5k4ecgx
- */
-static DEFINE_MUTEX(ce147_lock);
-static struct regulator *cam_isp_core_regulator;
-static struct regulator *cam_isp_host_regulator;
-static struct regulator *cam_af_regulator;
-static struct regulator *cam_sensor_regulator;
-static bool ce147_powered_on;
-static int ce147_regulator_init(void)
-{
-	if (IS_ERR_OR_NULL(cam_isp_core_regulator)) {
-		cam_isp_core_regulator = regulator_get(NULL, "cam_isp_core");
-		if (IS_ERR_OR_NULL(cam_isp_core_regulator)) {
-			pr_err("failed to get cam_isp_core regulator");
-			return -EINVAL;
-		}
-	}
-	if (IS_ERR_OR_NULL(cam_isp_host_regulator)) {
-		cam_isp_host_regulator = regulator_get(NULL, "cam_isp_host");
-		if (IS_ERR_OR_NULL(cam_isp_host_regulator)) {
-			pr_err("failed to get cam_isp_host regulator");
-			return -EINVAL;
-		}
-	}
-	if (IS_ERR_OR_NULL(cam_af_regulator)) {
-		cam_af_regulator = regulator_get(NULL, "cam_af");
-		if (IS_ERR_OR_NULL(cam_af_regulator)) {
-			pr_err("failed to get cam_af regulator");
-			return -EINVAL;
-		}
-	}
-	if (IS_ERR_OR_NULL(cam_sensor_regulator)) {
-		cam_sensor_regulator = regulator_get(NULL, "cam_sensor");
-		if (IS_ERR_OR_NULL(cam_sensor_regulator)) {
-			pr_err("failed to get cam_af regulator");
-			return -EINVAL;
-		}
-	}
-	pr_debug("cam_isp_core_regulator = %p\n", cam_isp_core_regulator);
-	pr_debug("cam_isp_host_regulator = %p\n", cam_isp_host_regulator);
-	pr_debug("cam_af_regulator = %p\n", cam_af_regulator);
-	pr_debug("cam_sensor_regulator = %p\n", cam_sensor_regulator);
-	return 0;
-}
-
-static void ce147_init(void)
-{
-	/* CAM_IO_EN - GPB(7) */
-	if (gpio_request(GPIO_GPB7, "GPB7") < 0)
-		pr_err("failed gpio_request(GPB7) for camera control\n");
-	/* CAM_MEGA_nRST - GPJ1(5) */
-	if (gpio_request(GPIO_CAM_MEGA_nRST, "GPJ1") < 0)
-		pr_err("failed gpio_request(GPJ1) for camera control\n");
-	/* CAM_MEGA_EN - GPJ0(6) */
-	if (gpio_request(GPIO_CAM_MEGA_EN, "GPJ0") < 0)
-		pr_err("failed gpio_request(GPJ0) for camera control\n");	
-}
-
-static int ce147_ldo_en(bool en)
-{
-	int err = 0;
-	int result;
-
-	if (IS_ERR_OR_NULL(cam_isp_core_regulator) ||
-		IS_ERR_OR_NULL(cam_sensor_regulator) ||
-		IS_ERR_OR_NULL(cam_isp_host_regulator) ||
-		IS_ERR_OR_NULL(cam_af_regulator)) {
-		pr_err("Camera regulators not initialized\n");
-		return -EINVAL;
-	}
-
-	if (!en)
-		goto off;
-
-	/* Turn CAM_ISP_CORE_1.2V(VDD_REG) on */
-	err = regulator_enable(cam_isp_core_regulator);
-	if (err) {
-		pr_err("Failed to enable regulator cam_isp_core\n");
-		goto off;
-	}
-	mdelay(1);
-
-	/* Turn CAM_SENSOR_A_2.8V(VDDA) on */
-	gpio_set_value(GPIO_GPB7, 1);
-	mdelay(1);
-
-	/* Turn CAM_ISP_HOST_2.8V(VDDIO) on */
-	err = regulator_enable(cam_sensor_regulator);
-	if (err) {
-		pr_err("Failed to enable regulator cam_sensor_regulator\n");
-		goto off;
-	}
-	udelay(50);
-	
-        /* Turn CAM_ISP_HOST_2.8V(VDDIO) on */
-	err = regulator_enable(cam_isp_host_regulator);
-	if (err) {
-		pr_err("Failed to enable regulator cam_isp_core\n");
-		goto off;
-	}
-	udelay(50);
-
-
-	/* Turn CAM_AF_2.8V or 3.0V on */
-	err = regulator_enable(cam_af_regulator);
-	if (err) {
-		pr_err("Failed to enable regulator cam_isp_core\n");
-		goto off;
-	}
-	udelay(50);
-	return 0;
-
-off:
-	result = err;
-	err = regulator_disable(cam_af_regulator);
-	if (err) {
-		pr_err("Failed to disable regulator cam_isp_core\n");
-		result = err;
-	}
-	err = regulator_disable(cam_isp_host_regulator);
-	if (err) {
-		pr_err("Failed to disable regulator cam_isp_core\n");
-		result = err;
-	}
-	gpio_set_value(GPIO_GPB7, 0);
-	err = regulator_disable(cam_sensor_regulator);
-	if (err) {
-		pr_err("Failed to disable regulator cam_sensor_regulator\n");
-		result = err;
-	}
-	err = regulator_disable(cam_isp_core_regulator);
-	if (err) {
-		pr_err("Failed to disable regulator cam_isp_core\n");
-		result = err;
-	}
-	return result;
-}
-
-static int ce147_power_on(void)
-{
-	/* LDO on */
-	int err;
-
-	/* can't do this earlier because regulators aren't available in
-	 * early boot
-	 */
-	if (ce147_regulator_init()) {
-		pr_err("Failed to initialize camera regulators\n");
-		return -EINVAL;
-	}
-
-	err = ce147_ldo_en(true);
-	if (err)
-		return err;
-	mdelay(66);
-
-	/* MCLK on - default is input, to save power when camera not on */
-	s3c_gpio_cfgpin(GPIO_CAM_MCLK, S3C_GPIO_SFN(GPIO_CAM_MCLK_AF));
-	mdelay(1);
-
-	/* CAM_MEGA_EN - GPJ1(2) LOW */
-	gpio_set_value(GPIO_CAM_MEGA_EN, 1);
-	mdelay(1);
-
-	/* CAM_MEGA_nRST - GPJ1(5) LOW */
-	gpio_set_value(GPIO_CAM_MEGA_nRST, 1);
-	mdelay(1);
-
-	return 0;
-}
-
-static int ce147_power_off(void)
-{
-	/* CAM_MEGA_nRST - GPJ1(5) LOW */
-	gpio_set_value(GPIO_CAM_MEGA_nRST, 0);
-	udelay(60);
-
-	/*  Mclk disable - set to input function to save power */
-	s3c_gpio_cfgpin(GPIO_CAM_MCLK, 0);
-	udelay(10);
-
-	/* CAM_MEGA_EN - GPJ1(2) LOW */
-	gpio_set_value(GPIO_CAM_MEGA_EN, 0);
-	udelay(10);
-
-	ce147_ldo_en(false);
-	mdelay(1);
-
-	return 0;
-}
-
-static int ce147_power_en(int onoff)
-{
-	int err = 0;
-	mutex_lock(&ce147_lock);
-	/* we can be asked to turn off even if we never were turned
-	 * on if something odd happens and we are closed
-	 * by camera framework before we even completely opened.
-	 */
-	if (onoff != ce147_powered_on) {
-		if (onoff)
-			err = ce147_power_on();
-		else
-			err = ce147_power_off();
-		if (!err)
-			ce147_powered_on = onoff;
-	}
-	mutex_unlock(&ce147_lock);
-	return err;
-}
-
-static struct ce147_platform_data ce147_plat = {
-	.default_width = 640,
-	.default_height = 480,
-	.pixelformat = V4L2_PIX_FMT_UYVY,
-	.freq = 24000000,
-	.cam_power = ce147_power_en,
-};
-
-static struct i2c_board_info ce147_i2c_info = {
-	I2C_BOARD_INFO("CE147", 0x78>>1),
-	.platform_data = &ce147_plat,
-};
-
-static struct s3c_platform_camera ce147 = {
-	.id = CAMERA_PAR_A,
-	.type = CAM_TYPE_ITU,
-	.fmt = ITU_601_YCBCR422_8BIT,
-	.order422 = CAM_ORDER422_8BIT_CBYCRY,
-	.i2c_busnum = 0,
-	.info = &ce147_i2c_info,
-	.pixelformat = V4L2_PIX_FMT_UYVY,
-	.srclk_name = "xusbxti",
-	.clk_name = "sclk_cam",
-	.clk_rate = 24000000,
-	.line_length = 1920,
-	.width = 640,
-	.height = 480,
-	.window = {
-		.left = 0,
-		.top = 0,
-		.width = 640,
-		.height = 480,
-	},
-
-	/* Polarity */
-	.inv_pclk = 0,
-	.inv_vsync = 1,
-	.inv_href = 0,
-	.inv_hsync = 0,
-
-	.initialized = 0,
-	.cam_power = ce147_power_en,
-};
-
 
 /* External camera module setting */
 static DEFINE_MUTEX(s5ka3dfx_lock);
@@ -1839,6 +1582,280 @@ static struct s3c_platform_camera s5ka3dfx = {
 	.initialized	= 0,
 	.cam_power	= s5ka3dfx_power_en,
 };
+
+
+
+/*
+ * Guide for Camera Configuration for Crespo board
+ * ITU CAM CH A: LSI s5k4ecgx
+ */
+static DEFINE_MUTEX(ce147_lock);
+static struct regulator *cam_isp_core_regulator;
+static struct regulator *cam_isp_host_regulator;
+static struct regulator *cam_af_regulator;
+static struct regulator *cam_sensor_regulator;
+static bool ce147_powered_on;
+static int ce147_regulator_init(void)
+{
+	if (IS_ERR_OR_NULL(cam_isp_core_regulator)) {
+		cam_isp_core_regulator = regulator_get(NULL, "cam_isp_core");
+		if (IS_ERR_OR_NULL(cam_isp_core_regulator)) {
+			pr_err("failed to get cam_isp_core regulator");
+			return -EINVAL;
+		}
+	}
+	if (IS_ERR_OR_NULL(cam_isp_host_regulator)) {
+		cam_isp_host_regulator = regulator_get(NULL, "cam_isp_host");
+		if (IS_ERR_OR_NULL(cam_isp_host_regulator)) {
+			pr_err("failed to get cam_isp_host regulator");
+			return -EINVAL;
+		}
+	}
+	if (IS_ERR_OR_NULL(cam_af_regulator)) {
+		cam_af_regulator = regulator_get(NULL, "cam_af");
+		if (IS_ERR_OR_NULL(cam_af_regulator)) {
+			pr_err("failed to get cam_af regulator");
+			return -EINVAL;
+		}
+	}
+	if (IS_ERR_OR_NULL(cam_sensor_regulator)) {
+		cam_sensor_regulator = regulator_get(NULL, "cam_sensor");
+		if (IS_ERR_OR_NULL(cam_sensor_regulator)) {
+			pr_err("failed to get cam_af regulator");
+			return -EINVAL;
+		}
+	}
+	pr_debug("cam_isp_core_regulator = %p\n", cam_isp_core_regulator);
+	pr_debug("cam_isp_host_regulator = %p\n", cam_isp_host_regulator);
+	pr_debug("cam_af_regulator = %p\n", cam_af_regulator);
+	pr_debug("cam_sensor_regulator = %p\n", cam_sensor_regulator);
+	return 0;
+}
+
+static void ce147_init(void)
+{
+	/* CAM_IO_EN - GPB(7) */
+	if (gpio_request(GPIO_GPB7, "GPB7") < 0)
+		pr_err("failed gpio_request(GPB7) for camera control\n");
+	/* CAM_MEGA_nRST - GPJ1(5) */
+	if (gpio_request(GPIO_CAM_MEGA_nRST, "GPJ1") < 0)
+		pr_err("failed gpio_request(GPJ1) for camera control\n");
+	/* CAM_MEGA_EN - GPJ0(6) */
+	if (gpio_request(GPIO_CAM_MEGA_EN, "GPJ0") < 0)
+		pr_err("failed gpio_request(GPJ0) for camera control\n");
+}
+
+static int ce147_ldo_en(bool en)
+{
+	int err = 0;
+	int result;
+
+	if (IS_ERR_OR_NULL(cam_isp_core_regulator) ||
+		IS_ERR_OR_NULL(cam_sensor_regulator) ||
+		IS_ERR_OR_NULL(cam_isp_host_regulator) ||
+		IS_ERR_OR_NULL(cam_af_regulator)) {
+		pr_err("Camera regulators not initialized\n");
+		return -EINVAL;
+	}
+
+	if (!en)
+		goto off;
+
+	/* Turn CAM_ISP_CORE_1.2V(VDD_REG) on */
+	err = regulator_enable(cam_isp_core_regulator);
+	if (err) {
+		pr_err("Failed to enable regulator cam_isp_core\n");
+		goto off;
+	}
+	mdelay(1);
+
+	/* Turn CAM_SENSOR_A_2.8V(VDDA) on */
+	gpio_set_value(GPIO_GPB7, 1);
+	mdelay(1);
+
+	/* Turn CAM_ISP_HOST_2.8V(VDDIO) on */
+	err = regulator_enable(cam_sensor_regulator);
+	if (err) {
+		pr_err("Failed to enable regulator cam_sensor_regulator\n");
+		goto off;
+	}
+	udelay(50);
+
+        /* Turn CAM_ISP_HOST_2.8V(VDDIO) on */
+	err = regulator_enable(cam_isp_host_regulator);
+	if (err) {
+		pr_err("Failed to enable regulator cam_isp_core\n");
+		goto off;
+	}
+	udelay(50);
+
+	/* Turn CAM_AF_2.8V or 3.0V on */
+	err = regulator_enable(cam_af_regulator);
+	if (err) {
+		pr_err("Failed to enable regulator cam_isp_core\n");
+		goto off;
+	}
+	udelay(50);
+	return 0;
+
+off:
+	result = err;
+	err = regulator_disable(cam_af_regulator);
+	if (err) {
+		pr_err("Failed to disable regulator cam_isp_core\n");
+		result = err;
+	}
+	err = regulator_disable(cam_isp_host_regulator);
+	if (err) {
+		pr_err("Failed to disable regulator cam_isp_core\n");
+		result = err;
+	}
+	gpio_set_value(GPIO_GPB7, 0);
+	err = regulator_disable(cam_sensor_regulator);
+	if (err) {
+		pr_err("Failed to disable regulator cam_sensor_regulator\n");
+		result = err;
+	}
+	err = regulator_disable(cam_isp_core_regulator);
+	if (err) {
+		pr_err("Failed to disable regulator cam_isp_core\n");
+		result = err;
+	}
+	return result;
+}
+
+static int ce147_power_on(void)
+{
+	/* LDO on */
+	int err;
+
+	/* can't do this earlier because regulators aren't available in
+	 * early boot
+	 */
+	if (ce147_regulator_init()) {
+		pr_err("Failed to initialize camera regulators\n");
+		return -EINVAL;
+	}
+
+	err = ce147_ldo_en(true);
+	if (err)
+		return err;
+	mdelay(66);
+
+	/* MCLK on - default is input, to save power when camera not on */
+	s3c_gpio_cfgpin(GPIO_CAM_MCLK, S3C_GPIO_SFN(GPIO_CAM_MCLK_AF));
+	mdelay(1);
+
+	/* CAM_MEGA_EN - GPJ1(2) LOW */
+	gpio_set_value(GPIO_CAM_MEGA_EN, 1);
+	mdelay(1);
+
+	/* CAM_MEGA_nRST - GPJ1(5) LOW */
+	gpio_set_value(GPIO_CAM_MEGA_nRST, 1);
+	mdelay(1);
+
+	return 0;
+}
+
+static int ce147_power_off(void)
+{
+	/* CAM_MEGA_nRST - GPJ1(5) LOW */
+	gpio_set_value(GPIO_CAM_MEGA_nRST, 0);
+	udelay(60);
+
+	/*  Mclk disable - set to input function to save power */
+	s3c_gpio_cfgpin(GPIO_CAM_MCLK, 0);
+	udelay(10);
+
+	/* CAM_MEGA_EN - GPJ1(2) LOW */
+	gpio_set_value(GPIO_CAM_MEGA_EN, 0);
+	udelay(10);
+
+	ce147_ldo_en(false);
+	mdelay(1);
+
+	return 0;
+}
+
+static int ce147_power_en(int onoff)
+{
+	int err = 0;
+	mutex_lock(&ce147_lock);
+	/* we can be asked to turn off even if we never were turned
+	 * on if something odd happens and we are closed
+	 * by camera framework before we even completely opened.
+	 */
+	pr_err("ce147_power_en()\n");
+	if (onoff != ce147_powered_on) {
+	        /* this is super bad but seems like there is
+	           a hardware issue on the aries board that prevents
+	           us from using the CE147 cam without turning on the
+	           s5ka3dfx unit, as i can't talk over i2c to the CE147
+	           if its off */
+	        pr_err("ce147_power_en() - power state changed\n");
+	        s5ka3dfx_power_en(onoff);
+		if (onoff)
+		{
+		        pr_err("ce147_power_en(ON)\n");
+			err = ce147_power_on();
+		}
+		else
+		{
+		        pr_err("ce147_power_en(OFF)\n");
+			err = ce147_power_off();
+		}
+		if (!err)
+			ce147_powered_on = onoff;
+	}
+	mutex_unlock(&ce147_lock);
+	return err;
+}
+
+static struct ce147_platform_data ce147_plat = {
+	.default_width = 640,
+	.default_height = 480,
+	.pixelformat = V4L2_PIX_FMT_UYVY,
+	.freq = 24000000,
+	.cam_power = ce147_power_en,
+};
+
+static struct i2c_board_info ce147_i2c_info = {
+	I2C_BOARD_INFO("CE147", 0x78>>1),
+	.platform_data = &ce147_plat,
+};
+
+static struct s3c_platform_camera ce147 = {
+	.id = CAMERA_PAR_A,
+	.type = CAM_TYPE_ITU,
+	.fmt = ITU_601_YCBCR422_8BIT,
+	.order422 = CAM_ORDER422_8BIT_CBYCRY,
+	.i2c_busnum = 0,
+	.info = &ce147_i2c_info,
+	.pixelformat = V4L2_PIX_FMT_UYVY,
+	.srclk_name = "xusbxti",
+	.clk_name = "sclk_cam",
+	.clk_rate = 24000000,
+	.line_length = 1920,
+	.width = 640,
+	.height = 480,
+	.window = {
+		.left = 0,
+		.top = 0,
+		.width = 640,
+		.height = 480,
+	},
+
+	/* Polarity */
+	.inv_pclk = 0,
+	.inv_vsync = 1,
+	.inv_href = 0,
+	.inv_hsync = 0,
+
+	.initialized = 0,
+	.cam_power = ce147_power_en,
+};
+
+
 
 /* Interface setting */
 static struct s3c_platform_fimc fimc_plat_lsi = {
