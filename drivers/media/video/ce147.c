@@ -114,7 +114,7 @@
 #define CMD_FW_DUMP			0xFB
 #define CMD_GPS_TIMESTAMP		0xA7
 
-#define CE147_FW_F2_PATH	"/system/firmware/CE147F02.bin"
+#define CE147_FW_F2_PATH	"/system/vendor/firmware/CE147F02.bin"
 
 static unsigned char	MAIN_SW_FW[4]			= {0x0, 0x0, 0x0, 0x0};	/* {FW Maj, FW Min, PRM Maj, PRM Min} */
 static int				MAIN_SW_DATE_INFO[3]	= {0x0, 0x0, 0x0};		/* {Year, Month, Date} */
@@ -374,23 +374,23 @@ static int ce147_i2c_write_multi(struct i2c_client *client, unsigned char cmd,
 	buf[0] = cmd;
 	memcpy(buf+1, w_data, w_len);
 
-#ifdef CE147_DEBUG
-	{
-		int j;
-		printk("W: ");
-		for(j = 0; j <= w_len; j++){
-			printk("0x%02x ", buf[j]);
-		}
-		printk("\n");
+
+        int j;
+	pr_err("W: ");
+	for(j = 0; j <= w_len; j++){
+		pr_err("0x%02x ", buf[j]);
 	}
-#endif
 
 	while(retry_count--){
 		ret  = i2c_transfer(client->adapter, &msg, 1);
 		if(ret == 1)
 			break;
+		pr_err("%s: comfail0r retry\n", __func__);
 		msleep(POLL_TIME_MS);
-		}
+	}
+	
+	if(ret != 1)
+	        pr_err("%s: i2c tranfer failed\n", __func__);
 
 	return (ret == 1) ? 0 : -EIO;
 }
@@ -3234,12 +3234,6 @@ static int ce147_set_focus_mode(struct v4l2_subdev *sd, struct v4l2_control *ctr
 			ce147_buf_set_focus_mode[0] = 0x00;
 		break;
 	}
-#if 0
-	if(state->hd_preview_on == 1)
-	{
-		ce147_buf_set_focus_mode[0] = 0x07;
-	}
-#endif
 	state->cur_af_status = ce147_buf_set_focus_mode[0];
 
 	if(ctrl->value != FOCUS_MODE_FACEDETECT)
@@ -3351,6 +3345,12 @@ static int ce147_set_face_beauty(struct v4l2_subdev *sd, struct v4l2_control *ct
 	return 0;
 }
 
+#define CAMERA_WHITE_BALANCE_AUTO        0x00
+#define CAMERA_WHITE_BALANCE_SUNNY       0x00
+#define CAMERA_WHITE_BALANCE_CLOUDY      0x01
+#define CAMERA_WHITE_BALANCE_TUNGSTEN    0x02
+#define CAMERA_WHITE_BALANCE_FLUORESCENT 0x03
+#define CAMERA_WHITE_BALANCE_DEFAULT     CAMERA_WHITE_BALANCE_AUTO
 
 static int ce147_set_white_balance(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 {
@@ -3361,36 +3361,38 @@ static int ce147_set_white_balance(struct v4l2_subdev *sd, struct v4l2_control *
 	unsigned char ce147_buf_set_wb[2] = { 0x10, 0x00 };
 	unsigned int ce147_len_set_wb_auto = 1;
 	unsigned int ce147_len_set_wb = 2;
+	bool bDefaultChoosen = false;
 	
 	switch(ctrl->value)
 	{
 		case WHITE_BALANCE_AUTO:
-			ce147_buf_set_wb_auto[0] = 0x00;
+			ce147_buf_set_wb_auto[0] = CAMERA_WHITE_BALANCE_AUTO;
 		break;
 
 		case WHITE_BALANCE_SUNNY:
-			ce147_buf_set_wb[1] = 0x00;
+			ce147_buf_set_wb[1] = CAMERA_WHITE_BALANCE_SUNNY;
 		break;
 
 		case WHITE_BALANCE_CLOUDY:
-			ce147_buf_set_wb[1] = 0x01;
+			ce147_buf_set_wb[1] = CAMERA_WHITE_BALANCE_CLOUDY;
 		break;
 
 		case WHITE_BALANCE_TUNGSTEN:
-			ce147_buf_set_wb[1] = 0x02;
+			ce147_buf_set_wb[1] = CAMERA_WHITE_BALANCE_TUNGSTEN;
 		break;
 
 		case WHITE_BALANCE_FLUORESCENT:
-			ce147_buf_set_wb[1] = 0x03;
+			ce147_buf_set_wb[1] = CAMERA_WHITE_BALANCE_FLUORESCENT;
 		break;
 
 		default:
-			dev_err(&client->dev, "%s: failed: to set_white_balance, enum: %d\n", __func__, ctrl->value);
-			return -EINVAL;
+		        bDefaultChoosen = true; /*bad workaround */
+		        ce147_buf_set_wb_auto[0] = CAMERA_WHITE_BALANCE_DEFAULT;
+			pr_warn("%s: white balance mode %d not defined assuming default white balance", __func__, ctrl->value);
 		break;
 	}
 
-	if(ctrl->value != WHITE_BALANCE_AUTO)
+	if((ctrl->value != WHITE_BALANCE_AUTO) && !bDefaultChoosen)
 	{
 		err = ce147_i2c_write_multi(client, CMD_SET_WB, ce147_buf_set_wb, ce147_len_set_wb);
 		if(err < 0){
@@ -3403,13 +3405,7 @@ static int ce147_set_white_balance(struct v4l2_subdev *sd, struct v4l2_control *
 		dev_err(&client->dev, "%s: failed: i2c_write for white_balance\n", __func__);
 		return -EIO;
 	}
-#if 0 //remove batch	
-	err = ce147_get_batch_reflection_status(sd);
-	if(err < 0){
-		dev_err(&client->dev, "%s: failed: ce147_get_batch_reflection_status for white_balance\n", __func__);
-		return -EIO; 
-	}
-#endif
+
 	ce147_msg(&client->dev, "%s: done\n", __func__);
 
 	return 0;
@@ -3464,8 +3460,8 @@ static int ce147_set_ev(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		break;			
 
 		default:
-			dev_err(&client->dev, "%s: failed: to set_ev, enum: %d\n", __func__, ctrl->value);
-			return -EINVAL;
+		        ce147_buf_set_ev[1] = 0x06;
+                        pr_warn("%s: ev mode %d not defined assuming default ev", __func__, ctrl->value);
 		break;
 	}
 
@@ -3473,27 +3469,27 @@ static int ce147_set_ev(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	{
 		ce147_buf_set_ev[1]+=ce147_ev_offset;
 	}
-	//printk("ce147_set_ev: set_ev:, data: 0x%02x\n", ce147_buf_set_ev[1]);
 
 	err = ce147_i2c_write_multi(client, CMD_SET_WB, ce147_buf_set_ev, ce147_len_set_ev);
 	if(err < 0){
 		dev_err(&client->dev, "%s: failed: i2c_write for set_ev, HD preview(%d)\n", __func__, state->hd_preview_on);
 		return -EIO;
 	}
-#if 0 //remove batch	
-	err = ce147_get_batch_reflection_status(sd);
-	if(err < 0){
-		dev_err(&client->dev, "%s: failed: ce147_get_batch_reflection_status for set_ev\n", __func__);
-		return -EIO; 
-	}
-#endif
 	ce147_msg(&client->dev, "%s: done\n", __func__);
 
 	return 0;
 }
 
+
+#define CAMERA_METERING_MATRIX   0x02
+#define CAMERA_METERING_CENTER   0x00
+#define CAMERA_METERING_SPOT     0x01
+#define CAMERA_METERING_HD       0x03
+#define CAMERA_METERING_DEFAULT  CAMERA_METERING_MATRIX
+
 static int ce147_set_metering(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 {
+
 	int err;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	struct ce147_state *state = to_state(sd);
@@ -3501,29 +3497,35 @@ static int ce147_set_metering(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	unsigned char ce147_buf_set_metering[2] = { 0x00, 0x00 };
 	unsigned int ce147_len_set_metering = 2;
 	
-	switch(ctrl->value)
-	{
-		case METERING_MATRIX:
-			ce147_buf_set_metering[1] = 0x02;
-		break;
-
-		case METERING_CENTER:
-			ce147_buf_set_metering[1] = 0x00;
-		break;
-
-		case METERING_SPOT:
-			ce147_buf_set_metering[1] = 0x01;
-		break;
-
-		default:
-			dev_err(&client->dev, "%s: failed: to set_photometry, enum: %d\n", __func__, ctrl->value);
-			return -EINVAL;
-		break;
-	}
-
+	
+	/* when in HD mode we don't care about the other meterings*/
 	if(state->hd_preview_on)
 	{
-		ce147_buf_set_metering[1] = 0x03;
+		ce147_buf_set_metering[1] = CAMERA_METERING_HD;
+	}
+	else
+	{
+	        switch(ctrl->value)
+	        {
+		        case METERING_MATRIX:
+		        	ce147_buf_set_metering[1] = CAMERA_METERING_MATRIX;
+		                break;
+
+		        case METERING_CENTER:
+			        ce147_buf_set_metering[1] = CAMERA_METERING_CENTER;
+		                break;
+
+		        case METERING_SPOT:
+			        ce147_buf_set_metering[1] = CAMERA_METERING_SPOT;
+		                break;
+
+		        default:
+		                //default we asume that we want matrix metering 
+		                ce147_buf_set_metering[1] = CAMERA_METERING_DEFAULT;
+			        pr_warn("%s: metering mode %d not defined assuming default metering", __func__, ctrl->value);
+		                break;
+	         }
+
 	}
 	
 	err = ce147_i2c_write_multi(client, CMD_SET_WB, ce147_buf_set_metering, ce147_len_set_metering);
@@ -3531,13 +3533,7 @@ static int ce147_set_metering(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		dev_err(&client->dev, "%s: failed: i2c_write for set_photometry\n", __func__);
 		return -EIO;
 	}
-#if 0 //remove batch	
-	err = ce147_get_batch_reflection_status(sd);
-	if(err < 0){
-		dev_err(&client->dev, "%s: failed: ce147_get_batch_reflection_status for set_photometry\n", __func__);
-		return -EIO; 
-	}
-#endif
+	
 	ce147_msg(&client->dev, "%s: done\n", __func__);
 
 	return 0;
@@ -3599,8 +3595,8 @@ static int ce147_set_iso(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		break;
 
 		default:
-			dev_err(&client->dev, "%s: failed: to set_iso, enum: %d\n", __func__, ctrl->value);
-			return -EINVAL;
+		        ce147_buf_set_iso[1] = 0x06;
+			pr_warn("%s: ISO mode %d not defined assuming default ISO", __func__, ctrl->value);
 		break;
 	}
 
@@ -3609,13 +3605,7 @@ static int ce147_set_iso(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		dev_err(&client->dev, "%s: failed: i2c_write for set_iso\n", __func__);
 		return -EIO;
 	}
-#if 0 //remove batch	
-	err = ce147_get_batch_reflection_status(sd);
-	if(err < 0){
-		dev_err(&client->dev, "%s: failed: ce147_get_batch_reflection_status for set_iso\n", __func__);
-		return -EIO; 
-	}
-#endif
+
 	ce147_msg(&client->dev, "%s: done, iso: 0x%02x\n", __func__, ce147_buf_set_iso[1]);
 
 	return 0;
@@ -3732,10 +3722,7 @@ static int ce147_set_auto_focus(struct v4l2_subdev *sd, struct v4l2_control *ctr
 
 	unsigned char ce147_buf_set_af[1] = { 0x00 };
 	unsigned int ce147_len_set_af = 1;
-#if 0
-	unsigned char ce147_buf_get_af_status[1] = { 0x00 };
-	int count;
-#endif
+
 	if (ctrl->value)
 	{
 		//start af
@@ -3744,34 +3731,6 @@ static int ce147_set_auto_focus(struct v4l2_subdev *sd, struct v4l2_control *ctr
 			dev_err(&client->dev, "%s: failed: i2c_write for auto_focus\n", __func__);
 			return -EIO;
 		}
-#if 0
-		//status check whether AF searching is successful or not 
-		for(count = 0; count < 600; count++)
-		{
-			msleep(10);
-			ce147_buf_get_af_status[0] = 0xFF;
-			err = ce147_i2c_read_multi(client, CMD_CHECK_AUTO_FOCUS_SEARCH, NULL, 0, ce147_buf_get_af_status, 1);
-			if(err < 0){
-				dev_err(&client->dev, "%s: failed: i2c_read for auto_focus\n", __func__);
-				return -EIO;
-			}
-			if(ce147_buf_get_af_status[0] == 0x05) continue;
-			if(ce147_buf_get_af_status[0] == 0x00 || ce147_buf_get_af_status[0] == 0x02) break;
-		}	
-		
-		if(ce147_buf_get_af_status[0] == 0x00)
-		{
-			if(err < 0){
-				dev_err(&client->dev, "%s: failed: AF is failed\n", __func__);
-				return -EIO;
-			}
-			ctrl->value =0;
-		}
-		else 
-			ctrl->value = 1;
-
-		ce147_msg(&client->dev, "%s: done\n", __func__);
-#endif
 	}
 	else
 	{
@@ -4539,7 +4498,7 @@ static int ce147_g_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		break; 
 
 	default:
-		dev_err(&client->dev, "%s: no such ctrl\n", __func__);
+		pr_err("%s: no such ctrl id(%d)\n", __func__, ctrl->id);
 		break;
 	}
 	
@@ -4852,8 +4811,13 @@ static int ce147_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		err = 0;
 		break;
 		
+	case V4L2_CID_CAMERA_RETURN_FOCUS:
+	        pr_warn("%s don't bother with V4L2_CID_CAMERA_RETURN_FOCUS shit I am a stupid CE147 cam!",__func__);
+	        err = 0;
+	        break;
+		
 	default:
-		dev_err(&client->dev, "%s: no such control\n", __func__);
+		pr_err("%s: no such control ... I know nothing about %d! What do you want from me sucker? \n", __func__, ctrl->id);
 		break;
 	}
 
@@ -4969,7 +4933,9 @@ static int ce147_init(struct v4l2_subdev *sd, u32 val)
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	struct ce147_state *state = to_state(sd);
 	int err = -EINVAL;
-        ce147_power_en(1, sd);
+	//camera was just turned on, we wait for it 
+	msleep(200);
+        //ce147_power_en(1, sd);
 	err = ce147_load_fw(sd);
 	if(err < 0){
 		dev_err(&client->dev, "%s: Failed: Camera Initialization\n", __func__);
@@ -5004,7 +4970,7 @@ static int ce147_init(struct v4l2_subdev *sd, u32 val)
 		return -EIO;
 	}
 	
-        ce147_power_en(0, sd);
+        //ce147_power_en(0, sd);
 
 	printk(KERN_DEBUG "FW  Version: %d.%d\n", state->fw.major, state->fw.minor);
 	printk(KERN_DEBUG "PRM Version: %d.%d\n", state->prm.major, state->prm.minor);
