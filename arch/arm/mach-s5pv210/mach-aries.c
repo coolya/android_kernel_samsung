@@ -67,6 +67,7 @@
 
 #include <media/s5ka3dfx_platform.h>
 #include <media/s5k4ecgx.h>
+#include <media/ce147_platform.h>
 
 #include <plat/regs-serial.h>
 #include <plat/s5pv210.h>
@@ -1307,12 +1308,13 @@ static struct wm8994_platform_data wm8994_pdata = {
  * Guide for Camera Configuration for Crespo board
  * ITU CAM CH A: LSI s5k4ecgx
  */
-static DEFINE_MUTEX(s5k4ecgx_lock);
+static DEFINE_MUTEX(ce147_lock);
 static struct regulator *cam_isp_core_regulator;
 static struct regulator *cam_isp_host_regulator;
 static struct regulator *cam_af_regulator;
-static bool s5k4ecgx_powered_on;
-static int s5k4ecgx_regulator_init(void)
+static struct regulator *cam_sensor_regulator;
+static bool ce147_powered_on;
+static int ce147_regulator_init(void)
 {
 	if (IS_ERR_OR_NULL(cam_isp_core_regulator)) {
 		cam_isp_core_regulator = regulator_get(NULL, "cam_isp_core");
@@ -1335,13 +1337,21 @@ static int s5k4ecgx_regulator_init(void)
 			return -EINVAL;
 		}
 	}
+	if (IS_ERR_OR_NULL(cam_sensor_regulator)) {
+		cam_sensor_regulator = regulator_get(NULL, "cam_sensor");
+		if (IS_ERR_OR_NULL(cam_sensor_regulator)) {
+			pr_err("failed to get cam_af regulator");
+			return -EINVAL;
+		}
+	}
 	pr_debug("cam_isp_core_regulator = %p\n", cam_isp_core_regulator);
 	pr_debug("cam_isp_host_regulator = %p\n", cam_isp_host_regulator);
 	pr_debug("cam_af_regulator = %p\n", cam_af_regulator);
+	pr_debug("cam_sensor_regulator = %p\n", cam_sensor_regulator);
 	return 0;
 }
 
-static void s5k4ecgx_init(void)
+static void ce147_init(void)
 {
 	/* CAM_IO_EN - GPB(7) */
 	if (gpio_request(GPIO_GPB7, "GPB7") < 0)
@@ -1354,12 +1364,13 @@ static void s5k4ecgx_init(void)
 		pr_err("failed gpio_request(GPJ0) for camera control\n");	
 }
 
-static int s5k4ecgx_ldo_en(bool en)
+static int ce147_ldo_en(bool en)
 {
 	int err = 0;
 	int result;
 
 	if (IS_ERR_OR_NULL(cam_isp_core_regulator) ||
+		IS_ERR_OR_NULL(cam_sensor_regulator) ||
 		IS_ERR_OR_NULL(cam_isp_host_regulator) ||
 		IS_ERR_OR_NULL(cam_af_regulator)) {
 		pr_err("Camera regulators not initialized\n");
@@ -1382,12 +1393,21 @@ static int s5k4ecgx_ldo_en(bool en)
 	mdelay(1);
 
 	/* Turn CAM_ISP_HOST_2.8V(VDDIO) on */
+	err = regulator_enable(cam_sensor_regulator);
+	if (err) {
+		pr_err("Failed to enable regulator cam_sensor_regulator\n");
+		goto off;
+	}
+	udelay(50);
+	
+        /* Turn CAM_ISP_HOST_2.8V(VDDIO) on */
 	err = regulator_enable(cam_isp_host_regulator);
 	if (err) {
 		pr_err("Failed to enable regulator cam_isp_core\n");
 		goto off;
 	}
 	udelay(50);
+
 
 	/* Turn CAM_AF_2.8V or 3.0V on */
 	err = regulator_enable(cam_af_regulator);
@@ -1411,6 +1431,11 @@ off:
 		result = err;
 	}
 	gpio_set_value(GPIO_GPB7, 0);
+	err = regulator_disable(cam_sensor_regulator);
+	if (err) {
+		pr_err("Failed to disable regulator cam_sensor_regulator\n");
+		result = err;
+	}
 	err = regulator_disable(cam_isp_core_regulator);
 	if (err) {
 		pr_err("Failed to disable regulator cam_isp_core\n");
@@ -1419,7 +1444,7 @@ off:
 	return result;
 }
 
-static int s5k4ecgx_power_on(void)
+static int ce147_power_on(void)
 {
 	/* LDO on */
 	int err;
@@ -1427,12 +1452,12 @@ static int s5k4ecgx_power_on(void)
 	/* can't do this earlier because regulators aren't available in
 	 * early boot
 	 */
-	if (s5k4ecgx_regulator_init()) {
+	if (ce147_regulator_init()) {
 		pr_err("Failed to initialize camera regulators\n");
 		return -EINVAL;
 	}
 
-	err = s5k4ecgx_ldo_en(true);
+	err = ce147_ldo_en(true);
 	if (err)
 		return err;
 	mdelay(66);
@@ -1452,7 +1477,7 @@ static int s5k4ecgx_power_on(void)
 	return 0;
 }
 
-static int s5k4ecgx_power_off(void)
+static int ce147_power_off(void)
 {
 	/* CAM_MEGA_nRST - GPJ1(5) LOW */
 	gpio_set_value(GPIO_CAM_MEGA_nRST, 0);
@@ -1466,56 +1491,52 @@ static int s5k4ecgx_power_off(void)
 	gpio_set_value(GPIO_CAM_MEGA_EN, 0);
 	udelay(10);
 
-	s5k4ecgx_ldo_en(false);
+	ce147_ldo_en(false);
 	mdelay(1);
 
 	return 0;
 }
 
-static int s5k4ecgx_power_en(int onoff)
+static int ce147_power_en(int onoff)
 {
 	int err = 0;
-	mutex_lock(&s5k4ecgx_lock);
+	mutex_lock(&ce147_lock);
 	/* we can be asked to turn off even if we never were turned
 	 * on if something odd happens and we are closed
 	 * by camera framework before we even completely opened.
 	 */
-	if (onoff != s5k4ecgx_powered_on) {
+	if (onoff != ce147_powered_on) {
 		if (onoff)
-			err = s5k4ecgx_power_on();
+			err = ce147_power_on();
 		else
-			err = s5k4ecgx_power_off();
+			err = ce147_power_off();
 		if (!err)
-			s5k4ecgx_powered_on = onoff;
+			ce147_powered_on = onoff;
 	}
-	mutex_unlock(&s5k4ecgx_lock);
+	mutex_unlock(&ce147_lock);
 	return err;
 }
 
-#define FLASH_MOVIE_MODE_CURRENT_50_PERCENT	7
-
-#define FLASH_TIME_LATCH_US			500
-#define FLASH_TIME_EN_SET_US			1
-
-static struct s5k4ecgx_platform_data s5k4ecgx_plat = {
+static struct ce147_platform_data ce147_plat = {
 	.default_width = 640,
 	.default_height = 480,
 	.pixelformat = V4L2_PIX_FMT_UYVY,
 	.freq = 24000000,
+	.cam_power = ce147_power_en,
 };
 
-static struct i2c_board_info  s5k4ecgx_i2c_info = {
-	I2C_BOARD_INFO("S5K4ECGX", 0x5A>>1),
-	.platform_data = &s5k4ecgx_plat,
+static struct i2c_board_info ce147_i2c_info = {
+	I2C_BOARD_INFO("CE147", 0x78>>1),
+	.platform_data = &ce147_plat,
 };
 
-static struct s3c_platform_camera s5k4ecgx = {
+static struct s3c_platform_camera ce147 = {
 	.id = CAMERA_PAR_A,
 	.type = CAM_TYPE_ITU,
 	.fmt = ITU_601_YCBCR422_8BIT,
 	.order422 = CAM_ORDER422_8BIT_CBYCRY,
 	.i2c_busnum = 0,
-	.info = &s5k4ecgx_i2c_info,
+	.info = &ce147_i2c_info,
 	.pixelformat = V4L2_PIX_FMT_UYVY,
 	.srclk_name = "xusbxti",
 	.clk_name = "sclk_cam",
@@ -1537,7 +1558,7 @@ static struct s3c_platform_camera s5k4ecgx = {
 	.inv_hsync = 0,
 
 	.initialized = 0,
-	.cam_power = s5k4ecgx_power_en,
+	.cam_power = ce147_power_en,
 };
 
 
@@ -1827,7 +1848,7 @@ static struct s3c_platform_fimc fimc_plat_lsi = {
 	.clk_rate	= 166750000,
 	.default_cam	= CAMERA_PAR_A,
 	.camera		= {
-		&s5k4ecgx,
+		&ce147,
 		&s5ka3dfx,
 	},
 	.hw_ver		= 0x43,
@@ -4323,7 +4344,7 @@ static void __init aries_machine_init(void)
 
 	s5ka3dfx_request_gpio();
 
-	s5k4ecgx_init();
+	ce147_init();
 
 #ifdef CONFIG_VIDEO_FIMC
 	/* fimc */
