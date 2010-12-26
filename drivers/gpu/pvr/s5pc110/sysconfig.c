@@ -475,7 +475,7 @@ PVRSRV_ERROR SysFinalise(IMG_VOID)
     }
 	else
 	{
-		PVR_DPF((PVR_DBG_WARNING, "SysFinalise: Version string: %s", gpsSysData->pszVersionString));
+		PVR_DPF((PVR_DBG_VERBOSE, "SysFinalise: Version string: %s", gpsSysData->pszVersionString));
 	}
 
 #if defined(SUPPORT_ACTIVE_POWER_MANAGEMENT)
