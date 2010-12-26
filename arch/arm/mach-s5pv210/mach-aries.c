@@ -1901,12 +1901,6 @@ static struct i2c_board_info i2c_devs4[] __initdata = {
 	},
 };
 
-static struct akm8973_platform_data akm8973_pdata = {
-	.reset_line = GPIO_MSENSE_nRST,
-	.reset_asserted = GPIO_LEVEL_LOW,
-	.gpio_data_ready_int = GPIO_MSENSE_IRQ,
-};
-
 /* I2C1 */
 static struct i2c_board_info i2c_devs1[] __initdata = {
 };
@@ -2144,12 +2138,7 @@ static struct i2c_board_info i2c_devs11[] __initdata = {
 
 static struct i2c_board_info i2c_devs12[] __initdata = {
 	{
-#if defined(CONFIG_SENSORS_YAMAHA_MS3C)
 		I2C_BOARD_INFO("yamaha", 0x2e),
-#else
-		I2C_BOARD_INFO("ak8973", 0x1c),
-		.platform_data = &akm8973_pdata,
-#endif
 	},
 };
 
@@ -4287,7 +4276,7 @@ static void __init aries_machine_init(void)
 	s3c_i2c2_set_platdata(NULL);
 
 	/* H/W I2C lines */
-	
+
 	i2c_register_board_info(0, i2c_devs0, ARRAY_SIZE(i2c_devs0));
 	i2c_register_board_info(1, i2c_devs1, ARRAY_SIZE(i2c_devs1));
 	i2c_register_board_info(2, i2c_devs2, ARRAY_SIZE(i2c_devs2));
@@ -4297,23 +4286,24 @@ static void __init aries_machine_init(void)
 	i2c_register_board_info(4, i2c_devs4, ARRAY_SIZE(i2c_devs4));
 	/* accel sensor for rev04 */
 	i2c_register_board_info(5, i2c_devs5, ARRAY_SIZE(i2c_devs5));
-	
+
 	i2c_register_board_info(6, i2c_devs6, ARRAY_SIZE(i2c_devs6));
-	/* Touch Key */
-	touch_keypad_gpio_init();
-	i2c_register_board_info(10, i2c_devs10, ARRAY_SIZE(i2c_devs10));
+
 	/* FSA9480 */
 	fsa9480_gpio_init();
 	i2c_register_board_info(7, i2c_devs7, ARRAY_SIZE(i2c_devs7));
 
 	i2c_register_board_info(9, i2c_devs9, ARRAY_SIZE(i2c_devs9));
+
+	/* Touch Key */
+	touch_keypad_gpio_init();
+	i2c_register_board_info(10, i2c_devs10, ARRAY_SIZE(i2c_devs10));
+
+
 	/* optical sensor */
 	gp2a_gpio_init();
 	i2c_register_board_info(11, i2c_devs11, ARRAY_SIZE(i2c_devs11));
-	/* magnetic sensor for rev04 */
-#ifndef CONFIG_SENSORS_YAMAHA_MS3C
-	if (system_rev == 0x04)
-#endif
+	/* magnetic sensor */
 	i2c_register_board_info(12, i2c_devs12, ARRAY_SIZE(i2c_devs12));
 
 #ifdef CONFIG_FB_S3C_TL2796
