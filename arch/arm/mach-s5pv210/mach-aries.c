@@ -1907,10 +1907,6 @@ static struct akm8973_platform_data akm8973_pdata = {
 	.gpio_data_ready_int = GPIO_MSENSE_IRQ,
 };
 
-static struct kr3dm_platform_data kr3dm_data = {
-	.gpio_acc_int = GPIO_ACC_INT,
-};
-
 /* I2C1 */
 static struct i2c_board_info i2c_devs1[] __initdata = {
 };
@@ -1995,8 +1991,7 @@ static struct i2c_board_info i2c_devs10[] __initdata = {
 
 static struct i2c_board_info i2c_devs5[] __initdata = {
 	{
-		I2C_BOARD_INFO("kr3dm", 0x09),
-		.platform_data  = &kr3dm_data,
+		I2C_BOARD_INFO("smb380", (0x38)),
 	},
 };
 
@@ -4295,12 +4290,6 @@ static void __init aries_machine_init(void)
 	
 	i2c_register_board_info(0, i2c_devs0, ARRAY_SIZE(i2c_devs0));
 	i2c_register_board_info(1, i2c_devs1, ARRAY_SIZE(i2c_devs1));
-	if (system_rev >= 0x05) {
-		/* gyro sensor */
-		
-		/* magnetic and accel sensor */
-		
-	}
 	i2c_register_board_info(2, i2c_devs2, ARRAY_SIZE(i2c_devs2));
 
 	/* wm8994 codec */
