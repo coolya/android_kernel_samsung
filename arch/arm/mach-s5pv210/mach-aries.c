@@ -355,6 +355,27 @@ static struct s5p_media_device aries_media_devs[] = {
 		.memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMD,
 		.paddr = 0,
 	},
+	[7] = {
+		.id = S5P_MDEV_PMEM,
+		.name = "pmem",
+		.memsize = CONFIG_ANDROID_PMEM_MEMSIZE_PMEM * SZ_1K,
+		.paddr = 0,
+		.bank = 0,
+	},
+        [8] = {
+                .id = S5P_MDEV_PMEM_GPU1,
+                .name = "pmem_gpu1",
+                .memsize = CONFIG_ANDROID_PMEM_MEMSIZE_PMEM_GPU1 * SZ_1K,
+                .paddr = 0,
+		.bank = 0,
+        },
+        [9] = {
+                .id = S5P_MDEV_PMEM_ADSP,
+                .name = "pmem_adsp",
+                .memsize = CONFIG_ANDROID_PMEM_MEMSIZE_PMEM_ADSP * SZ_1K,
+                .paddr = 0,
+		.bank = 0,
+        },
 };
 
 static struct regulator_consumer_supply ldo3_consumer[] = {
