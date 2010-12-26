@@ -1891,10 +1891,7 @@ static struct k3g_platform_data k3g_pdata = {
 
 /* I2C0 */
 static struct i2c_board_info i2c_devs0[] __initdata = {
-	{
-		I2C_BOARD_INFO("k3g", 0x69),
-		.platform_data = &k3g_pdata,
-	},
+
 };
 
 static struct i2c_board_info i2c_devs4[] __initdata = {
@@ -4305,18 +4302,16 @@ static void __init aries_machine_init(void)
 
 	/* i2c */
 	s3c_i2c0_set_platdata(NULL);
-#ifdef CONFIG_S3C_DEV_I2C1
 	s3c_i2c1_set_platdata(NULL);
-#endif
-
-#ifdef CONFIG_S3C_DEV_I2C2
 	s3c_i2c2_set_platdata(NULL);
-#endif
+
 	k3g_irq_init();
 	/* H/W I2C lines */
+	
+	i2c_register_board_info(0, i2c_devs0, ARRAY_SIZE(i2c_devs0));
 	if (system_rev >= 0x05) {
 		/* gyro sensor */
-		i2c_register_board_info(0, i2c_devs0, ARRAY_SIZE(i2c_devs0));
+		
 		/* magnetic and accel sensor */
 		i2c_register_board_info(1, i2c_devs1, ARRAY_SIZE(i2c_devs1));
 	}
