@@ -1913,14 +1913,6 @@ static struct kr3dm_platform_data kr3dm_data = {
 
 /* I2C1 */
 static struct i2c_board_info i2c_devs1[] __initdata = {
-	{
-		I2C_BOARD_INFO("ak8973", 0x1c),
-		.platform_data = &akm8973_pdata,
-	},
-	{
-		I2C_BOARD_INFO("kr3dm", 0x09),
-		.platform_data  = &kr3dm_data,
-	},
 };
 
 static void mxt224_power_on(void)
@@ -2015,12 +2007,6 @@ static struct i2c_board_info i2c_devs8[] __initdata = {
 		.irq = -1,
 	},
 };
-
-static void k3g_irq_init(void)
-{
-	i2c_devs0[0].irq = (system_rev >= 0x0A) ? IRQ_EINT(29) : -1;
-}
-
 
 static void fsa9480_usb_cb(bool attached)
 {
@@ -4305,15 +4291,15 @@ static void __init aries_machine_init(void)
 	s3c_i2c1_set_platdata(NULL);
 	s3c_i2c2_set_platdata(NULL);
 
-	k3g_irq_init();
 	/* H/W I2C lines */
 	
 	i2c_register_board_info(0, i2c_devs0, ARRAY_SIZE(i2c_devs0));
+	i2c_register_board_info(1, i2c_devs1, ARRAY_SIZE(i2c_devs1));
 	if (system_rev >= 0x05) {
 		/* gyro sensor */
 		
 		/* magnetic and accel sensor */
-		i2c_register_board_info(1, i2c_devs1, ARRAY_SIZE(i2c_devs1));
+		
 	}
 	i2c_register_board_info(2, i2c_devs2, ARRAY_SIZE(i2c_devs2));
 
