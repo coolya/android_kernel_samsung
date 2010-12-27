@@ -39,6 +39,10 @@
 #endif
 #include "s3cfb.h"
 
+#ifdef CONFIG_MACH_ARIES
+#include "logo_rgb24_wvga_portrait.h"
+#endif
+
 struct s3c_platform_fb *to_fb_plat(struct device *dev)
 {
 	struct platform_device *pdev = to_platform_device(dev);
@@ -91,6 +95,7 @@ static int s3cfb_draw_logo(struct fb_info *fb)
 		}
 	}
 #endif
+#ifndef CONFIG_MACH_ARIES
 	if (bootloaderfb) {
 		u8 *logo_virt_buf;
 		logo_virt_buf = ioremap_nocache(bootloaderfb,
@@ -100,6 +105,11 @@ static int s3cfb_draw_logo(struct fb_info *fb)
 				fb->var.yres * fb->fix.line_length);
 		iounmap(logo_virt_buf);
 	}
+#else /*CONFIG_SAMSUNG_GALAXYS*/
+
+	memcpy(fb->screen_base, LOGO_RGB24,
+				fb->var.yres * fb->fix.line_length);
+#endif
 	return 0;
 }
 #endif
