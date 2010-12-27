@@ -305,6 +305,10 @@ static struct s3cfb_lcd s6e63m0 = {
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMD (5120 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_JPEG (8192 * SZ_1K)
 
+#define  S5PV210_ANDROID_PMEM_MEMSIZE_PMEM (4096 * SZ_1K)
+#define  S5PV210_ANDROID_PMEM_MEMSIZE_PMEM_GPU1 (8192 * SZ_1K)
+#define  S5PV210_ANDROID_PMEM_MEMSIZE_PMEM_ADSP (1500 * SZ_1K)
+
 static struct s5p_media_device aries_media_devs[] = {
 	[0] = {
 		.id = S5P_MDEV_MFC,
@@ -355,27 +359,29 @@ static struct s5p_media_device aries_media_devs[] = {
 		.memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMD,
 		.paddr = 0,
 	},
+#ifdef CONFIG_ANDROID_PMEM
 	[7] = {
 		.id = S5P_MDEV_PMEM,
 		.name = "pmem",
-		.memsize = CONFIG_ANDROID_PMEM_MEMSIZE_PMEM * SZ_1K,
+		.memsize = S5PV210_ANDROID_PMEM_MEMSIZE_PMEM,
 		.paddr = 0,
 		.bank = 0,
 	},
         [8] = {
                 .id = S5P_MDEV_PMEM_GPU1,
                 .name = "pmem_gpu1",
-                .memsize = CONFIG_ANDROID_PMEM_MEMSIZE_PMEM_GPU1 * SZ_1K,
+                .memsize = S5PV210_ANDROID_PMEM_MEMSIZE_PMEM_GPU1,
                 .paddr = 0,
 		.bank = 0,
         },
         [9] = {
                 .id = S5P_MDEV_PMEM_ADSP,
                 .name = "pmem_adsp",
-                .memsize = CONFIG_ANDROID_PMEM_MEMSIZE_PMEM_ADSP * SZ_1K,
+                .memsize = S5PV210_ANDROID_PMEM_MEMSIZE_PMEM_ADSP,
                 .paddr = 0,
 		.bank = 0,
         },
+#endif
 };
 
 static struct regulator_consumer_supply ldo3_consumer[] = {
