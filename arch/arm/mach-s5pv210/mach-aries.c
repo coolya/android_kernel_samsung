@@ -57,9 +57,10 @@
 
 #ifdef CONFIG_ANDROID_PMEM
 #include <linux/android_pmem.h>
+#endif
+
 #include <plat/media.h>
 #include <mach/media.h>
-#endif
 
 #ifdef CONFIG_S5PV210_POWER_DOMAIN
 #include <mach/power-domain.h>
