@@ -2081,13 +2081,13 @@ static ssize_t herring_virtual_keys_show(struct kobject *kobj,
 					struct kobj_attribute *attr, char *buf)
 {
 	return sprintf(buf,
-		__stringify(EV_KEY) ":" __stringify(KEY_BACK) ":71:854:45:49"
+		__stringify(EV_KEY) ":" __stringify(KEY_BACK) ":71:849:54:61"
 		":" __stringify(EV_KEY) ":"
-					__stringify(KEY_MENU) ":183:854:45:49"
+					__stringify(KEY_MENU) ":183:849:54:61"
 		":" __stringify(EV_KEY) ":"
-					__stringify(KEY_SEARCH) ":294:854:45:49"
+					__stringify(KEY_SEARCH) ":294:849:54:61"
 		":" __stringify(EV_KEY) ":"
-					__stringify(KEY_HOME) ":406:854:45:49"
+					__stringify(KEY_HOME) ":406:849:54:61"
 		"\n");
 }
 
