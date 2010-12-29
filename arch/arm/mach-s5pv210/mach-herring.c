@@ -106,7 +106,6 @@ EXPORT_SYMBOL(sec_set_param_value);
 void (*sec_get_param_value)(int idx, void *value);
 EXPORT_SYMBOL(sec_get_param_value);
 
-#define KERNEL_REBOOT_MASK      0xFFFFFFFF
 #define REBOOT_MODE_FAST_BOOT		7
 
 #define PREALLOC_WLAN_SEC_NUM		4
@@ -141,10 +140,7 @@ static int herring_notifier_call(struct notifier_block *this,
 		else
 			mode = REBOOT_MODE_NONE;
 	}
-	temp = __raw_readl(S5P_INFORM6);
-	temp |= KERNEL_REBOOT_MASK;
-	temp &= mode;
-	__raw_writel(temp, S5P_INFORM6);
+	__raw_writel(mode, S5P_INFORM6);
 
 	return NOTIFY_DONE;
 }
@@ -4386,6 +4382,16 @@ static void flush_console(void)
 static void herring_pm_restart(char mode, const char *cmd)
 {
 	flush_console();
+
+	/* On a normal reboot, INFORM6 will contain a small integer
+	 * reason code from the notifier hook.  On a panic, it will
+	 * contain the 0xee we set at boot.  Write 0xbb to differentiate
+	 * a watchdog-timeout-and-reboot (0xee) from a controlled reboot
+	 * (0xbb)
+	 */
+	if (__raw_readl(S5P_INFORM6) == 0xee)
+		__raw_writel(0xbb, S5P_INFORM6);
+
 	arm_machine_restart(mode, cmd);
 }
 
@@ -4547,6 +4553,12 @@ static void __init herring_machine_init(void)
 	uart_switch_init();
 
 	herring_init_wifi_mem();
+
+	/* write something into the INFORM6 register that we can use to
+	 * differentiate an unclear reboot from a clean reboot (which
+	 * writes a small integer code to INFORM6).
+	 */
+	__raw_writel(0xee, S5P_INFORM6);
 }
 
 #ifdef CONFIG_USB_SUPPORT
