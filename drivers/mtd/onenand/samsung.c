@@ -79,19 +79,19 @@ struct mtd_partition s3c_partition_info[] = {
 	{	
 		.name		= "system",
 		.offset		=  (132*SZ_256K),
-		.size		= (600*SZ_256K), //731
+		.size		= (750*SZ_256K), //881
 	},
 	{
 		.name		= "cache",
-		.offset		= (732*SZ_256K),
-		.size		= (320*SZ_256K), //1051
+		.offset		= (882*SZ_256K),
+		.size		= (320*SZ_256K), //1201
 	},
 	{       /* we should consider moving this before the modem at the end
 	           that would allow us to change the partitions before without
 	           loosing ths sensible data*/
 		.name		= "efs",
-		.offset		= (1052*SZ_256K),
-		.size		= (50*SZ_256K), //1101
+		.offset		= (1890*SZ_256K),
+		.size		= (50*SZ_256K), //1939
 	},
 	{       /* the modem firmware has to be mtd5 as the userspace samsung ril uses
 	           this device hardcoded, but I placed it at the end of the NAND to be
@@ -102,8 +102,8 @@ struct mtd_partition s3c_partition_info[] = {
 	},
 	{
 		.name		= "userdata",
-		.offset		= (1102*SZ_256K),
-		.size		= (800*SZ_256K), //1901
+		.offset		= (1202*SZ_256K),
+		.size		= (688*SZ_256K), //1889
 	},
 };
 
