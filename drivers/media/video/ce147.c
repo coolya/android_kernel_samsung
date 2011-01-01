@@ -1,5 +1,8 @@
 /*
- * Driver for CE147 (5MP Camera) from NEC
+ *  Driver for CE147 (5MP Camera) from NEC
+ *
+ * Copyright © 2010 Samsung Electronics
+ * Copyright 2010 Kolja Dummann <k.dummann@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -374,12 +377,13 @@ static int ce147_i2c_write_multi(struct i2c_client *client, unsigned char cmd,
 	buf[0] = cmd;
 	memcpy(buf+1, w_data, w_len);
 
-
+#ifdef CE147_DEBUG
         int j;
 	pr_err("W: ");
 	for(j = 0; j <= w_len; j++){
 		pr_err("0x%02x ", buf[j]);
 	}
+#endif
 
 	while(retry_count--){
 		ret  = i2c_transfer(client->adapter, &msg, 1);
