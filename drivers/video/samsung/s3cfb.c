@@ -852,8 +852,16 @@ static int s3cfb_register_framebuffer(struct s3cfb_global *ctrl)
 			if (j == pdata->default_win) {
 				s3cfb_check_var(&ctrl->fb[j]->var, ctrl->fb[j]);
 				s3cfb_set_par(ctrl->fb[j]);
+#ifndef CONFIG_MACH_ARIES
 				s3cfb_draw_logo(ctrl->fb[j]);
+#endif
 			}
+#ifdef CONFIG_MACH_ARIES
+                        /* really ugly workaround for bootpixels on SGS */
+                        if(j == 0)
+                                s3cfb_draw_logo(ctrl->fb[j]);
+#endif
+
 #endif
 	}
 
