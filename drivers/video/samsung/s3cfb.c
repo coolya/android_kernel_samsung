@@ -858,8 +858,8 @@ static int s3cfb_register_framebuffer(struct s3cfb_global *ctrl)
 			}
 #ifdef CONFIG_MACH_ARIES
                         /* really ugly workaround for bootpixels on SGS */
-                        if(j == 0)
-                                s3cfb_draw_logo(ctrl->fb[j]);
+                        //if(j == 0)
+                        //        s3cfb_draw_logo(ctrl->fb[j]);
 #endif
 
 #endif
