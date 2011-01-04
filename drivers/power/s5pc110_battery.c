@@ -447,40 +447,30 @@ static int max8998_charging_control(struct chg_data *chg)
 		/* enable charging */
 		if (chg->cable_status == CABLE_TYPE_AC) {
 			/* ac */
-			ret = max8998_update_reg(chg->iodev, MAX8998_REG_CHGR1,
-				(2 << MAX8998_SHIFT_TOPOFF), MAX8998_MASK_TOPOFF);
-			if (ret < 0)
-				goto err;
-
-			ret = max8998_update_reg(chg->iodev, MAX8998_REG_CHGR1,
-				(5 << MAX8998_SHIFT_ICHG), MAX8998_MASK_ICHG);
+			ret = max8998_write_reg(chg->iodev, MAX8998_REG_CHGR1,
+						(2 << MAX8998_SHIFT_TOPOFF) |
+						(3 << MAX8998_SHIFT_RSTR) |
+						(5 << MAX8998_SHIFT_ICHG));
 			if (ret < 0)
 				goto err;
 
 			pr_debug("%s : TA charging enabled", __func__);
-
 		} else {
 			/* usb */
-			ret = max8998_update_reg(chg->iodev, MAX8998_REG_CHGR1,
-				(6 << MAX8998_SHIFT_TOPOFF), MAX8998_MASK_TOPOFF);
-			if (ret < 0)
-				goto err;
-
-			ret = max8998_update_reg(chg->iodev, MAX8998_REG_CHGR1,
-				(2 << MAX8998_SHIFT_ICHG), MAX8998_MASK_ICHG);
+			ret = max8998_write_reg(chg->iodev, MAX8998_REG_CHGR1,
+						(6 << MAX8998_SHIFT_TOPOFF) |
+						(3 << MAX8998_SHIFT_RSTR) |
+						(2 << MAX8998_SHIFT_ICHG));
 			if (ret < 0)
 				goto err;
 
 			pr_debug("%s : USB charging enabled", __func__);
 		}
 
-		ret = max8998_update_reg(chg->iodev, MAX8998_REG_CHGR2,
-			(2 << MAX8998_SHIFT_ESAFEOUT), MAX8998_MASK_ESAFEOUT);
-		if (ret < 0)
-			goto err;
-
-		ret = max8998_update_reg(chg->iodev, MAX8998_REG_CHGR2,
-			(0 << MAX8998_SHIFT_CHGEN), MAX8998_MASK_CHGEN);
+		ret = max8998_write_reg(chg->iodev, MAX8998_REG_CHGR2,
+					(2 << MAX8998_SHIFT_ESAFEOUT) |
+					(2 << MAX8998_SHIFT_FT) |
+					(0 << MAX8998_SHIFT_CHGEN));
 		if (ret < 0)
 			goto err;
 	}
