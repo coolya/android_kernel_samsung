@@ -2070,6 +2070,8 @@ static void mxt224_init(void)
 	if (system_rev < 0x30)
 		return;
 	mxt224_data.max_y = 939;
+	t9_config[8] = 45;
+	t9_config[9] = 3;
 	t9_config[24] = 0;
 	t9_config[27] = 0;
 	t9_config[28] = 0;
