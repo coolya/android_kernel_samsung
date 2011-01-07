@@ -3884,7 +3884,8 @@ static int wlan_carddetect_en(int onoff)
 	}
 	udelay(5);
 
-	sdhci_s3c_force_presence_change(&s3c_device_hsmmc3);
+	/* mmc rescan */
+	sdhci_s3c_force_presence_change(&s3c_device_hsmmc1);
 	return 0;
 }
 
