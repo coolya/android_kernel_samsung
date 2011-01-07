@@ -3844,10 +3844,6 @@ static int wlan_power_en(int onoff)
 
 		s3c_config_gpio_alive_table(ARRAY_SIZE(wlan_sdio_off_table), wlan_sdio_off_table);
 	}
-
-	/* mmc_rescan*/
-	sdhci_s3c_force_presence_change(&s3c_device_hsmmc1);
-
 	return 0;
 }
 
