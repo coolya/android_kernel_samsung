@@ -849,19 +849,23 @@ static int s3cfb_register_framebuffer(struct s3cfb_global *ctrl)
 				goto err_register_fb;
 			}
 #ifndef CONFIG_FRAMEBUFFER_CONSOLE
+#ifdef CONFIG_MACH_ARIES
+                        /*ugly workaround for bootpixels on SGS*/
+			if (j == 0) {
+				s3cfb_check_var(&ctrl->fb[j]->var, ctrl->fb[j]);
+				s3cfb_set_par(ctrl->fb[j]);
+				s3cfb_draw_logo(ctrl->fb[j]);
+
+			}
+
+#else
 			if (j == pdata->default_win) {
 				s3cfb_check_var(&ctrl->fb[j]->var, ctrl->fb[j]);
 				s3cfb_set_par(ctrl->fb[j]);
-#ifndef CONFIG_MACH_ARIES
 				s3cfb_draw_logo(ctrl->fb[j]);
-#endif
-			}
-#ifdef CONFIG_MACH_ARIES
-                        /* really ugly workaround for bootpixels on SGS */
-                        //if(j == 0)
-                        //        s3cfb_draw_logo(ctrl->fb[j]);
-#endif
 
+			}
+#endif
 #endif
 	}
 
