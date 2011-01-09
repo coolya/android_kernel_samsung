@@ -385,6 +385,13 @@ config SENSORS_KR3DM
 	help
 	  Driver for STMicro KR3DM accelerometer - digital motion sensor.
 
+config SENSOR_SMB380
+	tristate "SMB380 acceleration sensor support"
+	depends on I2C
+	default n
+	help
+	  Driver for Bosch SMB380 accelerometer - digital motion sensor.
+
 config EP93XX_PWM
 	tristate "EP93xx PWM support"
 	depends on ARCH_EP93XX
