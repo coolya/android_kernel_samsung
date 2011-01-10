@@ -236,7 +236,7 @@ static void cypress_touchkey_early_resume(struct early_suspend *h)
 static void set_device_params(struct cypress_touchkey_devdata *devdata,
 								u8 *data)
 {
-	if (data[1] < 0xc4 && (data[1] >= 0x8 ||
+	if (data[1] < 0xc4 && (data[1] > 0x8 ||
 				(data[1] == 0x8 && data[2] >= 0x9))) {
 		devdata->backlight_on = BACKLIGHT_ON;
 		devdata->backlight_off = BACKLIGHT_OFF;
