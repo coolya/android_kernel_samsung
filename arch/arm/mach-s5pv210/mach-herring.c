@@ -1453,6 +1453,10 @@ static struct touchkey_platform_data touchkey_data = {
 	.keycode_cnt = ARRAY_SIZE(touch_keypad_code),
 	.keycode = touch_keypad_code,
 	.touchkey_onoff = touch_keypad_onoff,
+	.fw_name = "cypress-touchkey.bin",
+	.scl_pin = _3_TOUCH_SCL_28V,
+	.sda_pin = _3_TOUCH_SDA_28V,
+	.en_pin = _3_GPIO_TOUCH_EN,
 };
 
 static struct gpio_event_direct_entry herring_keypad_key_map[] = {
