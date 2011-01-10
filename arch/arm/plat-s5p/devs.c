@@ -151,12 +151,20 @@ struct platform_device s3c_device_android_usb = {
 	},
 };
 
+
+
 static struct usb_mass_storage_platform_data ums_pdata = {
 	.vendor			= "Android",
 	.product		= "UMS Composite",
 	.release		= 1,
+#if defined(CONFIG_SAMSUNG_GALAXYS)
+	.nluns			= 2,
+#else
 	.nluns			= 1,
+#endif
 };
+
+
 
 struct platform_device s3c_device_usb_mass_storage = {
 	.name	= "usb_mass_storage",
