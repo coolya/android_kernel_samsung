@@ -27,6 +27,7 @@
 #include <linux/input.h>
 #include <linux/earlysuspend.h>
 #include <linux/input/cypress-touchkey.h>
+#include <linux/firmware.h>
 
 #define SCANCODE_MASK		0x07
 #define UPDOWN_EVENT_MASK	0x08
@@ -39,6 +40,8 @@
 #define OLD_BACKLIGHT_OFF	0x2
 
 #define DEVICE_NAME "cypress-touchkey"
+
+#define FW_SIZE 8192
 
 struct cypress_touchkey_devdata {
 	struct i2c_client *client;
@@ -56,7 +59,7 @@ static int i2c_touchkey_read_byte(struct cypress_touchkey_devdata *devdata,
 					u8 *val)
 {
 	int ret;
-	int retry = 2;
+	int retry = 5;
 
 	while (true) {
 		ret = i2c_smbus_read_byte(devdata->client);
@@ -230,6 +233,103 @@ static void cypress_touchkey_early_resume(struct early_suspend *h)
 }
 #endif
 
+static void set_device_params(struct cypress_touchkey_devdata *devdata,
+								u8 *data)
+{
+	if (data[1] < 0xc4 && (data[1] >= 0x8 ||
+				(data[1] == 0x8 && data[2] >= 0x9))) {
+		devdata->backlight_on = BACKLIGHT_ON;
+		devdata->backlight_off = BACKLIGHT_OFF;
+	} else {
+		devdata->backlight_on = OLD_BACKLIGHT_ON;
+		devdata->backlight_off = OLD_BACKLIGHT_OFF;
+	}
+
+	devdata->has_legacy_keycode = data[1] >= 0xc4 || data[1] < 0x9 ||
+					(data[1] == 0x9 && data[2] < 0x9);
+}
+
+static int update_firmware(struct cypress_touchkey_devdata *devdata)
+{
+	int ret;
+	const struct firmware *fw = NULL;
+	struct device *dev = &devdata->input_dev->dev;
+	int retries = 10;
+
+	dev_info(dev, "%s: Updating " DEVICE_NAME " firmware\n", __func__);
+
+	if (!devdata->pdata->fw_name) {
+		dev_err(dev, "%s: Device firmware name is not set\n", __func__);
+		return -EINVAL;
+	}
+
+	ret = request_firmware(&fw, devdata->pdata->fw_name, dev);
+	if (ret) {
+		dev_err(dev, "%s: Can't open firmware file from %s\n", __func__,
+						devdata->pdata->fw_name);
+		return ret;
+	}
+
+	if (fw->size != FW_SIZE) {
+		dev_err(dev, "%s: Firmware file size invalid\n", __func__);
+		return -EINVAL;
+	}
+
+	disable_irq(devdata->client->irq);
+	/* Lock the i2c bus since the firmware updater accesses it */
+	i2c_lock_adapter(devdata->client->adapter);
+	while (retries--) {
+		ret = touchkey_flash_firmware(devdata->pdata, fw->data);
+		if (!ret)
+			break;
+	}
+	if (ret)
+		dev_err(dev, "%s: Firmware update failed\n", __func__);
+	i2c_unlock_adapter(devdata->client->adapter);
+	enable_irq(devdata->client->irq);
+
+	release_firmware(fw);
+	return ret;
+}
+
+static int cypress_touchkey_open(struct input_dev *input_dev)
+{
+	struct device *dev = &input_dev->dev;
+	struct cypress_touchkey_devdata *devdata = dev_get_drvdata(dev);
+	u8 data[3];
+	int ret;
+
+	ret = update_firmware(devdata);
+	if (ret)
+		goto done;
+
+	ret = i2c_master_recv(devdata->client, data, sizeof(data));
+	if (ret < sizeof(data)) {
+		if (ret >= 0)
+			ret = -EIO;
+		dev_err(dev, "%s: error reading hardware version\n", __func__);
+		goto done;
+	}
+
+	dev_info(dev, "%s: hardware rev1 = %#02x, rev2 = %#02x\n", __func__,
+				data[1], data[2]);
+	set_device_params(devdata, data);
+
+	devdata->pdata->touchkey_onoff(TOUCHKEY_OFF);
+	devdata->pdata->touchkey_onoff(TOUCHKEY_ON);
+
+	ret = i2c_touchkey_write_byte(devdata, devdata->backlight_on);
+	if (ret) {
+		dev_err(dev, "%s: touch keypad backlight on failed\n",
+				__func__);
+		goto done;
+	}
+
+done:
+	input_dev->open = NULL;
+	return 0;
+}
+
 static int cypress_touchkey_probe(struct i2c_client *client,
 		const struct i2c_device_id *id)
 {
@@ -278,10 +378,6 @@ static int cypress_touchkey_probe(struct i2c_client *client,
 		input_set_capability(input_dev, EV_KEY,
 					devdata->pdata->keycode[cnt]);
 
-	err = input_register_device(input_dev);
-	if (err)
-		goto err_input_reg_dev;
-
 	devdata->is_powering_on = true;
 
 	devdata->pdata->touchkey_onoff(TOUCHKEY_ON);
@@ -296,28 +392,31 @@ static int cypress_touchkey_probe(struct i2c_client *client,
 
 	dev_info(dev, "%s: hardware rev1 = %#02x, rev2 = %#02x\n", __func__,
 				data[1], data[2]);
-	if (data[1] < 0xc4 && (data[1] >= 0x8 ||
-				(data[1] == 0x8 && data[2] >= 0x9))) {
-		devdata->backlight_on = BACKLIGHT_ON;
-		devdata->backlight_off = BACKLIGHT_OFF;
-	} else {
-		devdata->backlight_on = OLD_BACKLIGHT_ON;
-		devdata->backlight_off = OLD_BACKLIGHT_OFF;
-	}
 
-	devdata->has_legacy_keycode = data[1] >= 0xc4 || data[1] < 0x9 ||
-					(data[1] == 0x9 && data[2] < 0x9);
+	if (data[1] != 0x9 || data[2] < 0x9)
+		input_dev->open = cypress_touchkey_open;
+
+	err = input_register_device(input_dev);
+	if (err)
+		goto err_input_reg_dev;
+
+	set_device_params(devdata, data);
 
 	err = i2c_touchkey_write_byte(devdata, devdata->backlight_on);
 	if (err) {
 		dev_err(dev, "%s: touch keypad backlight on failed\n",
 				__func__);
-		goto err_backlight_on;
+		/* The device may not be responding because of bad firmware
+		 * Allow the firmware to be reflashed if it needs to be
+		 */
+		if (!input_dev->open)
+			goto err_backlight_on;
 	}
 
-	if (request_threaded_irq(client->irq, touchkey_interrupt_handler,
+	err = request_threaded_irq(client->irq, touchkey_interrupt_handler,
 				touchkey_interrupt_thread, IRQF_TRIGGER_FALLING,
-				DEVICE_NAME, devdata)) {
+				DEVICE_NAME, devdata);
+	if (err) {
 		dev_err(dev, "%s: Can't allocate irq.\n", __func__);
 		goto err_req_irq;
 	}
@@ -334,12 +433,13 @@ static int cypress_touchkey_probe(struct i2c_client *client,
 
 err_req_irq:
 err_backlight_on:
-err_read:
-	devdata->pdata->touchkey_onoff(TOUCHKEY_OFF);
 	input_unregister_device(input_dev);
-	goto err_input_alloc_dev;
+	goto touchkey_off;
 err_input_reg_dev:
+err_read:
 	input_free_device(input_dev);
+touchkey_off:
+	devdata->pdata->touchkey_onoff(TOUCHKEY_OFF);
 err_input_alloc_dev:
 err_null_keycodes:
 	kfree(devdata);
