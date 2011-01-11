@@ -39,6 +39,15 @@ struct max8998_data {
 	struct max8998_dev	*iodev;
 	int			num_regulators;
 	struct regulator_dev	**rdev;
+	u8			dvsarm[MAX8998_N_DVSARM_REGS];
+	int			dvsarmidx;
+	int			dvsarm_enable;
+	int			set1_gpio;
+	int			set2_gpio;
+	u8			dvsint[MAX8998_N_DVSINT_REGS];
+	int			dvsintidx;
+	int			dvsint_enable;
+	int			set3_gpio;
 };
 
 struct voltage_map_desc {
@@ -106,6 +115,18 @@ static const struct voltage_map_desc *ldo_voltage_map[] = {
 	&buck3_voltage_map_desc,	/* BUCK3 */
 	&buck4_voltage_map_desc,	/* BUCK4 */
 };
+
+/*
+ * Map ordinal values of increasing voltages to BUCK1_DVSARM registers
+ * using Gray code, to allow the 2 set GPIOs to be individually
+ * modified without temporarily lowering voltage out of spec and
+ * without temporarily moving voltage in the wrong direction.  The
+ * four voltages are indexed from 0-3 in increasing voltage value,
+ * but are actually assigned to BUCK1_DVSARMn registers using the
+ * ordering {0,1,3,2}.
+ */
+
+#define DVSARMREG(index) (index ^ (index >> 1))
 
 static inline int max8998_get_ldo(struct regulator_dev *rdev)
 {
@@ -276,19 +297,26 @@ static int max8998_get_voltage_register(struct regulator_dev *rdev,
 static int max8998_get_voltage(struct regulator_dev *rdev)
 {
 	struct max8998_data *max8998 = rdev_get_drvdata(rdev);
+	int ldo = max8998_get_ldo(rdev);
 	int reg, shift = 0, mask, ret;
 	u8 val;
 
-	ret = max8998_get_voltage_register(rdev, &reg, &shift, &mask);
-	if (ret)
-		return ret;
+	if (ldo == MAX8998_BUCK1 && max8998->dvsarm[max8998->dvsarmidx])
+		val = max8998->dvsarm[max8998->dvsarmidx];
+	else if (ldo == MAX8998_BUCK2 && max8998->dvsint[max8998->dvsintidx])
+		val = max8998->dvsint[max8998->dvsintidx];
+	else {
+		ret = max8998_get_voltage_register(rdev, &reg, &shift, &mask);
+		if (ret)
+			return ret;
 
-	ret = max8998_read_reg(max8998->iodev, reg, &val);
-	if (ret)
-		return ret;
+		ret = max8998_read_reg(max8998->iodev, reg, &val);
+		if (ret)
+			return ret;
 
-	val >>= shift;
-	val &= mask;
+		val >>= shift;
+		val &= mask;
+	}
 
 	return max8998_list_voltage(rdev, val);
 }
@@ -304,7 +332,9 @@ static int max8998_set_voltage(struct regulator_dev *rdev,
 	int reg, shift = 0, mask, ret;
 	int i = 0;
 	u8 val;
+	int dvsidx;
 	bool en_ramp = false;
+	bool dvsreplace = false;
 
 	if (ldo >= ARRAY_SIZE(ldo_voltage_map))
 		return -EINVAL;
@@ -323,9 +353,44 @@ static int max8998_set_voltage(struct regulator_dev *rdev,
 	if (desc->min + desc->step*i > max_vol)
 		return -EINVAL;
 
-	ret = max8998_get_voltage_register(rdev, &reg, &shift, &mask);
-	if (ret)
-		return ret;
+	/*
+	 * See if the requested voltage is already in a BUCK1/2 DVS register
+	 * (will point the GPIO MUX to it below).  If not already in a
+	 * register, add the new voltage in sorted voltage value per
+	 * Gray code order.
+	 */
+
+	if (ldo == MAX8998_BUCK1 && max8998->dvsarm_enable) {
+		for (dvsidx = 0; dvsidx < MAX8998_N_DVSARM_REGS; dvsidx++) {
+			if (i == max8998->dvsarm[DVSARMREG(dvsidx)])
+				break;
+			if ((i < max8998->dvsarm[DVSARMREG(dvsidx)]) ||
+			    !max8998->dvsarm[DVSARMREG(dvsidx)]) {
+				dvsreplace = true;
+				break;
+			}
+		}
+
+		if (dvsidx == MAX8998_N_DVSARM_REGS) {
+			--dvsidx;
+			dvsreplace = true;
+		}
+	} else if (ldo == MAX8998_BUCK2 && max8998->dvsint_enable) {
+		for (dvsidx = 0; dvsidx < MAX8998_N_DVSINT_REGS; dvsidx++) {
+			if (i == max8998->dvsint[dvsidx])
+				break;
+			if (i < max8998->dvsint[dvsidx] ||
+			    !max8998->dvsint[dvsidx]) {
+				dvsreplace = true;
+				break;
+			}
+		}
+
+		if (dvsidx == MAX8998_N_DVSINT_REGS) {
+			--dvsidx;
+			dvsreplace = true;
+		}
+	}
 
 	/* wait for RAMP_UP_DELAY if rdev is BUCK1/2 and
 	 * ENRAMP is ON */
@@ -337,7 +402,73 @@ static int max8998_set_voltage(struct regulator_dev *rdev,
 		}
 	}
 
-	ret = max8998_update_reg(max8998->iodev, reg, i<<shift, mask<<shift);
+	if (ldo == MAX8998_BUCK1 && max8998->dvsarm_enable) {
+		if (dvsreplace) {
+			ret = max8998_write_reg(max8998->iodev,
+						MAX8998_REG_BUCK1_DVSARM1 +
+						DVSARMREG(dvsidx), i);
+
+			if (ret) {
+				/*
+				 * Since we're not sure what's in the
+				 * register, zero out the values and
+				 * start all over collecting voltages
+				 * in sorted order.
+				 */
+				memset(max8998->dvsarm, 0,
+				       sizeof(max8998->dvsarm));
+				return ret;
+			}
+		}
+
+		/*
+		 * Ensure the intermediate transitory voltage selected
+		 * between updating the two GPIOs does not drop below
+		 * the final selected voltage, and is less than or
+		 * equal to the current voltage when scaling down,
+		 * or is greater than or equal to the current voltage
+		 * when scaling up.  That is, don't lower the voltage
+		 * temporarily out of spec, and don't move voltage
+		 * temporarily in the wrong direction.
+		 */
+
+		if (DVSARMREG(dvsidx) & 0x1)
+			gpio_set_value(max8998->set1_gpio, 1);
+
+		gpio_set_value(max8998->set2_gpio, DVSARMREG(dvsidx) & 0x2);
+
+		if (!(DVSARMREG(dvsidx) & 0x1))
+			gpio_set_value(max8998->set1_gpio, 0);
+
+		max8998->dvsarm[DVSARMREG(dvsidx)] = i;
+		max8998->dvsarmidx = DVSARMREG(dvsidx);
+		ret = 0;
+	} else if (ldo == MAX8998_BUCK2 && max8998->dvsint_enable) {
+		if (dvsreplace) {
+			ret = max8998_write_reg(max8998->iodev,
+						MAX8998_REG_BUCK2_DVSINT1 +
+						dvsidx, i);
+
+			if (ret) {
+				memset(max8998->dvsint, 0,
+				       sizeof(max8998->dvsint));
+
+				return ret;
+			}
+		}
+
+		gpio_set_value(max8998->set3_gpio, dvsidx);
+		max8998->dvsint[dvsidx] = i;
+		max8998->dvsintidx = dvsidx;
+		ret = 0;
+	} else {
+		ret = max8998_get_voltage_register(rdev, &reg, &shift, &mask);
+		if (ret)
+			return ret;
+
+		ret = max8998_update_reg(max8998->iodev, reg, i<<shift,
+					 mask<<shift);
+	}
 
 	if (en_ramp == true) {
 		int difference = desc->min + desc->step*i - previous_vol/1000;
@@ -539,6 +670,7 @@ static __devinit int max8998_pmic_probe(struct platform_device *pdev)
 	struct regulator_dev **rdev;
 	struct max8998_data *max8998;
 	int i, ret, size;
+	u8 val;
 
 	if (!pdata) {
 		dev_err(pdev->dev.parent, "No platform init data supplied\n");
@@ -561,6 +693,12 @@ static __devinit int max8998_pmic_probe(struct platform_device *pdev)
 	max8998->iodev = iodev;
 	max8998->num_regulators = pdata->num_regulators;
 	platform_set_drvdata(pdev, max8998);
+	max8998->set1_gpio = pdata->set1_gpio;
+	max8998->set2_gpio = pdata->set2_gpio;
+	max8998->dvsarm_enable = pdata->set1_gpio != -1 &&
+		pdata->set2_gpio != -1;
+	max8998->set3_gpio = pdata->set3_gpio;
+	max8998->dvsint_enable = pdata->set3_gpio != -1;
 
 	for (i = 0; i < pdata->num_regulators; i++) {
 		const struct voltage_map_desc *desc;
@@ -582,6 +720,59 @@ static __devinit int max8998_pmic_probe(struct platform_device *pdev)
 		}
 	}
 
+	/*
+	 * Program BUCK1,2 preloads in reverse order, which must be decreasing
+	 * in voltage.  Select the highest voltage as the one to run at for
+	 * now, until power management software takes over.  The highest
+	 * voltages preloaded must be consistent with the CPU speed at which
+	 * bootup is run.
+	 */
+
+	for (i = MAX8998_N_DVSARM_REGS - 1; i >= 0; i--) {
+		if (!pdata->buck1_preload[i])
+			continue;
+
+		val = (pdata->buck1_preload[i] / 1000 -
+		       buck12_voltage_map_desc.min) /
+			buck12_voltage_map_desc.step;
+		if (max8998_write_reg(max8998->iodev,
+				      MAX8998_REG_BUCK1_DVSARM1 + DVSARMREG(i),
+				      val)) {
+			dev_err(pdev->dev.parent,
+				"Error writing MAX8998_REG_BUCK1_DVSARM%d\n",
+				DVSARMREG(i)+1);
+			continue;
+		}
+
+		max8998->dvsarm[DVSARMREG(i)] = val;
+
+		if (i == MAX8998_N_DVSARM_REGS - 1) {
+			gpio_set_value(max8998->set1_gpio, DVSARMREG(i) & 0x1);
+			gpio_set_value(max8998->set2_gpio, DVSARMREG(i) & 0x2);
+		}
+	}
+
+	for (i = MAX8998_N_DVSINT_REGS - 1; i >= 0; i--) {
+		if (!pdata->buck2_preload[i])
+			continue;
+
+		val = (pdata->buck2_preload[i] / 1000 -
+			  buck12_voltage_map_desc.min) /
+			buck12_voltage_map_desc.step;
+
+		if (max8998_write_reg(max8998->iodev,
+				      MAX8998_REG_BUCK2_DVSINT1 + i, val)) {
+			dev_err(pdev->dev.parent,
+				"Error writing MAX8998_REG_BUCK2_DVSINT%d\n",
+				i+1);
+			continue;
+		}
+
+		max8998->dvsint[i] = val;
+
+		if (i == MAX8998_N_DVSINT_REGS - 1)
+			gpio_set_value(max8998->set3_gpio, i);
+	}
 
 	return 0;
 err:
