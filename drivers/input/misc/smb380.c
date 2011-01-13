@@ -117,6 +117,7 @@ struct smb380_sensor {
 	u8 hg_dur;
 	u8 hg_thres;
 	u8 hg_hyst;
+	int powerstate;
 };
 
 static int smb380_write_reg(struct i2c_client *client, u8 reg, u8 val)
@@ -391,6 +392,42 @@ static ssize_t smb380_show_temper(struct device *dev,
 }
 static DEVICE_ATTR(temperature, S_IRUGO, smb380_show_temper, NULL);
 
+
+static ssize_t smb380_show_enable(struct device *dev,
+				  struct device_attribute *attr, char *buf)
+{
+	struct smb380_sensor *sensor = dev_get_drvdata(dev);
+	return sprintf(buf, "%d\n", sensor->powerstate);
+}
+
+static ssize_t smb380_store_enable(struct device *dev,
+				  struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct smb380_sensor *sensor = dev_get_drvdata(dev);
+
+	bool new_value;
+
+	if (sysfs_streq(buf, "1"))
+		new_value = true;
+	else if (sysfs_streq(buf, "0"))
+		new_value = false;
+	else {
+		pr_err("%s: invalid value %d\n", __func__, *buf);
+		return -EINVAL;
+	}
+
+	if(sensor->powerstate != new_value)
+	{
+	        smb380_set_sleep(sensor->client, new_value ? 0 : 1);
+	        sensor->powerstate = new_value;
+	}
+
+	return count;
+}
+
+static DEVICE_ATTR(enable, S_IRUGO | S_IWUSR | S_IWGRP, smb380_show_enable, smb380_store_enable);
+
+
 #define SMB380_ADJUST(name) \
 static ssize_t smb380_show_##name(struct device *dev, \
 		struct device_attribute *att, char *buf) \
@@ -448,6 +485,7 @@ static struct attribute *smb380_attributes[] = {
 	&dev_attr_hg_dur.attr,
 	&dev_attr_hg_thres.attr,
 	&dev_attr_hg_hyst.attr,
+	&dev_attr_enable.attr,
 	NULL
 };
 
@@ -526,9 +564,6 @@ static int smb380_register_input_device(struct smb380_sensor *sensor)
 	}
 
 	idev->name = "SMB380 Sensor";
-	idev->id.bustype = BUS_I2C;
-	idev->dev.parent = &client->dev;
-	idev->evbit[0] = BIT_MASK(EV_ABS);
 
 	input_set_abs_params(idev, ABS_X, SMB380_MIN_VALUE,
 			SMB380_MAX_VALUE, 0, 0);
@@ -543,6 +578,12 @@ static int smb380_register_input_device(struct smb380_sensor *sensor)
 	if (ret) {
 		dev_err(&client->dev, "registering input device is failed\n");
 		goto failed_reg;
+	}
+
+	ret = sysfs_create_group(&idev->dev.kobj, &smb380_group);
+	if (ret) {
+		dev_err(&idev->dev, "creating attribute group is failed\n");
+		goto failed_sysfs;
 	}
 
 	if (client->irq > 0) {
@@ -560,6 +601,7 @@ static int smb380_register_input_device(struct smb380_sensor *sensor)
 failed_irq:
 	input_unregister_device(idev);
 	idev = NULL;
+failed_sysfs:
 failed_reg:
 	if (idev)
 		input_free_device(idev);
@@ -598,12 +640,6 @@ static int __devinit smb380_probe(struct i2c_client *client,
 	INIT_WORK(&sensor->work, smb380_work);
 	mutex_init(&sensor->lock);
 
-	ret = sysfs_create_group(&client->dev.kobj, &smb380_group);
-	if (ret) {
-		dev_err(&client->dev, "creating attribute group is failed\n");
-		goto failed_free;
-	}
-
 	ret = smb380_register_input_device(sensor);
 	if (ret) {
 		dev_err(&client->dev, "registering input device is failed\n");
@@ -637,6 +673,9 @@ static int __devinit smb380_probe(struct i2c_client *client,
 	}
 
 	smb380_initialize(sensor);
+
+	/*set device to sleep userspace will enable it when it is needed*/
+	smb380_set_sleep(client, 1);
 
 	dev_info(&client->dev, "%s registered\n", id->name);
 	return 0;
