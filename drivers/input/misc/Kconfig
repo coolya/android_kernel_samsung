@@ -419,4 +419,13 @@ config OPTICAL_GP2A
 	help
 	  This option enables proximity & light sensors using gp2a driver.
 
+config INPUT_SMB380
+	tristate "SMB380 Triaxial acceleration sensor"
+	depends on I2C
+	help
+	  This driver provides support for the Bosche Sensortec Triaxial
+	  Acceleration Sensor IC, which provides measurements of acceleration
+	  in prependicular axes as well as absolute temperature measurement.
+
+
 endif

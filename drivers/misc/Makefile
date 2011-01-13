@@ -46,7 +46,3 @@ obj-$(CONFIG_SAMSUNG_MODEMCTL) += samsung_modemctl/
 obj-$(CONFIG_SENSORS_YAMAHA_MS3C)    += yamaha_ms3c.o
 obj-$(CONFIG_INPUT_YAS529)			+= yas529.o
 obj-$(CONFIG_INPUT_ORIENTATION)			+= orientation.o
-obj-$(CONFIG_SENSOR_SMB380)	+= smb_i2c.o \
-                                   smb380.o \
-	                           smb_acc.o \
-	                           smb380calib.o
