@@ -485,6 +485,7 @@ static irqreturn_t modemctl_mbox_irq_handler(int irq, void *_mc)
 				MODEM_COUNT(mc,bp_req_confused);
 			} else if (mc->mmio_req_count == 0) {
 				/* No references? Give it to the modem. */
+				modem_update_state(mc);
 				mc->mmio_owner = 0;
 				writel(0, mc->mmio + OFF_SEM);
 				writel(MB_COMMAND | MB_VALID | MBC_RES_SEM,
