@@ -551,6 +551,7 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 	reg = backup_dmc1_reg * clk_info[index].hclk_msys;
 	reg /= clk_info[backup_freq_level].hclk_msys;
 	__raw_writel(reg & 0xFFFF, S5P_VA_DMC1 + 0x30);
+	cpufreq_notify_transition(&s3c_freqs.freqs, CPUFREQ_POSTCHANGE);
 
 	if (s3c_freqs.freqs.new < s3c_freqs.freqs.old) {
 		/* Voltage down: decrease INT first.*/
@@ -562,7 +563,6 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 					arm_volt, arm_volt_max);
 		}
 	}
-	cpufreq_notify_transition(&s3c_freqs.freqs, CPUFREQ_POSTCHANGE);
 
 	memcpy(&s3c_freqs.old, &s3c_freqs.new, sizeof(struct s3c_freq));
 	cpufreq_debug_printk(CPUFREQ_DEBUG_DRIVER, KERN_INFO,
