@@ -48,6 +48,8 @@ struct max8998_data {
 	int			dvsintidx;
 	int			dvsint_enable;
 	int			set3_gpio;
+	bool			en_ramp;
+	u8			ramp;
 };
 
 struct voltage_map_desc {
@@ -331,9 +333,7 @@ static int max8998_set_voltage(struct regulator_dev *rdev,
 	int ldo = max8998_get_ldo(rdev);
 	int reg, shift = 0, mask, ret;
 	int i = 0;
-	u8 val;
 	int dvsidx;
-	bool en_ramp = false;
 	bool dvsreplace = false;
 
 	if (ldo >= ARRAY_SIZE(ldo_voltage_map))
@@ -394,13 +394,9 @@ static int max8998_set_voltage(struct regulator_dev *rdev,
 
 	/* wait for RAMP_UP_DELAY if rdev is BUCK1/2 and
 	 * ENRAMP is ON */
-	if (ldo == MAX8998_BUCK1 || ldo == MAX8998_BUCK2) {
-		max8998_read_reg(max8998->iodev, MAX8998_REG_ONOFF4, &val);
-		if (val & (1 << 4)) {
-			en_ramp = true;
+	if (ldo == MAX8998_BUCK1 || ldo == MAX8998_BUCK2)
+		if (max8998->en_ramp)
 			previous_vol = max8998_get_voltage(rdev);
-		}
-	}
 
 	if (ldo == MAX8998_BUCK1 && max8998->dvsarm_enable) {
 		if (dvsreplace) {
@@ -470,10 +466,11 @@ static int max8998_set_voltage(struct regulator_dev *rdev,
 					 mask<<shift);
 	}
 
-	if (en_ramp == true) {
+	if ((ldo == MAX8998_BUCK1 || ldo == MAX8998_BUCK2) &&
+	    max8998->en_ramp) {
 		int difference = desc->min + desc->step*i - previous_vol/1000;
 		if (difference > 0)
-			udelay(difference / ((val & 0x0f) + 1));
+			udelay(difference / (max8998->ramp + 1));
 	}
 
 	return ret;
@@ -719,6 +716,17 @@ static __devinit int max8998_pmic_probe(struct platform_device *pdev)
 			goto err;
 		}
 	}
+
+	ret = max8998_read_reg(max8998->iodev, MAX8998_REG_ONOFF4, &val);
+
+	if (ret) {
+		dev_err(pdev->dev.parent,
+			"Error reading MAX8998_REG_ONOFF4\n");
+		goto err;
+	}
+
+	max8998->en_ramp = !!(val & (1 << 4));
+	max8998->ramp = val & 0xf;
 
 	/*
 	 * Program BUCK1,2 preloads in reverse order, which must be decreasing
