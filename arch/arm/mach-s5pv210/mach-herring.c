@@ -812,6 +812,12 @@ static struct max8998_platform_data max8998_pdata = {
 	.num_regulators = ARRAY_SIZE(herring_regulators),
 	.regulators     = herring_regulators,
 	.charger        = &herring_charger,
+	/* Preloads must be in increasing order of voltage value */
+	.buck1_preload	= {950000, 1050000, 1200000, 1250000},
+	.buck2_preload	= {1000000, 1100000},
+	.set1_gpio	= GPIO_BUCK_1_EN_A,
+	.set2_gpio	= GPIO_BUCK_1_EN_B,
+	.set3_gpio	= GPIO_BUCK_2_EN,
 };
 
 struct platform_device sec_device_dpram = {
