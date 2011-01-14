@@ -2069,9 +2069,10 @@ static void mxt224_init(void)
 {
 	if (system_rev < 0x30)
 		return;
-	mxt224_data.max_y = 939;
+	mxt224_data.max_y = 950;
 	t9_config[8] = 45;
 	t9_config[9] = 3;
+	t9_config[23] = 0;
 	t9_config[24] = 0;
 	t9_config[27] = 0;
 	t9_config[28] = 0;
@@ -2083,13 +2084,13 @@ static ssize_t herring_virtual_keys_show(struct kobject *kobj,
 					struct kobj_attribute *attr, char *buf)
 {
 	return sprintf(buf,
-		__stringify(EV_KEY) ":" __stringify(KEY_BACK) ":71:849:73:61"
+		__stringify(EV_KEY) ":" __stringify(KEY_BACK) ":71:839:73:62"
 		":" __stringify(EV_KEY) ":"
-					__stringify(KEY_MENU) ":183:849:73:61"
+					__stringify(KEY_MENU) ":183:839:73:62"
 		":" __stringify(EV_KEY) ":"
-					__stringify(KEY_SEARCH) ":294:849:73:61"
+					__stringify(KEY_SEARCH) ":294:839:73:62"
 		":" __stringify(EV_KEY) ":"
-					__stringify(KEY_HOME) ":406:849:73:61"
+					__stringify(KEY_HOME) ":406:839:73:62"
 		"\n");
 }
 
