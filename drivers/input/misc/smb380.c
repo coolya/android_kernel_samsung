@@ -110,9 +110,10 @@ struct smb380_sensor {
 	struct mutex		lock;
 	struct hrtimer 		timer;
 	struct smb380_data data;
+	struct workqueue_struct *wq;
+	bool interruptible;	/* interrupt or polling? */
 	enum scale_range range;
 	enum filter_bw bandwidth;
-	int irq;
 	u8 new_data_int;
 	u8 hg_int;
 	u8 lg_int;
@@ -125,7 +126,6 @@ struct smb380_sensor {
 	int powerstate;
 	u32 time_to_read;	/* time needed to read one entry */
 	ktime_t polling_delay;	/* polling time for timer */
-	struct workqueue_struct *wq;
 };
 
 static int smb380_write_reg(struct i2c_client *client, u8 reg, u8 val)
@@ -406,13 +406,20 @@ static DEVICE_ATTR(temperature, S_IRUGO, smb380_show_temper, NULL);
 static void smb380_enable(struct smb380_sensor *sensor)
 {
 
-	hrtimer_start(&sensor->timer, sensor->polling_delay, HRTIMER_MODE_REL);
+	if (sensor->interruptible)
+		enable_irq(sensor->client->irq);
+	else
+		hrtimer_start(&sensor->timer, sensor->polling_delay, HRTIMER_MODE_REL);
 }
 
 static void smb380_disable(struct smb380_sensor *sensor)
 {
-	hrtimer_cancel(&sensor->timer);
-	cancel_work_sync(&sensor->work);
+	if (sensor->interruptible)
+		disable_irq(sensor->client->irq);
+	else{
+		hrtimer_cancel(&sensor->timer);
+		cancel_work_sync(&sensor->work);
+	}
 }
 
 
@@ -431,7 +438,7 @@ static ssize_t smb380_store_enable(struct device *dev,
 
 	bool new_value;
 
-	printk("SMB380: store_enable has been called\n");
+	//printk("SMB380: store_enable has been called\n");
 	
 	if (sysfs_streq(buf, "1"))
 		new_value = true;
@@ -442,7 +449,7 @@ static ssize_t smb380_store_enable(struct device *dev,
 		return -EINVAL;
 	}
 
-	printk("SMB380: store_enable going to set up value\n");
+	//printk("SMB380: store_enable going to set up value\n");
 	
 	if(sensor->powerstate != new_value && new_value == true)
 	{
@@ -538,13 +545,19 @@ static void smb380_work(struct work_struct *work)
 	smb380_read_xyz(sensor->client,	&sensor->data.x, &sensor->data.y, &sensor->data.z);
 	//smb380_read_temperature(sensor->client, &sensor->data.temp);
 
+	mutex_lock(&sensor->lock);
 	input_report_abs(sensor->idev, ABS_X, sensor->data.x);
 	input_report_abs(sensor->idev, ABS_Y, sensor->data.y);
 	input_report_abs(sensor->idev, ABS_Z, sensor->data.z);
 	input_sync(sensor->idev);
+	//printk("SMB380: work completed x: %d\n", ((int) sensor->data.x) );
+
+	mutex_unlock(&sensor->lock);
+
 
 
 }
+
 
 
 static void smb380_initialize(struct smb380_sensor *sensor)
@@ -573,56 +586,6 @@ static void smb380_unregister_input_device(struct smb380_sensor *sensor)
 	sensor->idev = NULL;
 }
 
-static int smb380_register_input_device(struct smb380_sensor *sensor)
-{
-	struct i2c_client *client = sensor->client;
-	struct input_dev *idev;
-	int ret;
-
-	idev = sensor->idev = input_allocate_device();
-	if (!idev) {
-		dev_err(&client->dev, "allocating input device is failed\n");
-		ret = -ENOMEM;
-		goto failed_alloc;
-	}
-
-	idev->name = "SMB380 Sensor";
-
-	input_set_abs_params(idev, ABS_X, SMB380_MIN_VALUE,
-			SMB380_MAX_VALUE, 0, 0);
-	input_set_abs_params(idev, ABS_Y, SMB380_MIN_VALUE,
-			SMB380_MAX_VALUE, 0, 0);
-	input_set_abs_params(idev, ABS_Z, SMB380_MIN_VALUE,
-			SMB380_MAX_VALUE, 0, 0);
-
-	input_set_drvdata(idev, sensor);
-
-	ret = input_register_device(idev);
-	if (ret) {
-		dev_err(&client->dev, "registering input device is failed\n");
-		goto failed_reg;
-	}
-
-	ret = sysfs_create_group(&idev->dev.kobj, &smb380_group);
-	if (ret) {
-		dev_err(&idev->dev, "creating attribute group is failed\n");
-		goto failed_sysfs;
-	}
-
-	return 0;
-
-
-
-
-
-failed_sysfs:
-failed_reg:
-	if (idev)
-		input_free_device(idev);
-failed_alloc:
-	return ret;
-}
-
 
 /* This function is for light sensor.  It operates every a few seconds.
  * It asks for work to be done on a thread because i2c needs a thread
@@ -638,13 +601,43 @@ static enum hrtimer_restart smb380_timer_func(struct hrtimer *timer)
 }
 
 
+/*
+static irqreturn_t k3g_interrupt_thread(int irq, void *k3g_data_p)
+{
+	int res;
+	struct k3g_data *k3g_data = k3g_data_p;
+	res = k3g_report_gyro_values(k3g_data);
+	if (res < 0)
+		pr_err("%s: failed to report gyro values\n", __func__);
+
+	return IRQ_HANDLED;
+}
+*/
+
+static irqreturn_t smb380_irq(int irq, void *dev_id)
+{
+	struct smb380_sensor *sensor = dev_id;
+
+	if (!work_pending(&sensor->work)) {
+		disable_irq_nosync(irq);
+		schedule_work(&sensor->work);
+	}
+
+	return IRQ_HANDLED;
+}
+
+
+
 static int __devinit smb380_probe(struct i2c_client *client,
 			const struct i2c_device_id *id)
 {
 
 	struct smb380_sensor *sensor;
 	struct smb380_platform_data *pdata;
+	struct input_dev *input_dev;
 	int ret;
+	int err = 0;
+
 
 	
 	printk("SMB380: Probe has been called\n");
@@ -655,15 +648,7 @@ static int __devinit smb380_probe(struct i2c_client *client,
 	}
 
 	pdata = client->dev.platform_data;
-
-	
 	sensor->client = client;
-	i2c_set_clientdata(client, sensor);
-	
-	
-	/* wake lock init */
-	mutex_init(&sensor->lock);
-	
 
 	ret = smb380_read_reg(client, SMB380_CHIP_ID_REG);
 	if (ret < 0) {
@@ -674,31 +659,45 @@ static int __devinit smb380_probe(struct i2c_client *client,
 		dev_err(&client->dev, "the chip id is missmatched\n");
 		goto failed_free;
 	}
-
 	
+	/* wake lock init */
+	mutex_init(&sensor->lock);
 	
-	/* hrtimer settings.  we poll for accell values using a timer. */
-	hrtimer_init(&sensor->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	sensor->polling_delay = ns_to_ktime(40 * NSEC_PER_MSEC);
-	sensor->timer.function = smb380_timer_func;
-
-
-	/* the timer just fires off a work queue request.  we need a thread
-	   to read the i2c (can be slow and blocking). */
-	sensor->wq = create_singlethread_workqueue("smb380_wq");
-	if (!sensor->wq) {
-		ret = -ENOMEM;
-		pr_err("%s: could not create workqueue\n", __func__);
+	/* allocate accel input_device */
+	input_dev = input_allocate_device();
+	if (!input_dev) {
+		pr_err("%s: could not allocate input device\n", __func__);
+		err = -ENOMEM;
+		goto err_input_allocate_device;
 	}
-	/* this is the thread function we run on the work queue */
-	INIT_WORK(&sensor->work, smb380_work);
-	
-	
-	ret = smb380_register_input_device(sensor);
+
+
+	sensor->idev = input_dev;	
+	input_set_drvdata(input_dev, sensor);
+	input_dev->name = "SMB380-Sensor";
+
+	input_set_capability(input_dev, EV_ABS, ABS_X);
+	input_set_abs_params(input_dev, ABS_X, SMB380_MIN_VALUE, SMB380_MAX_VALUE, 0, 0);
+
+	input_set_capability(input_dev, EV_ABS, ABS_Y);
+	input_set_abs_params(input_dev, ABS_Y, SMB380_MIN_VALUE, SMB380_MAX_VALUE, 0, 0);
+
+	input_set_capability(input_dev, EV_ABS, ABS_Z);
+	input_set_abs_params(input_dev, ABS_Z, SMB380_MIN_VALUE, SMB380_MAX_VALUE, 0, 0);
+
+	ret = input_register_device(input_dev);
 	if (ret) {
 		dev_err(&client->dev, "registering input device is failed\n");
-		goto failed_remove_sysfs;
+		goto failed_reg;
 	}
+
+	ret = sysfs_create_group(&input_dev->dev.kobj, &smb380_group);
+	if (ret) {
+		dev_err(&input_dev->dev, "creating attribute group is failed\n");
+		goto failed_sysfs;
+	}
+
+
 
 	if (pdata) {
 		sensor->range = pdata->range;
@@ -727,19 +726,71 @@ static int __devinit smb380_probe(struct i2c_client *client,
 	}
 
 	smb380_initialize(sensor);
+	
+	
+
+	if (sensor->client->irq > 0) { /* interrupt */
+		printk("SMB380 We got IRQ %d\n", sensor->client->irq);
+		sensor->interruptible = true;
+		err = request_threaded_irq(sensor->client->irq, NULL,
+			smb380_irq, IRQF_TRIGGER_HIGH | IRQF_ONESHOT,
+				"smb380_wqirq", sensor);
+		if (err < 0) {
+			pr_err("%s: can't allocate irq.\n", __func__);
+			goto err_request_irq;
+		}
+		disable_irq(sensor->client->irq);
+
+	} else {
+		sensor->interruptible = false;
+		/* hrtimer settings.  we poll for accell values using a timer. */
+		hrtimer_init(&sensor->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+		sensor->polling_delay = ns_to_ktime(100 * NSEC_PER_MSEC);
+		sensor->timer.function = smb380_timer_func;
+
+
+		/* the timer just fires off a work queue request.  we need a thread
+		   to read the i2c (can be slow and blocking). */
+		sensor->wq = create_singlethread_workqueue("smb380_wq");
+		if (!sensor->wq) {
+			ret = -ENOMEM;
+			pr_err("%s: could not create workqueue\n", __func__);
+		}
+	}
+	/* this is the thread function we run on the work queue */
+	INIT_WORK(&sensor->work, smb380_work);
+
 
 	/*set device to sleep userspace will enable it when it is needed*/
 	smb380_set_sleep(client, 1);
 
+	i2c_set_clientdata(client, sensor);
+	dev_set_drvdata(&input_dev->dev, sensor);
+
 	dev_info(&client->dev, "%s registered\n", id->name);
 	return 0;
 
+failed_sysfs:
+failed_reg:
+	if (input_dev)
+		input_free_device(input_dev);
+failed_alloc:
+	return ret;
 failed_remove_sysfs:
 	sysfs_remove_group(&client->dev.kobj, &smb380_group);
 failed_free:
 	kfree(sensor);
 	return ret;
+err_request_irq:
+err_input_allocate_device:
+	mutex_destroy(&sensor->lock);
+exit:
+	return err;
+
 }
+
+
+
 
 static int __devexit smb380_remove(struct i2c_client *client)
 {
@@ -747,6 +798,18 @@ static int __devexit smb380_remove(struct i2c_client *client)
 
 	smb380_unregister_input_device(sensor);
 	sysfs_remove_group(&client->dev.kobj, &smb380_group);
+
+	if (sensor->interruptible) {
+		if (!sensor->powerstate) /* no disable_irq before free_irq */
+			enable_irq(sensor->client->irq);
+		free_irq(sensor->client->irq, sensor);
+
+	} else {
+		hrtimer_cancel(&sensor->timer);
+		cancel_work_sync(&sensor->work);
+		destroy_workqueue(sensor->wq);
+	}
+
 	kfree(sensor);
 	return 0;
 }
