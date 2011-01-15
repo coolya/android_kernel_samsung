@@ -54,7 +54,17 @@ Codec Output Path BIT
 #define RECORDING_MODE	(0x01 << 14)
 #define FMRADIO_MODE	(0x01 << 15)
 
-#define GAIN_DIVISION_BIT	(0x01 << 16)
+/*
+ * devide codec gain table
+ * GAIN_DIVISION_BIT_1 : EUR
+ * GAIN_DIVISION_BIT_2 : AT&T
+ * GAIN_DIVISION_BIT_3 : EUR_T
+ */
+
+#define GAIN_DIVISION_BIT_1	(0x01 << 16)
+#define GAIN_DIVISION_BIT_2	(0x01 << 17)
+#define GAIN_DIVISION_BIT_3	(0x01 << 18)
+
 #define COMMON_SET_BIT		(0x01 << 0)
 #define PLAYBACK_RCV		(0x01 << 1)
 #define PLAYBACK_SPK		(0x01 << 2)

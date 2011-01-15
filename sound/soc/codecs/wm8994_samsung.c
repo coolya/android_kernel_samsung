@@ -1209,6 +1209,17 @@ struct snd_soc_dai wm8994_dai = {
 	.ops = &wm8994_ops,
 };
 
+/* gain_code range : integer 0~3 */
+static int is_valid_gain_code(char *str)
+{
+	if ((*str >= 0x30) && (*str <= 0x33))
+		return 1;
+	else {
+		DEBUG_LOG_ERR("gain code is invalid (%d)", *str);
+		return 0;
+	}
+}
+
 static int __init gain_code_setup(char *str)
 {
 
@@ -1219,8 +1230,11 @@ static int __init gain_code_setup(char *str)
 		return 0;
 	}
 
-	if (!strcmp(str, "1"))
-		gain_code = 1;
+	if (is_valid_gain_code(str)) {
+		gain_code = *str - 0x30;
+		DEBUG_LOG("gain_code : %d", gain_code);
+	} else
+		DEBUG_LOG_ERR("gain code is invalid and so use default value");
 
 	return 0;
 }

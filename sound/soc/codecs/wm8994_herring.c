@@ -540,67 +540,67 @@ struct gain_info_t recording_gain_table[RECORDING_GAIN_NUM] = {
 struct gain_info_t gain_code_table[GAIN_CODE_NUM] = {
 	/* Playback */
 	{/* HP */
-		.mode = PLAYBACK_HP | PLAYBACK_MODE | GAIN_DIVISION_BIT,
+		.mode = PLAYBACK_HP | PLAYBACK_MODE | GAIN_DIVISION_BIT_1,
 		.reg  = WM8994_LEFT_OUTPUT_VOLUME,	/* 1Ch */
 		.mask = WM8994_HPOUT1L_VOL_MASK,
 		.gain = WM8994_HPOUT1_VU | 0x31		/* -8dB */
 	}, {
-		.mode = PLAYBACK_HP | PLAYBACK_MODE | GAIN_DIVISION_BIT,
+		.mode = PLAYBACK_HP | PLAYBACK_MODE | GAIN_DIVISION_BIT_1,
 		.reg  = WM8994_RIGHT_OUTPUT_VOLUME,	/* 1Dh */
 		.mask = WM8994_HPOUT1R_VOL_MASK,
 		.gain = WM8994_HPOUT1_VU | 0x31		/* -8dB */
 	}, {/* HP_NO_MIC */
-		.mode = PLAYBACK_HP_NO_MIC | PLAYBACK_MODE | GAIN_DIVISION_BIT,
+		.mode = PLAYBACK_HP_NO_MIC | PLAYBACK_MODE | GAIN_DIVISION_BIT_1,
 	        .reg  = WM8994_LEFT_OUTPUT_VOLUME,  /* 1Ch */
 		.mask = WM8994_HPOUT1L_VOL_MASK,
 		.gain = WM8994_HPOUT1_VU | 0x31	 /* -8dB */
 	}, {
-		.mode = PLAYBACK_HP_NO_MIC | PLAYBACK_MODE | GAIN_DIVISION_BIT,
+		.mode = PLAYBACK_HP_NO_MIC | PLAYBACK_MODE | GAIN_DIVISION_BIT_1,
 		.reg  = WM8994_RIGHT_OUTPUT_VOLUME, /* 1Dh */
 		.mask = WM8994_HPOUT1R_VOL_MASK,
 		.gain = WM8994_HPOUT1_VU | 0x31	 /* -8dB */
 	},	{/* Voicecall RCV */
-		.mode = VOICECALL_RCV | VOICECALL_MODE | GAIN_DIVISION_BIT,
+		.mode = VOICECALL_RCV | VOICECALL_MODE | GAIN_DIVISION_BIT_1,
 		.reg  = WM8994_LEFT_LINE_INPUT_1_2_VOLUME,	/* 18h */
 		.mask = WM8994_IN1L_VOL_MASK,
 		.gain = WM8994_IN1L_VU | 0x14		/* +13.5dB */
 	}, {/* SPK */
-		.mode = VOICECALL_SPK | VOICECALL_MODE | GAIN_DIVISION_BIT,
+		.mode = VOICECALL_SPK | VOICECALL_MODE | GAIN_DIVISION_BIT_1,
 		.reg  = WM8994_LEFT_LINE_INPUT_1_2_VOLUME,	/* 18h */
 		.mask = WM8994_IN1L_VOL_MASK,
 		.gain = WM8994_IN1L_VU | 0x0D		/* +3dB */
 	}, {
-		.mode = VOICECALL_SPK | VOICECALL_MODE | GAIN_DIVISION_BIT,
+		.mode = VOICECALL_SPK | VOICECALL_MODE | GAIN_DIVISION_BIT_1,
 		.reg  = WM8994_SPEAKER_VOLUME_LEFT,	/* 26h */
 		.mask = WM8994_SPKOUTL_VOL_MASK,
 		.gain = WM8994_SPKOUT_VU | 0x3A		/* +1dB */
 	}, {/* HP */
-		.mode = VOICECALL_HP | VOICECALL_MODE | GAIN_DIVISION_BIT,
+		.mode = VOICECALL_HP | VOICECALL_MODE | GAIN_DIVISION_BIT_1,
 		.reg  = WM8994_RIGHT_LINE_INPUT_1_2_VOLUME,	/* 1Ah */
 		.mask = WM8994_IN1R_VOL_MASK,
 		.gain = WM8994_IN1R_VU | 0x1D		/* +27dB */
 	}, {
-		.mode = VOICECALL_HP | VOICECALL_MODE | GAIN_DIVISION_BIT,
+		.mode = VOICECALL_HP | VOICECALL_MODE | GAIN_DIVISION_BIT_1,
 		.reg  = WM8994_LEFT_OUTPUT_VOLUME,	/* 1Ch */
 		.mask = WM8994_HPOUT1L_VOL_MASK,
 		.gain = WM8994_HPOUT1_VU | 0x3a		/* +1dB */
 	}, {
-		.mode = VOICECALL_HP | VOICECALL_MODE | GAIN_DIVISION_BIT,
+		.mode = VOICECALL_HP | VOICECALL_MODE | GAIN_DIVISION_BIT_1,
 		.reg  = WM8994_RIGHT_OUTPUT_VOLUME,	/* 1Dh */
 		.mask = WM8994_HPOUT1R_VOL_MASK,
 		.gain = WM8994_HPOUT1_VU | 0x3a		/* +1dB */
 	}, {/* HP_NO_MIC */
-		.mode = VOICECALL_HP_NO_MIC | VOICECALL_MODE | GAIN_DIVISION_BIT,
+		.mode = VOICECALL_HP_NO_MIC | VOICECALL_MODE | GAIN_DIVISION_BIT_1,
 		.reg  = WM8994_LEFT_LINE_INPUT_1_2_VOLUME,	/* 18h */
 		.mask = WM8994_IN1L_VOL_MASK,
 		.gain = WM8994_IN1L_VU | 0x12	/* +10.5dB */
 	}, {
-		.mode = VOICECALL_HP_NO_MIC | VOICECALL_MODE | GAIN_DIVISION_BIT,
+		.mode = VOICECALL_HP_NO_MIC | VOICECALL_MODE | GAIN_DIVISION_BIT_1,
 		.reg  = WM8994_LEFT_OUTPUT_VOLUME,	/* 1Ch */
 		.mask = WM8994_HPOUT1L_VOL_MASK,
 		.gain = WM8994_HPOUT1_VU | 0x3a		/* +1dB */
 	}, {
-		.mode = VOICECALL_HP_NO_MIC | VOICECALL_MODE | GAIN_DIVISION_BIT,
+		.mode = VOICECALL_HP_NO_MIC | VOICECALL_MODE | GAIN_DIVISION_BIT_1,
 		.reg  = WM8994_RIGHT_OUTPUT_VOLUME,	/* 1Dh */
 		.mask = WM8994_HPOUT1R_VOL_MASK,
 		.gain = WM8994_HPOUT1_VU | 0x3a		/* +1dB */
@@ -2716,7 +2716,25 @@ int wm8994_set_codec_gain(struct snd_soc_codec *codec, u16 mode, u16 device)
 
 	if (wm8994->gain_code) {
 		gain_set_bits &= ~(COMMON_SET_BIT);
-		gain_set_bits |= (mode | GAIN_DIVISION_BIT);
+
+		switch (wm8994->gain_code) {
+		case 1:
+			gain_set_bits |= (mode | GAIN_DIVISION_BIT_1);
+			break;
+		case 2:
+			gain_set_bits |= (mode | GAIN_DIVISION_BIT_2);
+			break;
+		case 3:
+			/* eur and eur tft device are same gain values currently
+			  * but gain code is different because of modem.
+			  */
+			gain_set_bits |= (mode | GAIN_DIVISION_BIT_1);
+			break;
+		default:
+			DEBUG_LOG_ERR("gain_code(%d) isn't support", wm8994->gain_code);
+			return 0;
+		}
+
 		default_gain_table_p = gain_code_table;
 		table_num = GAIN_CODE_NUM;
 
