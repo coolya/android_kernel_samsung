@@ -39,4 +39,18 @@ enum perf_level {
 #define MASK_FURTHER_CPUFREQ            0x30
 /* With 0x00(NOCHANGE), it depends on the previous "further" status */
 
+/* For cpu-freq driver */
+struct s5pv210_cpufreq_voltage {
+	unsigned int	freq;	/* kHz */
+	unsigned long	varm;	/* uV */
+	unsigned long	vint;	/* uV */
+};
+
+struct s5pv210_cpufreq_data {
+	struct s5pv210_cpufreq_voltage	*volt;
+	unsigned int			size;
+};
+
+extern void s5pv210_cpufreq_set_platdata(struct s5pv210_cpufreq_data *pdata);
+
 #endif /* __ASM_ARCH_CPU_FREQ_H */

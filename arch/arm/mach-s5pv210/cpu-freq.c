@@ -21,6 +21,7 @@
 #include <linux/suspend.h>
 #include <linux/regulator/consumer.h>
 #include <linux/gpio.h>
+#include <linux/platform_device.h>
 #include <asm/system.h>
 
 #include <mach/map.h>
@@ -721,8 +722,25 @@ static struct notifier_block s5pv210_cpufreq_notifier = {
 	.notifier_call = s5pv210_cpufreq_notifier_event,
 };
 
-static int __init s5pv210_cpufreq_init(void)
+static int __init s5pv210_cpufreq_probe(struct platform_device *pdev)
 {
+	struct s5pv210_cpufreq_data *pdata = dev_get_platdata(&pdev->dev);
+	int i, j;
+
+	if (pdata && pdata->size) {
+		for (i = 0; i < pdata->size; i++) {
+			j = 0;
+			while (freq_table[j].frequency != CPUFREQ_TABLE_END) {
+				if (freq_table[j].frequency == pdata->volt[i].freq) {
+					dvs_conf[j].arm_volt = pdata->volt[i].varm;
+					dvs_conf[j].int_volt = pdata->volt[i].vint;
+					break;
+				}
+				j++;
+			}
+		}
+	}
+
 #ifdef CONFIG_REGULATOR
 	arm_regulator = regulator_get_exclusive(NULL, "vddarm");
 	if (IS_ERR(arm_regulator)) {
@@ -743,6 +761,25 @@ finish:
 	register_pm_notifier(&s5pv210_cpufreq_notifier);
 
 	return cpufreq_register_driver(&s5pv210_cpufreq_driver);
+}
+
+static struct platform_driver s5pv210_cpufreq_drv = {
+	.probe		= s5pv210_cpufreq_probe,
+	.driver		= {
+		.owner	= THIS_MODULE,
+		.name	= "s5pv210-cpufreq",
+	},
+};
+
+static int __init s5pv210_cpufreq_init(void)
+{
+	int ret;
+
+	ret = platform_driver_register(&s5pv210_cpufreq_drv);
+	if (!ret)
+		pr_info("%s: S5PV210 cpu-freq driver\n", __func__);
+
+	return ret;
 }
 
 late_initcall(s5pv210_cpufreq_init);
