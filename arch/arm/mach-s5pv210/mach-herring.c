@@ -64,6 +64,7 @@
 #ifdef CONFIG_S5PV210_POWER_DOMAIN
 #include <mach/power-domain.h>
 #endif
+#include <mach/cpu-freq-v210.h>
 
 #include <media/s5ka3dfx_platform.h>
 #include <media/s5k4ecgx.h>
@@ -382,6 +383,37 @@ static struct s5p_media_device herring_media_devs[] = {
 	},
 };
 
+#ifdef CONFIG_CPU_FREQ
+static struct s5pv210_cpufreq_voltage smdkc110_cpufreq_volt[] = {
+	{
+		.freq	= 1000000,
+		.varm	= 1275000,
+		.vint	= 1100000,
+	}, {
+		.freq	=  800000,
+		.varm	= 1200000,
+		.vint	= 1100000,
+	}, {
+		.freq	=  400000,
+		.varm	= 1050000,
+		.vint	= 1100000,
+	}, {
+		.freq	=  200000,
+		.varm	=  950000,
+		.vint	= 1100000,
+	}, {
+		.freq	=  100000,
+		.varm	=  950000,
+		.vint	= 1000000,
+	},
+};
+
+static struct s5pv210_cpufreq_data smdkc110_cpufreq_plat = {
+	.volt	= smdkc110_cpufreq_volt,
+	.size	= ARRAY_SIZE(smdkc110_cpufreq_volt),
+};
+#endif
+
 static struct regulator_consumer_supply ldo3_consumer[] = {
 	REGULATOR_SUPPLY("pd_io", "s3c-usbgadget")
 };
@@ -641,7 +673,6 @@ static struct regulator_init_data herring_buck1_data = {
 	.consumer_supplies	= buck1_consumer,
 };
 
-
 static struct regulator_init_data herring_buck2_data = {
 	.constraints	= {
 		.name		= "VDD_INT",
@@ -813,7 +844,7 @@ static struct max8998_platform_data max8998_pdata = {
 	.regulators     = herring_regulators,
 	.charger        = &herring_charger,
 	/* Preloads must be in increasing order of voltage value */
-	.buck1_preload	= {950000, 1050000, 1200000, 1250000},
+	.buck1_preload	= {950000, 1050000, 1200000, 1275000},
 	.buck2_preload	= {1000000, 1100000},
 	.set1_gpio	= GPIO_BUCK_1_EN_A,
 	.set2_gpio	= GPIO_BUCK_1_EN_B,
@@ -4231,6 +4262,11 @@ static struct platform_device *herring_devices[] __initdata = {
 	&s3c_device_timer[2],
 	&s3c_device_timer[3],
 #endif
+
+#ifdef CONFIG_CPU_FREQ
+	&s5pv210_device_cpufreq,
+#endif
+
 	&sec_device_rfkill,
 	&sec_device_btsleep,
 	&ram_console_device,
@@ -4549,6 +4585,10 @@ static void __init herring_machine_init(void)
 #endif
 #ifdef CONFIG_S5PV210_SETUP_SDHCI
 	s3c_sdhci_set_platdata();
+#endif
+
+#ifdef CONFIG_CPU_FREQ
+	s5pv210_cpufreq_set_platdata(&smdkc110_cpufreq_plat);
 #endif
 
 	regulator_has_full_constraints();
