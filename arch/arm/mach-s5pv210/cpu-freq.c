@@ -396,10 +396,14 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 		/* Voltage up code: increase ARM first */
 		if (!IS_ERR_OR_NULL(arm_regulator) &&
 				!IS_ERR_OR_NULL(internal_regulator)) {
-			regulator_set_voltage(arm_regulator,
-					arm_volt, arm_volt_max);
-			regulator_set_voltage(internal_regulator,
-					int_volt, int_volt_max);
+			ret = regulator_set_voltage(arm_regulator,
+						    arm_volt, arm_volt_max);
+			if (ret)
+				goto out;
+			ret = regulator_set_voltage(internal_regulator,
+						    int_volt, int_volt_max);
+			if (ret)
+				goto out;
 		}
 	}
 	cpufreq_notify_transition(&s3c_freqs.freqs, CPUFREQ_PRECHANGE);
