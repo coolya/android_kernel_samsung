@@ -321,6 +321,31 @@ static struct s3cfb_lcd nt35580 = {
 	},
 };
 
+static struct s3cfb_lcd r61408 = {
+	.width = 480,
+	.height = 800,
+	.p_width = 52,
+	.p_height = 86,
+	.bpp = 24,
+	.freq = 60,
+	.timing = {
+		.h_fp = 100,
+		.h_bp = 2,
+		.h_sw = 2,
+		.v_fp = 8,
+		.v_fpe = 1,
+		.v_bp = 10,
+		.v_bpe = 1,
+		.v_sw = 2,
+	},
+	.polarity = {
+		.rise_vclk = 1,
+		.inv_hsync = 1,
+		.inv_vsync = 1,
+		.inv_vden = 0,
+	},
+};
+
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0 (6144 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC1 (9900 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC2 (6144 * SZ_1K)
@@ -951,6 +976,10 @@ struct platform_device sec_device_dpram = {
 	.id	= -1,
 };
 
+static unsigned int lcd_type;
+module_param_named(lcd_type, lcd_type, uint, 0444);
+MODULE_PARM_DESC(lcd_type, "LCD type: default= sony, 1= hydis, 2= hitachi");
+
 static void panel_cfg_gpio(struct platform_device *pdev)
 {
 	int i;
@@ -1159,6 +1188,19 @@ static struct s3c_platform_fb nt35580_data __initdata = {
 	.reset_lcd	= panel_reset_lcd,
 };
 
+static struct s3c_platform_fb r61408_data __initdata = {
+	.hw_ver		= 0x62,
+	.clk_name	= "sclk_fimd",
+	.nr_wins	= 5,
+	.default_win	= CONFIG_FB_S3C_DEFAULT_WINDOW,
+	.swap		= FB_SWAP_HWORD | FB_SWAP_WORD,
+
+	.lcd			= &r61408,
+	.cfg_gpio	= panel_cfg_gpio,
+	.backlight_on	= panel_backlight_on,
+	.reset_lcd	= panel_reset_lcd,
+};
+
 #define LCD_BUS_NUM     3
 #define DISPLAY_CS      S5PV210_MP01(1)
 #define SUB_DISPLAY_CS  S5PV210_MP01(2)
@@ -1177,10 +1219,34 @@ static struct spi_board_info spi_board_info[] __initdata = {
 	},
 };
 
-static struct spi_board_info spi_board_info_tft[] __initdata = {
+static struct spi_board_info spi_board_info_sony[] __initdata = {
 	{
 		.modalias	= "nt35580",
-		.platform_data	= &herring_tft_panel_data,
+		.platform_data	= &herring_sony_panel_data,
+		.max_speed_hz	= 1200000,
+		.bus_num	= LCD_BUS_NUM,
+		.chip_select	= 0,
+		.mode		= SPI_MODE_3,
+		.controller_data = (void *)DISPLAY_CS,
+	},
+};
+
+static struct spi_board_info spi_board_info_hydis[] __initdata = {
+	{
+		.modalias	= "nt35580",
+		.platform_data	= &herring_hydis_panel_data,
+		.max_speed_hz	= 1200000,
+		.bus_num	= LCD_BUS_NUM,
+		.chip_select	= 0,
+		.mode		= SPI_MODE_3,
+		.controller_data = (void *)DISPLAY_CS,
+	},
+};
+
+static struct spi_board_info spi_board_info_hitachi[] __initdata = {
+	{
+		.modalias	= "nt35580",
+		.platform_data	= &herring_hitachi_panel_data,
 		.max_speed_hz	= 1200000,
 		.bus_num	= LCD_BUS_NUM,
 		.chip_select	= 0,
@@ -4632,11 +4698,27 @@ static void __init herring_machine_init(void)
 	i2c_register_board_info(14, i2c_devs14, ARRAY_SIZE(i2c_devs14));
 
 	if (system_rev < 0x30) {
-		spi_register_board_info(spi_board_info, ARRAY_SIZE(spi_board_info));
+		spi_register_board_info(spi_board_info,
+					ARRAY_SIZE(spi_board_info));
 		s3cfb_set_platdata(&tl2796_data);
 	} else {
-		spi_register_board_info(spi_board_info_tft, ARRAY_SIZE(spi_board_info_tft));
-		s3cfb_set_platdata(&nt35580_data);
+		switch (lcd_type) {
+		case 1:
+			spi_register_board_info(spi_board_info_hydis,
+					ARRAY_SIZE(spi_board_info_hydis));
+			s3cfb_set_platdata(&nt35580_data);
+			break;
+		case 2:
+			spi_register_board_info(spi_board_info_hitachi,
+					ARRAY_SIZE(spi_board_info_hitachi));
+			s3cfb_set_platdata(&r61408_data);
+			break;
+		default:
+			spi_register_board_info(spi_board_info_sony,
+					ARRAY_SIZE(spi_board_info_sony));
+			s3cfb_set_platdata(&nt35580_data);
+			break;
+		}
 	}
 
 #if defined(CONFIG_S5P_ADC)

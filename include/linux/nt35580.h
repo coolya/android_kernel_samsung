@@ -21,6 +21,7 @@ struct s5p_tft_panel_data {
 	const u16 *display_on;
 	const u16 *display_off;
 	u16 *brightness_set;
+	int pwm_reg_offset;
 };
 
 
