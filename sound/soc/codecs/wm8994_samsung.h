@@ -91,10 +91,13 @@ Codec Output Path BIT
 #define RECORDING_CAM_MAIN	(0x01 << 7)
 #define RECORDING_CAM_HP	(0x01 << 8)
 #define RECORDING_CAM_BT	(0x01 << 9)
+#define RECORDING_VC_MAIN	(0x01 << 10)
+#define RECORDING_VC_HP		(0x01 << 11)
+#define RECORDING_VC_BT		(0x01 << 12)
 
 #define PLAYBACK_GAIN_NUM 43
 #define VOICECALL_GAIN_NUM 32
-#define RECORDING_GAIN_NUM 24
+#define RECORDING_GAIN_NUM 32
 #define GAIN_CODE_NUM 13
 /*
  * Definitions of enum type
@@ -106,7 +109,7 @@ enum audio_path	{
 enum mic_path		{MAIN, SUB, BT_REC, MIC_OFF};
 enum power_state	{CODEC_OFF, CODEC_ON };
 enum ringtone_state	{RING_OFF, RING_ON};
-enum input_source_state	{DEFAULT, RECOGNITION, CAMCORDER};
+enum input_source_state	{DEFAULT, RECOGNITION, CAMCORDER, VOICE_COMMUNICATION};
 
 typedef void (*select_route)(struct snd_soc_codec *);
 typedef void (*select_mic_route)(struct snd_soc_codec *);

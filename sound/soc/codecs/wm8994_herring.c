@@ -534,7 +534,47 @@ struct gain_info_t recording_gain_table[RECORDING_GAIN_NUM] = {
 		.reg  = WM8994_AIF1_ADC1_RIGHT_VOLUME,	/* 401h */
 		.mask = WM8994_AIF1ADC1R_VOL_MASK,
 		.gain = WM8994_AIF1ADC1_VU | 0xC0
-	},
+	}, { /* VOICE COMMUNICATION MAIN */
+		.mode = RECORDING_VC_MAIN,
+		.reg  = WM8994_LEFT_LINE_INPUT_1_2_VOLUME,	/* 18h */
+		.mask = WM8994_IN1L_VOL_MASK,
+		.gain = WM8994_IN1L_VU | 0x12    /* +10.5dB */
+	}, {
+		.mode = RECORDING_VC_MAIN,
+		.reg  = WM8994_INPUT_MIXER_3,		/* 29h */
+		.mask = WM8994_IN1L_MIXINL_VOL_MASK | WM8994_MIXOUTL_MIXINL_VOL_MASK,
+		.gain = 0x10                /* +30dB */
+	}, {
+		.mode = RECORDING_VC_MAIN,
+		.reg  = WM8994_AIF1_ADC1_LEFT_VOLUME,	/* 400h */
+		.mask = WM8994_AIF1ADC1L_VOL_MASK,
+		.gain = WM8994_AIF1ADC1_VU | 0xC0       /* 0dB */
+	}, {
+		.mode = RECORDING_VC_MAIN,
+		.reg  = WM8994_AIF1_ADC1_RIGHT_VOLUME,	/* 401h */
+		.mask = WM8994_AIF1ADC1R_VOL_MASK,
+		.gain = WM8994_AIF1ADC1_VU | 0xC0       /* 0dB */
+	}, { /* VOICE COMMUNICATION HP */
+		.mode = RECORDING_VC_HP,
+		.reg  = WM8994_RIGHT_LINE_INPUT_1_2_VOLUME,	/* 1Ah */
+		.mask = WM8994_IN1R_VOL_MASK,
+		.gain = WM8994_IN1R_VU | 0x15
+	}, {
+		.mode = RECORDING_VC_HP,
+		.reg  = WM8994_INPUT_MIXER_4,		/* 2Ah */
+		.mask = WM8994_IN1R_MIXINR_VOL_MASK | WM8994_MIXOUTR_MIXINR_VOL_MASK,
+		.gain = 0x10
+	}, {
+		.mode = RECORDING_VC_HP,
+		.reg  = WM8994_AIF1_ADC1_LEFT_VOLUME,	/* 400h */
+		.mask = WM8994_AIF1ADC1L_VOL_MASK,
+		.gain = WM8994_AIF1ADC1_VU | 0xC0
+	}, {
+		.mode = RECORDING_VC_HP,
+		.reg  = WM8994_AIF1_ADC1_RIGHT_VOLUME,	/* 401h */
+		.mask = WM8994_AIF1ADC1R_VOL_MASK,
+		.gain = WM8994_AIF1ADC1_VU | 0xC0
+	}
 };
 
 struct gain_info_t gain_code_table[GAIN_CODE_NUM] = {
@@ -1134,6 +1174,8 @@ void wm8994_record_headset_mic(struct snd_soc_codec *codec)
 		wm8994_set_codec_gain(codec, RECORDING_MODE, RECORDING_REC_HP);
 	else if (wm8994->input_source == CAMCORDER)
 		wm8994_set_codec_gain(codec, RECORDING_MODE, RECORDING_CAM_HP);
+	else if (wm8994->input_source == VOICE_COMMUNICATION)
+		wm8994_set_codec_gain(codec, RECORDING_MODE, RECORDING_VC_HP);
 	else
 		wm8994_set_codec_gain(codec, RECORDING_MODE, RECORDING_HP);
 
@@ -1244,6 +1286,9 @@ void wm8994_record_main_mic(struct snd_soc_codec *codec)
 	else if (wm8994->input_source == CAMCORDER)
 		wm8994_set_codec_gain(codec, RECORDING_MODE,
 				RECORDING_CAM_MAIN);
+	else if (wm8994->input_source == VOICE_COMMUNICATION)
+		wm8994_set_codec_gain(codec, RECORDING_MODE,
+			RECORDING_VC_MAIN);
 	else
 		wm8994_set_codec_gain(codec, RECORDING_MODE, RECORDING_MAIN);
 

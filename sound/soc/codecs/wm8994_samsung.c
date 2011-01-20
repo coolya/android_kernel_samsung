@@ -283,7 +283,7 @@ static const char *voicecall_path[] = { "OFF", "RCV", "SPK", "HP",
 static const char *mic_path[] = { "Main Mic", "Hands Free Mic",
 					"BT Sco Mic", "MIC OFF" };
 static const char *input_source_state[] = { "Default", "Voice Recognition",
-					"Camcorder" };
+					"Camcorder", "Voice Communication"};
 
 static int wm8994_get_mic_path(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
