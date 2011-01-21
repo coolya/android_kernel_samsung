@@ -2739,6 +2739,15 @@ int wm8994_set_codec_gain(struct snd_soc_codec *codec, u16 mode, u16 device)
 		case RECORDING_CAM_BT:
 			gain_set_bits |= RECORDING_CAM_BT;
 			break;
+		case RECORDING_VC_MAIN:
+			gain_set_bits |= RECORDING_VC_MAIN;
+			break;
+		case RECORDING_VC_HP:
+			gain_set_bits |= RECORDING_VC_HP;
+			break;
+		case RECORDING_VC_BT:
+			gain_set_bits |= RECORDING_VC_BT;
+			break;
 		default:
 			pr_err("recording gain flag is wrong\n");
 		}
