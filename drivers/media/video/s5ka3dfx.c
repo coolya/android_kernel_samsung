@@ -88,6 +88,7 @@ struct s5ka3dfx_state {
 };
 
 enum {
+	S5KA3DFX_PREVIEW_QCIF,
 	S5KA3DFX_PREVIEW_VGA,
 };
 
@@ -98,6 +99,7 @@ struct s5ka3dfx_enum_framesize {
 };
 
 struct s5ka3dfx_enum_framesize s5ka3dfx_framesize_list[] = {
+	{ S5KA3DFX_PREVIEW_QCIF, 176, 144 },
 	{ S5KA3DFX_PREVIEW_VGA, 640, 480 }
 };
 
@@ -175,6 +177,7 @@ static struct s5ka3dfx_regset_table fps_table[] = {
 	S5KA3DFX_REGSET_TABLE_ELEMENT(0, s5ka3dfx_fps_7),
 	S5KA3DFX_REGSET_TABLE_ELEMENT(1, s5ka3dfx_fps_10),
 	S5KA3DFX_REGSET_TABLE_ELEMENT(2, s5ka3dfx_fps_15),
+	S5KA3DFX_REGSET_TABLE_ELEMENT(3, s5ka3dfx_fps_auto),
 };
 
 static struct s5ka3dfx_regset_table blur_vt[] = {
@@ -207,6 +210,10 @@ static struct s5ka3dfx_regset_table init_vt_reg[] = {
 	S5KA3DFX_REGSET_TABLE_ELEMENT(0, s5ka3dfx_init_vt_reg),
 };
 
+static struct s5ka3dfx_regset_table frame_size[] = {
+	S5KA3DFX_REGSET_TABLE_ELEMENT(0, s5ka3dfx_QCIF),
+	S5KA3DFX_REGSET_TABLE_ELEMENT(1, s5ka3dfx_Return_VGA),
+};
 static int s5ka3dfx_reset(struct v4l2_subdev *sd)
 {
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -332,6 +339,27 @@ static int s5ka3dfx_set_parameter(struct v4l2_subdev *sd,
 
 	return err;
 }
+static int s5ka3dfx_set_preview_start(struct v4l2_subdev *sd)
+{
+	int err;
+	struct s5ka3dfx_state *state =
+		container_of(sd, struct s5ka3dfx_state, sd);
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+
+	if (!state->pix.width || !state->pix.height)
+		return -EINVAL;
+
+	err = s5ka3dfx_set_from_table(sd, "frame_size", frame_size,
+			ARRAY_SIZE(frame_size), state->framesize_index);
+	if (err < 0) {
+		dev_err(&client->dev,
+				"%s: failed: Could not set preview size\n",
+				__func__);
+		return -EIO;
+	}
+
+	return 0;
+}
 static struct v4l2_queryctrl s5ka3dfx_controls[] = {
 	/* Add here if needed */
 };
@@ -413,11 +441,60 @@ static int s5ka3dfx_g_fmt(struct v4l2_subdev *sd, struct v4l2_format *fmt)
 	return err;
 }
 
+static void s5ka3dfx_set_framesize(struct v4l2_subdev *sd,
+				const struct s5ka3dfx_enum_framesize *frmsize,
+				int frmsize_count)
+{
+	struct s5ka3dfx_state *state =
+		container_of(sd, struct s5ka3dfx_state, sd);
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	const struct s5ka3dfx_enum_framesize *last_frmsize =
+		&frmsize[frmsize_count - 1];
+
+	dev_dbg(&client->dev, "%s: Requested Res: %dx%d\n", __func__,
+			state->pix.width, state->pix.height);
+
+	do {
+		if (frmsize->width == state->pix.width &&
+				frmsize->height == state->pix.height) {
+			break;
+		}
+
+		frmsize++;
+	} while (frmsize <= last_frmsize);
+
+	if (frmsize > last_frmsize)
+		frmsize = last_frmsize;
+
+	state->pix.width = frmsize->width;
+	state->pix.height = frmsize->height;
+	state->framesize_index = frmsize->index;
+
+	dev_dbg(&client->dev, "%s: Preview Res Set: %dx%d, index %d\n",
+			__func__, state->pix.width, state->pix.height,
+			state->framesize_index);
+}
 static int s5ka3dfx_s_fmt(struct v4l2_subdev *sd, struct v4l2_format *fmt)
 {
+	struct s5ka3dfx_state *state =
+		container_of(sd, struct s5ka3dfx_state, sd);
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	int err = 0;
 
-	pr_debug("%s is called...\n", __func__);
+	if (fmt->fmt.pix.pixelformat == V4L2_PIX_FMT_JPEG &&
+			fmt->fmt.pix.colorspace != V4L2_COLORSPACE_JPEG) {
+		dev_dbg(&client->dev,
+				"%s: mismatch in pixelformat and colorspace\n",
+				__func__);
+		return -EINVAL;
+	}
+
+	state->pix.width = fmt->fmt.pix.width;
+	state->pix.height = fmt->fmt.pix.height;
+	state->pix.pixelformat = fmt->fmt.pix.pixelformat;
+
+	s5ka3dfx_set_framesize(sd, s5ka3dfx_framesize_list,
+			ARRAY_SIZE(s5ka3dfx_framesize_list));
 
 	return err;
 }
@@ -654,6 +731,10 @@ static int s5ka3dfx_set_frame_rate(struct v4l2_subdev *sd,
 	pr_debug("state->vt_mode : %d\n", state->vt_mode);
 
 	switch (ctrl->value) {
+	case 0:
+		fps_index = 3;
+		break;
+
 	case 7:
 		fps_index = 0;
 		break;
@@ -678,6 +759,7 @@ static int s5ka3dfx_set_frame_rate(struct v4l2_subdev *sd,
 		fps = fps_table;
 
 	fps += fps_index;
+	state->fps = fps_index;
 
 	err = s5ka3dfx_write_regset_table(sd, fps);
 out:
@@ -944,7 +1026,7 @@ static int s5ka3dfx_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 
 	case V4L2_CID_CAM_PREVIEW_ONOFF:
 		if (state->check_previewdata == 0)
-			err = 0;
+			err = s5ka3dfx_set_preview_start(sd);
 		else
 			err = -EIO;
 		break;
