@@ -48,6 +48,18 @@ struct yas529_data {
 	ktime_t polling_delay;
 };
 
+/*----- YAMAHA YAS529 Registers ------*/
+enum YAS_REG {
+       YAS_REG_CMDR            = 0x00, /* 000 < 5 */
+       YAS_REG_XOFFSETR        = 0x20, /* 001 < 5 */
+       YAS_REG_Y1OFFSETR       = 0x40, /* 010 < 5 */
+       YAS_REG_Y2OFFSETR       = 0x60, /* 011 < 5 */
+       YAS_REG_ICOILR          = 0x80, /* 100 < 5 */
+       YAS_REG_CAL             = 0xA0, /* 101 < 5 */
+       YAS_REG_CONFR           = 0xC0, /* 110 < 5 */
+       YAS_REG_DOUTR           = 0xE0  /* 111 < 5 */
+};
+
 static const int8_t
 		YAS529_TRANSFORMATION[][9] = { { 0, 1, 0, -1, 0, 0, 0, 0, 1 }, { -1, 0,
 				0, 0, -1, 0, 0, 0, 1 }, { 0, -1, 0, 1, 0, 0, 0, 0, 1 }, { 1, 0,
@@ -230,7 +242,7 @@ LOGI	("%s x[%d] y[%d] z[%d]\n", __func__,
 
 for (i = 0; i < 3; i++) {
 	LOGV("%s :raw[%d] = %d", __func__, i, raw[i]);
-	magnetic[i] = raw[i];//* 400;
+	magnetic[i] = raw[i] / -50;
 	//magnetic[i] *= 400; /* typically raw * 400 is nT in unit */
 	LOGV("%s :magnetic[%d] = %d", __func__, i, magnetic[i]);
 }
@@ -262,13 +274,189 @@ static int yas529_init_correction_matrix(const int8_t *transfrom,
 
 static int yas529_init_sensor(struct yas529_data *data) {
 	int i;
-	uint8_t dat;
 	uint8_t buf[9];
+	uint8_t dat;
+	unsigned char rawData[6];
 	uint8_t tempu8;
+	uint8_t rough_offset[3];
+	
+	int result = 0;
+	short xoffset, y1offset, y2offset;
+
+	static const uint8_t addr[3] = { 0x20, 0x40, 0x60};
+    	uint8_t tmp[3];
+	
+	unsigned char dummyData[1] = { 0 };
+    	unsigned char dummyRegister = 0;
 
 	LOGV("%s: IN", __func__);
+	
+	
+	  dummyData[0] = YAS_REG_ICOILR | 0x00;
+       result = yas529_i2c_write(data, 1,  dummyData);
+       //ERROR_CHECK(result);
+	   
+       /* zero config register - "110 00 000" */
+       dummyData[0] = YAS_REG_CONFR | 0x00;
+       result = yas529_i2c_write(data, 1, dummyData);
+       //ERROR_CHECK(result);
 
+       /* Step 2 - initialization coil operation */
+       dummyData[0] = YAS_REG_ICOILR | 0x11;
+       result = yas529_i2c_write(data, 1, dummyData);
+       //ERROR_CHECK(result);
+       
+	   dummyData[0] = YAS_REG_ICOILR | 0x01;
+       result = yas529_i2c_write(data, 1, dummyData);
+	   //ERROR_CHECK(result);
+	   
+       dummyData[0] = YAS_REG_ICOILR | 0x12;
+       result =  yas529_i2c_write(data, 1, dummyData);
+	   //ERROR_CHECK(result);
+      
+	   dummyData[0] = YAS_REG_ICOILR | 0x02;
+       result = yas529_i2c_write(data, 1,dummyData);
+	   //ERROR_CHECK(result);
+	   
+       dummyData[0] = YAS_REG_ICOILR | 0x13;
+       result = yas529_i2c_write(data, 1, dummyData);
+       //ERROR_CHECK(result);
+       
+	   dummyData[0] = YAS_REG_ICOILR | 0x03;
+       result = yas529_i2c_write(data, 1, dummyData);
+	   //ERROR_CHECK(result);
+	   
+       dummyData[0] = YAS_REG_ICOILR | 0x14;
+       result = yas529_i2c_write(data, 1, dummyData);
+       //ERROR_CHECK(result);
+       
+	   dummyData[0] = YAS_REG_ICOILR | 0x04;
+       result = yas529_i2c_write(data, 1, dummyData);
+       //ERROR_CHECK(result);
+      
+	  dummyData[0] = YAS_REG_ICOILR | 0x15;
+       result = yas529_i2c_write(data, 1, dummyData);
+       //ERROR_CHECK(result);
+       
+	   dummyData[0] = YAS_REG_ICOILR | 0x05;
+       result = yas529_i2c_write(data, 1, dummyData);
+       //ERROR_CHECK(result);
+       
+	   dummyData[0] = YAS_REG_ICOILR | 0x16;
+       result = yas529_i2c_write(data, 1, dummyData);
+       //ERROR_CHECK(result);
+       
+	   dummyData[0] = YAS_REG_ICOILR | 0x06;
+       result = yas529_i2c_write(data, 1, dummyData);
+       //ERROR_CHECK(result);
+       
+	   dummyData[0] = YAS_REG_ICOILR | 0x17;
+       result = yas529_i2c_write(data, 1, dummyData);
+       //ERROR_CHECK(result);
+       
+	   dummyData[0] = YAS_REG_ICOILR | 0x07;
+       result = yas529_i2c_write(data, 1, dummyData);
+       //ERROR_CHECK(result);
+       
+	   dummyData[0] = YAS_REG_ICOILR | 0x10;
+       result = yas529_i2c_write(data, 1, dummyData);
+       //ERROR_CHECK(result);
+       
+	   dummyData[0] = YAS_REG_ICOILR | 0x00;
+       result = yas529_i2c_write(data, 1, dummyData);
+       //ERROR_CHECK(result);
+	   
+	   
+	   
+
+       /* Step 3 - rough offset measurement */
+       /* Config register - Measurements results - "110 00 000" */
+       dummyData[0] = YAS_REG_CONFR | 0x00;
+       result = yas529_i2c_write(data, 1, dummyData);
+       //ERROR_CHECK(result);
+       
+       /* Measurements command register - Rough offset measurement -
+          "000 00001" */
+       dummyData[0] = YAS_REG_CMDR | 0x01;
+       result = yas529_i2c_write(data, 1, dummyData);
+
+       //ERROR_CHECK(result);
+       msleep(2);           /* wait at least 1.5ms */
+
+
+   if (yas529_i2c_read(data, 6, buf) < 0) {
+        return YAS529_CDRV_ERR_I2CCTRL;
+    }
+
+    if (buf[0] & 0x80) {
+        return YAS529_CDRV_ERR_BUSY;
+    }
+
+    for (i = 0; i < 3; ++i) {
+        rough_offset[2 - i] = ((buf[i << 1] & 0x7) << 8) | buf[(i << 1) | 1];
+    }
+
+    if (rough_offset[0] <= YAS529_CDRV_ROUGHOFFSET_MEASURE_UF_VALUE
+        || rough_offset[0] >= YAS529_CDRV_ROUGHOFFSET_MEASURE_OF_VALUE) {
+        result |= YAS529_CDRV_MEASURE_X_OFUF;
+    }
+    if (rough_offset[1] <= YAS529_CDRV_ROUGHOFFSET_MEASURE_UF_VALUE
+        || rough_offset[1] >= YAS529_CDRV_ROUGHOFFSET_MEASURE_OF_VALUE) {
+        result |= YAS529_CDRV_MEASURE_Y1_OFUF;
+    }
+    if (rough_offset[2] <= YAS529_CDRV_ROUGHOFFSET_MEASURE_UF_VALUE
+        || rough_offset[2] >= YAS529_CDRV_ROUGHOFFSET_MEASURE_OF_VALUE) {
+        result |= YAS529_CDRV_MEASURE_Y2_OFUF;
+    }	   
+	   
+	
+
+    for (i = 0; i < 3; i++) {
+        tmp[i] = rough_offset[i];
+    }
+
+    for (i = 0; i < 3; ++i) {
+        if (tmp[i] <= 5) {
+            tmp[i] = 0;
+        }
+        else {
+            tmp[i] -= 5;
+        }
+    }
+    for (i = 0; i < 3; ++i) {
+        dat = addr[i] | tmp[i];
+        if (yas529_i2c_write(data,1, &dat) < 0) {
+            return YAS529_CDRV_ERR_I2CCTRL;
+        }
+    }		   
+	
+
+	
+	
+     /* CAL matrix read (first read is invalid) */
+       /* Config register - CAL register read - "110 01 000" */
+       dummyData[0] = YAS_REG_CONFR | 0x08;
+       result =   yas529_i2c_write(data, 1, dummyData);
+       //ERROR_CHECK(result);
+       /* CAL data read */
+       result = yas529_i2c_read(data , 9, buf);
+       //ERROR_CHECK(result);
+       
+	   /* Config register - CAL register read - "110 01 000" */
+       dummyData[0] = YAS_REG_CONFR | 0x08;
+       result = yas529_i2c_write(data, 1, dummyData);
+       //ERROR_CHECK(result);
+       /* CAL data read */
+      
+       result = yas529_i2c_read(data, 9, buf);
+       //ERROR_CHECK(result);
+	
+	
+	
+	
 	/* preparation to read CAL register */
+	/*
+	
 	dat = MS3CDRV_CMD_MEASURE_ROUGHOFFSET;
 	if (yas529_i2c_write(data, 1, &dat) < 0) {
 		LOGE("%s: yas529_mach_i2c_write(%d) failed", __FUNCTION__,
@@ -277,14 +465,18 @@ static int yas529_init_sensor(struct yas529_data *data) {
 	}
 	msleep(MS3CDRV_WAIT_MEASURE_ROUGHOFFSET);
 
+	
 	dat = MS3CDRV_RDSEL_CALREGISTER;
 	if (yas529_i2c_write(data, 1, &dat) < 0) {
 		LOGE("%s: yas529_mach_i2c_write(%d) failed", __FUNCTION__,
 				MS3CDRV_RDSEL_CALREGISTER);
 		return YAS529_CDRV_ERR_I2CCTRL;
 	}
+	*/
 
 	/* dummy read */
+	
+	/*
 	if (yas529_i2c_read(data, 9, buf) < 0) {
 		LOGE("%s: yas529_mach_i2c_read() failed", __FUNCTION__);
 		return YAS529_CDRV_ERR_I2CCTRL;
@@ -294,6 +486,7 @@ static int yas529_init_sensor(struct yas529_data *data) {
 		LOGE("%s: yas529_mach_i2c_read() - 2 failed", __FUNCTION__);
 		return YAS529_CDRV_ERR_I2CCTRL;
 	}
+	*/
 
 	int16_t tempMatrix[9];
 
@@ -576,7 +769,7 @@ static int yas529_probe(struct i2c_client *client,
 		err = -ENOMEM;
 		goto err_input_allocate_device;
 	}
-	data->transform = 0;
+	data->transform = 1;
 	data->input_data = input_dev;
 	input_set_drvdata(input_dev, data);
 	input_dev->name = "yas529";
