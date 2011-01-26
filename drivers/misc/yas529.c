@@ -42,9 +42,8 @@ struct yas529_data {
 	struct work_struct work;
 	int transform;
 	int powerstate;
-	float[3] accel; //Acceleration Data
 	int16_t matrix[9]; 
-    	uint8_t rough_offset[3];
+    uint8_t rough_offset[3];
 	int8_t temp_coeff[3];
 	int16_t temperature;
 	ktime_t polling_delay;
@@ -61,7 +60,7 @@ enum YAS_REG {
        YAS_REG_CONFR           = 0xC0, /* 110 < 5 */
        YAS_REG_DOUTR           = 0xE0  /* 111 < 5 */
 };
-s
+
 static const int8_t
 		YAS529_TRANSFORMATION[][9] = { { 0, 1, 0, -1, 0, 0, 0, 0, 1 }, { -1, 0,
 				0, 0, -1, 0, 0, 0, 1 }, { 0, -1, 0, 1, 0, 0, 0, 0, 1 }, { 1, 0,
@@ -90,117 +89,6 @@ static int32_t calc_intensity(const int32_t *p) {
 	return intensity;
 }
 
-
-
-
-
-static float
-calc_intensity(float x, float y, float z)
-{
-    return sqrt(x*x + y*y + z*z);
-}
-
-
-static int
-get_rotation_matrix(const float *gsdata, const int32_t *msdata, float *matrix)
-{
-    float m_intensity, g_intensity, a_intensity, b_intensity;
-    float gdata[3], mdata[3], adata[3], bdata[3];
-    int i;
-
-    if (gsdata == NULL || msdata == NULL || matrix == NULL) {
-        return -1;
-    }
-    g_intensity = calc_intensity(gsdata[0], gsdata[1], gsdata[2]);
-    m_intensity = calc_intensity(msdata[0], msdata[1], msdata[2]);
-    if (g_intensity == 0 || m_intensity == 0) {
-        return -1;
-    }
-    for (i = 0; i < 3; i++) {
-        gdata[i] = -gsdata[i] / g_intensity;
-        mdata[i] = msdata[i] / m_intensity;
-    }
-
-    adata[0] = (gdata[1] * mdata[2] - gdata[2] * mdata[1]);
-    adata[1] = (gdata[2] * mdata[0] - gdata[0] * mdata[2]);
-    adata[2] = (gdata[0] * mdata[1] - gdata[1] * mdata[0]);
-    a_intensity = calc_intensity(adata[0], adata[1], adata[2]);
-    if (a_intensity == 0) {
-        return -1;
-    }
-    for (i = 0; i < 3; i++) {
-        adata[i] /= a_intensity;
-    }
-
-    bdata[0] = (adata[1] * gdata[2] - adata[2] * gdata[1]);
-    bdata[1] = (adata[2] * gdata[0] - adata[0] * gdata[2]);
-    bdata[2] = (adata[0] * gdata[1] - adata[1] * gdata[0]);
-    b_intensity = calc_intensity(bdata[0], bdata[1], bdata[2]);
-    if (b_intensity == 0) {
-        return -1;
-    }
-    for (i = 0; i < 3; i++) {
-        bdata[i] /= b_intensity;
-    }
-
-    matrix[0] = adata[0];
-    matrix[1] = adata[1];
-    matrix[2] = adata[2];
-    matrix[3] = bdata[0];
-    matrix[4] = bdata[1];
-    matrix[5] = bdata[2];
-    matrix[6] = -gdata[0];
-    matrix[7] = -gdata[1];
-    matrix[8] = -gdata[2];
-
-    return 0;
-}
-
-static int
-get_euler(const float *matrix, float *euler)
-{
-    float m11, m12;
-    float m21, m22;
-    float m31, m32, m33;
-    float yaw = 0, roll = 0, pitch = 0;
-
-    if (matrix == NULL || euler == NULL) {
-        return -1;
-    }
-
-    m11 = matrix[0];
-    m12 = matrix[1];
-    m21 = matrix[3];
-    m22 = matrix[4];
-    m31 = matrix[6];
-    m32 = matrix[7];
-    m33 = matrix[8];
-
-    yaw     = atan2(m12-m21, m11+m22);
-    pitch   = -asin(m32);
-    roll    = asin(m31);
-
-    yaw     *= 180.0 / M_PI;
-    pitch   *= 180.0 / M_PI;
-    roll    *= 180.0 / M_PI;
-
-    if (m33 < 0) {
-        pitch = -180 - pitch;
-        if (pitch < -180) {
-            pitch += 360;
-        }
-    }
-    if (yaw < 0) {
-        yaw += 360.0f;
-    }
-
-    euler[0] = (float)(int)yaw;    /* yaw */
-	
-    euler[1] = (float)(int)pitch;  /* pitch */
-    euler[2] = (float)(int)roll;   /* roll */
-
-    return 0;
-}
 
 
 
@@ -760,8 +648,7 @@ static void yas529_input_work_func(struct work_struct *work) {
 
 	struct yas529_data *data = container_of(work, struct yas529_data, work);
 	int32_t magdata[3];
-	float matrix[9], euler[3];
-	int rt, i, rta ,rto;
+	int rt;
 	//FIXME mutex !
 	LOGV("%s working", __func__);
 	mutex_lock(&data->lock);
@@ -772,47 +659,15 @@ static void yas529_input_work_func(struct work_struct *work) {
 	if (rt < 0) {
 		pr_err("work on compass failed[%d]\n", rt);
 	}
-	
-	//rta = Read latest Accel Data into data->accels? FIXME
-
-	if (rta < 0) {
-		pr_err("work on compass, reading accel failed[%d]\n", rt);
-	}
-
-	//process accel data to some unit?
-	//process magdata to some unit? MagData X is broken FIXME
-
-	rto = get_rotation_matrix(data->accel, magData, matrix);	
-	
-	if (rto < 0) {
-	   for (i = 0; i < 3; i++) {
-	       euler[i] = 0;
-	   }
-	}
-	else {
-	    get_euler(matrix, euler);
-	}		
-
-
 	mutex_unlock(&data->lock);
-	if (rt >= 0 && rta >= 0 && rto >= 0) {
+	
+	if (rt >= 0) {
 
 		/* report magnetic data */
 		input_report_abs(data->input_data, ABS_X, magdata[0]);
 		input_report_abs(data->input_data, ABS_Y, magdata[1]);
 		input_report_abs(data->input_data, ABS_Z, magdata[2]);
 		input_sync(data->input_data);
-
-		// Rerport Orientation Data
-		input_report_abs(data->input_data, REL_RX, euler[0]); // * 1000 on userspace
-		input_report_abs(data->input_data, REL_RY, euler[1]);
-		input_report_abs(data->input_data, REL_RZ, euler[2]);
-		input_sync(data->input_data);
-
-
-		LOGV("Orientation: azimuth is %d", (int)(euler[0]*1000.0));
-		LOGV("Orientation: pitch is %d", (int)(euler[1]*1000.0));
-		LOGV("Orientation: roll is %d", (int)(euler[2]*1000.0));
 
 	}
 }
@@ -872,10 +727,6 @@ static int yas529_probe(struct i2c_client *client,
 	input_set_capability(input_dev, EV_ABS, ABS_X);
 	input_set_capability(input_dev, EV_ABS, ABS_Y);
 	input_set_capability(input_dev, EV_ABS, ABS_Z);
-
-	input_set_capability(input_dev, EV_REL, REL_RX);
-	input_set_capability(input_dev, EV_REL, REL_RY);
-	input_set_capability(input_dev, EV_REL, REL_RZ);
 
 	err = input_register_device(input_dev);
 	if (err) {
