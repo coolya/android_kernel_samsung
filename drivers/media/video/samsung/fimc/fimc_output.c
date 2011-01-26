@@ -1908,6 +1908,7 @@ static int fimc_qbuf_output_dma_auto(struct fimc_control *ctrl,
 
 	switch (ctx->status) {
 	case FIMC_READY_ON:
+		fimc_info2("%s FIMC_READY_ON", __func__);
 		fbinfo = registered_fb[ctx->overlay.fb_id];
 		win = (struct s3cfb_window *)fbinfo->par;
 
@@ -1945,6 +1946,7 @@ static int fimc_qbuf_output_dma_auto(struct fimc_control *ctrl,
 		/* fall through */
 
 	case FIMC_STREAMON_IDLE:
+		fimc_info2("%s FIMC_STREAMON_IDLE", __func__);
 		fimc_outdev_set_src_addr(ctrl, ctx->src[idx].base);
 
 		memset(&buf_set, 0x00, sizeof(buf_set));
@@ -2008,6 +2010,9 @@ static int fimc_update_in_queue_addr(struct fimc_control *ctrl,
 				     struct fimc_ctx *ctx,
 				     u32 idx, dma_addr_t *addr)
 {
+
+	fimc_info2("%s called", __func__);
+
 	if (idx >= FIMC_OUTBUFS) {
 		fimc_err("%s: Failed\n", __func__);
 		return -EINVAL;
@@ -2067,7 +2072,7 @@ int fimc_qbuf_output(void *fh, struct v4l2_buffer *b)
 			fimc_err("Fail: fimc_pop_inq\n");
 			return -EINVAL;
 		}
-
+		fimc_info2("%s: fimc_clk_en", __func__);
 		fimc_clk_en(ctrl, true);
 
 		ctx = &ctrl->out->ctx[ctx_num];
@@ -2075,25 +2080,29 @@ int fimc_qbuf_output(void *fh, struct v4l2_buffer *b)
 			ctrl->out->last_ctx = ctx->ctx_num;
 			fimc_outdev_set_ctx_param(ctrl, ctx);
 		}
-
+		fimc_info2("%s: switch", __func__);
 		switch (ctx->overlay.mode) {
 		case FIMC_OVLY_DMA_AUTO:
+			fimc_info2("%s: FIMC_OVLY_DMA_AUTO", __func__);
 			ret = fimc_qbuf_output_dma_auto(ctrl, ctx, idx);
 			break;
 		case FIMC_OVLY_DMA_MANUAL:
+			fimc_info2("%s: FIMC_OVLY_DMA_MANUAL", __func__);
 			ret = fimc_qbuf_output_dma_manual(ctrl, ctx, idx);
 			break;
 		case FIMC_OVLY_NONE_SINGLE_BUF:
+			fimc_info2("%s: FIMC_OVLY_NONE_SINGLE_BUF", __func__);
 			ret = fimc_qbuf_output_single_buf(ctrl, ctx, idx);
 			break;
 		case FIMC_OVLY_NONE_MULTI_BUF:
+			fimc_info2("%s: FIMC_OVLY_NONE_MULTI_BUF", __func__);
 			ret = fimc_qbuf_output_multi_buf(ctrl, ctx, idx);
 			break;
 		default:
 			break;
 		}
 	}
-
+	fimc_info2("%s OUT with %d", __func__, ret);
 	return ret;
 }
 
