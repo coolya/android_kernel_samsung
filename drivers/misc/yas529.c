@@ -42,7 +42,9 @@ struct yas529_data {
 	struct work_struct work;
 	int transform;
 	int powerstate;
-	int16_t matrix[9];
+	float[3] accel; //Acceleration Data
+	int16_t matrix[9]; 
+    	uint8_t rough_offset[3];
 	int8_t temp_coeff[3];
 	int16_t temperature;
 	ktime_t polling_delay;
@@ -59,7 +61,7 @@ enum YAS_REG {
        YAS_REG_CONFR           = 0xC0, /* 110 < 5 */
        YAS_REG_DOUTR           = 0xE0  /* 111 < 5 */
 };
-
+s
 static const int8_t
 		YAS529_TRANSFORMATION[][9] = { { 0, 1, 0, -1, 0, 0, 0, 0, 1 }, { -1, 0,
 				0, 0, -1, 0, 0, 0, 1 }, { 0, -1, 0, 1, 0, 0, 0, 0, 1 }, { 1, 0,
@@ -87,6 +89,121 @@ static int32_t calc_intensity(const int32_t *p) {
 
 	return intensity;
 }
+
+
+
+
+
+static float
+calc_intensity(float x, float y, float z)
+{
+    return sqrt(x*x + y*y + z*z);
+}
+
+
+static int
+get_rotation_matrix(const float *gsdata, const int32_t *msdata, float *matrix)
+{
+    float m_intensity, g_intensity, a_intensity, b_intensity;
+    float gdata[3], mdata[3], adata[3], bdata[3];
+    int i;
+
+    if (gsdata == NULL || msdata == NULL || matrix == NULL) {
+        return -1;
+    }
+    g_intensity = calc_intensity(gsdata[0], gsdata[1], gsdata[2]);
+    m_intensity = calc_intensity(msdata[0], msdata[1], msdata[2]);
+    if (g_intensity == 0 || m_intensity == 0) {
+        return -1;
+    }
+    for (i = 0; i < 3; i++) {
+        gdata[i] = -gsdata[i] / g_intensity;
+        mdata[i] = msdata[i] / m_intensity;
+    }
+
+    adata[0] = (gdata[1] * mdata[2] - gdata[2] * mdata[1]);
+    adata[1] = (gdata[2] * mdata[0] - gdata[0] * mdata[2]);
+    adata[2] = (gdata[0] * mdata[1] - gdata[1] * mdata[0]);
+    a_intensity = calc_intensity(adata[0], adata[1], adata[2]);
+    if (a_intensity == 0) {
+        return -1;
+    }
+    for (i = 0; i < 3; i++) {
+        adata[i] /= a_intensity;
+    }
+
+    bdata[0] = (adata[1] * gdata[2] - adata[2] * gdata[1]);
+    bdata[1] = (adata[2] * gdata[0] - adata[0] * gdata[2]);
+    bdata[2] = (adata[0] * gdata[1] - adata[1] * gdata[0]);
+    b_intensity = calc_intensity(bdata[0], bdata[1], bdata[2]);
+    if (b_intensity == 0) {
+        return -1;
+    }
+    for (i = 0; i < 3; i++) {
+        bdata[i] /= b_intensity;
+    }
+
+    matrix[0] = adata[0];
+    matrix[1] = adata[1];
+    matrix[2] = adata[2];
+    matrix[3] = bdata[0];
+    matrix[4] = bdata[1];
+    matrix[5] = bdata[2];
+    matrix[6] = -gdata[0];
+    matrix[7] = -gdata[1];
+    matrix[8] = -gdata[2];
+
+    return 0;
+}
+
+static int
+get_euler(const float *matrix, float *euler)
+{
+    float m11, m12;
+    float m21, m22;
+    float m31, m32, m33;
+    float yaw = 0, roll = 0, pitch = 0;
+
+    if (matrix == NULL || euler == NULL) {
+        return -1;
+    }
+
+    m11 = matrix[0];
+    m12 = matrix[1];
+    m21 = matrix[3];
+    m22 = matrix[4];
+    m31 = matrix[6];
+    m32 = matrix[7];
+    m33 = matrix[8];
+
+    yaw     = atan2(m12-m21, m11+m22);
+    pitch   = -asin(m32);
+    roll    = asin(m31);
+
+    yaw     *= 180.0 / M_PI;
+    pitch   *= 180.0 / M_PI;
+    roll    *= 180.0 / M_PI;
+
+    if (m33 < 0) {
+        pitch = -180 - pitch;
+        if (pitch < -180) {
+            pitch += 360;
+        }
+    }
+    if (yaw < 0) {
+        yaw += 360.0f;
+    }
+
+    euler[0] = (float)(int)yaw;    /* yaw */
+	
+    euler[1] = (float)(int)pitch;  /* pitch */
+    euler[2] = (float)(int)roll;   /* roll */
+
+    return 0;
+}
+
+
+
 
 static int yas529_cdrv_transform(const int16_t *matrix, const int32_t *raw,
 		int32_t *data) {
@@ -242,7 +359,7 @@ LOGI	("%s x[%d] y[%d] z[%d]\n", __func__,
 
 for (i = 0; i < 3; i++) {
 	LOGV("%s :raw[%d] = %d", __func__, i, raw[i]);
-	magnetic[i] = raw[i] / -50;
+	magnetic[i] = raw[i];
 	//magnetic[i] *= 400; /* typically raw * 400 is nT in unit */
 	LOGV("%s :magnetic[%d] = %d", __func__, i, magnetic[i]);
 }
@@ -253,6 +370,105 @@ LOGV("%s : intensity = %d", __func__, intensity);
 
 return err;
 }
+
+
+
+
+STATIC int
+yas529_cdrv_measure_rough_offset(struct yas529_data *data, uint8_t *rough_offset)
+{
+    int i;
+    uint8_t dat;
+    uint8_t buf[6];
+    int rv = YAS529_CDRV_NO_ERROR;
+
+    if (rough_offset == NULL) {
+        return YAS529_CDRV_ERR_ARG;
+    }
+
+    dat = MS3CDRV_RDSEL_MEASURE;
+    if (yas529_i2c_write(data, 1, &dat) < 0) {
+        return YAS529_CDRV_ERR_I2CCTRL;
+    }
+
+    dat = MS3CDRV_CMD_MEASURE_ROUGHOFFSET;
+    if (yas529_i2c_write(data, 1, &dat) < 0) {
+        return YAS529_CDRV_ERR_I2CCTRL;
+    }
+
+    msleep(MS3CDRV_WAIT_MEASURE_ROUGHOFFSET);
+
+    if (yas529_i2c_read(data, 6, buf) < 0) {
+        return YAS529_CDRV_ERR_I2CCTRL;
+    }
+
+    if (buf[0] & 0x80) {
+        return YAS529_CDRV_ERR_BUSY;
+    }
+
+    for (i = 0; i < 3; ++i) {
+        rough_offset[2 - i] = ((buf[i << 1] & 0x7) << 8) | buf[(i << 1) | 1];
+    }
+
+    if (rough_offset[0] <= YAS529_CDRV_ROUGHOFFSET_MEASURE_UF_VALUE
+        || rough_offset[0] >= YAS529_CDRV_ROUGHOFFSET_MEASURE_OF_VALUE) {
+        rv |= YAS529_CDRV_MEASURE_X_OFUF;
+    }
+    if (rough_offset[1] <= YAS529_CDRV_ROUGHOFFSET_MEASURE_UF_VALUE
+        || rough_offset[1] >= YAS529_CDRV_ROUGHOFFSET_MEASURE_OF_VALUE) {
+        rv |= YAS529_CDRV_MEASURE_Y1_OFUF;
+    }
+    if (rough_offset[2] <= YAS529_CDRV_ROUGHOFFSET_MEASURE_UF_VALUE
+        || rough_offset[2] >= YAS529_CDRV_ROUGHOFFSET_MEASURE_OF_VALUE) {
+        rv |= YAS529_CDRV_MEASURE_Y2_OFUF;
+    }
+
+    return rv;
+}
+
+STATIC int
+yas529_cdrv_set_rough_offset(struct yas529_data *data, const uint8_t *rough_offset)
+{
+    int i;
+    uint8_t dat;
+    static const uint8_t addr[3] = { 0x20, 0x40, 0x60};
+    uint8_t tmp[3];
+    int rv = YAS529_CDRV_NO_ERROR;
+
+    if (rough_offset == NULL) {
+        return YAS529_CDRV_ERR_ARG;
+    }
+    if (rough_offset[0] > 32 || rough_offset[1] > 32 || rough_offset[2] > 32) {
+        return YAS529_CDRV_ERR_ARG;
+    }
+
+    for (i = 0; i < 3; i++) {
+        tmp[i] = rough_offset[i];
+    }
+
+    for (i = 0; i < 3; ++i) {
+        if (tmp[i] <= 5) {
+            tmp[i] = 0;
+        }
+        else {
+            tmp[i] -= 5;
+        }
+    }
+    for (i = 0; i < 3; ++i) {
+        dat = addr[i] | tmp[i];
+        if (yas529_i2c_write(data, 1, &dat) < 0) {
+            return YAS529_CDRV_ERR_I2CCTRL;
+        }
+    }
+
+    //c_driver.roughoffset_is_set = 1;
+
+    return rv;
+}
+
+
+
+
 
 static int yas529_init_correction_matrix(const int8_t *transfrom,
 		const int16_t *matrix, int16_t *target) {
@@ -278,7 +494,7 @@ static int yas529_init_sensor(struct yas529_data *data) {
 	uint8_t dat;
 	unsigned char rawData[6];
 	uint8_t tempu8;
-	uint8_t rough_offset[3];
+	//uint8_t rough_offset[3];
 	
 	int result = 0;
 	short xoffset, y1offset, y2offset;
@@ -291,172 +507,17 @@ static int yas529_init_sensor(struct yas529_data *data) {
 
 	LOGV("%s: IN", __func__);
 	
-	
-	  dummyData[0] = YAS_REG_ICOILR | 0x00;
-       result = yas529_i2c_write(data, 1,  dummyData);
-       //ERROR_CHECK(result);
-	   
-       /* zero config register - "110 00 000" */
-       dummyData[0] = YAS_REG_CONFR | 0x00;
-       result = yas529_i2c_write(data, 1, dummyData);
-       //ERROR_CHECK(result);
+		   
+	if(yas529_cdrv_measure_rough_offset(data, data->rough_offset) != YAS529_CDRV_NO_ERROR){
+		LOGE("%s: Error setting up Offset", __func__);
+	}
 
-       /* Step 2 - initialization coil operation */
-       dummyData[0] = YAS_REG_ICOILR | 0x11;
-       result = yas529_i2c_write(data, 1, dummyData);
-       //ERROR_CHECK(result);
-       
-	   dummyData[0] = YAS_REG_ICOILR | 0x01;
-       result = yas529_i2c_write(data, 1, dummyData);
-	   //ERROR_CHECK(result);
-	   
-       dummyData[0] = YAS_REG_ICOILR | 0x12;
-       result =  yas529_i2c_write(data, 1, dummyData);
-	   //ERROR_CHECK(result);
-      
-	   dummyData[0] = YAS_REG_ICOILR | 0x02;
-       result = yas529_i2c_write(data, 1,dummyData);
-	   //ERROR_CHECK(result);
-	   
-       dummyData[0] = YAS_REG_ICOILR | 0x13;
-       result = yas529_i2c_write(data, 1, dummyData);
-       //ERROR_CHECK(result);
-       
-	   dummyData[0] = YAS_REG_ICOILR | 0x03;
-       result = yas529_i2c_write(data, 1, dummyData);
-	   //ERROR_CHECK(result);
-	   
-       dummyData[0] = YAS_REG_ICOILR | 0x14;
-       result = yas529_i2c_write(data, 1, dummyData);
-       //ERROR_CHECK(result);
-       
-	   dummyData[0] = YAS_REG_ICOILR | 0x04;
-       result = yas529_i2c_write(data, 1, dummyData);
-       //ERROR_CHECK(result);
-      
-	  dummyData[0] = YAS_REG_ICOILR | 0x15;
-       result = yas529_i2c_write(data, 1, dummyData);
-       //ERROR_CHECK(result);
-       
-	   dummyData[0] = YAS_REG_ICOILR | 0x05;
-       result = yas529_i2c_write(data, 1, dummyData);
-       //ERROR_CHECK(result);
-       
-	   dummyData[0] = YAS_REG_ICOILR | 0x16;
-       result = yas529_i2c_write(data, 1, dummyData);
-       //ERROR_CHECK(result);
-       
-	   dummyData[0] = YAS_REG_ICOILR | 0x06;
-       result = yas529_i2c_write(data, 1, dummyData);
-       //ERROR_CHECK(result);
-       
-	   dummyData[0] = YAS_REG_ICOILR | 0x17;
-       result = yas529_i2c_write(data, 1, dummyData);
-       //ERROR_CHECK(result);
-       
-	   dummyData[0] = YAS_REG_ICOILR | 0x07;
-       result = yas529_i2c_write(data, 1, dummyData);
-       //ERROR_CHECK(result);
-       
-	   dummyData[0] = YAS_REG_ICOILR | 0x10;
-       result = yas529_i2c_write(data, 1, dummyData);
-       //ERROR_CHECK(result);
-       
-	   dummyData[0] = YAS_REG_ICOILR | 0x00;
-       result = yas529_i2c_write(data, 1, dummyData);
-       //ERROR_CHECK(result);
-	   
-	   
-	   
-
-       /* Step 3 - rough offset measurement */
-       /* Config register - Measurements results - "110 00 000" */
-       dummyData[0] = YAS_REG_CONFR | 0x00;
-       result = yas529_i2c_write(data, 1, dummyData);
-       //ERROR_CHECK(result);
-       
-       /* Measurements command register - Rough offset measurement -
-          "000 00001" */
-       dummyData[0] = YAS_REG_CMDR | 0x01;
-       result = yas529_i2c_write(data, 1, dummyData);
-
-       //ERROR_CHECK(result);
-       msleep(2);           /* wait at least 1.5ms */
-
-
-   if (yas529_i2c_read(data, 6, buf) < 0) {
-        return YAS529_CDRV_ERR_I2CCTRL;
-    }
-
-    if (buf[0] & 0x80) {
-        return YAS529_CDRV_ERR_BUSY;
-    }
-
-    for (i = 0; i < 3; ++i) {
-        rough_offset[2 - i] = ((buf[i << 1] & 0x7) << 8) | buf[(i << 1) | 1];
-    }
-
-    if (rough_offset[0] <= YAS529_CDRV_ROUGHOFFSET_MEASURE_UF_VALUE
-        || rough_offset[0] >= YAS529_CDRV_ROUGHOFFSET_MEASURE_OF_VALUE) {
-        result |= YAS529_CDRV_MEASURE_X_OFUF;
-    }
-    if (rough_offset[1] <= YAS529_CDRV_ROUGHOFFSET_MEASURE_UF_VALUE
-        || rough_offset[1] >= YAS529_CDRV_ROUGHOFFSET_MEASURE_OF_VALUE) {
-        result |= YAS529_CDRV_MEASURE_Y1_OFUF;
-    }
-    if (rough_offset[2] <= YAS529_CDRV_ROUGHOFFSET_MEASURE_UF_VALUE
-        || rough_offset[2] >= YAS529_CDRV_ROUGHOFFSET_MEASURE_OF_VALUE) {
-        result |= YAS529_CDRV_MEASURE_Y2_OFUF;
-    }	   
-	   
-	
-
-    for (i = 0; i < 3; i++) {
-        tmp[i] = rough_offset[i];
-    }
-
-    for (i = 0; i < 3; ++i) {
-        if (tmp[i] <= 5) {
-            tmp[i] = 0;
-        }
-        else {
-            tmp[i] -= 5;
-        }
-    }
-    for (i = 0; i < 3; ++i) {
-        dat = addr[i] | tmp[i];
-        if (yas529_i2c_write(data,1, &dat) < 0) {
-            return YAS529_CDRV_ERR_I2CCTRL;
-        }
-    }		   
-	
-
-	
-	
-     /* CAL matrix read (first read is invalid) */
-       /* Config register - CAL register read - "110 01 000" */
-       dummyData[0] = YAS_REG_CONFR | 0x08;
-       result =   yas529_i2c_write(data, 1, dummyData);
-       //ERROR_CHECK(result);
-       /* CAL data read */
-       result = yas529_i2c_read(data , 9, buf);
-       //ERROR_CHECK(result);
-       
-	   /* Config register - CAL register read - "110 01 000" */
-       dummyData[0] = YAS_REG_CONFR | 0x08;
-       result = yas529_i2c_write(data, 1, dummyData);
-       //ERROR_CHECK(result);
-       /* CAL data read */
-      
-       result = yas529_i2c_read(data, 9, buf);
-       //ERROR_CHECK(result);
-	
-	
+	if(yas529_cdrv_set_rough_offset(data, data->rough_offset) != YAS529_CDRV_NO_ERROR){
+		LOGE("%s: Error setting up Offset", __func__);
+	}
 	
 	
 	/* preparation to read CAL register */
-	/*
-	
 	dat = MS3CDRV_CMD_MEASURE_ROUGHOFFSET;
 	if (yas529_i2c_write(data, 1, &dat) < 0) {
 		LOGE("%s: yas529_mach_i2c_write(%d) failed", __FUNCTION__,
@@ -472,11 +533,9 @@ static int yas529_init_sensor(struct yas529_data *data) {
 				MS3CDRV_RDSEL_CALREGISTER);
 		return YAS529_CDRV_ERR_I2CCTRL;
 	}
-	*/
+	
 
 	/* dummy read */
-	
-	/*
 	if (yas529_i2c_read(data, 9, buf) < 0) {
 		LOGE("%s: yas529_mach_i2c_read() failed", __FUNCTION__);
 		return YAS529_CDRV_ERR_I2CCTRL;
@@ -486,7 +545,7 @@ static int yas529_init_sensor(struct yas529_data *data) {
 		LOGE("%s: yas529_mach_i2c_read() - 2 failed", __FUNCTION__);
 		return YAS529_CDRV_ERR_I2CCTRL;
 	}
-	*/
+	
 
 	int16_t tempMatrix[9];
 
@@ -701,23 +760,59 @@ static void yas529_input_work_func(struct work_struct *work) {
 
 	struct yas529_data *data = container_of(work, struct yas529_data, work);
 	int32_t magdata[3];
-	int rt;
+	float matrix[9], euler[3];
+	int rt, i, rta ,rto;
 	//FIXME mutex !
 	LOGV("%s working", __func__);
 	mutex_lock(&data->lock);
+	
+	//Read Mag Data	
 	rt = yas529_measure(data, magdata);
-	mutex_unlock(&data->lock);
+
 	if (rt < 0) {
-		pr_err("work failed[%d]\n", rt);
+		pr_err("work on compass failed[%d]\n", rt);
+	}
+	
+	//rta = Read latest Accel Data into data->accels? FIXME
+
+	if (rta < 0) {
+		pr_err("work on compass, reading accel failed[%d]\n", rt);
 	}
 
-	if (rt >= 0) {
+	//process accel data to some unit?
+	//process magdata to some unit? MagData X is broken FIXME
 
-			/* report magnetic data */
-			 input_report_abs(data->input_data, ABS_X, magdata[0]);
-			 input_report_abs(data->input_data, ABS_Y, magdata[1]);
-			 input_report_abs(data->input_data, ABS_Z, magdata[2]);
-			 input_sync(data->input_data);
+	rto = get_rotation_matrix(data->accel, magData, matrix);	
+	
+	if (rto < 0) {
+	   for (i = 0; i < 3; i++) {
+	       euler[i] = 0;
+	   }
+	}
+	else {
+	    get_euler(matrix, euler);
+	}		
+
+
+	mutex_unlock(&data->lock);
+	if (rt >= 0 && rta >= 0 && rto >= 0) {
+
+		/* report magnetic data */
+		input_report_abs(data->input_data, ABS_X, magdata[0]);
+		input_report_abs(data->input_data, ABS_Y, magdata[1]);
+		input_report_abs(data->input_data, ABS_Z, magdata[2]);
+		input_sync(data->input_data);
+
+		// Rerport Orientation Data
+		input_report_abs(data->input_data, REL_RX, euler[0]); // * 1000 on userspace
+		input_report_abs(data->input_data, REL_RY, euler[1]);
+		input_report_abs(data->input_data, REL_RZ, euler[2]);
+		input_sync(data->input_data);
+
+
+		LOGV("Orientation: azimuth is %d", (int)(euler[0]*1000.0));
+		LOGV("Orientation: pitch is %d", (int)(euler[1]*1000.0));
+		LOGV("Orientation: roll is %d", (int)(euler[2]*1000.0));
 
 	}
 }
@@ -777,6 +872,10 @@ static int yas529_probe(struct i2c_client *client,
 	input_set_capability(input_dev, EV_ABS, ABS_X);
 	input_set_capability(input_dev, EV_ABS, ABS_Y);
 	input_set_capability(input_dev, EV_ABS, ABS_Z);
+
+	input_set_capability(input_dev, EV_REL, REL_RX);
+	input_set_capability(input_dev, EV_REL, REL_RY);
+	input_set_capability(input_dev, EV_REL, REL_RZ);
 
 	err = input_register_device(input_dev);
 	if (err) {
