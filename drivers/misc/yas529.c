@@ -3107,7 +3107,7 @@ geomagnetic_input_work_func(struct work_struct *work)
             input_report_abs(data->input_data, ABS_X, magdata[0]);
             input_report_abs(data->input_data, ABS_Y, magdata[1]);
             input_report_abs(data->input_data, ABS_Z, magdata[2]);
-            //input_report_abs(data->input_data, ABS_STATUS, accuracy);
+            input_report_abs(data->input_data, ABS_STATUS, accuracy);
             input_sync(data->input_data);
         }
 
@@ -3355,14 +3355,14 @@ geomagnetic_probe(struct i2c_client *client, const struct i2c_device_id *id)
     }
 
     input_data->name = GEOMAGNETIC_INPUT_NAME;
-    //input_data->id.bustype = BUS_I2C;
+    input_data->id.bustype = BUS_I2C;
     set_bit(EV_ABS, input_data->evbit);
     input_set_capability(input_data, EV_ABS, ABS_X);
     input_set_capability(input_data, EV_ABS, ABS_Y);
     input_set_capability(input_data, EV_ABS, ABS_Z);
     input_set_capability(input_data, EV_ABS, ABS_STATUS);
     input_set_capability(input_data, EV_ABS, ABS_WAKE);
-    //input_data->dev.parent = &client->dev;
+    input_data->dev.parent = &client->dev;
 
     rt = input_register_device(input_data);
     if (rt) {
@@ -3392,7 +3392,7 @@ geomagnetic_probe(struct i2c_client *client, const struct i2c_device_id *id)
     }
 
     input_raw->name = GEOMAGNETIC_INPUT_RAW_NAME;
-    //input_raw->id.bustype = BUS_I2C;
+    input_raw->id.bustype = BUS_I2C;
     set_bit(EV_ABS, input_raw->evbit);
     input_set_capability(input_raw, EV_ABS, ABS_X);
     input_set_capability(input_raw, EV_ABS, ABS_Y);
@@ -3401,7 +3401,7 @@ geomagnetic_probe(struct i2c_client *client, const struct i2c_device_id *id)
     input_set_capability(input_raw, EV_ABS, ABS_RAW_THRESHOLD);
     input_set_capability(input_raw, EV_ABS, ABS_RAW_SHAPE);
     input_set_capability(input_raw, EV_ABS, ABS_RAW_REPORT);
-    //input_raw->dev.parent = &client->dev;
+    input_raw->dev.parent = &client->dev;
 
     rt = input_register_device(input_raw);
     if (rt) {
