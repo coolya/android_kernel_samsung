@@ -81,6 +81,9 @@ Codec Output Path BIT
 #define VOICECALL_HP		(0x01 << 3)
 #define VOICECALL_HP_NO_MIC	(0x01 << 4)
 #define VOICECALL_BT		(0x01 << 5)
+#define VOICECALL_TTY_VCO	(0x01 << 6)
+#define VOICECALL_TTY_HCO	(0x01 << 7)
+#define VOICECALL_TTY_FULL	(0x01 << 8)
 
 #define RECORDING_MAIN		(0x01 << 1)
 #define RECORDING_HP		(0x01 << 2)
@@ -96,7 +99,7 @@ Codec Output Path BIT
 #define RECORDING_VC_BT		(0x01 << 12)
 
 #define PLAYBACK_GAIN_NUM 43
-#define VOICECALL_GAIN_NUM 32
+#define VOICECALL_GAIN_NUM 38
 #define RECORDING_GAIN_NUM 32
 #define GAIN_CODE_NUM 13
 /*
@@ -105,6 +108,11 @@ Codec Output Path BIT
 enum audio_path	{
 	OFF, RCV, SPK, HP, HP_NO_MIC, BT, SPK_HP,
 	RING_SPK, RING_HP, RING_NO_MIC, RING_SPK_HP
+};
+enum call_path		{
+	CALL_OFF, CALL_RCV, CALL_SPK, CALL_HP,
+	CALL_HP_NO_MIC, CALL_BT, CALL_TTY_VCO,
+	CALL_TTY_HCO, CALL_TTY_FULL
 };
 enum mic_path		{MAIN, SUB, BT_REC, MIC_OFF};
 enum power_state	{CODEC_OFF, CODEC_ON };
@@ -193,6 +201,9 @@ void wm8994_set_voicecall_headset(struct snd_soc_codec *codec);
 void wm8994_set_voicecall_headphone(struct snd_soc_codec *codec);
 void wm8994_set_voicecall_speaker(struct snd_soc_codec *codec);
 void wm8994_set_voicecall_bluetooth(struct snd_soc_codec *codec);
+void wm8994_set_voicecall_tty_vco(struct snd_soc_codec *codec);
+void wm8994_set_voicecall_tty_hco(struct snd_soc_codec *codec);
+void wm8994_set_voicecall_tty_full(struct snd_soc_codec *codec);
 int wm8994_set_codec_gain(struct snd_soc_codec *codec, u16 mode, u16 device);
 extern int gain_code_check(void);
 #endif
