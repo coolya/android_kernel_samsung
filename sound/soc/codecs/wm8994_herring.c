@@ -567,7 +567,7 @@ struct gain_info_t recording_gain_table[RECORDING_GAIN_NUM] = {
 		.mode = RECORDING_VC_MAIN,
 		.reg  = WM8994_LEFT_LINE_INPUT_1_2_VOLUME,	/* 18h */
 		.mask = WM8994_IN1L_VOL_MASK,
-		.gain = WM8994_IN1L_VU | 0x12    /* +10.5dB */
+		.gain = WM8994_IN1L_VU | 0x07    /* -6dB */
 	}, {
 		.mode = RECORDING_VC_MAIN,
 		.reg  = WM8994_INPUT_MIXER_3,		/* 29h */
@@ -587,7 +587,7 @@ struct gain_info_t recording_gain_table[RECORDING_GAIN_NUM] = {
 		.mode = RECORDING_VC_HP,
 		.reg  = WM8994_RIGHT_LINE_INPUT_1_2_VOLUME,	/* 1Ah */
 		.mask = WM8994_IN1R_VOL_MASK,
-		.gain = WM8994_IN1R_VU | 0x15
+		.gain = WM8994_IN1R_VU | 0x0D	/* 3.0dB */
 	}, {
 		.mode = RECORDING_VC_HP,
 		.reg  = WM8994_INPUT_MIXER_4,		/* 2Ah */
