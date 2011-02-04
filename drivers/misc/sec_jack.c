@@ -425,6 +425,9 @@ static int sec_jack_probe(struct platform_device *pdev)
 
 	dev_set_drvdata(&pdev->dev, hi);
 
+	#if defined (CONFIG_SAMSUNG_CAPTIVATE)
+			pdata->det_active_high = 1
+
 	return 0;
 
 err_enable_irq_wake:
