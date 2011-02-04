@@ -393,7 +393,7 @@ static int cypress_touchkey_probe(struct i2c_client *client,
 	dev_info(dev, "%s: hardware rev1 = %#02x, rev2 = %#02x\n", __func__,
 				data[1], data[2]);
 
-	if (data[1] != 0x9 || data[2] < 0x9)
+	if (data[1] != 0x8 || data[2] < 0x9)
 		input_dev->open = cypress_touchkey_open;
 
 	err = input_register_device(input_dev);
