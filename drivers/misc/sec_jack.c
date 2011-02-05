@@ -426,7 +426,7 @@ static int sec_jack_probe(struct platform_device *pdev)
 	dev_set_drvdata(&pdev->dev, hi);
 
 #ifdef CONFIG_SAMSUNG_CAPTIVATE
-	pdata->det_active_high = 1
+	pdata->det_active_high = 1;
 #endif
 
 	return 0;
