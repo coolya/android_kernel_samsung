@@ -3791,7 +3791,7 @@ static void ce147_init_parameters(struct v4l2_subdev *sd)
 	state->strm.parm.capture.timeperframe.numerator = 1;
 	state->strm.parm.capture.capturemode = 0;
 
-//	state->framesize_index = CE147_PREVIEW_VGA;
+	state->framesize_index = CE147_PREVIEW_VGA;
 	state->fps = 30; /* Default value */
 	
 	state->jpeg.enable = 0;
@@ -4294,6 +4294,7 @@ static int ce147_g_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	struct ce147_state *state = to_state(sd);
 	struct ce147_userset userset = state->userset;
 	int err = -ENOIOCTLCMD;
+	int offset = 134217728;
 
 	switch (ctrl->id) {
 	case V4L2_CID_EXPOSURE:
@@ -4500,9 +4501,14 @@ static int ce147_g_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		ctrl->value = state->main_sw_prm.major;
 		err = 0;
 		break; 
+		
+	case V4L2_CID_ESD_INT:
+			pr_warn("%s don't bother with V4L2_CID_ESD_INT shit I am a stupid CE147 cam!",__func__);
+	        err = 0;
+	        break;
 
 	default:
-		pr_err("%s: no such ctrl id(%d)\n", __func__, ctrl->id);
+		pr_err("%s: no such ctrl id(%d)\n", __func__, (ctrl->id - offset));
 		break;
 	}
 	
