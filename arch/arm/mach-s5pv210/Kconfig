@@ -191,6 +191,24 @@ config SAMSUNG_EPIC
 endchoice
 endif
 
+if SAMSUNG_GALAXYS
+choice
+	prompt "Select Device Type"
+
+config SAMSUNG_GALAXYS_GTI9000
+	bool "select GTI9000"
+	depends on SAMSUNG_GALAXYS
+	help
+	 Select Samsung Galaxy S GT-I9000
+
+config SAMSUNG_GALAXYS_GTI9000B
+	bool "select GTI9000B"
+	depends on SAMSUNG_GALAXYS
+	help
+	 Select Samsung Galaxy S GT-I9000B
+endchoice
+endif
+
 config S5PV210_SETUP_FB
 	bool
 	depends on FB_S3C
