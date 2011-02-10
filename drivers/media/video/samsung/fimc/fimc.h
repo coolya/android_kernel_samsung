@@ -419,7 +419,7 @@ struct fimc_prv_data {
 };
 
 /* debug macro */
-#define FIMC_LOG_DEFAULT	(FIMC_LOG_WARN | FIMC_LOG_ERR | FIMC_LOG_INFO_L2 | FIMC_LOG_INFO_L1 | FIMC_LOG_DEBUG)
+#define FIMC_LOG_DEFAULT	( FIMC_LOG_WARN | FIMC_LOG_ERR )
 
 #define FIMC_DEBUG(fmt, ...)						\
 	do {								\
