@@ -1050,7 +1050,7 @@ CONFIG_IFB=y
 # CONFIG_BONDING is not set
 # CONFIG_MACVLAN is not set
 # CONFIG_EQUALIZER is not set
-# CONFIG_TUN is not set
+CONFIG_TUN=m
 # CONFIG_VETH is not set
 # CONFIG_NET_ETHERNET is not set
 CONFIG_NETDEV_1000=y
@@ -1892,7 +1892,7 @@ CONFIG_NETWORK_FILESYSTEMS=y
 # CONFIG_NFSD is not set
 # CONFIG_SMB_FS is not set
 # CONFIG_CEPH_FS is not set
-# CONFIG_CIFS is not set
+CONFIG_CIFS=m
 # CONFIG_NCP_FS is not set
 # CONFIG_CODA_FS is not set
 # CONFIG_AFS_FS is not set
