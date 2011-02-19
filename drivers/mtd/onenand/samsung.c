@@ -45,15 +45,15 @@ enum soc_type {
 /* START OF DEVICE SPECIFIC PARTITION LAYOUT */
 
 #if defined(CONFIG_SAMSUNG_CAPTIVATE)
-#include <drivers/mtd/onenand/samsung_captivate.h>
+#include "samsung_captivate.h"
 #elif defined(CONFIG_SAMSUNG_FASCINATE)
-#include <drivers/mtd/onenand/samsung_fascinate.h>
+#include "samsung_fascinate.h"
 #elif defined(CONFIG_SAMSUNG_GALAXYS)
-#include <drivers/mtd/onenand/samsung_galaxys.h>
+#include "samsung_galaxys.h"
 #elif defined(CONFIG_SAMSUNG_VIBRANT)
-#include <drivers/mtd/onenand/samsung_vibrant.h>
+#include "samsung_vibrant.h"
 #else
-#include <drivers/mtd/onenand/samsung.h>
+#include "samsung.h"
 #endif
 
 /* END OF DEVICE SPECIFIC PARTITION LAYOUT */
