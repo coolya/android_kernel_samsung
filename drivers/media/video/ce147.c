@@ -4301,38 +4301,38 @@ static int ce147_g_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 
 	switch (ctrl->id) {
 	case V4L2_CID_EXPOSURE:
-		LOGV("%s: V4L2_CID_EXPOSURE %d \n", __func__,ctrl->value);
 		ctrl->value = userset.exposure_bias;
+		LOGV("%s: V4L2_CID_EXPOSURE %d \n", __func__,ctrl->value);
 		err = 0;
 		break;
 
 	case V4L2_CID_AUTO_WHITE_BALANCE:
-		LOGV("%s: V4L2_CID_AUTO_WHITE_BALANCE %d \n", __func__,ctrl->value);
 		ctrl->value = userset.auto_wb;
+		LOGV("%s: V4L2_CID_AUTO_WHITE_BALANCE %d \n", __func__,ctrl->value);
 		err = 0;
 		break;
 
 	case V4L2_CID_WHITE_BALANCE_PRESET:
-		LOGV("%s: V4L2_CID_WHITE_BALANCE_PRESET %d \n", __func__,ctrl->value);
 		ctrl->value = userset.manual_wb;
+		LOGV("%s: V4L2_CID_WHITE_BALANCE_PRESET %d \n", __func__,ctrl->value);
 		err = 0;
 		break;
 
 	case V4L2_CID_COLORFX:
-		LOGV("%s: V4L2_CID_COLORFX %d \n", __func__,ctrl->value);
 		ctrl->value = userset.effect;
+		LOGV("%s: V4L2_CID_COLORFX %d \n", __func__,ctrl->value);
 		err = 0;
 		break;
 
 	case V4L2_CID_CONTRAST:
-		LOGV("%s: V4L2_CID_CONTRAST %d \n", __func__,ctrl->value);
 		ctrl->value = userset.contrast;
+		LOGV("%s: V4L2_CID_CONTRAST %d \n", __func__,ctrl->value);
 		err = 0;
 		break;
 
 	case V4L2_CID_SATURATION:
-		LOGV("%s: V4L2_CID_SATURATION %d \n", __func__,ctrl->value);
 		ctrl->value = userset.saturation;
+		LOGV("%s: V4L2_CID_SATURATION %d \n", __func__,ctrl->value);
 		err = 0;
 		break;
 
@@ -4343,68 +4343,68 @@ static int ce147_g_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		break;
 
 	case V4L2_CID_CAM_JPEG_MAIN_SIZE:
-		LOGV("%s: V4L2_CID_CAM_JPEG_MAIN_SIZE %d \n", __func__,ctrl->value);
 		ctrl->value = state->jpeg.main_size;
+		LOGV("%s: V4L2_CID_CAM_JPEG_MAIN_SIZE %d \n", __func__,ctrl->value);
 		err = 0;
 		break;
 	
 	case V4L2_CID_CAM_JPEG_MAIN_OFFSET:
-		LOGV("%s: V4L2_CID_CAM_JPEG_MAIN_OFFSET %d \n", __func__,ctrl->value);
 		ctrl->value = state->jpeg.main_offset;
+		LOGV("%s: V4L2_CID_CAM_JPEG_MAIN_OFFSET %d \n", __func__,ctrl->value);
 		err = 0;
 		break;
 
 	case V4L2_CID_CAM_JPEG_THUMB_SIZE:
-		LOGV("%s: V4L2_CID_CAM_JPEG_THUMB_SIZE %d \n", __func__,ctrl->value);
 		ctrl->value = state->jpeg.thumb_size;
+		LOGV("%s: V4L2_CID_CAM_JPEG_THUMB_SIZE %d \n", __func__,ctrl->value);
 		err = 0;
 		break;
 	
 	case V4L2_CID_CAM_JPEG_THUMB_OFFSET:
-		LOGV("%s: V4L2_CID_CAM_JPEG_THUMB_OFFSET %d \n", __func__,ctrl->value);
 		ctrl->value = state->jpeg.thumb_offset;
+		LOGV("%s: V4L2_CID_CAM_JPEG_THUMB_OFFSET %d \n", __func__,ctrl->value);
 		err = 0;
 		break;
 
-	case V4L2_CID_CAM_JPEG_POSTVIEW_OFFSET:
-		LOGV("%s: V4L2_CID_CAM_JPEG_POSTVIEW_OFFSET %d \n", __func__,ctrl->value);
+	case V4L2_CID_CAM_JPEG_POSTVIEW_OFFSET:		
 		ctrl->value = state->jpeg.postview_offset;
+		LOGV("%s: V4L2_CID_CAM_JPEG_POSTVIEW_OFFSET %d \n", __func__,ctrl->value);
 		err = 0;
 		break; 
 	
-	case V4L2_CID_CAM_JPEG_MEMSIZE:
-		LOGV("%s: V4L2_CID_CAM_JPEG_MEMSIZE %d \n", __func__,ctrl->value);
+	case V4L2_CID_CAM_JPEG_MEMSIZE:		
 		ctrl->value = SENSOR_JPEG_SNAPSHOT_MEMSIZE;
+		LOGV("%s: V4L2_CID_CAM_JPEG_MEMSIZE %d \n", __func__,ctrl->value);
 		err = 0;
 		break;
 
 	//need to be modified
 	case V4L2_CID_CAM_JPEG_QUALITY:
-		LOGV("%s: V4L2_CID_CAM_JPEG_QUALITY %d \n", __func__,ctrl->value);
 		ctrl->value = state->jpeg.quality;
+		LOGV("%s: V4L2_CID_CAM_JPEG_QUALITY %d \n", __func__,ctrl->value);
 		err = 0;
 		break;
 
 	case V4L2_CID_CAMERA_OBJ_TRACKING_STATUS:
-		LOGV("%s: V4L2_CID_CAMERA_OBJ_TRACKING_STATUS %d \n", __func__,ctrl->value);
 		err = ce147_get_object_tracking(sd, ctrl);
+		LOGV("%s: V4L2_CID_CAMERA_OBJ_TRACKING_STATUS %d \n", __func__,ctrl->value);
 		ctrl->value = state->ot_status;
 		break;
 
 	case V4L2_CID_CAMERA_SMART_AUTO_STATUS:
-		LOGV("%s: V4L2_CID_CAMERA_SMART_AUTO_STATUS %d \n", __func__,ctrl->value);
 		err = ce147_get_smart_auto_status(sd, ctrl);
+		LOGV("%s: V4L2_CID_CAMERA_SMART_AUTO_STATUS %d \n", __func__,ctrl->value);
 		ctrl->value = state->sa_status;
 		break;
 
 	case V4L2_CID_CAMERA_AUTO_FOCUS_RESULT:
-		LOGV("%s: V4L2_CID_CAMERA_AUTO_FOCUS_RESULT %d \n", __func__,ctrl->value);
 		err = ce147_get_auto_focus_status(sd, ctrl);
+		LOGV("%s: V4L2_CID_CAMERA_AUTO_FOCUS_RESULT %d \n", __func__,ctrl->value);
 		break;
 
 	case V4L2_CID_CAM_DATE_INFO_YEAR:
-		LOGV("%s: V4L2_CID_CAM_DATE_INFO_YEAR %d \n", __func__,ctrl->value);
 		ctrl->value = state->dateinfo.year;
+		LOGV("%s: V4L2_CID_CAM_DATE_INFO_YEAR %d \n", __func__,ctrl->value);
 		err = 0;
 		break; 
 
@@ -4551,6 +4551,24 @@ static int ce147_g_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 			pr_warn("%s don't bother with V4L2_CID_ESD_INT shit I am a stupid CE147 cam!",__func__);
 	        err = 0;
 	        break;
+	case V4L2_CID_CAMERA_GET_SHT_TIME:
+		//FIXME get real shutterspeed
+		ctrl->value = 100;
+		LOGV("%s: V4L2_CID_CAMERA_GET_SHT_TIME %d \n", __func__,ctrl->value);
+		err = 0;
+		break;
+	case V4L2_CID_CAMERA_GET_ISO:
+		//FIXME get real ISO
+		ctrl->value = ISO_100; //ISO 100 as workaround
+		LOGV("%s: V4L2_CID_CAMERA_GET_ISO %d \n", __func__,ctrl->value);
+		err = 0;
+		break;  
+	case V4L2_CID_CAMERA_GET_FLASH_ONOFF:
+		ctrl->value = 0; //we have no flash
+		err = 0;
+		LOGV("%s: V4L2_CID_CAMERA_GET_FLASH_ONOFF %d \n", __func__,ctrl->value);
+		break;
+
 
 	default:
 		pr_err("%s: no such ctrl id(%d)\n", __func__, (ctrl->id - offset));
