@@ -52,6 +52,8 @@
 #define ce147_info	dev_dbg
 #endif
 
+#define LOGV pr_warn
+
 /* Default resolution & pixelformat. plz ref ce147_platform.h */
 #define DEFAULT_PIX_FMT		V4L2_PIX_FMT_UYVY	/* YUV422 */
 #define DEFUALT_MCLK		24000000
@@ -132,13 +134,13 @@ enum ce147_oprmode {
 
 /* Declare Funtion */
 static int ce147_set_awb_lock(struct v4l2_subdev *sd, int lock);
-static int ce147_set_iso(struct v4l2_subdev * sd, struct v4l2_control * ctrl);
-static int ce147_set_metering(struct v4l2_subdev * sd, struct v4l2_control * ctrl);
-static int ce147_set_ev(struct v4l2_subdev * sd, struct v4l2_control * ctrl);
-static int ce147_set_slow_ae(struct v4l2_subdev * sd, struct v4l2_control * ctrl);
-static int ce147_set_gamma(struct v4l2_subdev * sd, struct v4l2_control * ctrl);
-static int ce147_set_effect(struct v4l2_subdev * sd, struct v4l2_control * ctrl);
-static int ce147_set_white_balance(struct v4l2_subdev * sd, struct v4l2_control * ctrl);
+static int ce147_set_iso(struct v4l2_subdev * sd, int iso);
+static int ce147_set_metering(struct v4l2_subdev * sd, int metring);
+static int ce147_set_ev(struct v4l2_subdev * sd, int ev);
+static int ce147_set_slow_ae(struct v4l2_subdev * sd, int ae);
+static int ce147_set_gamma(struct v4l2_subdev * sd, int gamma);
+static int ce147_set_effect(struct v4l2_subdev * sd, int effect);
+static int ce147_set_white_balance(struct v4l2_subdev * sd, int wb);
 static int ce147_s_ext_ctrl(struct v4l2_subdev *sd, struct v4l2_ext_control *ctrl);
 
 enum ce147_frame_size {
@@ -1603,6 +1605,7 @@ static int ce147_set_preview_start(struct v4l2_subdev *sd)
 	//This is for 15 testmode
 	if(state->check_dataline)
 	{
+		LOGV("%s state->check_dataline = 1", __func__);
 		err = ce147_check_dataline(sd);
 		if(err < 0){
 			dev_err(&client->dev, "%s: failed: Could not check data line.\n", __func__);
@@ -1612,6 +1615,7 @@ static int ce147_set_preview_start(struct v4l2_subdev *sd)
 	//Normal preview sequence
 	else 
 	{
+		LOGV("%s state->check_dataline = Normal preview sequence", __func__);
 		/* Stop it if it is already running */
 		err = ce147_set_preview_stop(sd);
 		if(err < 0){
@@ -1657,41 +1661,42 @@ static int ce147_set_preview_start(struct v4l2_subdev *sd)
 
 		if(state->runmode != CE147_RUNMODE_READY)
 		{
+			LOGV("%s CE147_RUNMODE_READY", __func__);
 			/* iso */
-			ctrl.value = state->iso;
-			err = ce147_set_iso(sd, &ctrl);
+			//ctrl.value = state->iso;
+			err = ce147_set_iso(sd, ISO_AUTO);
 			if(err < 0){
 				dev_err(&client->dev, "%s: failed: ce147_set_iso, err %d\n", __func__, err);
 				return -EIO;
 			}
 
 			/* metering */
-			ctrl.value = state->metering;
-			err = ce147_set_metering(sd, &ctrl);
+			//ctrl.value = state->metering;
+			err = ce147_set_metering(sd, METERING_MATRIX);
 			if(err < 0){
 				dev_err(&client->dev, "%s: failed: ce147_set_metering, err %d\n", __func__, err);
 				return -EIO;
 			}
 
 			/* ev */
-			ctrl.value = state->ev;
-			err = ce147_set_ev(sd, &ctrl);
+			//ctrl.value = state->ev;
+			err = ce147_set_ev(sd, EV_DEFAULT);
 			if(err < 0){
 				dev_err(&client->dev, "%s: failed: ce147_set_ev, err %d\n", __func__, err);
 				return -EIO;
 			}
 			
 			/* effect */
-			ctrl.value = state->effect;
-			err = ce147_set_effect(sd, &ctrl);
+			//ctrl.value = state->effect;
+			err = ce147_set_effect(sd, IMAGE_EFFECT_NONE);
 			if(err < 0){
 				dev_err(&client->dev, "%s: failed: ce147_set_effect, err %d\n", __func__, err);
 				return -EIO;
 			}
 
 			/* wb*/
-			ctrl.value = state->wb;
-			err = ce147_set_white_balance(sd, &ctrl);
+			//ctrl.value = state->wb;
+			err = ce147_set_white_balance(sd, WHITE_BALANCE_AUTO);
 			if(err < 0){
 				dev_err(&client->dev, "%s: failed: ce147_set_white_balance, err %d\n", __func__, err);
 				return -EIO;
@@ -1699,16 +1704,16 @@ static int ce147_set_preview_start(struct v4l2_subdev *sd)
 						
 		}
 		/* slow ae */
-		ctrl.value = state->hd_slow_ae;
-		err = ce147_set_slow_ae(sd, &ctrl);
+		//ctrl.value = state->hd_slow_ae;
+		err = ce147_set_slow_ae(sd, state->hd_slow_ae);
 		if(err < 0){
 			dev_err(&client->dev, "%s: failed: ce147_set_slow_ae, err %d\n", __func__, err);
 			return -EIO;
 		}
 
 		/* RGB gamma */
-		ctrl.value = state->hd_gamma;
-		err = ce147_set_gamma(sd, &ctrl);
+		//ctrl.value = state->hd_gamma;
+		err = ce147_set_gamma(sd, state->hd_gamma);
 		if(err < 0){
 			dev_err(&client->dev, "%s: failed: ce147_set_gamma, err %d\n", __func__, err);
 			return -EIO;
@@ -1813,14 +1818,14 @@ static int ce147_set_capture_size(struct v4l2_subdev *sd)
 	return 0;	
 }
 
-static int ce147_set_ae_awb(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_ae_awb(struct v4l2_subdev *sd, int ae_awb)
 {
 	int err;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 
 	unsigned char ce147_buf_set_ae_awb[1] = { 0x00 };
 	
-	switch(ctrl->value)
+	switch(ae_awb)
 	{
 		case AE_LOCK_AWB_UNLOCK: 
 			ce147_buf_set_ae_awb[0] = 0x01;
@@ -2478,7 +2483,7 @@ static int ce147_set_af_softlanding(struct v4l2_subdev *sd)
 	return 0;
 }
 
-static int ce147_set_flash(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_flash(struct v4l2_subdev *sd, int flash)
 {
 	int err;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -2488,7 +2493,7 @@ static int ce147_set_flash(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	unsigned char ce147_buf_set_flash_manual[2] = { 0x00, 0x00 };
 	unsigned int ce147_len_set_flash_manual = 2;
 	
-	switch(ctrl->value)
+	switch(flash)
 	{
 		case FLASH_MODE_OFF:
 			ce147_buf_set_flash[1] = 0x00;
@@ -2513,7 +2518,7 @@ static int ce147_set_flash(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	}
 
 	//need to modify flash off for torch mode
-	if(ctrl->value == FLASH_MODE_OFF)
+	if(flash == FLASH_MODE_OFF)
 	{
 		err = ce147_i2c_write_multi(client, CMD_SET_FLASH_MANUAL, ce147_buf_set_flash_manual, ce147_len_set_flash_manual);
 		if(err < 0){
@@ -2533,7 +2538,7 @@ static int ce147_set_flash(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	return 0;
 }
 
-static int ce147_set_effect(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_effect(struct v4l2_subdev *sd, int effect)
 {
 	int err;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -2541,7 +2546,7 @@ static int ce147_set_effect(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	unsigned char ce147_buf_set_effect[2] = { 0x05, 0x00 };
 	unsigned int ce147_len_set_effect = 2;
 	
-	switch(ctrl->value)
+	switch(effect)
 	{
 		case IMAGE_EFFECT_NONE:
 			ce147_buf_set_effect[1] = 0x00;
@@ -2594,7 +2599,7 @@ static int ce147_set_effect(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	return 0;
 }
 
-static int ce147_set_saturation(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_saturation(struct v4l2_subdev *sd, int saturation)
 {
 	int err;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -2602,7 +2607,7 @@ static int ce147_set_saturation(struct v4l2_subdev *sd, struct v4l2_control *ctr
 	unsigned char ce147_buf_set_saturation[2] = { 0x06, 0x00 };
 	unsigned int ce147_len_set_saturation = 2;
 	
-	switch(ctrl->value)
+	switch(saturation)
 	{
 		case SATURATION_MINUS_2:
 			ce147_buf_set_saturation[1] = 0x01;
@@ -2647,7 +2652,7 @@ static int ce147_set_saturation(struct v4l2_subdev *sd, struct v4l2_control *ctr
 	return 0;
 }
 
-static int ce147_set_contrast(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_contrast(struct v4l2_subdev *sd, int contrast)
 {
 	int err;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -2655,7 +2660,7 @@ static int ce147_set_contrast(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	unsigned char ce147_buf_set_contrast[2] = { 0x07, 0x00 };
 	unsigned int ce147_len_set_contrast = 2;
 	
-	switch(ctrl->value)
+	switch(contrast)
 	{
 		case CONTRAST_MINUS_2:
 			ce147_buf_set_contrast[1] = 0x01;
@@ -2700,7 +2705,7 @@ static int ce147_set_contrast(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	return 0;
 }
 
-static int ce147_set_sharpness(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_sharpness(struct v4l2_subdev *sd, int sharpness)
 {
 	int err;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -2708,7 +2713,7 @@ static int ce147_set_sharpness(struct v4l2_subdev *sd, struct v4l2_control *ctrl
 	unsigned char ce147_buf_set_saturation[2] = { 0x02, 0x00 };
 	unsigned int ce147_len_set_saturation = 2;
 	
-	switch(ctrl->value)
+	switch(sharpness)
 	{
 		case SHARPNESS_MINUS_2:
 			ce147_buf_set_saturation[1] = 0x01;
@@ -2753,7 +2758,7 @@ static int ce147_set_sharpness(struct v4l2_subdev *sd, struct v4l2_control *ctrl
 	return 0;
 }
 
-static int ce147_set_wdr(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_wdr(struct v4l2_subdev *sd, int wdr)
 {
 	int err;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -2761,7 +2766,7 @@ static int ce147_set_wdr(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	unsigned char ce147_buf_set_wdr[1] = { 0x00 };
 	unsigned int ce147_len_set_wdr = 1;
 	
-	switch(ctrl->value)
+	switch(wdr)
 	{
 		case WDR_ON:
 			ce147_buf_set_wdr[0] = 0x01;
@@ -2785,7 +2790,7 @@ static int ce147_set_wdr(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	return 0;
 }
 
-static int ce147_set_anti_shake(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_anti_shake(struct v4l2_subdev *sd, int anti_shake)
 {
 	int err;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -2793,7 +2798,7 @@ static int ce147_set_anti_shake(struct v4l2_subdev *sd, struct v4l2_control *ctr
 	unsigned char ce147_buf_set_anti_shake[1] = { 0x00 };
 	unsigned int ce147_len_set_anti_shake = 1;
 	
-	switch(ctrl->value)
+	switch(anti_shake)
 	{
 		case ANTI_SHAKE_STILL_ON:
 			ce147_buf_set_anti_shake[0] = 0x01;
@@ -2821,7 +2826,7 @@ static int ce147_set_anti_shake(struct v4l2_subdev *sd, struct v4l2_control *ctr
 	return 0;
 }
 
-static int ce147_set_continous_af(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_continous_af(struct v4l2_subdev *sd, int af)
 {
 	int err;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -2837,7 +2842,7 @@ static int ce147_set_continous_af(struct v4l2_subdev *sd, struct v4l2_control *c
 	/* need to set face_detection with noline */
 	//
 
-	if(ctrl->value)
+	if(af)
 	{
 		err = ce147_get_focus_mode(client, CMD_SET_AUTO_FOCUS_MODE, ce147_buf_set_caf);
 		if(err < 0){
@@ -2873,7 +2878,7 @@ static int ce147_set_continous_af(struct v4l2_subdev *sd, struct v4l2_control *c
 	return 0;
 }
 
-static int ce147_set_object_tracking(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_object_tracking(struct v4l2_subdev *sd, int object_tracking)
 {
 	int err;
 	int count;
@@ -2893,7 +2898,7 @@ static int ce147_set_object_tracking(struct v4l2_subdev *sd, struct v4l2_control
 	x = state->position.x;
 	y = state->position.y;
 
-	if(OT_START)
+	if(object_tracking = OT_START)
 	{			
 		ce147_buf_set_object_tracking[3] = (x & 0x00FF);	
 		ce147_buf_set_object_tracking[4] = ((x	& 0xFF00) >> 8);
@@ -2928,7 +2933,7 @@ static int ce147_set_object_tracking(struct v4l2_subdev *sd, struct v4l2_control
 		/* OT status: an object is detected successfully */
 		else if(ce147_buf_check_object_tracking[0] == 0x02)
 		{
-			err = ce147_set_continous_af(sd, ctrl);
+			err = ce147_set_continous_af(sd, object_tracking);
 			if(err < 0){
 				dev_err(&client->dev, "%s: failed: ce147_start_continous_af for object_tracking\n", __func__);
 				return -EIO;
@@ -3007,7 +3012,7 @@ static int ce147_get_object_tracking(struct v4l2_subdev *sd, struct v4l2_control
 	return 0;
 }
 
-static int ce147_set_face_detection(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_face_detection(struct v4l2_subdev *sd, int face_detection)
 {
 	int err;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -3015,7 +3020,7 @@ static int ce147_set_face_detection(struct v4l2_subdev *sd, struct v4l2_control 
 	unsigned char ce147_buf_set_fd[3] = { 0x00, 0x00, 0x00 };
 	unsigned int ce147_len_set_fd = 3;
 	
-	switch(ctrl->value)
+	switch(face_detection)
 	{
 		case FACE_DETECTION_ON:
 			ce147_buf_set_fd[0] = 0x03;
@@ -3054,7 +3059,7 @@ static int ce147_set_face_detection(struct v4l2_subdev *sd, struct v4l2_control 
 	return 0;
 }
 
-static int ce147_set_smart_auto(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_smart_auto(struct v4l2_subdev *sd, int smart_auto)
 {
 	int err;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -3062,7 +3067,7 @@ static int ce147_set_smart_auto(struct v4l2_subdev *sd, struct v4l2_control *ctr
 	unsigned char ce147_buf_set_smart_auto[1] = { 0x00 };
 	unsigned int ce147_len_set_smart_auto = 1;
 	
-	if(ctrl->value == SMART_AUTO_ON)
+	if(smart_auto == SMART_AUTO_ON)
 	{
 		ce147_buf_set_smart_auto[0] = 0x01;
 		err = ce147_i2c_write_multi(client, CMD_SET_SMART_AUTO, ce147_buf_set_smart_auto, ce147_len_set_smart_auto);
@@ -3164,7 +3169,7 @@ static int ce147_get_smart_auto_status(struct v4l2_subdev *sd, struct v4l2_contr
 	return 0;
 }
 
-static int ce147_set_touch_auto_focus(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_touch_auto_focus(struct v4l2_subdev *sd, int focus)
 {
 	int err;
 	unsigned short x;
@@ -3187,7 +3192,7 @@ static int ce147_set_touch_auto_focus(struct v4l2_subdev *sd, struct v4l2_contro
 	x = state->position.x;
 	y = state->position.y;
 	
-	if(ctrl->value == TOUCH_AF_START)
+	if(focus == TOUCH_AF_START)
 	{
 		ce147_buf_set_touch_af[0] = 0x01;
 		ce147_buf_set_touch_af[1] = 0x03;
@@ -3213,7 +3218,7 @@ static int ce147_set_touch_auto_focus(struct v4l2_subdev *sd, struct v4l2_contro
 	return 0;
 }
 
-static int ce147_set_focus_mode(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_focus_mode(struct v4l2_subdev *sd, int focus_mode)
 {
 	int err;
 	struct ce147_state *state = to_state(sd);
@@ -3221,7 +3226,7 @@ static int ce147_set_focus_mode(struct v4l2_subdev *sd, struct v4l2_control *ctr
 
 	unsigned char ce147_buf_set_focus_mode[1] = { 0x00 };
 
-	switch(ctrl->value)
+	switch(focus_mode)
 	{
 		case FOCUS_MODE_MACRO:
 		case FOCUS_MODE_MACRO_DEFAULT:
@@ -3240,10 +3245,10 @@ static int ce147_set_focus_mode(struct v4l2_subdev *sd, struct v4l2_control *ctr
 	}
 	state->cur_af_status = ce147_buf_set_focus_mode[0];
 
-	if(ctrl->value != FOCUS_MODE_FACEDETECT)
+	if(focus_mode != FOCUS_MODE_FACEDETECT)
 	{
 		if((state->pre_af_status != state->cur_af_status) \
-			|| (ctrl->value == FOCUS_MODE_MACRO_DEFAULT)||(ctrl->value == FOCUS_MODE_AUTO_DEFAULT)|| (ctrl->value == FOCUS_MODE_FACEDETECT_DEFAULT))
+			|| (focus_mode == FOCUS_MODE_MACRO_DEFAULT)||(focus_mode == FOCUS_MODE_AUTO_DEFAULT)|| (focus_mode == FOCUS_MODE_FACEDETECT_DEFAULT))
 		{
 #if defined(CONFIG_ARIES_NTT) // Modify NTTS1
                 	ce147_msg(&client->dev, "%s: unlock\n", __func__);		
@@ -3266,7 +3271,7 @@ static int ce147_set_focus_mode(struct v4l2_subdev *sd, struct v4l2_control *ctr
 	return 0;
 }
 
-static int ce147_set_vintage_mode(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_vintage_mode(struct v4l2_subdev *sd, int vintage_mode)
 {
 	int err;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -3274,7 +3279,7 @@ static int ce147_set_vintage_mode(struct v4l2_subdev *sd, struct v4l2_control *c
 	unsigned char ce147_buf_set_vintage_mode[4] = { 0x10, 0x01, 0x32, 0x00 };
 	unsigned int ce147_len_set_vintage_mode = 4;
 	
-	switch(ctrl->value)
+	switch(vintage_mode)
 	{
 		case VINTAGE_MODE_OFF:
 			ce147_buf_set_vintage_mode[1] = 0x00;
@@ -3316,7 +3321,7 @@ static int ce147_set_vintage_mode(struct v4l2_subdev *sd, struct v4l2_control *c
 	return 0;
 }
 
-static int ce147_set_face_beauty(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_face_beauty(struct v4l2_subdev *sd, int face_beauty)
 {
 	int err;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -3324,7 +3329,7 @@ static int ce147_set_face_beauty(struct v4l2_subdev *sd, struct v4l2_control *ct
 	unsigned char ce147_buf_set_face_beauty[4] = { 0x00, 0x00, 0x00, 0x00 };
 	unsigned int ce147_len_set_face_beauty = 4;
 
-	switch(ctrl->value)
+	switch(face_beauty)
 	{
 		case BEAUTY_SHOT_ON:
 			ce147_buf_set_face_beauty[1] = 0x01;
@@ -3356,7 +3361,7 @@ static int ce147_set_face_beauty(struct v4l2_subdev *sd, struct v4l2_control *ct
 #define CAMERA_WHITE_BALANCE_FLUORESCENT 0x03
 #define CAMERA_WHITE_BALANCE_DEFAULT     CAMERA_WHITE_BALANCE_AUTO
 
-static int ce147_set_white_balance(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_white_balance(struct v4l2_subdev *sd, int wb)
 {
 	int err;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -3365,9 +3370,9 @@ static int ce147_set_white_balance(struct v4l2_subdev *sd, struct v4l2_control *
 	unsigned char ce147_buf_set_wb[2] = { 0x10, 0x00 };
 	unsigned int ce147_len_set_wb_auto = 1;
 	unsigned int ce147_len_set_wb = 2;
-	bool bDefaultChoosen = false;
+
 	
-	switch(ctrl->value)
+	switch(wb)
 	{
 		case WHITE_BALANCE_AUTO:
 			ce147_buf_set_wb_auto[0] = CAMERA_WHITE_BALANCE_AUTO;
@@ -3390,13 +3395,11 @@ static int ce147_set_white_balance(struct v4l2_subdev *sd, struct v4l2_control *
 		break;
 
 		default:
-		        bDefaultChoosen = true; /*bad workaround */
-		        ce147_buf_set_wb_auto[0] = CAMERA_WHITE_BALANCE_DEFAULT;
-			pr_warn("%s: white balance mode %d not defined assuming default white balance", __func__, ctrl->value);
+		     //pr_warn("%s: white balance mode %d not defined assuming default white balance", __func__, ctrl->value);
 		break;
 	}
 
-	if((ctrl->value != WHITE_BALANCE_AUTO) && !bDefaultChoosen)
+	if(wb != WHITE_BALANCE_AUTO) 
 	{
 		err = ce147_i2c_write_multi(client, CMD_SET_WB, ce147_buf_set_wb, ce147_len_set_wb);
 		if(err < 0){
@@ -3415,7 +3418,7 @@ static int ce147_set_white_balance(struct v4l2_subdev *sd, struct v4l2_control *
 	return 0;
 }
 
-static int ce147_set_ev(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_ev(struct v4l2_subdev *sd, int ev)
 {
 	int err;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -3425,7 +3428,7 @@ static int ce147_set_ev(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	unsigned int ce147_len_set_ev = 2;
 	unsigned int ce147_ev_offset = 13;
 
-	switch(ctrl->value)
+	switch(ev)
 	{
 		case EV_MINUS_4:
 			ce147_buf_set_ev[1] = 0x02;
@@ -3465,7 +3468,7 @@ static int ce147_set_ev(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 
 		default:
 		        ce147_buf_set_ev[1] = 0x06;
-                        pr_warn("%s: ev mode %d not defined assuming default ev", __func__, ctrl->value);
+                       // pr_warn("%s: ev mode %d not defined assuming default ev", __func__, ctrl->value);
 		break;
 	}
 
@@ -3491,7 +3494,7 @@ static int ce147_set_ev(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 #define CAMERA_METERING_HD       0x03
 #define CAMERA_METERING_DEFAULT  CAMERA_METERING_MATRIX
 
-static int ce147_set_metering(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_metering(struct v4l2_subdev *sd, int metering)
 {
 
 	int err;
@@ -3509,7 +3512,7 @@ static int ce147_set_metering(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	}
 	else
 	{
-	        switch(ctrl->value)
+	        switch(metering)
 	        {
 		        case METERING_MATRIX:
 		        	ce147_buf_set_metering[1] = CAMERA_METERING_MATRIX;
@@ -3526,7 +3529,7 @@ static int ce147_set_metering(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		        default:
 		                //default we asume that we want matrix metering 
 		                ce147_buf_set_metering[1] = CAMERA_METERING_DEFAULT;
-			        pr_warn("%s: metering mode %d not defined assuming default metering", __func__, ctrl->value);
+			        //pr_warn("%s: metering mode %d not defined assuming default metering", __func__, ctrl->value);
 		                break;
 	         }
 
@@ -3543,7 +3546,7 @@ static int ce147_set_metering(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	return 0;
 }
 
-static int ce147_set_iso(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_iso(struct v4l2_subdev *sd, int iso)
 {
 	int err;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -3551,9 +3554,9 @@ static int ce147_set_iso(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	unsigned char ce147_buf_set_iso[2] = { 0x01, 0x00 };
 	unsigned int ce147_len_set_iso = 2;
 
-	ce147_msg(&client->dev, "%s: Enter : iso %d\n", __func__, ctrl->value);
+	ce147_msg(&client->dev, "%s: Enter : iso %d\n", __func__, iso);
 	
-	switch(ctrl->value)
+	switch(iso)
 	{
 		case ISO_AUTO:
 			ce147_buf_set_iso[1] = 0x06;
@@ -3600,7 +3603,7 @@ static int ce147_set_iso(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 
 		default:
 		        ce147_buf_set_iso[1] = 0x06;
-			pr_warn("%s: ISO mode %d not defined assuming default ISO", __func__, ctrl->value);
+			//pr_warn("%s: ISO mode %d not defined assuming default ISO", __func__, ctrl->value);
 		break;
 	}
 
@@ -3615,7 +3618,7 @@ static int ce147_set_iso(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	return 0;
 }
 
-static int ce147_set_gamma(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_gamma(struct v4l2_subdev *sd, int gamma)
 {
 	int err;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -3627,7 +3630,7 @@ static int ce147_set_gamma(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	unsigned char ce147_buf_set_uv[2] = { 0x03, 0x00 };
 	unsigned int ce147_len_set_uv = 2;
 
-	if(ctrl->value == GAMMA_ON)
+	if(gamma == GAMMA_ON)
 	{
 		if(state->hd_preview_on)
 		{
@@ -3655,7 +3658,7 @@ static int ce147_set_gamma(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	return 0;
 }
 
-static int ce147_set_slow_ae(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_slow_ae(struct v4l2_subdev *sd, int ae)
 {
 	int err;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -3664,7 +3667,7 @@ static int ce147_set_slow_ae(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	unsigned char ce147_buf_set_slow_ae[2] = { 0x03, 0x00 };
 	unsigned int ce147_len_set_slow_ae = 2;
 
-	if(ctrl->value == SLOW_AE_ON)
+	if(ae == SLOW_AE_ON)
 	{
 		if(state->hd_preview_on)
 		{
@@ -3684,7 +3687,7 @@ static int ce147_set_slow_ae(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	return 0;
 }
  
-static int ce147_set_face_lock(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_face_lock(struct v4l2_subdev *sd, int face_lock)
 {
 	int err;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -3692,7 +3695,7 @@ static int ce147_set_face_lock(struct v4l2_subdev *sd, struct v4l2_control *ctrl
 	unsigned char ce147_buf_set_fd_lock[1] = { 0x00 };
 	unsigned int ce147_len_set_fd_lock = 1;
 	
-	switch(ctrl->value) 
+	switch(face_lock) 
 	{
 		case FACE_LOCK_ON:
 			ce147_buf_set_fd_lock[0] = 0x01;
@@ -3719,7 +3722,7 @@ static int ce147_set_face_lock(struct v4l2_subdev *sd, struct v4l2_control *ctrl
 	return 0;
 }
 
-static int ce147_set_auto_focus(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_auto_focus(struct v4l2_subdev *sd, int auto_focus)
 {
 	int err;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -3727,7 +3730,7 @@ static int ce147_set_auto_focus(struct v4l2_subdev *sd, struct v4l2_control *ctr
 	unsigned char ce147_buf_set_af[1] = { 0x00 };
 	unsigned int ce147_len_set_af = 1;
 
-	if (ctrl->value)
+	if (auto_focus)
 	{
 		//start af
 		err = ce147_i2c_write_multi(client, CMD_START_AUTO_FOCUS_SEARCH, ce147_buf_set_af, ce147_len_set_af);
@@ -4298,211 +4301,253 @@ static int ce147_g_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 
 	switch (ctrl->id) {
 	case V4L2_CID_EXPOSURE:
+		LOGV("%s: V4L2_CID_EXPOSURE %d \n", __func__,ctrl->value);
 		ctrl->value = userset.exposure_bias;
 		err = 0;
 		break;
 
 	case V4L2_CID_AUTO_WHITE_BALANCE:
+		LOGV("%s: V4L2_CID_AUTO_WHITE_BALANCE %d \n", __func__,ctrl->value);
 		ctrl->value = userset.auto_wb;
 		err = 0;
 		break;
 
 	case V4L2_CID_WHITE_BALANCE_PRESET:
+		LOGV("%s: V4L2_CID_WHITE_BALANCE_PRESET %d \n", __func__,ctrl->value);
 		ctrl->value = userset.manual_wb;
 		err = 0;
 		break;
 
 	case V4L2_CID_COLORFX:
+		LOGV("%s: V4L2_CID_COLORFX %d \n", __func__,ctrl->value);
 		ctrl->value = userset.effect;
 		err = 0;
 		break;
 
 	case V4L2_CID_CONTRAST:
+		LOGV("%s: V4L2_CID_CONTRAST %d \n", __func__,ctrl->value);
 		ctrl->value = userset.contrast;
 		err = 0;
 		break;
 
 	case V4L2_CID_SATURATION:
+		LOGV("%s: V4L2_CID_SATURATION %d \n", __func__,ctrl->value);
 		ctrl->value = userset.saturation;
 		err = 0;
 		break;
 
 	case V4L2_CID_SHARPNESS:
+		LOGV("%s: V4L2_CID_SHARPNESS %d \n", __func__,ctrl->value);
 		ctrl->value = userset.sharpness;
 		err = 0;
 		break;
 
 	case V4L2_CID_CAM_JPEG_MAIN_SIZE:
+		LOGV("%s: V4L2_CID_CAM_JPEG_MAIN_SIZE %d \n", __func__,ctrl->value);
 		ctrl->value = state->jpeg.main_size;
 		err = 0;
 		break;
 	
 	case V4L2_CID_CAM_JPEG_MAIN_OFFSET:
+		LOGV("%s: V4L2_CID_CAM_JPEG_MAIN_OFFSET %d \n", __func__,ctrl->value);
 		ctrl->value = state->jpeg.main_offset;
 		err = 0;
 		break;
 
 	case V4L2_CID_CAM_JPEG_THUMB_SIZE:
+		LOGV("%s: V4L2_CID_CAM_JPEG_THUMB_SIZE %d \n", __func__,ctrl->value);
 		ctrl->value = state->jpeg.thumb_size;
 		err = 0;
 		break;
 	
 	case V4L2_CID_CAM_JPEG_THUMB_OFFSET:
+		LOGV("%s: V4L2_CID_CAM_JPEG_THUMB_OFFSET %d \n", __func__,ctrl->value);
 		ctrl->value = state->jpeg.thumb_offset;
 		err = 0;
 		break;
 
 	case V4L2_CID_CAM_JPEG_POSTVIEW_OFFSET:
+		LOGV("%s: V4L2_CID_CAM_JPEG_POSTVIEW_OFFSET %d \n", __func__,ctrl->value);
 		ctrl->value = state->jpeg.postview_offset;
 		err = 0;
 		break; 
 	
 	case V4L2_CID_CAM_JPEG_MEMSIZE:
+		LOGV("%s: V4L2_CID_CAM_JPEG_MEMSIZE %d \n", __func__,ctrl->value);
 		ctrl->value = SENSOR_JPEG_SNAPSHOT_MEMSIZE;
 		err = 0;
 		break;
 
 	//need to be modified
 	case V4L2_CID_CAM_JPEG_QUALITY:
+		LOGV("%s: V4L2_CID_CAM_JPEG_QUALITY %d \n", __func__,ctrl->value);
 		ctrl->value = state->jpeg.quality;
 		err = 0;
 		break;
 
 	case V4L2_CID_CAMERA_OBJ_TRACKING_STATUS:
+		LOGV("%s: V4L2_CID_CAMERA_OBJ_TRACKING_STATUS %d \n", __func__,ctrl->value);
 		err = ce147_get_object_tracking(sd, ctrl);
 		ctrl->value = state->ot_status;
 		break;
 
 	case V4L2_CID_CAMERA_SMART_AUTO_STATUS:
+		LOGV("%s: V4L2_CID_CAMERA_SMART_AUTO_STATUS %d \n", __func__,ctrl->value);
 		err = ce147_get_smart_auto_status(sd, ctrl);
 		ctrl->value = state->sa_status;
 		break;
 
 	case V4L2_CID_CAMERA_AUTO_FOCUS_RESULT:
+		LOGV("%s: V4L2_CID_CAMERA_AUTO_FOCUS_RESULT %d \n", __func__,ctrl->value);
 		err = ce147_get_auto_focus_status(sd, ctrl);
 		break;
 
 	case V4L2_CID_CAM_DATE_INFO_YEAR:
+		LOGV("%s: V4L2_CID_CAM_DATE_INFO_YEAR %d \n", __func__,ctrl->value);
 		ctrl->value = state->dateinfo.year;
 		err = 0;
 		break; 
 
 	case V4L2_CID_CAM_DATE_INFO_MONTH:
+		LOGV("%s: V4L2_CID_CAM_DATE_INFO_MONTH %d \n", __func__,ctrl->value);
 		ctrl->value = state->dateinfo.month;
 		err = 0;
 		break; 
 
 	case V4L2_CID_CAM_DATE_INFO_DATE:
+		LOGV("%s: V4L2_CID_CAM_DATE_INFO_DATE %d \n", __func__,ctrl->value);
 		ctrl->value = state->dateinfo.date;
 		err = 0;
 		break; 
 
 	case V4L2_CID_CAM_SENSOR_VER:
+		LOGV("%s: V4L2_CID_CAM_SENSOR_VER %d \n", __func__,ctrl->value);
 		ctrl->value = state->sensor_version;
 		err = 0;
 		break; 
 
 	case V4L2_CID_CAM_FW_MINOR_VER:
+		LOGV("%s: V4L2_CID_CAM_FW_MINOR_VER %d \n", __func__,ctrl->value);
 		ctrl->value = state->fw.minor;
 		err = 0;
 		break; 
 
 	case V4L2_CID_CAM_FW_MAJOR_VER:
+		LOGV("%s: V4L2_CID_CAM_FW_MAJOR_VER %d \n", __func__,ctrl->value);
 		ctrl->value = state->fw.major;
 		err = 0;
 		break; 
 
 	case V4L2_CID_CAM_PRM_MINOR_VER:
+		LOGV("%s: V4L2_CID_CAM_PRM_MINOR_VER %d \n", __func__,ctrl->value);
 		ctrl->value = state->prm.minor;
 		err = 0;
 		break; 
 
 	case V4L2_CID_CAM_PRM_MAJOR_VER:
+		LOGV("%s: V4L2_CID_CAM_PRM_MAJOR_VER %d \n", __func__,ctrl->value);
 		ctrl->value = state->prm.major;
 		err = 0;
 		break; 
 
 	case V4L2_CID_CAM_SENSOR_MAKER:
+		LOGV("%s: V4L2_CID_CAM_SENSOR_MAKER %d \n", __func__,ctrl->value);
 		ctrl->value = state->sensor_info.maker;
 		err = 0;
 		break; 
 
 	case V4L2_CID_CAM_SENSOR_OPTICAL:
+		LOGV("%s: V4L2_CID_CAM_SENSOR_OPTICAL %d \n", __func__,ctrl->value);
 		ctrl->value = state->sensor_info.optical;
 		err = 0;
 		break; 		
 
 	case V4L2_CID_CAM_AF_VER_LOW:
+		LOGV("%s: V4L2_CID_CAM_AF_VER_LOW %d \n", __func__,ctrl->value);
 		ctrl->value = state->af_info.low;
 		err = 0;
 		break; 
 
 	case V4L2_CID_CAM_AF_VER_HIGH:
+		LOGV("%s: V4L2_CID_CAM_AF_VER_HIGH %d \n", __func__,ctrl->value);
 		ctrl->value = state->af_info.high;
 		err = 0;
 		break; 	
 
 	case V4L2_CID_CAM_GAMMA_RG_LOW:
+		LOGV("%s: V4L2_CID_CAM_GAMMA_RG_LOW %d \n", __func__,ctrl->value);
 		ctrl->value = state->gamma.rg_low;
 		err = 0;
 		break; 
 
 	case V4L2_CID_CAM_GAMMA_RG_HIGH:
+		LOGV("%s: V4L2_CID_CAM_GAMMA_RG_HIGH %d \n", __func__,ctrl->value);
 		ctrl->value = state->gamma.rg_high;
 		err = 0;
 		break; 		
 
 	case V4L2_CID_CAM_GAMMA_BG_LOW:
+		LOGV("%s: V4L2_CID_CAM_GAMMA_BG_LOW %d \n", __func__,ctrl->value);
 		ctrl->value = state->gamma.bg_low;
 		err = 0;
 		break; 
 
 	case V4L2_CID_CAM_GAMMA_BG_HIGH:
+		LOGV("%s: V4L2_CID_CAM_GAMMA_BG_HIGH %d \n", __func__,ctrl->value);
 		ctrl->value = state->gamma.bg_high;
 		err = 0;
 		break; 	
 	
 	case V4L2_CID_CAM_GET_DUMP_SIZE:
+		LOGV("%s: V4L2_CID_CAM_GET_DUMP_SIZE %d \n", __func__,ctrl->value);
 		ctrl->value = state->fw_dump_size;
 		err = 0;
 		break;		
 	
 	case V4L2_CID_MAIN_SW_DATE_INFO_YEAR:
+		LOGV("%s: V4L2_CID_MAIN_SW_DATE_INFO_YEAR %d \n", __func__,ctrl->value);
 		ctrl->value = state->main_sw_dateinfo.year;
 		err = 0;
 		break; 
 
 	case V4L2_CID_MAIN_SW_DATE_INFO_MONTH:
+		LOGV("%s: V4L2_CID_MAIN_SW_DATE_INFO_MONTH %d \n", __func__,ctrl->value);
 		ctrl->value = state->main_sw_dateinfo.month;
 		err = 0;
 		break; 
 
 	case V4L2_CID_MAIN_SW_DATE_INFO_DATE:
+		LOGV("%s: V4L2_CID_MAIN_SW_DATE_INFO_DATE %d \n", __func__,ctrl->value);
 		ctrl->value = state->main_sw_dateinfo.date;
 		err = 0;
 		break; 
 
 	case V4L2_CID_MAIN_SW_FW_MINOR_VER:
+		LOGV("%s: V4L2_CID_MAIN_SW_FW_MINOR_VER %d \n", __func__,ctrl->value);
 		ctrl->value = state->main_sw_fw.minor;
 		err = 0;
 		break; 
 
 	case V4L2_CID_MAIN_SW_FW_MAJOR_VER:
+		LOGV("%s: V4L2_CID_MAIN_SW_FW_MAJOR_VER %d \n", __func__,ctrl->value);
 		ctrl->value = state->main_sw_fw.major;
 		err = 0;
 		break; 
 
 	case V4L2_CID_MAIN_SW_PRM_MINOR_VER:
+		LOGV("%s: V4L2_CID_MAIN_SW_PRM_MINOR_VER %d \n", __func__,ctrl->value);
 		ctrl->value = state->main_sw_prm.minor;
 		err = 0;
 		break; 
 
 	case V4L2_CID_MAIN_SW_PRM_MAJOR_VER:
+		LOGV("%s: V4L2_CID_MAIN_SW_PRM_MAJOR_VER %d \n", __func__,ctrl->value);
 		ctrl->value = state->main_sw_prm.major;
 		err = 0;
 		break; 
 		
 	case V4L2_CID_ESD_INT:
+		LOGV("%s: V4L2_CID_ESD_INT %d \n", __func__,ctrl->value);
 			pr_warn("%s don't bother with V4L2_CID_ESD_INT shit I am a stupid CE147 cam!",__func__);
 	        err = 0;
 	        break;
@@ -4523,54 +4568,19 @@ static int ce147_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	int offset = 134217728;
 
 	switch (ctrl->id) {
-#if 0
-	case V4L2_CID_EXPOSURE:
-		dev_err(&client->dev, "%s: V4L2_CID_EXPOSURE: not implemented\n", __func__);
-		break;
-
-	case V4L2_CID_AUTO_WHITE_BALANCE:
-		dev_err(&client->dev, "%s: V4L2_CID_AUTO_WHITE_BALANCE: not implemented\n", __func__);
-		break;
-
-	case V4L2_CID_WHITE_BALANCE_PRESET:
-		dev_err(&client->dev, "%s: V4L2_CID_WHITE_BALANCE_PRESET: not implemented\n", __func__);
-		break;
-
-	case V4L2_CID_COLORFX:
-		dev_err(&client->dev, "%s: V4L2_CID_COLORFX: not implemented\n", __func__);
-		break;
-
-	case V4L2_CID_CONTRAST:
-		dev_err(&client->dev, "%s: V4L2_CID_CONTRAST: not implemented\n", __func__);
-		break;
-
-	case V4L2_CID_SATURATION:
-		dev_err(&client->dev, "%s: V4L2_CID_SATURATION: not implemented\n", __func__);
-		break;
-
-	case V4L2_CID_SHARPNESS:
-		dev_err(&client->dev, "%s: V4L2_CID_SHARPNESS: not implemented\n", __func__);
-		break;
-
-	case V4L2_CID_CAM_JPEG_QUALITY:
-		if(ctrl->value < 0 || ctrl->value > 100){
-			err = -EINVAL;
-		} else {
-			state->jpeg.quality = ctrl->value;
-			err = 0;
-		}
-		break;
-#else
+		
 	case V4L2_CID_CAMERA_AEAWB_LOCK_UNLOCK:
-		err = ce147_set_ae_awb(sd, ctrl);
+		LOGV("%s: V4L2_CID_CAMERA_AEAWB_LOCK_UNLOCK %d \n", __func__,ctrl->value);
+		err = ce147_set_ae_awb(sd, ctrl->value);
 		break;
 		
 	case V4L2_CID_CAMERA_FLASH_MODE:
-		err = ce147_set_flash(sd, ctrl);
+		LOGV("%s: V4L2_CID_CAMERA_FLASH_MODE %d \n", __func__,ctrl->value);
+		err = ce147_set_flash(sd, ctrl->value);
 		break;
 
 	case V4L2_CID_CAMERA_BRIGHTNESS:
-		//dev_err(&client->dev, "%s: V4L2_CID_CAMERA_BRIGHTNESS, runmode %d  \n", __func__, state->runmode);
+		LOGV("%s: V4L2_CID_CAMERA_BRIGHTNESS %d \n", __func__,ctrl->value);
 
 		if(state->runmode != CE147_RUNMODE_RUNNING)
 		{
@@ -4579,12 +4589,12 @@ static int ce147_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		}
 		else
 		{
-			err = ce147_set_ev(sd, ctrl);
+			err = ce147_set_ev(sd, ctrl->value);
 		}
 		break;
 
 	case V4L2_CID_CAMERA_WHITE_BALANCE:
-		//dev_err(&client->dev, "%s: V4L2_CID_CAMERA_WHITE_BALANCE, runmode %d	\n", __func__, state->runmode);
+		LOGV("%s: V4L2_CID_CAMERA_WHITE_BALANCE %d \n", __func__,ctrl->value);
 		
 		if(state->runmode != CE147_RUNMODE_RUNNING)
 		{
@@ -4593,13 +4603,13 @@ static int ce147_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		}
 		else
 		{
-			err = ce147_set_white_balance(sd, ctrl);		
+			err = ce147_set_white_balance(sd, ctrl->value);		
 		}
 		break;
 
 	case V4L2_CID_CAMERA_EFFECT:
-		//dev_err(&client->dev, "%s: V4L2_CID_CAMERA_EFFECT, runmode %d	\n", __func__, state->runmode);
-
+		LOGV("%s: V4L2_CID_CAMERA_EFFECT %d \n", __func__,ctrl->value);
+		
 		if(state->runmode != CE147_RUNMODE_RUNNING)
 		{
 			state->effect= ctrl->value;
@@ -4607,13 +4617,13 @@ static int ce147_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		}
 		else
 		{
-			err = ce147_set_effect(sd, ctrl);		
+			err = ce147_set_effect(sd, ctrl->value);		
 		}
 		break;		
 
 	case V4L2_CID_CAMERA_ISO:
-		//dev_err(&client->dev, "%s: V4L2_CID_CAMERA_ISO, runmode %d	\n", __func__, state->runmode);
-
+		LOGV("%s: V4L2_CID_CAMERA_EFFECT %d \n", __func__,ctrl->value);
+		
 		if(state->runmode != CE147_RUNMODE_RUNNING)
 		{
 			state->iso = ctrl->value;
@@ -4621,13 +4631,13 @@ static int ce147_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		}
 		else
 		{
-			err = ce147_set_iso(sd, ctrl);		
+			err = ce147_set_iso(sd, ctrl->value);		
 		}
 		break;
 
 	case V4L2_CID_CAMERA_METERING:
-		//dev_err(&client->dev, "%s: V4L2_CID_CAMERA_METERING, runmode %d  \n", __func__, state->runmode);
-
+		LOGV("%s: V4L2_CID_CAMERA_METERING %d \n", __func__,ctrl->value);
+		
 		if(state->runmode != CE147_RUNMODE_RUNNING)
 		{
 			state->metering = ctrl->value;
@@ -4635,56 +4645,68 @@ static int ce147_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		}
 		else
 		{
-			err = ce147_set_metering(sd, ctrl);
+			err = ce147_set_metering(sd, ctrl->value);
 		}
 		break;
 
 	case V4L2_CID_CAMERA_CONTRAST:
-		err = ce147_set_contrast(sd, ctrl);
+		LOGV("%s: V4L2_CID_CAMERA_CONTRAST %d \n", __func__,ctrl->value);
+		err = ce147_set_contrast(sd, ctrl->value);
 		break;
 
 	case V4L2_CID_CAMERA_SATURATION:
-		err = ce147_set_saturation(sd, ctrl);
+		LOGV("%s: V4L2_CID_CAMERA_SATURATION %d \n", __func__,ctrl->value);
+		err = ce147_set_saturation(sd, ctrl->value);
 		break;
 
 	case V4L2_CID_CAMERA_SHARPNESS:
-		err = ce147_set_sharpness(sd, ctrl);
+		LOGV("%s: V4L2_CID_CAMERA_SHARPNESS %d \n", __func__,ctrl->value);
+		err = ce147_set_sharpness(sd, ctrl->value);
 		break;
 
 	case V4L2_CID_CAMERA_WDR:
-		err = ce147_set_wdr(sd, ctrl);
+		LOGV("%s: V4L2_CID_CAMERA_WDR %d \n", __func__,ctrl->value);
+		err = ce147_set_wdr(sd, ctrl->value);
 		break;
 
 	case V4L2_CID_CAMERA_ANTI_SHAKE:
-		err = ce147_set_anti_shake(sd, ctrl);
+		LOGV("%s: V4L2_CID_CAMERA_ANTI_SHAKE %d \n", __func__,ctrl->value);
+		err = ce147_set_anti_shake(sd, ctrl->value);
 		break;
 
 	case V4L2_CID_CAMERA_FACE_DETECTION:
-		err = ce147_set_face_detection(sd, ctrl);
+		LOGV("%s: V4L2_CID_CAMERA_FACE_DETECTION %d \n", __func__,ctrl->value);
+		err = ce147_set_face_detection(sd, ctrl->value);
 		break;
 
 	case V4L2_CID_CAMERA_SMART_AUTO:
-		err = ce147_set_smart_auto(sd, ctrl);
+		LOGV("%s: V4L2_CID_CAMERA_SMART_AUTO %d \n", __func__,ctrl->value);
+		err = ce147_set_smart_auto(sd, ctrl->value);
 		break;
 
 	case V4L2_CID_CAMERA_FOCUS_MODE:
-		err = ce147_set_focus_mode(sd, ctrl);
+		LOGV("%s: V4L2_CID_CAMERA_FOCUS_MODE %d \n", __func__,ctrl->value);
+		err = ce147_set_focus_mode(sd, ctrl->value);
 		break;
 		
 	case V4L2_CID_CAMERA_VINTAGE_MODE:
-		err = ce147_set_vintage_mode(sd, ctrl);
+		LOGV("%s: V4L2_CID_CAMERA_VINTAGE_MODE %d \n", __func__,ctrl->value);
+		err = ce147_set_vintage_mode(sd, ctrl->value);
 		break;
 		
 	case V4L2_CID_CAMERA_BEAUTY_SHOT:
-		err = ce147_set_face_beauty(sd, ctrl);
+		LOGV("%s: V4L2_CID_CAMERA_BEAUTY_SHOT %d \n", __func__,ctrl->value);
+		err = ce147_set_face_beauty(sd, ctrl->value);
 		break;
 
 	case V4L2_CID_CAMERA_FACEDETECT_LOCKUNLOCK:
-		err = ce147_set_face_lock(sd, ctrl);
+		LOGV("%s: V4L2_CID_CAMERA_FACEDETECT_LOCKUNLOCK %d \n", __func__,ctrl->value);
+		err = ce147_set_face_lock(sd, ctrl->value);
 		break;		
 
 	//need to be modified
 	case V4L2_CID_CAM_JPEG_QUALITY:
+		LOGV("%s: V4L2_CID_CAM_JPEG_QUALITY %d \n", __func__,ctrl->value);
 		if(ctrl->value < 0 || ctrl->value > 100){
 			err = -EINVAL;
 		} else {
@@ -4694,68 +4716,81 @@ static int ce147_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		break;
 
 	case V4L2_CID_CAMERA_ZOOM:
+		LOGV("%s: V4L2_CID_CAMERA_ZOOM %d \n", __func__,ctrl->value);
 		err = ce147_set_dzoom(sd, ctrl);
 		break;
 
 	case V4L2_CID_CAMERA_TOUCH_AF_START_STOP:
-		err = ce147_set_touch_auto_focus(sd, ctrl);
+		LOGV("%s: V4L2_CID_CAMERA_TOUCH_AF_START_STOP %d \n", __func__,ctrl->value);
+		err = ce147_set_touch_auto_focus(sd, ctrl->value);
 		break;
 		
 	case V4L2_CID_CAMERA_CAF_START_STOP:
-		err = ce147_set_continous_af(sd, ctrl);
+		LOGV("%s: V4L2_CID_CAMERA_CAF_START_STOP %d \n", __func__,ctrl->value);
+		err = ce147_set_continous_af(sd, ctrl->value);
 		break;	
 
 	case V4L2_CID_CAMERA_OBJECT_POSITION_X:
+		LOGV("%s: V4L2_CID_CAMERA_OBJECT_POSITION_X %d \n", __func__,ctrl->value);
 		state->position.x = ctrl->value;
 		err = 0;
 		break;
 
 	case V4L2_CID_CAMERA_OBJECT_POSITION_Y:
+		LOGV("%s: V4L2_CID_CAMERA_OBJECT_POSITION_Y %d \n", __func__,ctrl->value);
 		state->position.y = ctrl->value;
 		err = 0;
 		break;
 
 	case V4L2_CID_CAMERA_OBJ_TRACKING_START_STOP:
-		err = ce147_set_object_tracking(sd, ctrl);
+		LOGV("%s: V4L2_CID_CAMERA_OBJ_TRACKING_START_STOP %d \n", __func__,ctrl->value);
+		err = ce147_set_object_tracking(sd, ctrl->value);
 		break;
 
 	case V4L2_CID_CAMERA_SET_AUTO_FOCUS:
-		err = ce147_set_auto_focus(sd, ctrl);
+		LOGV("%s: V4L2_CID_CAMERA_SET_AUTO_FOCUS %d \n", __func__,ctrl->value);
+		err = ce147_set_auto_focus(sd, ctrl->value);
 		break;		
 
 	case V4L2_CID_CAMERA_FRAME_RATE:
+		LOGV("%s: V4L2_CID_CAMERA_FRAME_RATE %d \n", __func__,ctrl->value);
 		state->fps = ctrl->value;
 		err = 0;		
 		break;
 		
 	case V4L2_CID_CAMERA_ANTI_BANDING:
+		LOGV("%s: V4L2_CID_CAMERA_ANTI_BANDING %d \n", __func__,ctrl->value);
 		state->anti_banding= ctrl->value;
 		err = 0;		
 		break;
 
 	case V4L2_CID_CAMERA_SET_GAMMA:
+		LOGV("%s: V4L2_CID_CAMERA_SET_GAMMA %d \n", __func__,ctrl->value);
 		state->hd_gamma = ctrl->value;
 		err = 0;
 		break;
 	
 	case V4L2_CID_CAMERA_SET_SLOW_AE:
+		LOGV("%s: V4L2_CID_CAMERA_SET_SLOW_AE %d \n", __func__,ctrl->value);
 		state->hd_slow_ae = ctrl->value;
 		err = 0;
 		break;
 
 	case V4L2_CID_CAMERA_CAPTURE:
+		LOGV("%s: V4L2_CID_CAMERA_CAPTURE %d \n", __func__,ctrl->value);
 		err = ce147_set_capture_start(sd, ctrl);
 		break;
 
-#endif
 
 	case V4L2_CID_CAM_CAPTURE:
+		LOGV("%s: V4L2_CID_CAM_CAPTURE %d \n", __func__,ctrl->value);
 		err = ce147_set_capture_config(sd, ctrl);
 		break;
 	
 	/* Used to start / stop preview operation. 
  	 * This call can be modified to START/STOP operation, which can be used in image capture also */
 	case V4L2_CID_CAM_PREVIEW_ONOFF:
+		LOGV("%s: V4L2_CID_CAM_PREVIEW_ONOFF %d \n", __func__,ctrl->value);
 		if(ctrl->value)
 			err = ce147_set_preview_start(sd);
 		else
@@ -4763,15 +4798,18 @@ static int ce147_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		break;
 
 	case V4L2_CID_CAM_UPDATE_FW:
+		LOGV("%s: V4L2_CID_CAM_UPDATE_FW %d \n", __func__,ctrl->value);
 		err = ce147_update_fw(sd);
 		break;
 
 	case V4L2_CID_CAM_SET_FW_ADDR:
+		LOGV("%s: V4L2_CID_CAM_SET_FW_ADDR %d \n", __func__,ctrl->value);
 		state->fw_info.addr = ctrl->value;
 		err = 0;
 		break;
 
 	case V4L2_CID_CAM_SET_FW_SIZE:
+		LOGV("%s: V4L2_CID_CAM_SET_FW_SIZE %d \n", __func__,ctrl->value);
 		state->fw_info.size = ctrl->value;
 		err = 0;
 		break;
@@ -4784,18 +4822,22 @@ static int ce147_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 #endif
 
 	case V4L2_CID_CAM_FW_VER:
+		LOGV("%s: V4L2_CID_CAM_FW_VER %d \n", __func__,ctrl->value);
 		err = ce147_get_fw_data(sd);
 		break;
 
 	case V4L2_CID_CAM_DUMP_FW:
+		LOGV("%s: V4L2_CID_CAM_DUMP_FW %d \n", __func__,ctrl->value);
 		err = ce147_dump_fw(sd);
 		break;
 		
 	case V4L2_CID_CAMERA_BATCH_REFLECTION:
+		LOGV("%s: V4L2_CID_CAMERA_BATCH_REFLECTION %d \n", __func__,ctrl->value);
 		err = ce147_get_batch_reflection_status(sd);
 		break;
 
 	case V4L2_CID_CAMERA_EXIF_ORIENTATION:
+		LOGV("%s: V4L2_CID_CAMERA_EXIF_ORIENTATION %d \n", __func__,ctrl->value);
 		state->exif_orientation_info = ctrl->value;
 		err = 0;
 		break;
@@ -4808,15 +4850,18 @@ static int ce147_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	// _]
 
 	case V4L2_CID_CAMERA_CHECK_DATALINE:
+		LOGV("%s: V4L2_CID_CAMERA_CHECK_DATALINE %d \n", __func__,ctrl->value);
 		state->check_dataline = ctrl->value;
 		err = 0;
 		break;	
 
 	case V4L2_CID_CAMERA_CHECK_DATALINE_STOP:
+		LOGV("%s: V4L2_CID_CAMERA_CHECK_DATALINE_STOP %d \n", __func__,ctrl->value);
 		err = ce147_check_dataline_stop(sd);
 		break;
 		
 	case V4L2_CID_CAMERA_THUMBNAIL_NULL:
+		LOGV("%s: V4L2_CID_CAMERA_THUMBNAIL_NULL %d \n", __func__,ctrl->value);
 		state->thumb_null = ctrl->value;
 		err = 0;
 		break;
