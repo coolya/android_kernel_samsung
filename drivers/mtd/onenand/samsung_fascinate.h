@@ -29,7 +29,7 @@ struct mtd_partition s3c_partition_info[] = {
    #########################################################################################
    #########################################################################################*/ 
                                                                    
-        {
+    {
 		.name		= "boot",
 		.offset		= (72*SZ_256K),
 		.size		= (30*SZ_256K), //101
@@ -49,17 +49,17 @@ struct mtd_partition s3c_partition_info[] = {
 		.offset		= (882*SZ_256K),
 		.size		= (320*SZ_256K), //1201
 	},
+	{
+		.name		= "datadata",
+		.offset		= (1202*SZ_256K),
+		.size		= (688*SZ_256K), //1889
+	},
 	{       /* the modem firmware has to be mtd5 as the userspace samsung ril uses
 	           this device hardcoded, but I placed it at the end of the NAND to be
 	           able to change the other partition layout without moving it */
 		.name		= "radio",
 		.offset		= (1890*SZ_256K),
 		.size		= (104*SZ_256K), //1993
-	},
-	{
-		.name		= "datadata",
-		.offset		= (1202*SZ_256K),
-		.size		= (688*SZ_256K), //1889
 	},
 };
 
