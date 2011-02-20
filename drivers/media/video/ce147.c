@@ -1934,6 +1934,9 @@ static int ce147_set_exif_ctrl(struct v4l2_subdev *sd , int onoff)
 }
 static int ce147_set_capture_exif(struct v4l2_subdev *sd)
 {
+	LOGV("%s ENTER", __func__);
+	
+#if 0
 	int err;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	struct ce147_state *state = to_state(sd);
@@ -1959,66 +1962,50 @@ static int ce147_set_capture_exif(struct v4l2_subdev *sd)
 #else // Modify NTTS1
 	unsigned char ce147_str_model[7] = "SC-02B\0";
 #endif
-#if 0
-	struct timeval curr_time;
-	struct rtc_time time;
-#endif
+
 	ce147_model_name[0] = 0x06;
 	ce147_model_name[1] = 0x09;
-
+	LOGV("%s WTH GPS in KERNAL", __func__);
 	memcpy(ce147_model_name+2, ce147_str_model, sizeof(ce147_str_model));	
 
 	ce147_gps_processing[0] = 0x10;
 	ce147_gps_processing[1] = 0x32;
+	LOGV("%s WTH GPS in KERNAL", __func__);
+	//memcpy(ce147_gps_processing+2, state->gpsInfo.gps_processingmethod, sizeof(state->gpsInfo.gps_processingmethod));
+
+	//state->exifTimeInfo->tm_year += 1900;
+	//state->exifTimeInfo->tm_mon += 1;
+	//ce147_regbuf_exif[0] = (state->exifTimeInfo->tm_year & 0x00FF);
+	//ce147_regbuf_exif[1] = (state->exifTimeInfo->tm_year & 0xFF00) >> 8;
+	//ce147_regbuf_exif[2] = state->exifTimeInfo->tm_mon;
+	//ce147_regbuf_exif[3] = state->exifTimeInfo->tm_mday;
+	//ce147_regbuf_exif[4] = state->exifTimeInfo->tm_hour;
+	//ce147_regbuf_exif[5] = state->exifTimeInfo->tm_min;
+	//ce147_regbuf_exif[6] = state->exifTimeInfo->tm_sec;	
+
+	LOGV("%s WTH GPS in KERNAL", __func__);
 	
-	memcpy(ce147_gps_processing+2, state->gpsInfo.gps_processingmethod, sizeof(state->gpsInfo.gps_processingmethod));
+	//FIXME get time from rtc not GPS
+	//rtc_time_to_tm(state->gpsInfo.gps_timeStamp, &gps_timestamp);
+	//gps_timestamp.tm_year += 2000;
+	//gps_timestamp.tm_mon += 1;
 
-#if 0
-	do_gettimeofday(&curr_time);
-	rtc_time_to_tm(curr_time.tv_sec, &time);
+	//LOGV("====!! Exif Time YEAR: %ld, MONTH: %d, DAY: %d, HOUR: %d, MIN: %d, SEC: %d\n", \
+	//gps_timestamp.tm_year, gps_timestamp.tm_mon, gps_timestamp.tm_mday, \
+	//gps_timestamp.tm_hour, gps_timestamp.tm_min, gps_timestamp.tm_sec);
 
-	time.tm_year += 1900;
-	time.tm_mon += 1;
-
-	ce147_regbuf_exif[0] = (time.tm_year & 0x00FF);
-	ce147_regbuf_exif[1] = (time.tm_year & 0xFF00) >> 8;
-	ce147_regbuf_exif[2] = time.tm_mon;
-	ce147_regbuf_exif[3] = time.tm_mday;
-	ce147_regbuf_exif[4] = time.tm_hour;
-	ce147_regbuf_exif[5] = time.tm_min;
-	ce147_regbuf_exif[6] = time.tm_sec;		
-#else
-	state->exifTimeInfo->tm_year += 1900;
-	state->exifTimeInfo->tm_mon += 1;
-	ce147_regbuf_exif[0] = (state->exifTimeInfo->tm_year & 0x00FF);
-	ce147_regbuf_exif[1] = (state->exifTimeInfo->tm_year & 0xFF00) >> 8;
-	ce147_regbuf_exif[2] = state->exifTimeInfo->tm_mon;
-	ce147_regbuf_exif[3] = state->exifTimeInfo->tm_mday;
-	ce147_regbuf_exif[4] = state->exifTimeInfo->tm_hour;
-	ce147_regbuf_exif[5] = state->exifTimeInfo->tm_min;
-	ce147_regbuf_exif[6] = state->exifTimeInfo->tm_sec;	
-#endif
-
-	rtc_time_to_tm(state->gpsInfo.gps_timeStamp, &gps_timestamp);
-	gps_timestamp.tm_year += 2000;
-	gps_timestamp.tm_mon += 1;
-
-	printk(KERN_DEBUG "====!! Exif Time YEAR: %ld, MONTH: %d, DAY: %d, HOUR: %d, MIN: %d, SEC: %d\n", \
-	gps_timestamp.tm_year, gps_timestamp.tm_mon, gps_timestamp.tm_mday, \
-	gps_timestamp.tm_hour, gps_timestamp.tm_min, gps_timestamp.tm_sec);
-
-	ce147_regbuf_timestamp[0] = (gps_timestamp.tm_year & 0x00FF);
-	ce147_regbuf_timestamp[1] = (gps_timestamp.tm_year & 0xFF00) >> 8;
-	ce147_regbuf_timestamp[2] = gps_timestamp.tm_mon;
-	ce147_regbuf_timestamp[3] = gps_timestamp.tm_mday;
-	ce147_regbuf_timestamp[4] = gps_timestamp.tm_hour;
-	ce147_regbuf_timestamp[5] = gps_timestamp.tm_min;
-	ce147_regbuf_timestamp[6] = gps_timestamp.tm_sec;
+	//ce147_regbuf_timestamp[0] = (gps_timestamp.tm_year & 0x00FF);
+	//ce147_regbuf_timestamp[1] = (gps_timestamp.tm_year & 0xFF00) >> 8;
+	//ce147_regbuf_timestamp[2] = gps_timestamp.tm_mon;
+	//ce147_regbuf_timestamp[3] = gps_timestamp.tm_mday;
+	//ce147_regbuf_timestamp[4] = gps_timestamp.tm_hour;
+	//ce147_regbuf_timestamp[5] = gps_timestamp.tm_min;
+	//ce147_regbuf_timestamp[6] = gps_timestamp.tm_sec;
 
 
-	printk(KERN_DEBUG "Exif Time YEAR: %ld, MONTH: %d, DAY: %d, HOUR: %d, MIN: %d, SEC: %d\n", \
-	state->exifTimeInfo->tm_year, state->exifTimeInfo->tm_mon, state->exifTimeInfo->tm_mday, \
-	state->exifTimeInfo->tm_hour, state->exifTimeInfo->tm_min, state->exifTimeInfo->tm_sec);
+	//LOGV(KERN_DEBUG "Exif Time YEAR: %ld, MONTH: %d, DAY: %d, HOUR: %d, MIN: %d, SEC: %d\n", \
+	//state->exifTimeInfo->tm_year, state->exifTimeInfo->tm_mon, state->exifTimeInfo->tm_mday, \
+	//state->exifTimeInfo->tm_hour, state->exifTimeInfo->tm_min, state->exifTimeInfo->tm_sec);
 
 	ce147_regbuf_rot[0] = state->exif_orientation_info;
 
@@ -2040,32 +2027,33 @@ static int ce147_set_capture_exif(struct v4l2_subdev *sd)
 		return -EIO;
 	}
 
-	err = ce147_i2c_write_multi(client, CMD_INFO_LONGITUDE_LATITUDE, state->gpsInfo.ce147_gps_buf, sizeof(state->gpsInfo.ce147_gps_buf));
-	if(err < 0){
-		dev_err(&client->dev, "%s: failed: i2c_write for gps longitude latitude\n", __func__);
-		return -EIO;
-	}
+	//err = ce147_i2c_write_multi(client, CMD_INFO_LONGITUDE_LATITUDE, state->gpsInfo.ce147_gps_buf, sizeof(state->gpsInfo.ce147_gps_buf));
+	//if(err < 0){
+	//	dev_err(&client->dev, "%s: failed: i2c_write for gps longitude latitude\n", __func__);
+	//	return -EIO;
+	//}
 	
-	err = ce147_i2c_write_multi(client, CMD_INFO_ALTITUDE, state->gpsInfo.ce147_altitude_buf, sizeof(state->gpsInfo.ce147_altitude_buf));
-	if(err < 0){
-		dev_err(&client->dev, "%s: failed: i2c_write for gps altitude\n", __func__);
-		return -EIO;
-	}
+	//err = ce147_i2c_write_multi(client, CMD_INFO_ALTITUDE, state->gpsInfo.ce147_altitude_buf, sizeof(state->gpsInfo.ce147_altitude_buf));
+	//if(err < 0){
+	//	dev_err(&client->dev, "%s: failed: i2c_write for gps altitude\n", __func__);
+	//	return -EIO;
+	//}
 		
-	err = ce147_i2c_write_multi(client, CMD_GPS_TIMESTAMP, ce147_regbuf_timestamp, ce147_reglen_timestamp);
-	if(err < 0){
-		dev_err(&client->dev, "%s: failed: i2c_write for gps timestamp\n", __func__);
-		return -EIO;
-	}
+	//err = ce147_i2c_write_multi(client, CMD_GPS_TIMESTAMP, ce147_regbuf_timestamp, ce147_reglen_timestamp);
+	//if(err < 0){
+	//	dev_err(&client->dev, "%s: failed: i2c_write for gps timestamp\n", __func__);
+	//	return -EIO;
+	//}
 	
-	err = ce147_i2c_write_multi(client, CMD_INFO_MODEL, ce147_gps_processing, ce147_reglen_gps_processing);
-	if(err < 0){
-		dev_err(&client->dev, "%s: failed: i2c_write for gps method\n", __func__);
-		return -EIO;
-	}
+	//err = ce147_i2c_write_multi(client, CMD_INFO_MODEL, ce147_gps_processing, ce147_reglen_gps_processing);
+	//if(err < 0){
+	//	dev_err(&client->dev, "%s: failed: i2c_write for gps method\n", __func__);
+	//	return -EIO;
+	//}
 		
 	ce147_msg(&client->dev, "%s: done\n", __func__);
-
+#endif
+	LOGV("%s OUT", __func__);
 	return 0;
 }
 
@@ -2295,7 +2283,7 @@ static int ce147_get_snapshot_data(struct v4l2_subdev *sd)
 	return 0;
 }
 
-static int ce147_set_capture_config(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_capture_config(struct v4l2_subdev *sd)
 {
 	int err;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -2313,6 +2301,8 @@ static int ce147_set_capture_config(struct v4l2_subdev *sd, struct v4l2_control 
 	/*
  	 * Set DZoom
  	 */
+ 	 
+ #if 0
 	if(DZoom_State != 0){
 		ctrl->value = DZoom_State;
 		err = ce147_set_dzoom(sd, ctrl);
@@ -2321,6 +2311,7 @@ static int ce147_set_capture_config(struct v4l2_subdev *sd, struct v4l2_control 
 		return -EIO;
 		}
 	}
+#endif
 	
 	/*
  	 * Set AWB Lock
@@ -2342,7 +2333,7 @@ static int ce147_set_capture_config(struct v4l2_subdev *sd, struct v4l2_control 
 	return 0;
 }
 
-static int ce147_set_capture_start(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
+static int ce147_set_capture_start(struct v4l2_subdev *sd)
 {
 	int err;
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -2352,25 +2343,28 @@ static int ce147_set_capture_start(struct v4l2_subdev *sd, struct v4l2_control *
 	 * Right after ce147_set_capture_config,
 	 * 3. Wait for capture to complete for ce147_set_capture_cmd() in ce147_set_capture_config()
 	 */
+	LOGV("%s 1", __func__);
 	err = ce147_waitfordone_timeout(client, 0x6C, 0x00, 3000, POLL_TIME_MS);
 	if(err < 0){
 		dev_err(&client->dev, "%s: failed: Wait for buffering_capture\n", __func__ );
 		return err;
 	}
+	LOGV("%s 2", __func__);
 	ce147_msg(&client->dev, "%s: buffering_capture - wait time %d ms\n", __func__, err);
 
-
+	LOGV("%s 3", __func__);
 	err = ce147_set_exif_ctrl(sd, state->exif_ctrl);
 	if(err < 0){
 				dev_err(&client->dev, "%s: failed: set_capture_cmd failed\n", __func__);
 				return err;
 	}
 			
-
+	LOGV("%s 4", __func__);
 	if(state->jpeg.enable){
 		/*
 		 * 4. Set EXIF information
 		 */ 
+		LOGV("%s 5", __func__);
 		err = ce147_set_capture_exif(sd);
 		if(err < 0){
 			dev_err(&client->dev, "%s: failed: i2c_write for exif\n", __func__);
@@ -2380,6 +2374,7 @@ static int ce147_set_capture_start(struct v4l2_subdev *sd, struct v4l2_control *
 		/*
 		 * 6. Set JPEG Encoding parameters
 		 */
+		LOGV("%s 6", __func__);
 		err = ce147_set_jpeg_config(sd);
 		if(err < 0){
 			dev_err(&client->dev, "%s: Setting JPEG encoding parameters\n", __func__);
@@ -2388,6 +2383,7 @@ static int ce147_set_capture_start(struct v4l2_subdev *sd, struct v4l2_control *
 		/*
 		 * 7. Wait for encoding to complete
 		 */
+		LOGV("%s 7", __func__);
 		err = ce147_waitfordone_timeout(client, 0x6C, 0x00, 3000, POLL_TIME_MS);
 		if(err < 0){
 			dev_err(&client->dev, "%s: failed: Wait for jpeg_encoding\n", __func__ );
@@ -2398,6 +2394,7 @@ static int ce147_set_capture_start(struct v4l2_subdev *sd, struct v4l2_control *
 	/*
 	 * 8. Get JPEG Main Data
 	 */ 
+	 LOGV("%s 8", __func__);
 	err = ce147_get_snapshot_data(sd);
 	if(err < 0){
 		dev_err(&client->dev, "%s: failed: get_snapshot_data\n", __func__);
@@ -2406,11 +2403,12 @@ static int ce147_set_capture_start(struct v4l2_subdev *sd, struct v4l2_control *
 	/*
 	 * 9. Wait for done 
 	 */
+	 LOGV("%s 9", __func__);
 	err = ce147_waitfordone_timeout(client, 0x61, 0x00, 3000, POLL_TIME_MS);
 	if(err < 0){
 		dev_err(&client->dev, "%s: failed: Wait for data_transfer\n", __func__ );
 		return err;
-	}
+	}	
 	ce147_msg(&client->dev, "%s: data_transfer - wait time %d ms\n", __func__, err);
 	
 	return 0;
@@ -4795,14 +4793,14 @@ static int ce147_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		break;
 
 	case V4L2_CID_CAMERA_CAPTURE:
-		LOGV("%s: V4L2_CID_CAMERA_CAPTURE %d \n", __func__,ctrl->value);
-		err = ce147_set_capture_start(sd, ctrl);
+		LOGV("%s: V4L2_CID_CAMERA_CAPTURE %d \n", __func__,ctrl->value);		
 		break;
 
 
 	case V4L2_CID_CAM_CAPTURE:
-		LOGV("%s: V4L2_CID_CAM_CAPTURE %d \n", __func__,ctrl->value);
-		err = ce147_set_capture_config(sd, ctrl);
+		LOGV("%s: V4L2_CID_CAM_CAPTURE %d \n", __func__);
+		err = ce147_set_capture_config(sd);
+		err = ce147_set_capture_start(sd);
 		break;
 	
 	/* Used to start / stop preview operation. 
