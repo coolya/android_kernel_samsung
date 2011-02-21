@@ -4614,11 +4614,13 @@ static int ce147_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		
 		if(state->runmode != CE147_RUNMODE_RUNNING)
 		{
+			
 			state->wb= ctrl->value;
 			err = 0;
 		}
 		else
 		{
+			LOGV("%s: V4L2_CID_CAMERA_WHITE_BALANCE %d is CE147_RUNMODE_RUNNING\n", __func__,ctrl->value);
 			err = ce147_set_white_balance(sd, ctrl->value);		
 		}
 		break;
@@ -4633,12 +4635,13 @@ static int ce147_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		}
 		else
 		{
+			LOGV("%s: V4L2_CID_CAMERA_EFFECT %d is CE147_RUNMODE_RUNNING\n", __func__,ctrl->value);
 			err = ce147_set_effect(sd, ctrl->value);		
 		}
 		break;		
 
 	case V4L2_CID_CAMERA_ISO:
-		LOGV("%s: V4L2_CID_CAMERA_EFFECT %d \n", __func__,ctrl->value);
+		LOGV("%s: V4L2_CID_CAMERA_ISO %d \n", __func__,ctrl->value);
 		
 		if(state->runmode != CE147_RUNMODE_RUNNING)
 		{
@@ -4647,6 +4650,7 @@ static int ce147_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		}
 		else
 		{
+			LOGV("%s: V4L2_CID_CAMERA_ISO %d is CE147_RUNMODE_RUNNING\n", __func__,ctrl->value);
 			err = ce147_set_iso(sd, ctrl->value);		
 		}
 		break;
