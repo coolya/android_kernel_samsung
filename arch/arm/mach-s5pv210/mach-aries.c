@@ -1946,7 +1946,7 @@ static u8 t8_config[] = {GEN_ACQUISITIONCONFIG_T8,
 static u8 t9_config[] = {TOUCH_MULTITOUCHSCREEN_T9,
 				139, 0, 0, 19, 11, 0, 32, 25, 2, 1, 25, 3, 1,
 				46, MXT224_MAX_MT_FINGERS, 5, 14, 10, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 143, 110, 18};
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18};
 static u8 t18_config[] = {SPT_COMCONFIG_T18,
 				0, 1};
 static u8 t20_config[] = {PROCI_GRIPFACESUPPRESSION_T20,
