@@ -1937,7 +1937,7 @@ static void mxt224_power_off(void)
 	gpio_direction_output(GPIO_TOUCH_EN, 0);
 }
 
-#define MXT224_MAX_MT_FINGERS 5
+#define MXT224_MAX_MT_FINGERS 10
 
 static u8 t7_config[] = {GEN_POWERCONFIG_T7,
 				64, 255, 50};
