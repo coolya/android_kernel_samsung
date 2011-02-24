@@ -2022,7 +2022,7 @@ static struct i2c_board_info i2c_devs5[] __initdata = {
 
 static struct i2c_board_info i2c_devs8[] __initdata = {
 	{
-		I2C_BOARD_INFO("Si4709", (0x20 >> 1)),
+		I2C_BOARD_INFO("si470x", (0x20 >> 1)),
 	},
 };
 
@@ -4139,6 +4139,9 @@ static struct platform_device *aries_devices[] __initdata = {
 	&s3c_device_i2c5,  /* accel sensor */
 	&s3c_device_i2c6,
 	&s3c_device_i2c7,
+#if defined(CONFIG_SAMSUNG_GALAXYS)
+	&s3c_device_i2c8,  /* si470x: fm radio */
+#endif
 	&s3c_device_i2c9,  /* max1704x:fuel_guage */
 	&s3c_device_i2c11, /* optical sensor */
 	&s3c_device_i2c12, /* magnetic sensor */
