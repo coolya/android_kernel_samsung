@@ -1200,7 +1200,7 @@ static void touch_keypad_onoff(int onoff)
 }
 
 static const int touch_keypad_code[] = {
-#ifdef CONFIG_SAMSUNG_GALAXYS
+#ifdef CONFIG_SAMSUNG_GALAXYS_GTI9000
 	KEY_MENU,
 	KEY_BACK,
 	0,
@@ -1551,18 +1551,23 @@ static int s5ka3dfx_power_en(int onoff)
 	 * on if something odd happens and we are closed
 	 * by camera framework before we even completely opened.
 	 */
+	 pr_err("%s/n", __func__);
 	if (onoff != s5ka3dfx_powered_on) {
-		if (onoff)
+		if (onoff){
+			pr_err("%s ON/n", __func__);
 			err = s5ka3dfx_power_on();
-		else {
+			pr_err("%s ON %d/n", __func__, err);
+		} else {
+			pr_err("%s OFF/n", __func__);
 			err = s5ka3dfx_power_off();
 			s3c_i2c0_force_stop();
+			pr_err("%s OFF %d/n", __func__, err);
 		}
 		if (!err)
 			s5ka3dfx_powered_on = onoff;
 	}
 	mutex_unlock(&s5ka3dfx_lock);
-
+	pr_err("%s/n", __func__);
 	return err;
 }
 
