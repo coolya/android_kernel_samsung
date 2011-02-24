@@ -425,7 +425,7 @@ static int sec_jack_probe(struct platform_device *pdev)
 
 	dev_set_drvdata(&pdev->dev, hi);
 
-#ifdef CONFIG_SAMSUNG_CAPTIVATE
+#if defined (CONFIG_SAMSUNG_CAPTIVATE) || defined(CONFIG_SAMSUNG_VIBRANT)
 	pdata->det_active_high = 1;
 #endif
 
