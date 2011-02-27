@@ -2022,7 +2022,7 @@ static struct i2c_board_info i2c_devs5[] __initdata = {
 
 static struct i2c_board_info i2c_devs8[] __initdata = {
 	{
-		I2C_BOARD_INFO("si470x", (0x20 >> 1)),
+		I2C_BOARD_INFO("Si4709", (0x20 >> 1)),
 	},
 };
 
