@@ -4831,7 +4831,7 @@ static void __init aries_machine_init(void)
 		i2c_register_board_info(12, i2c_devs12, ARRAY_SIZE(i2c_devs12));
 
 
-	if (system_rev < 0x30) {
+	if (system_rev <= 0x30) {
 		spi_register_board_info(spi_board_info,
 					ARRAY_SIZE(spi_board_info));
 		s3cfb_set_platdata(&tl2796_data);
