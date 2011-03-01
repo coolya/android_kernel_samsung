@@ -2285,6 +2285,21 @@ static void mxt224_init(void)
 	t9_config[30] = 0;
 }
 
+#if defined (CONFIG_SAMSUNG_GALAXYS)
+static ssize_t aries_virtual_keys_show(struct kobject *kobj,
+					struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf,
+		__stringify(EV_KEY) ":" __stringify(KEY_BACK) ":425:930:75:75" /*:x:y:w:h*/
+		":" __stringify(EV_KEY) ":"
+					__stringify(KEY_MENU) ":60:930:75:75"
+		":" __stringify(EV_KEY) ":"
+					__stringify(KEY_SEARCH) ":0:0:0:0"
+		":" __stringify(EV_KEY) ":"
+					__stringify(KEY_HOME) ":0:0:0:0"
+		"\n");
+}
+#else
 static ssize_t aries_virtual_keys_show(struct kobject *kobj,
 					struct kobj_attribute *attr, char *buf)
 {
@@ -2298,6 +2313,7 @@ static ssize_t aries_virtual_keys_show(struct kobject *kobj,
 					__stringify(KEY_HOME) ":406:839:73:62"
 		"\n");
 }
+#endif
 
 static struct kobj_attribute aries_virtual_keys_attr = {
 	.attr = {
@@ -4807,9 +4823,11 @@ static void __init aries_machine_init(void)
 	/* max8998 */
 	i2c_register_board_info(6, i2c_devs6, ARRAY_SIZE(i2c_devs6));
 
-	/* cypress touchkey */
+	/* cypress touchkey 
 	touch_keypad_gpio_init();
-	i2c_register_board_info(10, i2c_devs10, ARRAY_SIZE(i2c_devs10));
+	i2c_register_board_info(10, i2c_devs10, ARRAY_SIZE(i2c_devs10));*/
+
+	aries_virtual_keys_init();
 
 	/* FSA9480 */
 	fsa9480_gpio_init();
