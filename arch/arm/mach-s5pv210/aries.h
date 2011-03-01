@@ -11,5 +11,7 @@ void aries_bt_uart_wake_peer(struct uart_port *port);
 extern void s3c_setup_uart_cfg_gpio(unsigned char port);
 
 extern struct s5p_panel_data aries_panel_data;
-
+extern struct s5p_tft_panel_data aries_sony_panel_data;
+extern struct s5p_tft_panel_data aries_hydis_panel_data;
+extern struct s5p_tft_panel_data aries_hitachi_panel_data;
 #endif
