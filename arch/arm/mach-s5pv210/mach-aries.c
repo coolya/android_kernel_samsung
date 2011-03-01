@@ -1253,7 +1253,7 @@ static struct spi_board_info spi_board_info[] __initdata = {
 static struct spi_board_info spi_board_info_sony[] __initdata = {
 	{
 		.modalias	= "nt35580",
-		.platform_data	= &herring_sony_panel_data,
+		.platform_data	= &aries_sony_panel_data,
 		.max_speed_hz	= 1200000,
 		.bus_num	= LCD_BUS_NUM,
 		.chip_select	= 0,
@@ -1265,7 +1265,7 @@ static struct spi_board_info spi_board_info_sony[] __initdata = {
 static struct spi_board_info spi_board_info_hydis[] __initdata = {
 	{
 		.modalias	= "nt35580",
-		.platform_data	= &herring_hydis_panel_data,
+		.platform_data	= &aries_hydis_panel_data,
 		.max_speed_hz	= 1200000,
 		.bus_num	= LCD_BUS_NUM,
 		.chip_select	= 0,
@@ -1277,7 +1277,7 @@ static struct spi_board_info spi_board_info_hydis[] __initdata = {
 static struct spi_board_info spi_board_info_hitachi[] __initdata = {
 	{
 		.modalias	= "nt35580",
-		.platform_data	= &herring_hitachi_panel_data,
+		.platform_data	= &aries_hitachi_panel_data,
 		.max_speed_hz	= 1200000,
 		.bus_num	= LCD_BUS_NUM,
 		.chip_select	= 0,
@@ -3846,7 +3846,7 @@ void s3c_config_gpio_table(void)
 {
 	u32 i, gpio;
 
-	for (i = 0; i < ARRAY_SIZE(herring_init_gpios); i++) {
+	for (i = 0; i < ARRAY_SIZE(aries_init_gpios); i++) {
 		gpio = aries_init_gpios[i].num;
 		if (system_rev <= 0x07 && gpio == S5PV210_GPJ3(3)) {
 			s3c_gpio_cfgpin(gpio, S3C_GPIO_OUTPUT);
@@ -3855,7 +3855,7 @@ void s3c_config_gpio_table(void)
 			s3c_gpio_cfgpin(gpio, aries_init_gpios[i].cfg);
 			s3c_gpio_setpull(gpio, aries_init_gpios[i].pud);
 
-			if (herring_init_gpios[i].val != S3C_GPIO_SETPIN_NONE)
+			if (aries_init_gpios[i].val != S3C_GPIO_SETPIN_NONE)
 				gpio_set_value(gpio, aries_init_gpios[i].val);
 
 			s3c_gpio_set_drvstrength(gpio, aries_init_gpios[i].drv);
