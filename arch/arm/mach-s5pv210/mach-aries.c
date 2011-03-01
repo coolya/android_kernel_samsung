@@ -830,6 +830,90 @@ static struct max8998_adc_table_data temper_table[] =  {
 	{ 1697,		(-90)	},
 	{ 1715,		(-100)	},
 };
+static struct max8998_adc_table_data temper_table_tft[] =  {
+	/* ADC, Temperature (C/10) */
+	{ 242,		700	},
+	{ 253,		690	},
+	{ 264,		680	},
+	{ 275,		670	},
+	{ 286,		660	},
+	{ 297,		650	},
+	{ 310,		640	},
+	{ 323,		630	},
+	{ 336,		620	},
+	{ 349,		610	},
+	{ 362,		600	},
+	{ 375,		590	},
+	{ 388,		580	},
+	{ 401,		570	},
+	{ 414,		560	},
+	{ 430,		550	},
+	{ 444,		540	},
+	{ 458,		530	},
+	{ 472,		520	},
+	{ 486,		510	},
+	{ 500,		500	},
+	{ 515,		490	},
+	{ 530,		480	},
+	{ 545,		470	},
+	{ 560,		460	},
+	{ 575,		450	},
+	{ 590,		440	},
+	{ 605,		430	},
+	{ 625,		420	},
+	{ 645,		410	},
+	{ 665,		400	},
+	{ 683,		390	},
+	{ 702,		380	},
+	{ 735,		370	},
+	{ 768,		360	},
+	{ 768,		350	},
+	{ 790,		340	},
+	{ 812,		330	},
+	{ 834,		320	},
+	{ 856,		310	},
+	{ 881,		300	},
+	{ 905,		290	},
+	{ 929,		280	},
+	{ 955,		270	},
+	{ 979,		260	},
+	{ 1002,		250	},
+	{ 1027,		240	},
+	{ 1053,		230	},
+	{ 1078,		220	},
+	{ 1105,		210	},
+	{ 1130,		200	},
+	{ 1151,		190	},
+	{ 1174,		180	},
+	{ 1195,		170	},
+	{ 1219,		160	},
+	{ 1237,		150	},
+	{ 1261,		140	},
+	{ 1285,		130	},
+	{ 1309,		120	},
+	{ 1331,		110	},
+	{ 1359,		100	},
+	{ 1381,		90	},
+	{ 1404,		80	},
+	{ 1426,		70	},
+	{ 1438,		60	},
+	{ 1470,		50	},
+	{ 1488,		40	},
+	{ 1506,		30	},
+	{ 1524,		20	},
+	{ 1532,		10	},
+	{ 1560,		0	},
+	{ 1586,		(-10)	},
+	{ 1604,		(-20)	},
+	{ 1614,		(-30)	},
+	{ 1622,		(-40)	},
+	{ 1630,		(-50)	},
+	{ 1648,		(-60)	},
+	{ 1666,		(-70)	},
+	{ 1684,		(-80)	},
+	{ 1702,		(-90)	},
+	{ 1720,		(-100)	},
+};
 struct max8998_charger_callbacks *callbacks;
 static enum cable_type_t set_cable_status;
 
@@ -845,14 +929,31 @@ static void max8998_charger_register_callbacks(
 
 static struct max8998_charger_data aries_charger = {
 	.register_callbacks = &max8998_charger_register_callbacks,
-	.adc_table		= temper_table,
-	.adc_array_size		= ARRAY_SIZE(temper_table),
 };
+
+static void set_adc_table(void)
+{
+	if (system_rev < 0x30) {
+		herring_charger.adc_table = temper_table_oled;
+		herring_charger.adc_array_size =
+			ARRAY_SIZE(temper_table_oled);
+	} else {
+		herring_charger.adc_table = temper_table_tft;
+		herring_charger.adc_array_size =
+			ARRAY_SIZE(temper_table_tft);
+	}
+}
 
 static struct max8998_platform_data max8998_pdata = {
 	.num_regulators = ARRAY_SIZE(aries_regulators),
 	.regulators     = aries_regulators,
 	.charger        = &aries_charger,
+	/* Preloads must be in increasing order of voltage value */
+	.buck1_preload	= {950000, 1050000, 1200000, 1275000},
+	.buck2_preload	= {1000000, 1100000},
+	.set1_gpio	= GPIO_BUCK_1_EN_A,
+	.set2_gpio	= GPIO_BUCK_1_EN_B,
+	.set3_gpio	= GPIO_BUCK_2_EN,
 };
 
 struct platform_device sec_device_dpram = {
