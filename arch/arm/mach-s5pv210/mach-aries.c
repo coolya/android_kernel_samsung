@@ -792,7 +792,7 @@ static struct max8998_regulator_data aries_regulators[] = {
 	{ MAX8998_BUCK4, &aries_buck4_data },
 };
 
-static struct max8998_adc_table_data temper_table[] =  {
+static struct max8998_adc_table_data temper_table_oled[] =  {
 	/* ADC, Temperature (C/10) */
 	{  222,		700	},
 	{  230,		690	},
