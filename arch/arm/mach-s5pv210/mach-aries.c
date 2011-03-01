@@ -274,9 +274,12 @@ static struct s3c2410_uartcfg aries_uartcfgs[] __initdata = {
 	},
 };
 
+#define S5PV210_LCD_WIDTH 480
+#define S5PV210_LCD_HEIGHT 800
+
 static struct s3cfb_lcd s6e63m0 = {
-	.width = 480,
-	.height = 800,
+	.width = S5PV210_LCD_WIDTH,
+	.height = S5PV210_LCD_HEIGHT,
 	.p_width = 52,
 	.p_height = 86,
 	.bpp = 24,
@@ -300,12 +303,14 @@ static struct s3cfb_lcd s6e63m0 = {
 	},
 };
 
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0 (12288 * SZ_1K)
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC1 (10240 * SZ_1K)
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC2 (12288 * SZ_1K)
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0 (6144 * SZ_1K)
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC1 (9900 * SZ_1K)
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC2 (6144 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC0 (36864 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC1 (36864 * SZ_1K)
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMD (5120 * SZ_1K)
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMD (S5PV210_LCD_WIDTH * \
+					     S5PV210_LCD_HEIGHT * 4 * \
+					     CONFIG_FB_S3C_NR_BUFFERS)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_JPEG (8192 * SZ_1K)
 
 #define  S5PV210_ANDROID_PMEM_MEMSIZE_PMEM (4096 * SZ_1K)
@@ -386,6 +391,37 @@ static struct s5p_media_device aries_media_devs[] = {
         },
 #endif
 };
+
+#ifdef CONFIG_CPU_FREQ
+static struct s5pv210_cpufreq_voltage smdkc110_cpufreq_volt[] = {
+	{
+		.freq	= 1000000,
+		.varm	= 1275000,
+		.vint	= 1100000,
+	}, {
+		.freq	=  800000,
+		.varm	= 1200000,
+		.vint	= 1100000,
+	}, {
+		.freq	=  400000,
+		.varm	= 1050000,
+		.vint	= 1100000,
+	}, {
+		.freq	=  200000,
+		.varm	=  950000,
+		.vint	= 1100000,
+	}, {
+		.freq	=  100000,
+		.varm	=  950000,
+		.vint	= 1000000,
+	},
+};
+
+static struct s5pv210_cpufreq_data smdkc110_cpufreq_plat = {
+	.volt	= smdkc110_cpufreq_volt,
+	.size	= ARRAY_SIZE(smdkc110_cpufreq_volt),
+};
+#endif
 
 static struct regulator_consumer_supply ldo3_consumer[] = {
 	REGULATOR_SUPPLY("pd_io", "s3c-usbgadget")
@@ -1218,6 +1254,10 @@ static struct touchkey_platform_data touchkey_data = {
 	.keycode_cnt = ARRAY_SIZE(touch_keypad_code),
 	.keycode = touch_keypad_code,
 	.touchkey_onoff = touch_keypad_onoff,
+	.fw_name = "cypress-touchkey.bin",
+	.scl_pin = _3_TOUCH_SCL_28V,
+	.sda_pin = _3_TOUCH_SDA_28V,
+	.en_pin = _3_GPIO_TOUCH_EN,
 };
 
 static struct gpio_event_direct_entry aries_keypad_key_map[] = {
