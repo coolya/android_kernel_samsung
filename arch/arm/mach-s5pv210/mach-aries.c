@@ -145,10 +145,7 @@ static int aries_notifier_call(struct notifier_block *this,
 		else
 			mode = REBOOT_MODE_NONE;
 	}
-	temp = __raw_readl(S5P_INFORM6);
-	temp |= KERNEL_REBOOT_MASK;
-	temp &= mode;
-	__raw_writel(temp, S5P_INFORM6);
+	__raw_writel(mode, S5P_INFORM6);
 
 	return NOTIFY_DONE;
 }
@@ -300,6 +297,56 @@ static struct s3cfb_lcd s6e63m0 = {
 		.inv_hsync = 1,
 		.inv_vsync = 1,
 		.inv_vden = 1,
+	},
+};
+
+static struct s3cfb_lcd nt35580 = {
+	.width = 480,
+	.height = 800,
+	.p_width = 52,
+	.p_height = 86,
+	.bpp = 24,
+	.freq = 60,
+	.timing = {
+		.h_fp = 10,
+		.h_bp = 20,
+		.h_sw = 10,
+		.v_fp = 6,
+		.v_fpe = 1,
+		.v_bp = 8,
+		.v_bpe = 1,
+		.v_sw = 2,
+	},
+	.polarity = {
+		.rise_vclk = 1,
+		.inv_hsync = 1,
+		.inv_vsync = 1,
+		.inv_vden = 1,
+	},
+};
+
+static struct s3cfb_lcd r61408 = {
+	.width = 480,
+	.height = 800,
+	.p_width = 52,
+	.p_height = 86,
+	.bpp = 24,
+	.freq = 60,
+	.timing = {
+		.h_fp = 100,
+		.h_bp = 2,
+		.h_sw = 2,
+		.v_fp = 8,
+		.v_fpe = 1,
+		.v_bp = 10,
+		.v_bpe = 1,
+		.v_sw = 2,
+	},
+	.polarity = {
+		.rise_vclk = 1,
+		.inv_hsync = 1,
+		.inv_vsync = 1,
+		.inv_vden = 0,
 	},
 };
 
@@ -682,7 +729,6 @@ static struct regulator_init_data aries_buck1_data = {
 	.consumer_supplies	= buck1_consumer,
 };
 
-
 static struct regulator_init_data aries_buck2_data = {
 	.constraints	= {
 		.name		= "VDD_INT",
@@ -961,7 +1007,11 @@ struct platform_device sec_device_dpram = {
 	.id	= -1,
 };
 
-static void tl2796_cfg_gpio(struct platform_device *pdev)
+static unsigned int lcd_type;
+module_param_named(lcd_type, lcd_type, uint, 0444);
+MODULE_PARM_DESC(lcd_type, "LCD type: default= sony, 1= hydis, 2= hitachi");
+
+static void panel_cfg_gpio(struct platform_device *pdev)
 {
 	int i;
 
@@ -1009,6 +1059,12 @@ static void tl2796_cfg_gpio(struct platform_device *pdev)
 	s3c_gpio_setpull(S5PV210_MP04(2), S3C_GPIO_PULL_NONE);
 	/* DISPLAY_SI */
 	s3c_gpio_setpull(S5PV210_MP04(3), S3C_GPIO_PULL_NONE);
+
+	/* OLED_ID */
+	if (system_rev >= 0x30) {
+		s3c_gpio_cfgpin(GPIO_OLED_ID, S3C_GPIO_INPUT);
+		s3c_gpio_setpull(GPIO_OLED_ID, S3C_GPIO_PULL_DOWN);
+	}
 }
 
 void lcd_cfg_gpio_early_suspend(void)
@@ -1076,9 +1132,11 @@ void lcd_cfg_gpio_early_suspend(void)
 	gpio_set_value(GPIO_DISPLAY_SI, 0);
 
 	/* OLED_ID */
-	s3c_gpio_cfgpin(GPIO_OLED_ID, S3C_GPIO_INPUT);
-	s3c_gpio_setpull(GPIO_OLED_ID, S3C_GPIO_PULL_DOWN);
-	/* gpio_set_value(GPIO_OLED_ID, 0); */
+	if (system_rev < 0x30) {
+		s3c_gpio_cfgpin(GPIO_OLED_ID, S3C_GPIO_INPUT);
+		s3c_gpio_setpull(GPIO_OLED_ID, S3C_GPIO_PULL_DOWN);
+		/* gpio_set_value(GPIO_OLED_ID, 0); */
+	}
 
 	/* DIC_ID */
 	s3c_gpio_cfgpin(GPIO_DIC_ID, S3C_GPIO_INPUT);
@@ -1093,9 +1151,11 @@ void lcd_cfg_gpio_late_resume(void)
 	s3c_gpio_cfgpin(GPIO_OLED_DET, S3C_GPIO_INPUT);
 	s3c_gpio_setpull(GPIO_OLED_DET, S3C_GPIO_PULL_NONE);
 	/* OLED_ID */
-	s3c_gpio_cfgpin(GPIO_OLED_ID, S3C_GPIO_OUTPUT);
-	s3c_gpio_setpull(GPIO_OLED_ID, S3C_GPIO_PULL_NONE);
-	/* gpio_set_value(GPIO_OLED_ID, 0); */
+	if (system_rev < 0x30) {
+		s3c_gpio_cfgpin(GPIO_OLED_ID, S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(GPIO_OLED_ID, S3C_GPIO_PULL_NONE);
+		/* gpio_set_value(GPIO_OLED_ID, 0); */
+	}
 	/* DIC_ID */
 	s3c_gpio_cfgpin(GPIO_DIC_ID, S3C_GPIO_OUTPUT);
 	s3c_gpio_setpull(GPIO_DIC_ID, S3C_GPIO_PULL_NONE);
@@ -1103,7 +1163,7 @@ void lcd_cfg_gpio_late_resume(void)
 }
 EXPORT_SYMBOL(lcd_cfg_gpio_late_resume);
 
-static int tl2796_reset_lcd(struct platform_device *pdev)
+static int panel_reset_lcd(struct platform_device *pdev)
 {
 	int err;
 
@@ -1128,7 +1188,7 @@ static int tl2796_reset_lcd(struct platform_device *pdev)
 	return 0;
 }
 
-static int tl2796_backlight_on(struct platform_device *pdev)
+static int panel_backlight_on(struct platform_device *pdev)
 {
 	return 0;
 }
@@ -1141,9 +1201,35 @@ static struct s3c_platform_fb tl2796_data __initdata = {
 	.swap		= FB_SWAP_HWORD | FB_SWAP_WORD,
 
 	.lcd = &s6e63m0,
-	.cfg_gpio	= tl2796_cfg_gpio,
-	.backlight_on	= tl2796_backlight_on,
-	.reset_lcd	= tl2796_reset_lcd,
+	.cfg_gpio	= panel_cfg_gpio,
+	.backlight_on	= panel_backlight_on,
+	.reset_lcd	= panel_reset_lcd,
+};
+
+static struct s3c_platform_fb nt35580_data __initdata = {
+	.hw_ver		= 0x62,
+	.clk_name	= "sclk_fimd",
+	.nr_wins	= 5,
+	.default_win	= CONFIG_FB_S3C_DEFAULT_WINDOW,
+	.swap		= FB_SWAP_HWORD | FB_SWAP_WORD,
+
+	.lcd			= &nt35580,
+	.cfg_gpio	= panel_cfg_gpio,
+	.backlight_on	= panel_backlight_on,
+	.reset_lcd	= panel_reset_lcd,
+};
+
+static struct s3c_platform_fb r61408_data __initdata = {
+	.hw_ver		= 0x62,
+	.clk_name	= "sclk_fimd",
+	.nr_wins	= 5,
+	.default_win	= CONFIG_FB_S3C_DEFAULT_WINDOW,
+	.swap		= FB_SWAP_HWORD | FB_SWAP_WORD,
+
+	.lcd			= &r61408,
+	.cfg_gpio	= panel_cfg_gpio,
+	.backlight_on	= panel_backlight_on,
+	.reset_lcd	= panel_reset_lcd,
 };
 
 #define LCD_BUS_NUM     3
@@ -1163,6 +1249,43 @@ static struct spi_board_info spi_board_info[] __initdata = {
 		.controller_data = (void *)DISPLAY_CS,
 	},
 };
+
+static struct spi_board_info spi_board_info_sony[] __initdata = {
+	{
+		.modalias	= "nt35580",
+		.platform_data	= &herring_sony_panel_data,
+		.max_speed_hz	= 1200000,
+		.bus_num	= LCD_BUS_NUM,
+		.chip_select	= 0,
+		.mode		= SPI_MODE_3,
+		.controller_data = (void *)DISPLAY_CS,
+	},
+};
+
+static struct spi_board_info spi_board_info_hydis[] __initdata = {
+	{
+		.modalias	= "nt35580",
+		.platform_data	= &herring_hydis_panel_data,
+		.max_speed_hz	= 1200000,
+		.bus_num	= LCD_BUS_NUM,
+		.chip_select	= 0,
+		.mode		= SPI_MODE_3,
+		.controller_data = (void *)DISPLAY_CS,
+	},
+};
+
+static struct spi_board_info spi_board_info_hitachi[] __initdata = {
+	{
+		.modalias	= "nt35580",
+		.platform_data	= &herring_hitachi_panel_data,
+		.max_speed_hz	= 1200000,
+		.bus_num	= LCD_BUS_NUM,
+		.chip_select	= 0,
+		.mode		= SPI_MODE_3,
+		.controller_data = (void *)DISPLAY_CS,
+	},
+};
+
 
 static struct spi_gpio_platform_data tl2796_spi_gpio_data = {
 	.sck	= DISPLAY_CLK,
@@ -1334,7 +1457,7 @@ static void touch_keypad_onoff(int onoff)
 	if (onoff == TOUCHKEY_OFF)
 		msleep(30);
 	else
-		msleep(25);
+		msleep(50);
 }
 
 static const int touch_keypad_code[] = {
@@ -3723,13 +3846,16 @@ void s3c_config_gpio_table(void)
 {
 	u32 i, gpio;
 
-	for (i = 0; i < ARRAY_SIZE(aries_init_gpios); i++) {
+	for (i = 0; i < ARRAY_SIZE(herring_init_gpios); i++) {
 		gpio = aries_init_gpios[i].num;
-		if (gpio <= S5PV210_MP05(7)) {
+		if (system_rev <= 0x07 && gpio == S5PV210_GPJ3(3)) {
+			s3c_gpio_cfgpin(gpio, S3C_GPIO_OUTPUT);
+			gpio_set_value(gpio, S3C_GPIO_SETPIN_ONE);
+		} else if (gpio <= S5PV210_MP05(7)) {
 			s3c_gpio_cfgpin(gpio, aries_init_gpios[i].cfg);
 			s3c_gpio_setpull(gpio, aries_init_gpios[i].pud);
 
-			if (aries_init_gpios[i].val != S3C_GPIO_SETPIN_NONE)
+			if (herring_init_gpios[i].val != S3C_GPIO_SETPIN_NONE)
 				gpio_set_value(gpio, aries_init_gpios[i].val);
 
 			s3c_gpio_set_drvstrength(gpio, aries_init_gpios[i].drv);
@@ -4598,6 +4724,16 @@ static void flush_console(void)
 static void aries_pm_restart(char mode, const char *cmd)
 {
 	flush_console();
+
+	/* On a normal reboot, INFORM6 will contain a small integer
+	 * reason code from the notifier hook.  On a panic, it will
+	 * contain the 0xee we set at boot.  Write 0xbb to differentiate
+	 * a watchdog-timeout-and-reboot (0xee) from a controlled reboot
+	 * (0xbb)
+	 */
+	if (__raw_readl(S5P_INFORM6) == 0xee)
+		__raw_writel(0xbb, S5P_INFORM6);
+
 	arm_machine_restart(mode, cmd);
 }
 
@@ -4608,6 +4744,8 @@ static void __init aries_machine_init(void)
 	setup_ram_console_mem();
 	s3c_usb_set_serial();
 	platform_add_devices(aries_devices, ARRAY_SIZE(aries_devices));
+	if (system_rev < 0x30)
+		platform_device_register(&s3c_device_i2c5);
 
 	/* Find out S5PC110 chip version */
 	_hw_version_check();
@@ -4653,18 +4791,21 @@ static void __init aries_machine_init(void)
 
     set_adc_table();
 	/* H/W I2C lines */
-
-	i2c_register_board_info(0, i2c_devs0, ARRAY_SIZE(i2c_devs0));
-	i2c_register_board_info(1, i2c_devs1, ARRAY_SIZE(i2c_devs1));
-    mxt224_init();
+	if (system_rev >= 0x05) {
+		/* gyro sensor */
+		i2c_register_board_info(0, i2c_devs0, ARRAY_SIZE(i2c_devs0));
+		/* magnetic and accel sensor */
+		i2c_register_board_info(1, i2c_devs1, ARRAY_SIZE(i2c_devs1));
+	}
+	mxt224_init();
 	i2c_register_board_info(2, i2c_devs2, ARRAY_SIZE(i2c_devs2));
 
 	/* wm8994 codec */
 	sound_init();
 	i2c_register_board_info(4, i2c_devs4, ARRAY_SIZE(i2c_devs4));
 	/* accel sensor for rev04 */
-	i2c_register_board_info(5, i2c_devs5, ARRAY_SIZE(i2c_devs5));
-
+	if (system_rev == 0x04)
+		i2c_register_board_info(5, i2c_devs5, ARRAY_SIZE(i2c_devs5));
 	i2c_register_board_info(6, i2c_devs6, ARRAY_SIZE(i2c_devs6));
 	if (system_rev < 0x30) {
 		/* Touch Key */
@@ -4677,24 +4818,42 @@ static void __init aries_machine_init(void)
 	fsa9480_gpio_init();
 	i2c_register_board_info(7, i2c_devs7, ARRAY_SIZE(i2c_devs7));
 
-	i2c_register_board_info(8, i2c_devs8, ARRAY_SIZE(i2c_devs8));
-	
+	/* gyro sensor for rev04 */
+	if (system_rev == 0x04)
+		i2c_register_board_info(8, i2c_devs8, ARRAY_SIZE(i2c_devs8));
 
-
-    i2c_register_board_info(9, i2c_devs9, ARRAY_SIZE(i2c_devs9));
-	
-
-
+	i2c_register_board_info(9, i2c_devs9, ARRAY_SIZE(i2c_devs9));
 	/* optical sensor */
 	gp2a_gpio_init();
 	i2c_register_board_info(11, i2c_devs11, ARRAY_SIZE(i2c_devs11));
-	/* magnetic sensor */
-	i2c_register_board_info(12, i2c_devs12, ARRAY_SIZE(i2c_devs12));
+	/* magnetic sensor for rev04 */
+	if (system_rev == 0x04)
+		i2c_register_board_info(12, i2c_devs12, ARRAY_SIZE(i2c_devs12));
 
-#ifdef CONFIG_FB_S3C_TL2796
-	spi_register_board_info(spi_board_info, ARRAY_SIZE(spi_board_info));
-	s3cfb_set_platdata(&tl2796_data);
-#endif
+
+	if (system_rev < 0x30) {
+		spi_register_board_info(spi_board_info,
+					ARRAY_SIZE(spi_board_info));
+		s3cfb_set_platdata(&tl2796_data);
+	} else {
+		switch (lcd_type) {
+		case 1:
+			spi_register_board_info(spi_board_info_hydis,
+					ARRAY_SIZE(spi_board_info_hydis));
+			s3cfb_set_platdata(&nt35580_data);
+			break;
+		case 2:
+			spi_register_board_info(spi_board_info_hitachi,
+					ARRAY_SIZE(spi_board_info_hitachi));
+			s3cfb_set_platdata(&r61408_data);
+			break;
+		default:
+			spi_register_board_info(spi_board_info_sony,
+					ARRAY_SIZE(spi_board_info_sony));
+			s3cfb_set_platdata(&nt35580_data);
+			break;
+		}
+	}
 
 #if defined(CONFIG_S5P_ADC)
 	s3c_adc_set_platdata(&s3c_adc_platform);
@@ -4755,6 +4914,12 @@ static void __init aries_machine_init(void)
 	uart_switch_init();
 
 	aries_init_wifi_mem();
+
+	/* write something into the INFORM6 register that we can use to
+	 * differentiate an unclear reboot from a clean reboot (which
+	 * writes a small integer code to INFORM6).
+	 */
+	__raw_writel(0xee, S5P_INFORM6);
 }
 
 #ifdef CONFIG_USB_SUPPORT
