@@ -299,7 +299,7 @@ static int cypress_touchkey_open(struct input_dev *input_dev)
 	u8 data[3];
 	int ret;
 
-	ret = update_firmware(devdata);
+	//ret = update_firmware(devdata);
 	if (ret)
 		goto done;
 
