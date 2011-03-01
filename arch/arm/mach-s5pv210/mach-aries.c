@@ -934,12 +934,12 @@ static struct max8998_charger_data aries_charger = {
 static void set_adc_table(void)
 {
 	if (system_rev < 0x30) {
-		herring_charger.adc_table = temper_table_oled;
-		herring_charger.adc_array_size =
+		aries_charger.adc_table = temper_table_oled;
+		aries_charger.adc_array_size =
 			ARRAY_SIZE(temper_table_oled);
 	} else {
-		herring_charger.adc_table = temper_table_tft;
-		herring_charger.adc_array_size =
+		aries_charger.adc_table = temper_table_tft;
+		aries_charger.adc_array_size =
 			ARRAY_SIZE(temper_table_tft);
 	}
 }
@@ -2201,7 +2201,7 @@ static void aries_virtual_keys_init(void)
 	properties_kobj = kobject_create_and_add("board_properties", NULL);
 	if (properties_kobj)
 		ret = sysfs_create_group(properties_kobj,
-						&herring_properties_attr_group);
+						&aries_properties_attr_group);
 	if (!properties_kobj || ret)
 		pr_err("failed to create board_properties\n");
 }
