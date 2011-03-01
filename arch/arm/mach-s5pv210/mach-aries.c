@@ -65,6 +65,7 @@
 #ifdef CONFIG_S5PV210_POWER_DOMAIN
 #include <mach/power-domain.h>
 #endif
+#include <mach/cpu-freq-v210.h>
 
 #include <media/s5ka3dfx_platform.h>
 #include <media/s5k4ecgx.h>
