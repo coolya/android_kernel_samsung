@@ -4260,6 +4260,11 @@ static struct platform_device *aries_devices[] __initdata = {
 	&s3c_device_timer[2],
 	&s3c_device_timer[3],
 #endif
+
+#ifdef CONFIG_CPU_FREQ
+	&s5pv210_device_cpufreq,
+#endif
+
 	&sec_device_rfkill,
 	&sec_device_btsleep,
 	&ram_console_device,
@@ -4552,6 +4557,10 @@ static void __init aries_machine_init(void)
 #endif
 #ifdef CONFIG_S5PV210_SETUP_SDHCI
 	s3c_sdhci_set_platdata();
+#endif
+
+#ifdef CONFIG_CPU_FREQ
+	s5pv210_cpufreq_set_platdata(&smdkc110_cpufreq_plat);
 #endif
 
 	regulator_has_full_constraints();
