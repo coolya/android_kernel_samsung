@@ -4744,8 +4744,9 @@ static void __init aries_machine_init(void)
 	setup_ram_console_mem();
 	s3c_usb_set_serial();
 	platform_add_devices(aries_devices, ARRAY_SIZE(aries_devices));
-	if (system_rev < 0x30)
-		platform_device_register(&s3c_device_i2c5);
+
+	/* smb380 */
+	/* platform_device_register(&s3c_device_i2c5); */
 
 	/* Find out S5PC110 chip version */
 	_hw_version_check();
@@ -4789,72 +4790,50 @@ static void __init aries_machine_init(void)
 	s3c_i2c1_set_platdata(NULL);
 	s3c_i2c2_set_platdata(NULL);
 
-    set_adc_table();
+    	set_adc_table();
 	/* H/W I2C lines */
-	if (system_rev >= 0x05) {
-		/* gyro sensor */
-		i2c_register_board_info(0, i2c_devs0, ARRAY_SIZE(i2c_devs0));
-		/* magnetic and accel sensor */
-		i2c_register_board_info(1, i2c_devs1, ARRAY_SIZE(i2c_devs1));
-	}
+
+	/* mxt224 */
 	mxt224_init();
 	i2c_register_board_info(2, i2c_devs2, ARRAY_SIZE(i2c_devs2));
 
 	/* wm8994 codec */
 	sound_init();
 	i2c_register_board_info(4, i2c_devs4, ARRAY_SIZE(i2c_devs4));
-	/* accel sensor for rev04 */
-	if (system_rev == 0x04)
-		i2c_register_board_info(5, i2c_devs5, ARRAY_SIZE(i2c_devs5));
+
+	/* accel sensor */
+	i2c_register_board_info(5, i2c_devs5, ARRAY_SIZE(i2c_devs5));
+
+	/* max8998 */
 	i2c_register_board_info(6, i2c_devs6, ARRAY_SIZE(i2c_devs6));
-	if (system_rev < 0x30) {
-		/* Touch Key */
-		touch_keypad_gpio_init();
-		i2c_register_board_info(10, i2c_devs10, ARRAY_SIZE(i2c_devs10));
-	} else {
-		aries_virtual_keys_init();
-	}
+
+	/* cypress touchkey */
+	touch_keypad_gpio_init();
+	i2c_register_board_info(10, i2c_devs10, ARRAY_SIZE(i2c_devs10));
+
 	/* FSA9480 */
 	fsa9480_gpio_init();
 	i2c_register_board_info(7, i2c_devs7, ARRAY_SIZE(i2c_devs7));
 
-	/* gyro sensor for rev04 */
-	if (system_rev == 0x04)
-		i2c_register_board_info(8, i2c_devs8, ARRAY_SIZE(i2c_devs8));
+#if defined (CONFIG_SAMSUNG_GALAXYS)
+	/* fm radio */
+	i2c_register_board_info(8, i2c_devs8, ARRAY_SIZE(i2c_devs8));
+#endif
 
+	/* max17040 */
 	i2c_register_board_info(9, i2c_devs9, ARRAY_SIZE(i2c_devs9));
+
 	/* optical sensor */
 	gp2a_gpio_init();
 	i2c_register_board_info(11, i2c_devs11, ARRAY_SIZE(i2c_devs11));
-	/* magnetic sensor for rev04 */
-	if (system_rev == 0x04)
-		i2c_register_board_info(12, i2c_devs12, ARRAY_SIZE(i2c_devs12));
+	
+	/* yamaha magnetic sensor */
+	i2c_register_board_info(12, i2c_devs12, ARRAY_SIZE(i2c_devs12));
 
-
-	if (system_rev <= 0x30) {
-		spi_register_board_info(spi_board_info,
-					ARRAY_SIZE(spi_board_info));
-		s3cfb_set_platdata(&tl2796_data);
-	} else {
-		switch (lcd_type) {
-		case 1:
-			spi_register_board_info(spi_board_info_hydis,
-					ARRAY_SIZE(spi_board_info_hydis));
-			s3cfb_set_platdata(&nt35580_data);
-			break;
-		case 2:
-			spi_register_board_info(spi_board_info_hitachi,
-					ARRAY_SIZE(spi_board_info_hitachi));
-			s3cfb_set_platdata(&r61408_data);
-			break;
-		default:
-			spi_register_board_info(spi_board_info_sony,
-					ARRAY_SIZE(spi_board_info_sony));
-			s3cfb_set_platdata(&nt35580_data);
-			break;
-		}
-	}
-
+	/* panel */
+	spi_register_board_info(spi_board_info, ARRAY_SIZE(spi_board_info));
+	s3cfb_set_platdata(&tl2796_data);
+	
 #if defined(CONFIG_S5P_ADC)
 	s3c_adc_set_platdata(&s3c_adc_platform);
 #endif
