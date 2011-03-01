@@ -2147,6 +2147,65 @@ static struct i2c_board_info i2c_devs2[] __initdata = {
 	},
 };
 
+static void mxt224_init(void)
+{
+	if (system_rev < 0x30)
+		return;
+	mxt224_data.max_y = 950;
+	t9_config[8] = 45;
+	t9_config[9] = 3;
+	t9_config[23] = 0;
+	t9_config[24] = 0;
+	t9_config[27] = 0;
+	t9_config[28] = 0;
+	t9_config[29] = 0;
+	t9_config[30] = 0;
+}
+
+static ssize_t aries_virtual_keys_show(struct kobject *kobj,
+					struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf,
+		__stringify(EV_KEY) ":" __stringify(KEY_BACK) ":71:839:73:62"
+		":" __stringify(EV_KEY) ":"
+					__stringify(KEY_MENU) ":183:839:73:62"
+		":" __stringify(EV_KEY) ":"
+					__stringify(KEY_SEARCH) ":294:839:73:62"
+		":" __stringify(EV_KEY) ":"
+					__stringify(KEY_HOME) ":406:839:73:62"
+		"\n");
+}
+
+static struct kobj_attribute aries_virtual_keys_attr = {
+	.attr = {
+		.name = "virtualkeys.mxt224_ts_input",
+		.mode = S_IRUGO,
+	},
+	.show = &aries_virtual_keys_show,
+};
+
+static struct attribute *aries_properties_attrs[] = {
+	&aries_virtual_keys_attr.attr,
+	NULL,
+};
+
+static struct attribute_group aries_properties_attr_group = {
+	.attrs = aries_properties_attrs,
+};
+
+static void aries_virtual_keys_init(void)
+{
+	struct kobject *properties_kobj;
+	int ret;
+
+	properties_kobj = kobject_create_and_add("board_properties", NULL);
+	if (properties_kobj)
+		ret = sysfs_create_group(properties_kobj,
+						&herring_properties_attr_group);
+	if (!properties_kobj || ret)
+		pr_err("failed to create board_properties\n");
+}
+
 /* I2C2 */
 static struct i2c_board_info i2c_devs10[] __initdata = {
 	{
@@ -2197,10 +2256,23 @@ static struct switch_dev switch_dock = {
 
 static void fsa9480_deskdock_cb(bool attached)
 {
+	struct usb_gadget *gadget = platform_get_drvdata(&s3c_device_usbgadget);
+
 	if (attached)
 		switch_set_state(&switch_dock, 1);
 	else
 		switch_set_state(&switch_dock, 0);
+
+	if (gadget) {
+		if (attached)
+			usb_gadget_vbus_connect(gadget);
+		else
+			usb_gadget_vbus_disconnect(gadget);
+	}
+
+	set_cable_status = attached ? CABLE_TYPE_USB : CABLE_TYPE_NONE;
+	if (callbacks && callbacks->set_cable)
+		callbacks->set_cable(callbacks, set_cable_status);
 }
 
 static void fsa9480_cardock_cb(bool attached)
@@ -4579,10 +4651,12 @@ static void __init aries_machine_init(void)
 	s3c_i2c1_set_platdata(NULL);
 	s3c_i2c2_set_platdata(NULL);
 
+    set_adc_table();
 	/* H/W I2C lines */
 
 	i2c_register_board_info(0, i2c_devs0, ARRAY_SIZE(i2c_devs0));
 	i2c_register_board_info(1, i2c_devs1, ARRAY_SIZE(i2c_devs1));
+    mxt224_init();
 	i2c_register_board_info(2, i2c_devs2, ARRAY_SIZE(i2c_devs2));
 
 	/* wm8994 codec */
@@ -4592,17 +4666,23 @@ static void __init aries_machine_init(void)
 	i2c_register_board_info(5, i2c_devs5, ARRAY_SIZE(i2c_devs5));
 
 	i2c_register_board_info(6, i2c_devs6, ARRAY_SIZE(i2c_devs6));
-
+	if (system_rev < 0x30) {
+		/* Touch Key */
+		touch_keypad_gpio_init();
+		i2c_register_board_info(10, i2c_devs10, ARRAY_SIZE(i2c_devs10));
+	} else {
+		aries_virtual_keys_init();
+	}
 	/* FSA9480 */
 	fsa9480_gpio_init();
 	i2c_register_board_info(7, i2c_devs7, ARRAY_SIZE(i2c_devs7));
 
 	i2c_register_board_info(8, i2c_devs8, ARRAY_SIZE(i2c_devs8));
-	i2c_register_board_info(9, i2c_devs9, ARRAY_SIZE(i2c_devs9));
+	
 
-	/* Touch Key */
-	touch_keypad_gpio_init();
-	i2c_register_board_info(10, i2c_devs10, ARRAY_SIZE(i2c_devs10));
+
+    i2c_register_board_info(9, i2c_devs9, ARRAY_SIZE(i2c_devs9));
+	
 
 
 	/* optical sensor */
