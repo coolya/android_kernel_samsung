@@ -124,6 +124,9 @@ EXPORT_SYMBOL(sec_get_param_value);
 
 #define WLAN_SKB_BUF_NUM	16
 
+/* disable cypress and use virtual keys */ 
+//#define ENABLE_VIRTUAL_KEYS 1
+
 static struct sk_buff *wlan_static_skb[WLAN_SKB_BUF_NUM];
 
 struct wifi_mem_prealloc {
@@ -2272,8 +2275,7 @@ static struct i2c_board_info i2c_devs2[] __initdata = {
 
 static void mxt224_init(void)
 {
-	if (system_rev < 0x30)
-		return;
+#if defined (ENABLE_VIRTUAL_KEYS)		
 	mxt224_data.max_y = 950;
 	t9_config[8] = 45;
 	t9_config[9] = 3;
@@ -2283,6 +2285,9 @@ static void mxt224_init(void)
 	t9_config[28] = 0;
 	t9_config[29] = 0;
 	t9_config[30] = 0;
+#else
+	return;
+#endif
 }
 
 #if defined (CONFIG_SAMSUNG_GALAXYS)
@@ -4823,11 +4828,14 @@ static void __init aries_machine_init(void)
 	/* max8998 */
 	i2c_register_board_info(6, i2c_devs6, ARRAY_SIZE(i2c_devs6));
 
-	/* cypress touchkey 
-	touch_keypad_gpio_init();
-	i2c_register_board_info(10, i2c_devs10, ARRAY_SIZE(i2c_devs10));*/
-
+#if defined (ENABLE_VIRTUAL_KEYS)
+	/* virtual keys */	
 	aries_virtual_keys_init();
+#else
+	/* cypress touchkey */
+	touch_keypad_gpio_init();
+	i2c_register_board_info(10, i2c_devs10, ARRAY_SIZE(i2c_devs10));
+#endif	
 
 	/* FSA9480 */
 	fsa9480_gpio_init();
