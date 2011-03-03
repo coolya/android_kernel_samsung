@@ -2304,6 +2304,20 @@ static ssize_t aries_virtual_keys_show(struct kobject *kobj,
 					__stringify(KEY_HOME) ":0:0:0:0"
 		"\n");
 }
+#elif defined (CONFIG_SAMSUNG_CAPTIVATE)
+static ssize_t aries_virtual_keys_show(struct kobject *kobj,
+					struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf,
+		__stringify(EV_KEY) ":" __stringify(KEY_MENU) ":71:839:73:62"
+		":" __stringify(EV_KEY) ":"
+					__stringify(KEY_HOME) ":183:839:73:62"
+		":" __stringify(EV_KEY) ":"
+					__stringify(KEY_BACK) ":294:839:73:62"
+		":" __stringify(EV_KEY) ":"
+					__stringify(KEY_SEARCH) ":406:839:73:62"
+		"\n");
+}
 #else
 static ssize_t aries_virtual_keys_show(struct kobject *kobj,
 					struct kobj_attribute *attr, char *buf)
