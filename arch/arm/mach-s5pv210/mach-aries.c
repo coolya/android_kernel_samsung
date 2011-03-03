@@ -1367,7 +1367,7 @@ static struct platform_device s3c_device_i2c7 = {
 };
 
 // For FM radio
-#ifdef CONFIG_SAMSUNG_GALAXYS
+#if defined (CONFIG_SAMSUNG_GALAXYS) || defined (CONFIG_SAMSUNG_GALAXYSB)
 static  struct  i2c_gpio_platform_data  i2c8_platdata = {
         .sda_pin                = GPIO_FM_SDA_28V,
         .scl_pin                = GPIO_FM_SCL_28V,
@@ -1464,7 +1464,7 @@ static void touch_keypad_onoff(int onoff)
 }
 
 static const int touch_keypad_code[] = {
-#ifdef CONFIG_SAMSUNG_GALAXYS_GTI9000
+#if defined (CONFIG_SAMSUNG_GALAXYS) || defined (CONFIG_SAMSUNG_GALAXYSB)
 	KEY_MENU,
 	KEY_BACK,
 	0,
@@ -1492,7 +1492,7 @@ static struct gpio_event_direct_entry aries_keypad_key_map[] = {
 		.gpio	= S5PV210_GPH2(6),
 		.code	= KEY_POWER,
 	},
-#ifdef CONFIG_SAMSUNG_GALAXYS
+#if defined (CONFIG_SAMSUNG_GALAXYS) || defined (CONFIG_SAMSUNG_GALAXYSB)
 	{
 		.gpio	= S5PV210_GPH3(5),
 		.code	= KEY_HOME,
@@ -2261,7 +2261,7 @@ static struct mxt224_platform_data mxt224_data = {
 /* I2C2 */
 static struct i2c_board_info i2c_devs2[] __initdata = {
 	{
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 		I2C_BOARD_INFO(MXT224_DEV_NAME, 0x4a),
 		.platform_data = &mxt224_data,
 		.irq = IRQ_EINT_GROUP(3, 3),
@@ -2290,7 +2290,7 @@ static void mxt224_init(void)
 #endif
 }
 
-#if defined (CONFIG_SAMSUNG_GALAXYS)
+#if defined (CONFIG_SAMSUNG_GALAXYS) || defined (CONFIG_SAMSUNG_GALAXYSB)
 static ssize_t aries_virtual_keys_show(struct kobject *kobj,
 					struct kobj_attribute *attr, char *buf)
 {
@@ -2765,7 +2765,7 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 		.num	= S5PV210_GPB(3), // S5PV210_GPJ0(5)
 		.cfg	= S3C_GPIO_SFN(0xF),
 		.val	= S3C_GPIO_SETPIN_NONE,
@@ -2791,7 +2791,7 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 		.num	= S5PV210_GPB(6), // S5PV210_GPB(3)
 		.cfg	= S3C_GPIO_OUTPUT,
 		.val	= S3C_GPIO_SETPIN_ZERO,
@@ -3182,7 +3182,7 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.pud	= S3C_GPIO_PULL_DOWN,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 		.num	= S5PV210_GPG3(2), // S5PV210_GPG3(0)
 		.cfg	= S3C_GPIO_OUTPUT,
 		.val	= S3C_GPIO_SETPIN_ZERO,
@@ -3214,7 +3214,7 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.pud	= S3C_GPIO_PULL_DOWN,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 		.num	= S5PV210_GPG3(6), // S5PV210_GPJ0(2)
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
@@ -3410,7 +3410,7 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.pud	= S3C_GPIO_PULL_DOWN,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
-#ifdef CONFIG_SAMSUNG_GALAXYS /* HOME Key */
+#if defined (CONFIG_SAMSUNG_GALAXYS) || defined (CONFIG_SAMSUNG_GALAXYSB) /* HOME Key */
 		.num	= S5PV210_GPH3(5),
 		.cfg	= S3C_GPIO_SFN(0xF),
 		.val	= S3C_GPIO_SETPIN_NONE,
@@ -3524,7 +3524,7 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 		.num	= S5PV210_GPJ0(7), // S5PV210_GPJ0(6)
 		.cfg	= S3C_GPIO_OUTPUT,
 		.val	= S3C_GPIO_SETPIN_ZERO,
@@ -3577,7 +3577,7 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	},
 
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 	{
 		.num	= S5PV210_GPJ2(0), // S5PV210_GPJ0(3)
 		.cfg	= S3C_GPIO_INPUT,
@@ -3613,7 +3613,7 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.pud	= S3C_GPIO_PULL_DOWN,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 		.num	= S5PV210_GPJ2(3), // S5PV210_GPJ0(7)
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
@@ -3948,14 +3948,14 @@ static unsigned int aries_sleep_gpio_table[][3] = {
 	{ S5PV210_GPB(0),  S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE},
 	{ S5PV210_GPB(1),  S3C_GPIO_SLP_OUT1,	S3C_GPIO_PULL_NONE},
 	{ S5PV210_GPB(2),  S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE},
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 	{ S5PV210_GPB(3), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN}, // S5PV210_GPJ0(5)
 #else
 	{ S5PV210_GPB(3),  S3C_GPIO_SLP_PREV,	S3C_GPIO_PULL_NONE},
 #endif
 	{ S5PV210_GPB(4),  S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_NONE},
 	{ S5PV210_GPB(5),  S3C_GPIO_SLP_PREV,	S3C_GPIO_PULL_NONE},
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 	{ S5PV210_GPB(6),  S3C_GPIO_SLP_PREV,	S3C_GPIO_PULL_NONE}, // S5PV210_GPB(3)
 #else
 	{ S5PV210_GPB(6),  S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
@@ -4061,7 +4061,7 @@ static unsigned int aries_sleep_gpio_table[][3] = {
 
 	{ S5PV210_GPG3(0), S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE},
 	{ S5PV210_GPG3(1), S3C_GPIO_SLP_OUT1,	S3C_GPIO_PULL_NONE},
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 	{ S5PV210_GPG3(2), S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE}, // S5PV210_GPG3(0)
 #else
 	{ S5PV210_GPG3(2), S3C_GPIO_SLP_PREV,	S3C_GPIO_PULL_NONE},
@@ -4069,7 +4069,7 @@ static unsigned int aries_sleep_gpio_table[][3] = {
 	{ S5PV210_GPG3(3), S3C_GPIO_SLP_OUT1,	S3C_GPIO_PULL_NONE},
 	{ S5PV210_GPG3(4), S3C_GPIO_SLP_OUT1,	S3C_GPIO_PULL_NONE},
 	{ S5PV210_GPG3(5), S3C_GPIO_SLP_OUT1,	S3C_GPIO_PULL_NONE},
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 	{ S5PV210_GPG3(6), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_NONE}, // S5PV210_GPJ0(2)
 #else
 	{ S5PV210_GPG3(6), S3C_GPIO_SLP_OUT1,	S3C_GPIO_PULL_NONE},
@@ -4091,7 +4091,7 @@ static unsigned int aries_sleep_gpio_table[][3] = {
 	{ S5PV210_GPJ0(4), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_NONE},
 	{ S5PV210_GPJ0(5), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
 	{ S5PV210_GPJ0(6), S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE},
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 	{ S5PV210_GPJ0(7), S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE}, // S5PV210_GPJ0(6)
 #else
 	{ S5PV210_GPJ0(7), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_NONE},
@@ -4104,7 +4104,7 @@ static unsigned int aries_sleep_gpio_table[][3] = {
 	{ S5PV210_GPJ1(4), S3C_GPIO_SLP_PREV,	S3C_GPIO_PULL_NONE},
 	{ S5PV210_GPJ1(5), S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE},
 
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 	{ S5PV210_GPJ2(0), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_NONE}, // S5PV210_GPJ0(3)
 	{ S5PV210_GPJ2(1), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_NONE}, // S5PV210_GPJ0(4)
 #else
@@ -4112,7 +4112,7 @@ static unsigned int aries_sleep_gpio_table[][3] = {
 	{ S5PV210_GPJ2(1), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
 #endif
 	{ S5PV210_GPJ2(2), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 	{ S5PV210_GPJ2(3), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_NONE}, // S5PV210_GPJ0(7)
 #else
 	{ S5PV210_GPJ2(3), S3C_GPIO_SLP_PREV,	S3C_GPIO_PULL_NONE},
@@ -4538,7 +4538,7 @@ static struct platform_device *aries_devices[] __initdata = {
 	&s3c_device_i2c5,  /* accel sensor */
 	&s3c_device_i2c6,
 	&s3c_device_i2c7,
-#if defined(CONFIG_SAMSUNG_GALAXYS)
+#if defined(CONFIG_SAMSUNG_GALAXYS) || defined (CONFIG_SAMSUNG_GALAXYSB)
 	&s3c_device_i2c8,  /* si470x: fm radio */
 #endif
 	&s3c_device_i2c9,  /* max1704x:fuel_guage */
@@ -4799,7 +4799,7 @@ static void __init aries_machine_init(void)
 	HWREV = HWREV | (gpio_get_value(GPIO_HWREV_MODE2) << 2);
 	s3c_gpio_cfgpin(GPIO_HWREV_MODE3, S3C_GPIO_INPUT);
 	s3c_gpio_setpull(GPIO_HWREV_MODE3, S3C_GPIO_PULL_NONE);
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 	HWREV = 0xE;
 #else
 	HWREV = HWREV | (gpio_get_value(GPIO_HWREV_MODE3) << 3);
@@ -4855,7 +4855,7 @@ static void __init aries_machine_init(void)
 	fsa9480_gpio_init();
 	i2c_register_board_info(7, i2c_devs7, ARRAY_SIZE(i2c_devs7));
 
-#if defined (CONFIG_SAMSUNG_GALAXYS)
+#if defined (CONFIG_SAMSUNG_GALAXYS) || defined (CONFIG_SAMSUNG_GALAXYSB)
 	/* fm radio */
 	i2c_register_board_info(8, i2c_devs8, ARRAY_SIZE(i2c_devs8));
 #endif

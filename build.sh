@@ -16,8 +16,7 @@ case "$DEVICE" in
 		cfg=aries_galaxys_defconfig
 		;;
 	galaxysb)
-		cfg=aries_galaxys_gti9000b_defconfig
-		DEVICE=galaxys
+		cfg=aries_galaxysb_defconfig
 		;;
 	vibrant)
 		cfg=aries_vibrant_defconfig

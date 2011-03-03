@@ -51,7 +51,7 @@
 
 #define GPIO_CAM_VGA_nRST		S5PV210_GPB(2)
 
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 #define GPIO_BT_nRST			S5PV210_GPB(6)
 #else
 #define GPIO_BT_nRST			S5PV210_GPB(3)
@@ -302,7 +302,7 @@
 #define GPIO_T_FLASH_D3         S5PV210_GPG2(6)
 #define GPIO_T_FLASH_D3_AF		2
 
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 #define GPIO_GPS_nRST			S5PV210_GPG3(2)
 #else
 #define GPIO_GPS_nRST			S5PV210_GPG3(0)
@@ -418,37 +418,37 @@
 #define GPIO_MSENSE_SCL_28V				S5PV210_GPJ0(0)
 #define GPIO_MSENSE_SDA_28V				S5PV210_GPJ0(1)
 
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 #define GPIO_HWREV_MODE0		S5PV210_GPG3(6)
 #else
 #define GPIO_HWREV_MODE0		S5PV210_GPJ0(2)
 #endif
 
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 #define GPIO_HWREV_MODE1		S5PV210_GPJ2(0)
 #else
 #define GPIO_HWREV_MODE1		S5PV210_GPJ0(3)
 #endif
 
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 #define GPIO_HWREV_MODE2		S5PV210_GPJ2(1)
 #else
 #define GPIO_HWREV_MODE2		S5PV210_GPJ0(4)
 #endif
 
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 #define GPIO_TOUCH_INT			S5PV210_GPB(3)
 #else
 #define GPIO_TOUCH_INT			S5PV210_GPJ0(5)
 #endif
 
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 #define GPIO_CAM_MEGA_EN		S5PV210_GPJ0(7)
 #else
 #define GPIO_CAM_MEGA_EN		S5PV210_GPJ0(6)
 #endif
 
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 #define GPIO_HWREV_MODE3		S5PV210_GPJ2(3)
 #else
 #define GPIO_HWREV_MODE3		S5PV210_GPJ0(7)
@@ -593,7 +593,7 @@
 #define PMIC_I2C_SDA            S5PV210_GPJ4(0)
 #define PMIC_I2C_SCL            S5PV210_GPJ4(3)
 
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 #define GPIO_TOUCH_INT			S5PV210_GPB(3)
 #else
 #define GPIO_TOUCH_INT			S5PV210_GPJ0(5)
@@ -642,7 +642,7 @@
 #define		GPIO_N_POWER		S5PV210_GPH2(6)
 #define		GPIO_N_POWER_AF		2 //?
 
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 #define		GPIO_BT_RST			S5PV210_GPB(6)
 #else
 #define		GPIO_BT_RST			S5PV210_GPB(3)
