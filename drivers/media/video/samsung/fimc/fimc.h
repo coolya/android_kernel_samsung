@@ -65,10 +65,7 @@
 #define FIMC_SCLK		1
 #define FIMC_OVLY_MODE FIMC_OVLY_DMA_AUTO
 
-#define PINGPONG_2ADDR_MODE
-#if defined(PINGPONG_2ADDR_MODE)
 #define FIMC_PINGPONG 2
-#endif
 
 /*
  * ENUMERATIONS

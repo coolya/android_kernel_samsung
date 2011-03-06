@@ -288,11 +288,12 @@ PVRSRV_ERROR IMG_CALLCONV PVRSRVDeinitialiseDevice(IMG_UINT32 ui32DevIndex);
 
 #if !defined(USE_CODE)
 
-IMG_IMPORT PVRSRV_ERROR IMG_CALLCONV PollForValueKM(volatile IMG_UINT32* pui32LinMemAddr,
-												   IMG_UINT32 ui32Value,
-												   IMG_UINT32 ui32Mask,
-												   IMG_UINT32 ui32Waitus,
-												   IMG_UINT32 ui32Tries);
+IMG_IMPORT PVRSRV_ERROR IMG_CALLCONV PollForValueKM(volatile IMG_UINT32*	pui32LinMemAddr,
+													IMG_UINT32				ui32Value,
+													IMG_UINT32				ui32Mask,
+													IMG_UINT32				ui32Timeoutus,
+													IMG_UINT32				ui32PollPeriodus,
+													IMG_BOOL				bAllowPreemption);
 
 #endif 
 

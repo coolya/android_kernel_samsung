@@ -39,10 +39,18 @@
 struct sec_jack_info {
 	struct sec_jack_platform_data *pdata;
 	struct delayed_work jack_detect_work;
+	struct work_struct buttons_work;
+	struct workqueue_struct *queue;
+	struct input_dev *input_dev;
 	struct wake_lock det_wake_lock;
 	struct sec_jack_zone *zone;
+	struct input_handler handler;
+	struct input_handle handle;
+	struct input_device_id ids;
 	int det_irq;
 	int dev_id;
+	int pressed;
+	int pressed_code;
 	struct platform_device *send_key_dev;
 	unsigned int cur_jack_type;
 };
@@ -64,7 +72,7 @@ struct switch_dev switch_jack_detection = {
 
 static struct gpio_event_direct_entry sec_jack_key_map[] = {
 	{
-		.code	= KEY_MEDIA,
+		.code	= KEY_UNKNOWN,
 	},
 };
 
@@ -86,6 +94,85 @@ static struct gpio_event_platform_data sec_jack_input_data = {
 	.info = sec_jack_input_info,
 	.info_count = ARRAY_SIZE(sec_jack_input_info),
 };
+
+/* gpio_input driver does not support to read adc value.
+ * We use input filter to support 3-buttons of headset
+ * without changing gpio_input driver.
+ */
+static bool sec_jack_buttons_filter(struct input_handle *handle,
+				    unsigned int type, unsigned int code,
+				    int value)
+{
+	struct sec_jack_info *hi = handle->handler->private;
+
+	if (type != EV_KEY || code != KEY_UNKNOWN)
+		return false;
+
+	hi->pressed = value;
+
+	/* This is called in timer handler of gpio_input driver.
+	 * We use workqueue to read adc value.
+	 */
+	queue_work(hi->queue, &hi->buttons_work);
+
+	return true;
+}
+
+static int sec_jack_buttons_connect(struct input_handler *handler,
+				    struct input_dev *dev,
+				    const struct input_device_id *id)
+{
+	struct sec_jack_info *hi;
+	struct sec_jack_platform_data *pdata;
+	struct sec_jack_buttons_zone *btn_zones;
+	int err;
+	int i;
+
+	/* bind input_handler to input device related to only sec_jack */
+	if (dev->name != sec_jack_input_data.name)
+		return -ENODEV;
+
+	hi = handler->private;
+	pdata = hi->pdata;
+	btn_zones = pdata->buttons_zones;
+
+	hi->input_dev = dev;
+	hi->handle.dev = dev;
+	hi->handle.handler = handler;
+	hi->handle.open = 0;
+	hi->handle.name = "sec_jack_buttons";
+
+	err = input_register_handle(&hi->handle);
+	if (err) {
+		pr_err("%s: Failed to register sec_jack buttons handle, "
+			"error %d\n", __func__, err);
+		goto err_register_handle;
+	}
+
+	err = input_open_device(&hi->handle);
+	if (err) {
+		pr_err("%s: Failed to open input device, error %d\n",
+			__func__, err);
+		goto err_open_device;
+	}
+
+	for (i = 0; i < pdata->num_buttons_zones; i++)
+		input_set_capability(dev, EV_KEY, btn_zones[i].code);
+
+	return 0;
+
+ err_open_device:
+	input_unregister_handle(&hi->handle);
+ err_register_handle:
+
+	return err;
+}
+
+static void sec_jack_buttons_disconnect(struct input_handle *handle)
+{
+	input_close_device(handle);
+	input_unregister_handle(handle);
+}
 
 static void sec_jack_set_type(struct sec_jack_info *hi, int jack_type)
 {
@@ -200,6 +287,42 @@ static irqreturn_t sec_jack_detect_irq_thread(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
+/* thread run whenever the button of headset is pressed or released */
+void sec_jack_buttons_work(struct work_struct *work)
+{
+	struct sec_jack_info *hi =
+		container_of(work, struct sec_jack_info, buttons_work);
+	struct sec_jack_platform_data *pdata = hi->pdata;
+	struct sec_jack_buttons_zone *btn_zones = pdata->buttons_zones;
+	int adc;
+	int i;
+
+	/* when button is released */
+	if (hi->pressed == 0) {
+		input_report_key(hi->input_dev, hi->pressed_code, 0);
+		input_sync(hi->input_dev);
+		pr_debug("%s: keycode=%d, is released\n", __func__,
+			hi->pressed_code);
+		return;
+	}
+
+	/* when button is pressed */
+	adc = pdata->get_adc_value();
+
+	for (i = 0; i < pdata->num_buttons_zones; i++)
+		if (adc >= btn_zones[i].adc_low &&
+		    adc <= btn_zones[i].adc_high) {
+			hi->pressed_code = btn_zones[i].code;
+			input_report_key(hi->input_dev, btn_zones[i].code, 1);
+			input_sync(hi->input_dev);
+			pr_debug("%s: keycode=%d, is pressed\n", __func__,
+				btn_zones[i].code);
+			return;
+		}
+
+	pr_warn("%s: key is skipped. ADC value is %d\n", __func__, adc);
+}
+
 static int sec_jack_probe(struct platform_device *pdev)
 {
 	struct sec_jack_info *hi;
@@ -225,6 +348,10 @@ static int sec_jack_probe(struct platform_device *pdev)
 	}
 
 	sec_jack_key_map[0].gpio = pdata->send_end_gpio;
+
+	/* If no other keys in pdata, make all keys default to KEY_MEDIA */
+	if (pdata->num_buttons_zones == 0)
+		sec_jack_key_map[0].code = KEY_MEDIA;
 
 	hi = kzalloc(sizeof(struct sec_jack_info), GFP_KERNEL);
 	if (hi == NULL) {
@@ -256,7 +383,30 @@ static int sec_jack_probe(struct platform_device *pdev)
 
 	wake_lock_init(&hi->det_wake_lock, WAKE_LOCK_SUSPEND, "sec_jack_det");
 
+	INIT_WORK(&hi->buttons_work, sec_jack_buttons_work);
+	hi->queue = create_singlethread_workqueue("sec_jack_wq");
+	if (hi->queue == NULL) {
+		ret = -ENOMEM;
+		pr_err("%s: Failed to create workqueue\n", __func__);
+		goto err_create_wq_failed;
+	}
+
 	hi->det_irq = gpio_to_irq(pdata->det_gpio);
+
+	set_bit(EV_KEY, hi->ids.evbit);
+	hi->ids.flags = INPUT_DEVICE_ID_MATCH_EVBIT;
+	hi->handler.filter = sec_jack_buttons_filter;
+	hi->handler.connect = sec_jack_buttons_connect;
+	hi->handler.disconnect = sec_jack_buttons_disconnect;
+	hi->handler.name = "sec_jack_buttons";
+	hi->handler.id_table = &hi->ids;
+	hi->handler.private = hi;
+
+	ret = input_register_handler(&hi->handler);
+	if (ret) {
+		pr_err("%s : Failed to register_handler\n", __func__);
+		goto err_register_input_handler;
+	}
 	ret = request_threaded_irq(hi->det_irq, NULL,
 				   sec_jack_detect_irq_thread,
 				   IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING |
@@ -284,6 +434,10 @@ static int sec_jack_probe(struct platform_device *pdev)
 err_enable_irq_wake:
 	free_irq(hi->det_irq, hi);
 err_request_detect_irq:
+	input_unregister_handler(&hi->handler);
+err_register_input_handler:
+	destroy_workqueue(hi->queue);
+err_create_wq_failed:
 	wake_lock_destroy(&hi->det_wake_lock);
 	switch_dev_unregister(&switch_jack_detection);
 err_switch_dev_register:
@@ -304,7 +458,12 @@ static int sec_jack_remove(struct platform_device *pdev)
 	pr_info("%s :\n", __func__);
 	disable_irq_wake(hi->det_irq);
 	free_irq(hi->det_irq, hi);
-	platform_device_unregister(hi->send_key_dev);
+	destroy_workqueue(hi->queue);
+	if (hi->send_key_dev) {
+		platform_device_unregister(hi->send_key_dev);
+		hi->send_key_dev = NULL;
+	}
+	input_unregister_handler(&hi->handler);
 	wake_lock_destroy(&hi->det_wake_lock);
 	switch_dev_unregister(&switch_jack_detection);
 	gpio_free(hi->pdata->det_gpio);

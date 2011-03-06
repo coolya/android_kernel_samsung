@@ -94,6 +94,15 @@ config FB_S3C_TL2796
         ---help---
           This enables support for Samsung TL2796 WVGA LCD panel
 
+config FB_S3C_NT35580
+        bool "NT35580"
+        depends on FB_S3C
+        select SPI
+        select SPI_GPIO
+        select SPI_BITBANG
+        ---help---
+          This enables support for SONY NT35580 WVGA LCD panel
+
 config FB_S3C_LVDS
 	bool "LVDS"
 	depends on FB_S3C && (ARCH_S5PV210)

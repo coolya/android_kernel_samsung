@@ -884,6 +884,8 @@ void s3c_udc_soft_connect(void)
 	writel(uTemp, S3C_UDC_OTG_DCTL);
 	msleep(1);
 
+	reset_available = 1;
+
 	/* Unmask the core interrupt */
 	writel(readl(S3C_UDC_OTG_GINTSTS), S3C_UDC_OTG_GINTSTS);
 	writel(GINTMSK_INIT, S3C_UDC_OTG_GINTMSK);

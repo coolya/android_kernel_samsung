@@ -136,13 +136,14 @@ int modem_acquire_mmio(struct modemctl *mc)
 	if (modem_request_mmio(mc) == 0) {
 		int ret = wait_event_interruptible_timeout(
 			mc->wq, mmio_owner_p(mc), 5 * HZ);
-		if (ret == 0) {
-			pr_err("modem_acquire_mmio() TIMEOUT\n");
-			return -ENODEV;
-		}
-		if (ret < 0) {
+		if (ret <= 0) {
 			modem_release_mmio(mc, 0);
-			return -ERESTARTSYS;
+			if (ret == 0) {
+				pr_err("modem_acquire_mmio() TIMEOUT\n");
+				return -ENODEV;
+			} else {
+				return -ERESTARTSYS;
+			}
 		}
 	}
 	if (!modem_running(mc)) {
@@ -498,6 +499,7 @@ static irqreturn_t modemctl_mbox_irq_handler(int irq, void *_mc)
 				MODEM_COUNT(mc,bp_req_confused);
 			} else if (mc->mmio_req_count == 0) {
 				/* No references? Give it to the modem. */
+				modem_update_state(mc);
 				mc->mmio_owner = 0;
 				writel(0, mc->mmio + OFF_SEM);
 				writel(MB_COMMAND | MB_VALID | MBC_RES_SEM,

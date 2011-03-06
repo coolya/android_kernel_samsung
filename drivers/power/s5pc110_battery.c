@@ -166,6 +166,21 @@ static void max8998_set_cable(struct max8998_charger_callbacks *ptr,
 	queue_work(chg->monitor_wqueue, &chg->bat_work);
 }
 
+static bool max8998_check_vdcin(struct chg_data *chg)
+{
+	u8 data = 0;
+	int ret;
+
+	ret = max8998_read_reg(chg->iodev, MAX8998_REG_STATUS2, &data);
+
+	if (ret < 0) {
+		pr_err("max8998_read_reg error\n");
+		return ret;
+	}
+
+	return data & MAX8998_MASK_VDCIN;
+}
+
 static int s3c_bat_get_property(struct power_supply *bat_ps,
 				enum power_supply_property psp,
 				union power_supply_propval *val)
@@ -191,19 +206,11 @@ static int s3c_bat_get_property(struct power_supply *bat_ps,
 		val->intval = 1;
 		break;
 	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+	case POWER_SUPPLY_PROP_CAPACITY:
 		if (chg->pdata && chg->pdata->psy_fuelgauge &&
 			chg->pdata->psy_fuelgauge->get_property &&
-			chg->pdata->psy_fuelgauge->get_property(
-				chg->pdata->psy_fuelgauge, psp, val) < 0)
-			return -EINVAL;
-		break;
-	case POWER_SUPPLY_PROP_CAPACITY:
-		if (chg->bat_info.batt_is_full)
-			val->intval = 100;
-		else if (chg->pdata && chg->pdata->psy_fuelgauge &&
-			chg->pdata->psy_fuelgauge->get_property &&
-			chg->pdata->psy_fuelgauge->get_property(
-				chg->pdata->psy_fuelgauge, psp, val) < 0)
+			chg->pdata->psy_fuelgauge->get_property(chg->pdata->psy_fuelgauge,
+				psp, (union power_supply_propval *)&val->intval) < 0)
 			return -EINVAL;
 		break;
 	case POWER_SUPPLY_PROP_TECHNOLOGY:
@@ -225,7 +232,8 @@ static int s3c_usb_get_property(struct power_supply *ps,
 		return -EINVAL;
 
 	/* Set enable=1 only if the USB charger is connected */
-	val->intval = (chg->cable_status == CABLE_TYPE_USB);
+	val->intval = ((chg->cable_status == CABLE_TYPE_USB) &&
+			max8998_check_vdcin(chg));
 
 	return 0;
 }
@@ -431,21 +439,6 @@ static void s3c_bat_discharge_reason(struct chg_data *chg)
 		chg->discharging_time, chg->bat_info.dis_reason);
 }
 
-static bool max8998_check_vdcin(struct chg_data *chg)
-{
-	u8 data = 0;
-	int ret;
-
-	ret = max8998_read_reg(chg->iodev, MAX8998_REG_STATUS2, &data);
-
-	if (ret < 0) {
-		pr_err("max8998_read_reg error\n");
-		return ret;
-	}
-
-	return data & MAX8998_MASK_VDCIN;
-}
-
 static int max8998_charging_control(struct chg_data *chg)
 {
 	int ret;
@@ -462,45 +455,30 @@ static int max8998_charging_control(struct chg_data *chg)
 		/* enable charging */
 		if (chg->cable_status == CABLE_TYPE_AC) {
 			/* ac */
-			ret = max8998_update_reg(chg->iodev, MAX8998_REG_CHGR1,
-				(2 << MAX8998_SHIFT_TOPOFF), MAX8998_MASK_TOPOFF);
-			if (ret < 0)
-				goto err;
-
-			ret = max8998_update_reg(chg->iodev, MAX8998_REG_CHGR1,
-				(5 << MAX8998_SHIFT_ICHG), MAX8998_MASK_ICHG);
-			if (ret < 0)
-				goto err;
-
-			ret = max8998_update_reg(chg->iodev, MAX8998_REG_CHGR2,
-				(2 << MAX8998_SHIFT_ESAFEOUT), MAX8998_MASK_ESAFEOUT);
+			ret = max8998_write_reg(chg->iodev, MAX8998_REG_CHGR1,
+						(2 << MAX8998_SHIFT_TOPOFF) |
+						(3 << MAX8998_SHIFT_RSTR) |
+						(5 << MAX8998_SHIFT_ICHG));
 			if (ret < 0)
 				goto err;
 
 			pr_debug("%s : TA charging enabled", __func__);
-
 		} else {
 			/* usb */
-			ret = max8998_update_reg(chg->iodev, MAX8998_REG_CHGR1,
-				(6 << MAX8998_SHIFT_TOPOFF), MAX8998_MASK_TOPOFF);
-			if (ret < 0)
-				goto err;
-
-			ret = max8998_update_reg(chg->iodev, MAX8998_REG_CHGR1,
-				(2 << MAX8998_SHIFT_ICHG), MAX8998_MASK_ICHG);
-			if (ret < 0)
-				goto err;
-
-			ret = max8998_update_reg(chg->iodev, MAX8998_REG_CHGR2,
-				(3 << MAX8998_SHIFT_ESAFEOUT), MAX8998_MASK_ESAFEOUT);
+			ret = max8998_write_reg(chg->iodev, MAX8998_REG_CHGR1,
+						(6 << MAX8998_SHIFT_TOPOFF) |
+						(3 << MAX8998_SHIFT_RSTR) |
+						(2 << MAX8998_SHIFT_ICHG));
 			if (ret < 0)
 				goto err;
 
 			pr_debug("%s : USB charging enabled", __func__);
 		}
 
-		ret = max8998_update_reg(chg->iodev, MAX8998_REG_CHGR2,
-			(0 << MAX8998_SHIFT_CHGEN), MAX8998_MASK_CHGEN);
+		ret = max8998_write_reg(chg->iodev, MAX8998_REG_CHGR2,
+					(2 << MAX8998_SHIFT_ESAFEOUT) |
+					(2 << MAX8998_SHIFT_FT) |
+					(0 << MAX8998_SHIFT_CHGEN));
 		if (ret < 0)
 			goto err;
 	}
@@ -514,11 +492,13 @@ err:
 static int s3c_cable_status_update(struct chg_data *chg)
 {
 	int ret;
+	bool vdc_status;
 	ktime_t ktime;
 	struct timespec cur_time;
 
 	/* if max8998 has detected vdcin */
 	if (max8998_check_vdcin(chg)) {
+		vdc_status = 1;
 		if (chg->bat_info.dis_reason) {
 			pr_info("%s : battery status discharging : %d\n",
 				__func__, chg->bat_info.dis_reason);
@@ -555,6 +535,7 @@ static int s3c_cable_status_update(struct chg_data *chg)
 
 	} else {
 		/* no vdc in, not able to charge */
+		vdc_status = 0;
 		chg->charging = false;
 		ret = max8998_charging_control(chg);
 		if (ret < 0)
@@ -570,7 +551,7 @@ static int s3c_cable_status_update(struct chg_data *chg)
 	}
 
 update:
-	if (chg->cable_status == CABLE_TYPE_USB)
+	if ((chg->cable_status == CABLE_TYPE_USB) && vdc_status)
 		wake_lock(&chg->vbus_wake_lock);
 	else
 		wake_lock_timeout(&chg->vbus_wake_lock, HZ / 2);

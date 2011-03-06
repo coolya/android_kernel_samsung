@@ -227,6 +227,8 @@ struct s3cfb_global {
 	struct device		*dev;
 	struct clk		*clock;
 	struct regulator	*regulator;
+	struct regulator	*vcc_lcd;
+	struct regulator	*vlcd;
 	int			irq;
 	struct fb_info		**fb;
 	struct completion	fb_complete;

@@ -107,6 +107,7 @@ static void all_keys_up(struct cypress_touchkey_devdata *devdata)
 
 static int recovery_routine(struct cypress_touchkey_devdata *devdata)
 {
+	dev_err(&devdata->client->dev, "%s: recovery_routine\n", __func__);
 	int ret = -1;
 	int retry = 10;
 	u8 data;
@@ -138,6 +139,7 @@ static int recovery_routine(struct cypress_touchkey_devdata *devdata)
 	devdata->pdata->touchkey_onoff(TOUCHKEY_OFF);
 	dev_err(&devdata->client->dev, "%s: touchkey died\n", __func__);
 out:
+	dev_err(&devdata->client->dev, "%s: recovery_routine\n", __func__);
 	return ret;
 }
 
@@ -148,7 +150,7 @@ static irqreturn_t touchkey_interrupt_thread(int irq, void *touchkey_devdata)
 	int ret;
 	int scancode;
 	struct cypress_touchkey_devdata *devdata = touchkey_devdata;
-
+dev_err(&devdata->client->dev, "%s: touchkey_interrupt_thread\n", __func__);
 	ret = i2c_touchkey_read_byte(devdata, &data);
 	if (ret || (data & ESD_STATE_MASK)) {
 		ret = recovery_routine(devdata);
@@ -178,6 +180,7 @@ static irqreturn_t touchkey_interrupt_thread(int irq, void *touchkey_devdata)
 
 	input_sync(devdata->input_dev);
 err:
+	dev_err(&devdata->client->dev, "%s: touchkey_interrupt_thread\n", __func__);
 	return IRQ_HANDLED;
 }
 
@@ -185,8 +188,10 @@ static irqreturn_t touchkey_interrupt_handler(int irq, void *touchkey_devdata)
 {
 	struct cypress_touchkey_devdata *devdata = touchkey_devdata;
 
+		dev_err(&devdata->client->dev, "%s: touchkey_interrupt_handler\n", __func__);
+
 	if (devdata->is_powering_on) {
-		dev_dbg(&devdata->client->dev, "%s: ignoring spurious boot "
+		dev_err(&devdata->client->dev, "%s: ignoring spurious boot "
 					"interrupt\n", __func__);
 		return IRQ_HANDLED;
 	}
@@ -354,7 +359,7 @@ err_null_keycodes:
 static int __devexit i2c_touchkey_remove(struct i2c_client *client)
 {
 	struct cypress_touchkey_devdata *devdata = i2c_get_clientdata(client);
-
+	dev_err(&client->dev, "%s: i2c_touchkey_remove\n", __func__);
 	unregister_early_suspend(&devdata->early_suspend);
 	/* If the device is dead IRQs are disabled, we need to rebalance them */
 	if (unlikely(devdata->is_dead))

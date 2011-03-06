@@ -240,15 +240,22 @@
 	#endif
 
 	#if SGX_CORE_REV == 113
+		#define FIX_HW_BRN_29997
 		#define FIX_HW_BRN_30954
+		#define FIX_HW_BRN_31093
+		#define FIX_HW_BRN_31195
 			
 	#else
 	#if SGX_CORE_REV == 122
-		 #define FIX_HW_BRN_30954
+		#define FIX_HW_BRN_29997
+		#define FIX_HW_BRN_30954
+		#define FIX_HW_BRN_31093
+		#define FIX_HW_BRN_31195
 			
 	#else
 	#if SGX_CORE_REV == 140
 		 #define FIX_HW_BRN_30954
+		 #define FIX_HW_BRN_31195
 			
 	#else
 	#if SGX_CORE_REV == SGX_CORE_REV_HEAD

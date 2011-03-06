@@ -299,9 +299,8 @@ int rtc_set_alarm(struct rtc_device *rtc, struct rtc_wkalrm *alarm)
 
 	err = mutex_lock_interruptible(&rtc->ops_lock);
 	if (err)
-		return err;
-
-	if (!rtc->ops)
+		/* nothing */;
+	else if (!rtc->ops)
 		err = -ENODEV;
 	else if (!rtc->ops->set_alarm)
 		err = -EINVAL;

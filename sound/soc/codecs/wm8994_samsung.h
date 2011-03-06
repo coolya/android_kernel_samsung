@@ -54,7 +54,17 @@ Codec Output Path BIT
 #define RECORDING_MODE	(0x01 << 14)
 #define FMRADIO_MODE	(0x01 << 15)
 
-#define GAIN_DIVISION_BIT	(0x01 << 16)
+/*
+ * devide codec gain table
+ * GAIN_DIVISION_BIT_1 : EUR
+ * GAIN_DIVISION_BIT_2 : AT&T
+ * GAIN_DIVISION_BIT_3 : EUR_T
+ */
+
+#define GAIN_DIVISION_BIT_1	(0x01 << 16)
+#define GAIN_DIVISION_BIT_2	(0x01 << 17)
+#define GAIN_DIVISION_BIT_3	(0x01 << 18)
+
 #define COMMON_SET_BIT		(0x01 << 0)
 #define PLAYBACK_RCV		(0x01 << 1)
 #define PLAYBACK_SPK		(0x01 << 2)
@@ -71,6 +81,9 @@ Codec Output Path BIT
 #define VOICECALL_HP		(0x01 << 3)
 #define VOICECALL_HP_NO_MIC	(0x01 << 4)
 #define VOICECALL_BT		(0x01 << 5)
+#define VOICECALL_TTY_VCO	(0x01 << 6)
+#define VOICECALL_TTY_HCO	(0x01 << 7)
+#define VOICECALL_TTY_FULL	(0x01 << 8)
 
 #define RECORDING_MAIN		(0x01 << 1)
 #define RECORDING_HP		(0x01 << 2)
@@ -81,10 +94,13 @@ Codec Output Path BIT
 #define RECORDING_CAM_MAIN	(0x01 << 7)
 #define RECORDING_CAM_HP	(0x01 << 8)
 #define RECORDING_CAM_BT	(0x01 << 9)
+#define RECORDING_VC_MAIN	(0x01 << 10)
+#define RECORDING_VC_HP		(0x01 << 11)
+#define RECORDING_VC_BT		(0x01 << 12)
 
 #define PLAYBACK_GAIN_NUM 43
-#define VOICECALL_GAIN_NUM 32
-#define RECORDING_GAIN_NUM 24
+#define VOICECALL_GAIN_NUM 38
+#define RECORDING_GAIN_NUM 32
 #define GAIN_CODE_NUM 13
 /*
  * Definitions of enum type
@@ -93,10 +109,15 @@ enum audio_path	{
 	OFF, RCV, SPK, HP, HP_NO_MIC, BT, SPK_HP,
 	RING_SPK, RING_HP, RING_NO_MIC, RING_SPK_HP
 };
+enum call_path		{
+	CALL_OFF, CALL_RCV, CALL_SPK, CALL_HP,
+	CALL_HP_NO_MIC, CALL_BT, CALL_TTY_VCO,
+	CALL_TTY_HCO, CALL_TTY_FULL
+};
 enum mic_path		{MAIN, SUB, BT_REC, MIC_OFF};
 enum power_state	{CODEC_OFF, CODEC_ON };
 enum ringtone_state	{RING_OFF, RING_ON};
-enum input_source_state	{DEFAULT, RECOGNITION, CAMCORDER};
+enum input_source_state	{DEFAULT, RECOGNITION, CAMCORDER, VOICE_COMMUNICATION};
 
 typedef void (*select_route)(struct snd_soc_codec *);
 typedef void (*select_mic_route)(struct snd_soc_codec *);
@@ -180,6 +201,9 @@ void wm8994_set_voicecall_headset(struct snd_soc_codec *codec);
 void wm8994_set_voicecall_headphone(struct snd_soc_codec *codec);
 void wm8994_set_voicecall_speaker(struct snd_soc_codec *codec);
 void wm8994_set_voicecall_bluetooth(struct snd_soc_codec *codec);
+void wm8994_set_voicecall_tty_vco(struct snd_soc_codec *codec);
+void wm8994_set_voicecall_tty_hco(struct snd_soc_codec *codec);
+void wm8994_set_voicecall_tty_full(struct snd_soc_codec *codec);
 int wm8994_set_codec_gain(struct snd_soc_codec *codec, u16 mode, u16 device);
 extern int gain_code_check(void);
 #endif

@@ -123,7 +123,9 @@ select_route universal_wm8994_playback_paths[] = {
 select_route universal_wm8994_voicecall_paths[] = {
 	wm8994_disable_path, wm8994_set_voicecall_receiver,
 	wm8994_set_voicecall_speaker, wm8994_set_voicecall_headset,
-	wm8994_set_voicecall_headphone, wm8994_set_voicecall_bluetooth
+	wm8994_set_voicecall_headphone, wm8994_set_voicecall_bluetooth,
+	wm8994_set_voicecall_tty_vco, wm8994_set_voicecall_tty_hco,
+	wm8994_set_voicecall_tty_full,
 };
 
 select_mic_route universal_wm8994_mic_paths[] = {
@@ -273,17 +275,18 @@ static int wm899x_inpga_put_volsw_vu(struct snd_kcontrol *kcontrol,
  * Implementation of sound path
  */
 #define MAX_PLAYBACK_PATHS 10
-#define MAX_VOICECALL_PATH 5
+#define MAX_VOICECALL_PATH 8
 static const char *playback_path[] = {
 	"OFF", "RCV", "SPK", "HP", "HP_NO_MIC", "BT", "SPK_HP",
 	"RING_SPK", "RING_HP", "RING_NO_MIC", "RING_SPK_HP"
 };
 static const char *voicecall_path[] = { "OFF", "RCV", "SPK", "HP",
-					"HP_NO_MIC", "BT" };
+					"HP_NO_MIC", "BT", "TTY_VCO",
+					"TTY_HCO", "TTY_FULL"};
 static const char *mic_path[] = { "Main Mic", "Hands Free Mic",
 					"BT Sco Mic", "MIC OFF" };
 static const char *input_source_state[] = { "Default", "Voice Recognition",
-					"Camcorder" };
+					"Camcorder", "Voice Communication"};
 
 static int wm8994_get_mic_path(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
@@ -431,14 +434,17 @@ static int wm8994_set_voice_path(struct snd_kcontrol *kcontrol,
 	}
 
 	switch (path_num) {
-	case OFF:
+	case CALL_OFF:
 		DEBUG_LOG("Switching off output path\n");
 		break;
-	case RCV:
-	case SPK:
-	case HP:
-	case HP_NO_MIC:
-	case BT:
+	case CALL_RCV:
+	case CALL_SPK:
+	case CALL_HP:
+	case CALL_HP_NO_MIC:
+	case CALL_BT:
+	case CALL_TTY_VCO:
+	case CALL_TTY_HCO:
+	case CALL_TTY_FULL:
 		DEBUG_LOG("routing  voice path to %s\n", mc->texts[path_num]);
 		break;
 	default:
@@ -1209,6 +1215,17 @@ struct snd_soc_dai wm8994_dai = {
 	.ops = &wm8994_ops,
 };
 
+/* gain_code range : integer 0~3 */
+static int is_valid_gain_code(char *str)
+{
+	if ((*str >= 0x30) && (*str <= 0x33))
+		return 1;
+	else {
+		DEBUG_LOG_ERR("gain code is invalid (%d)", *str);
+		return 0;
+	}
+}
+
 static int __init gain_code_setup(char *str)
 {
 
@@ -1219,8 +1236,11 @@ static int __init gain_code_setup(char *str)
 		return 0;
 	}
 
-	if (!strcmp(str, "1"))
-		gain_code = 1;
+	if (is_valid_gain_code(str)) {
+		gain_code = *str - 0x30;
+		DEBUG_LOG("gain_code : %d", gain_code);
+	} else
+		DEBUG_LOG_ERR("gain code is invalid and so use default value");
 
 	return 0;
 }

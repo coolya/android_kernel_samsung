@@ -26,11 +26,26 @@ struct tl2796_gamma_adj_points {
 	const u32 v255;
 };
 
+struct tl2796_color_adj {
+	u32 mult[3];
+	int rshift;
+};
+
 struct s5p_panel_data {
 	const u16 *seq_display_set;
 	const u16 *seq_etc_set;
 	const u16 *standby_on;
 	const u16 *standby_off;
+
+	int gpio_dcx;
+	int gpio_rdx;
+	int gpio_csx;
+	int gpio_wrx;
+	int gpio_db[8];
+	int (*configure_mtp_gpios)(struct s5p_panel_data *pdata, bool enable);
+	u16 factory_v255_regs[3];
+	struct tl2796_color_adj color_adj;
+
 	const struct tl2796_gamma_adj_points *gamma_adj_points;
 	const struct gamma_entry *gamma_table;
 	int gamma_table_size;

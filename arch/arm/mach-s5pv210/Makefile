@@ -30,6 +30,7 @@ obj-$(CONFIG_MACH_HERRING)	+= herring-vibrator.o
 obj-$(CONFIG_MACH_HERRING)	+= herring-btlpm.o
 obj-$(CONFIG_MACH_HERRING)	+= herring-watchdog.o
 obj-$(CONFIG_MACH_HERRING)	+= herring-panel.o
+obj-$(CONFIG_MACH_HERRING)	+= herring-touchkey-led.o
 obj-$(CONFIG_MACH_HERRING)	+= dev-herring-phone.o
 
 obj-$(CONFIG_MACH_ARIES)	+= mach-aries.o aries-rfkill.o
@@ -60,3 +61,4 @@ obj-$(CONFIG_S5PV210_SETUP_CSIS)	+= setup-csis.o
 
 
 obj-$(CONFIG_CPU_IDLE)		+= cpuidle.o
+obj-$(CONFIG_CPU_FREQ)		+= dev-cpufreq.o

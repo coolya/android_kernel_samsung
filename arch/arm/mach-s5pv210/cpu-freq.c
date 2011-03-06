@@ -21,6 +21,7 @@
 #include <linux/suspend.h>
 #include <linux/regulator/consumer.h>
 #include <linux/gpio.h>
+#include <linux/platform_device.h>
 #include <asm/system.h>
 
 #include <mach/map.h>
@@ -395,10 +396,14 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 		/* Voltage up code: increase ARM first */
 		if (!IS_ERR_OR_NULL(arm_regulator) &&
 				!IS_ERR_OR_NULL(internal_regulator)) {
-			regulator_set_voltage(arm_regulator,
-					arm_volt, arm_volt_max);
-			regulator_set_voltage(internal_regulator,
-					int_volt, int_volt_max);
+			ret = regulator_set_voltage(arm_regulator,
+						    arm_volt, arm_volt_max);
+			if (ret)
+				goto out;
+			ret = regulator_set_voltage(internal_regulator,
+						    int_volt, int_volt_max);
+			if (ret)
+				goto out;
 		}
 	}
 	cpufreq_notify_transition(&s3c_freqs.freqs, CPUFREQ_PRECHANGE);
@@ -551,6 +556,7 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 	reg = backup_dmc1_reg * clk_info[index].hclk_msys;
 	reg /= clk_info[backup_freq_level].hclk_msys;
 	__raw_writel(reg & 0xFFFF, S5P_VA_DMC1 + 0x30);
+	cpufreq_notify_transition(&s3c_freqs.freqs, CPUFREQ_POSTCHANGE);
 
 	if (s3c_freqs.freqs.new < s3c_freqs.freqs.old) {
 		/* Voltage down: decrease INT first.*/
@@ -562,7 +568,6 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 					arm_volt, arm_volt_max);
 		}
 	}
-	cpufreq_notify_transition(&s3c_freqs.freqs, CPUFREQ_POSTCHANGE);
 
 	memcpy(&s3c_freqs.old, &s3c_freqs.new, sizeof(struct s3c_freq));
 	cpufreq_debug_printk(CPUFREQ_DEBUG_DRIVER, KERN_INFO,
@@ -721,8 +726,25 @@ static struct notifier_block s5pv210_cpufreq_notifier = {
 	.notifier_call = s5pv210_cpufreq_notifier_event,
 };
 
-static int __init s5pv210_cpufreq_init(void)
+static int __init s5pv210_cpufreq_probe(struct platform_device *pdev)
 {
+	struct s5pv210_cpufreq_data *pdata = dev_get_platdata(&pdev->dev);
+	int i, j;
+
+	if (pdata && pdata->size) {
+		for (i = 0; i < pdata->size; i++) {
+			j = 0;
+			while (freq_table[j].frequency != CPUFREQ_TABLE_END) {
+				if (freq_table[j].frequency == pdata->volt[i].freq) {
+					dvs_conf[j].arm_volt = pdata->volt[i].varm;
+					dvs_conf[j].int_volt = pdata->volt[i].vint;
+					break;
+				}
+				j++;
+			}
+		}
+	}
+
 #ifdef CONFIG_REGULATOR
 	arm_regulator = regulator_get_exclusive(NULL, "vddarm");
 	if (IS_ERR(arm_regulator)) {
@@ -743,6 +765,25 @@ finish:
 	register_pm_notifier(&s5pv210_cpufreq_notifier);
 
 	return cpufreq_register_driver(&s5pv210_cpufreq_driver);
+}
+
+static struct platform_driver s5pv210_cpufreq_drv = {
+	.probe		= s5pv210_cpufreq_probe,
+	.driver		= {
+		.owner	= THIS_MODULE,
+		.name	= "s5pv210-cpufreq",
+	},
+};
+
+static int __init s5pv210_cpufreq_init(void)
+{
+	int ret;
+
+	ret = platform_driver_register(&s5pv210_cpufreq_drv);
+	if (!ret)
+		pr_info("%s: S5PV210 cpu-freq driver\n", __func__);
+
+	return ret;
 }
 
 late_initcall(s5pv210_cpufreq_init);
