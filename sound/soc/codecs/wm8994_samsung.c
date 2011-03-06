@@ -2975,7 +2975,11 @@ static int wm8994_i2c_probe(struct i2c_client *i2c,
 			pr_err("Failed to request EAR_SEL!\n");
 			goto err_earsel;
 		}
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+		gpio_direction_output(pdata->ear_sel, 1);
+#else
 		gpio_direction_output(pdata->ear_sel, 0);
+#endif
 	}
 	s3c_gpio_setpull(pdata->ear_sel, S3C_GPIO_PULL_NONE);
 
