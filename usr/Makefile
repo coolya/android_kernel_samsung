@@ -29,7 +29,7 @@ $(obj)/initramfs_data$(suffix_y).o: $(obj)/initramfs_data.cpio$(suffix_y) FORCE
 #####
 # Generate the initramfs cpio archive
 
-INITRAMFSTREE := $(subst kernel/samsung/2.6.35,out/target/product,$(srctree))
+INITRAMFSTREE := $(subst kernel/samsung/2.6.35,,$(srctree))
 hostprogs-y := gen_init_cpio
 initramfs   := $(CONFIG_SHELL) $(srctree)/scripts/gen_initramfs_list.sh
 ramfs-input := $(if $(filter-out "",$(CONFIG_INITRAMFS_SOURCE)), \
