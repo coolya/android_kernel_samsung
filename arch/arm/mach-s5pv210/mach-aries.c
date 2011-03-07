@@ -1595,11 +1595,13 @@ static void sec_jack_set_micbias_state(bool on)
 		gpio_set_value(GPIO_EARPATH_SEL, on);
 		gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
 #else
-	        //FIXME
+        //FIXME
 		//gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
 #endif
+    }
 }
 
+    
 static struct wm8994_platform_data wm8994_pdata = {
 	.ldo = GPIO_CODEC_LDO_EN,
 #if defined(CONFIG_SAMSUNG_CAPTIVATE)
