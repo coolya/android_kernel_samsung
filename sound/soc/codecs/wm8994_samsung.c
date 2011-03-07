@@ -1124,7 +1124,7 @@ static int wm8994_startup(struct snd_pcm_substream *substream,
 		msleep(50);
 		wm8994_write(codec, WM8994_POWER_MANAGEMENT_1,
 				WM8994_VMID_SEL_NORMAL | WM8994_BIAS_ENA);
-		wm8994_write(codec, WM8994_OVERSAMPLING, 0x0000);
+		wm8994_write(codec, WM8994_OVERSAMPLING, 0x0001);
 	} else
 		DEBUG_LOG("Already turned on codec!!");
 
