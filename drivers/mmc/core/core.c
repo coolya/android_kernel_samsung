@@ -1447,8 +1447,7 @@ int mmc_pm_notify(struct notifier_block *notify_block,
 		}
 		host->rescan_disable = 0;
 		spin_unlock_irqrestore(&host->lock, flags);
-		/* ugly workaround for Galaxy S */
-		//mmc_detect_change(host, 0);
+		mmc_detect_change(host, 0);
 
 	}
 
