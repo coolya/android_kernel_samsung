@@ -22,8 +22,23 @@
 #include <linux/i2c-dev.h>
 #include <linux/gpio.h>
 #include <linux/yas529.h>
+#include <asm/byteorder.h>
 
 #include "yas529_const.h"
+#define buf_conv11_1(in) (be16_to_cpu(in)&0x7ff)
+#define buf_conv11_3(in, out, min, max) ({ \
+    int i, overflow = 0; \
+    for (i = 0; i < 3; i++) { \
+        int out_tmp = buf_conv11_1(in[i]); \
+        if (out_tmp < min || out_tmp > max) { \
+            overflow |= 4 >> i; \
+        } \
+        out[2-i] = out_tmp; \
+    } \
+    overflow; \
+})
+#define u8p(p) ((uint8_t*)(p))
+
 
 static void (*current_time)(int *sec, int *msec) = NULL;
 
@@ -485,7 +500,7 @@ struct yas529_compact_driver {
     int8_t roughoffset_is_set;
     int16_t matrix[9];
     int16_t correction_m[9];
-    int8_t temp_coeff[3];
+    int32_t temp_coeff[3];
     int8_t initialized;
     int16_t temperature;
 };
@@ -597,18 +612,8 @@ yas529_cdrv_msens_correction(const int32_t *raw, uint16_t temperature,
         temp_rawdata[i] <<= 4;
         temp_rawdata[i] -= center16[i];
 
-        /*
-          Memo:
-          The number '3 / 100' is approximated to '0x7ae1 / 2^20'.
-        */
-
-        temps32 = ((int32_t)temperature - YAS529_CDRV_CENTER_T) *  c_driver.temp_coeff[i] * 0x7ae1;
-        if (temps32 >= 0) {
-            temp_rawdata[i] -= (int16_t)(temps32 >> 16);
-        }
-        else {
-            temp_rawdata[i] += (int16_t)((-temps32) >> 16);
-        }
+        temps32 = ((int32_t)temperature - YAS529_CDRV_CENTER_T) *  c_driver.temp_coeff[i];
+        temp_rawdata[i] -= temps32 >> 16;
     }
 
     raw_xyz[0] = - temp_rawdata[0];
@@ -618,7 +623,7 @@ yas529_cdrv_msens_correction(const int32_t *raw, uint16_t temperature,
     yas529_cdrv_transform(c_driver.correction_m, raw_xyz, data);
 
     for (i = 0; i < 3; ++i) {
-        data[i] /= 1600;
+        data[i] /= 4;
     }
 
     return 0;
@@ -645,6 +650,7 @@ yas529_cdrv_actuate_initcoil(void)
         if (yas529_mach_i2c_write(1, &InitCoilTable[i]) < 0) {
             return YAS529_CDRV_ERR_I2CCTRL;
         }
+        yas529_mach_sleep(1);
     }
 
     return YAS529_CDRV_NO_ERROR;
@@ -653,9 +659,8 @@ yas529_cdrv_actuate_initcoil(void)
 STATIC int
 yas529_cdrv_measure_rough_offset(uint8_t *rough_offset)
 {
-    int i;
     uint8_t dat;
-    uint8_t buf[6];
+    uint16_t buf[3];
     int rv = YAS529_CDRV_NO_ERROR;
 
     if (rough_offset == NULL) {
@@ -682,30 +687,17 @@ yas529_cdrv_measure_rough_offset(uint8_t *rough_offset)
 
     yas529_mach_sleep(MS3CDRV_WAIT_MEASURE_ROUGHOFFSET);
 
-    if (yas529_mach_i2c_read(6, buf) < 0) {
+    if (yas529_mach_i2c_read(6, u8p(buf)) < 0) {
         return YAS529_CDRV_ERR_I2CCTRL;
     }
 
-    if (buf[0] & 0x80) {
+    if (u8p(buf)[0] & 0x80) {
         return YAS529_CDRV_ERR_BUSY;
     }
 
-    for (i = 0; i < 3; ++i) {
-        rough_offset[2 - i] = ((buf[i << 1] & 0x7) << 8) | buf[(i << 1) | 1];
-    }
 
-    if (rough_offset[0] <= YAS529_CDRV_ROUGHOFFSET_MEASURE_UF_VALUE
-        || rough_offset[0] >= YAS529_CDRV_ROUGHOFFSET_MEASURE_OF_VALUE) {
-        rv |= YAS529_CDRV_MEASURE_X_OFUF;
-    }
-    if (rough_offset[1] <= YAS529_CDRV_ROUGHOFFSET_MEASURE_UF_VALUE
-        || rough_offset[1] >= YAS529_CDRV_ROUGHOFFSET_MEASURE_OF_VALUE) {
-        rv |= YAS529_CDRV_MEASURE_Y1_OFUF;
-    }
-    if (rough_offset[2] <= YAS529_CDRV_ROUGHOFFSET_MEASURE_UF_VALUE
-        || rough_offset[2] >= YAS529_CDRV_ROUGHOFFSET_MEASURE_OF_VALUE) {
-        rv |= YAS529_CDRV_MEASURE_Y2_OFUF;
-    }
+    rv |= buf_conv11_3(buf, rough_offset, YAS529_CDRV_ROUGHOFFSET_MEASURE_UF_VALUE,
+        YAS529_CDRV_ROUGHOFFSET_MEASURE_OF_VALUE);
 
     return rv;
 }
@@ -779,7 +771,7 @@ static int
 yas529_cdrv_measure_sub(int32_t *msens, int32_t *raw, int16_t *t)
 {
     uint8_t dat;
-    uint8_t buf[8];
+    uint16_t buf[4];
     uint8_t rv = YAS529_CDRV_NO_ERROR;
     int32_t temp_msens[3];
     int i;
@@ -796,35 +788,21 @@ yas529_cdrv_measure_sub(int32_t *msens, int32_t *raw, int16_t *t)
     for (i = 0; i < MS3CDRV_WAIT_MEASURE_XY1Y2T; i++) {
         yas529_mach_sleep(1);
 
-        if (yas529_mach_i2c_read(8, buf) < 0) {
+        if (yas529_mach_i2c_read(8, u8p(buf)) < 0) {
             return YAS529_CDRV_ERR_I2CCTRL;
         }
-        if (!(buf[0] & 0x80)) {
+        if (!(u8p(buf)[0] & 0x80)) {
             break;
         }
     }
 
-    if (buf[0] & 0x80) {
+    if (u8p(buf)[0] & 0x80) {
         return YAS529_CDRV_ERR_BUSY;
     }
 
-    for (i = 0; i < 3; ++i) {
-        temp_msens[2 - i] = ((buf[i << 1] & 0x7) << 8) + buf[(i << 1) | 1];
-    }
-    c_driver.temperature = ((buf[6] & 0x7) << 8) + buf[7];
-
-    if (temp_msens[0] <= YAS529_CDRV_NORMAL_MEASURE_UF_VALUE
-        || temp_msens[0] >= YAS529_CDRV_NORMAL_MEASURE_OF_VALUE) {
-        rv |= YAS529_CDRV_MEASURE_X_OFUF;
-    }
-    if (temp_msens[1] <= YAS529_CDRV_NORMAL_MEASURE_UF_VALUE
-        || temp_msens[1] >= YAS529_CDRV_NORMAL_MEASURE_OF_VALUE) {
-        rv |= YAS529_CDRV_MEASURE_Y1_OFUF;
-    }
-    if (temp_msens[2] <= YAS529_CDRV_NORMAL_MEASURE_UF_VALUE
-        || temp_msens[2] >= YAS529_CDRV_NORMAL_MEASURE_OF_VALUE) {
-        rv |= YAS529_CDRV_MEASURE_Y2_OFUF;
-    }
+    rv |= buf_conv11_3(buf, temp_msens, YAS529_CDRV_NORMAL_MEASURE_UF_VALUE,
+        YAS529_CDRV_NORMAL_MEASURE_OF_VALUE);
+    c_driver.temperature = buf_conv11_1(buf[3]);
 
     yas529_cdrv_msens_correction(temp_msens, c_driver.temperature, msens);
 
@@ -941,10 +919,9 @@ yas529_cdrv_set_transformatiom_matrix(const int8_t *transform)
 STATIC int
 yas529_cdrv_init(const int8_t *transform, struct yas529_machdep_func *func)
 {
-    int i;
+    int i, temp;
     uint8_t dat;
     uint8_t *buf = c_driver.raw_calreg;
-    uint8_t tempu8;
 short d2, d3, d4, d5, d6, d7, d8, d9;
 
     if (transform == NULL || func == NULL) {
@@ -1011,34 +988,34 @@ c_driver.matrix[8] = 63;
     c_driver.matrix[0] = 100;  	
 
 
-    tempu8 = (buf[0] & 0xfc) >> 2;
-    c_driver.matrix[1] = tempu8 - 0x20;
+    temp = (buf[0] & 0xfc) >> 2;
+    c_driver.matrix[1] = temp - 0x20;
 
-    tempu8 = ((buf[0] & 0x3) << 2) | ((buf[1] & 0xc0) >> 6);
-    c_driver.matrix[2] = tempu8 - 8;
+    temp = ((buf[0] & 0x3) << 2) | ((buf[1] & 0xc0) >> 6);
+    c_driver.matrix[2] = temp - 8;
 
-    tempu8 = buf[1] & 0x3f;
-    c_driver.matrix[3] = tempu8 - 0x20;
+    temp = buf[1] & 0x3f;
+    c_driver.matrix[3] = temp - 0x20;
 
-    tempu8 = (buf[2] & 0xfc) >> 2;
-    c_driver.matrix[4] = tempu8 + 38;
+    temp = (buf[2] & 0xfc) >> 2;
+    c_driver.matrix[4] = temp + 70;
 
-    tempu8 = ((buf[2] & 0x3) << 4) | (buf[3] & 0xf0) >> 4;
-    c_driver.matrix[5] = tempu8 - 0x20;
+    temp = ((buf[2] & 0x3) << 4) | (buf[3] & 0xf0) >> 4;
+    c_driver.matrix[5] = temp - 0x20;
 
-    tempu8 = ((buf[3] & 0xf) << 2) | ((buf[4] & 0xc0) >> 6);
-    c_driver.matrix[6] = tempu8 - 0x20;
+    temp = ((buf[3] & 0xf) << 2) | ((buf[4] & 0xc0) >> 6);
+    c_driver.matrix[6] = temp - 0x20;
 
-    tempu8 = buf[4] & 0x3f;
-    c_driver.matrix[7] = tempu8 - 0x20;
+    temp = buf[4] & 0x3f;
+    c_driver.matrix[7] = temp - 0x20;
 
-    tempu8 = (buf[5] & 0xfe) >> 1;
-    c_driver.matrix[8] = tempu8 + 66;
+    temp = (buf[5] & 0xfe) >> 1;
+    c_driver.matrix[8] = temp + 66;
 
     yas529_cdrv_make_correction_matrix(transform, c_driver.matrix, c_driver.correction_m);
 
     for (i = 0; i < 3; ++i) {
-        c_driver.temp_coeff[i] = (int8_t)((int16_t)buf[i + 6] - 0x80);
+        c_driver.temp_coeff[i] = 0x7ae1 * ((int)buf[i + 6] - 0x80);
     }
 
     c_driver.initialized = 1;
@@ -1662,9 +1639,6 @@ measure_msensor_normal(struct yas529_driver *d, int32_t *raw, int32_t *magnetic)
         for (i = 0; i < 3; i++) {
             magnetic[i] = get_filter_enable(d) ? filtered[i] : raw[i];
         }
-    }
-    for (i = 0; i < 3; i++) {
-        magnetic[i] *= 400; /* typically raw * 400 is nT in unit */
     }
 
     YLOGD("measure_msensor_normal OUT\n");
