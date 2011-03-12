@@ -963,6 +963,7 @@ static struct max8998_adc_table_data temper_table_tft[] =  {
 	{ 1702,		(-90)	},
 	{ 1720,		(-100)	},
 };
+
 struct max8998_charger_callbacks *callbacks;
 static enum cable_type_t set_cable_status;
 
@@ -1571,6 +1572,7 @@ static void set_shared_mic_bias(void)
 
 static void wm8994_set_mic_bias(bool on)
 {
+    pr_debug("%s: system_rev=%d\n", system_rev);
 	if (system_rev < 0x09) {
 		unsigned long flags;
 		spin_lock_irqsave(&mic_bias_lock, flags);
@@ -1583,21 +1585,33 @@ static void wm8994_set_mic_bias(bool on)
 
 static void sec_jack_set_micbias_state(bool on)
 {
+    pr_debug("%s: system_rev=%d\n", system_rev);
 	if (system_rev < 0x09) {
 		unsigned long flags;
 		spin_lock_irqsave(&mic_bias_lock, flags);
 		jack_mic_bias = on;
 		set_shared_mic_bias();
 		spin_unlock_irqrestore(&mic_bias_lock, flags);
-	} //else
-	        //FIXME
+	} else {
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+		gpio_set_value(GPIO_EARPATH_SEL, on);
+		gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
+#else
+        //FIXME
 		//gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
+#endif
+    }
 }
 
+    
 static struct wm8994_platform_data wm8994_pdata = {
 	.ldo = GPIO_CODEC_LDO_EN,
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+    .ear_sel = GPIO_EARPATH_SEL,
+#else
 	//FIXME
 	//.ear_sel = GPIO_EAR_SEL,
+#endif
 	.set_mic_bias = wm8994_set_mic_bias,
 };
 
@@ -2722,7 +2736,11 @@ struct sec_jack_platform_data sec_jack_pdata = {
 	.buttons_zones = sec_jack_buttons_zones,
 	.num_buttons_zones = ARRAY_SIZE(sec_jack_buttons_zones),
 	.det_gpio = GPIO_DET_35,
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+    .send_end_gpio = GPIO_KBC2,
+#else
 	.send_end_gpio = GPIO_EAR_SEND_END,
+#endif
 };
 
 static struct platform_device sec_device_jack = {
@@ -3341,11 +3359,17 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.val	= S3C_GPIO_SETPIN_ZERO,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
-	}, {
+	}, { /* GPIO_KBC2 */
 		.num	= S5PV210_GPH2(2),
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+		.cfg	= S3C_GPIO_INPUT,
+		.val	= S3C_GPIO_SETPIN_NONE,
+		.pud	= S3C_GPIO_PULL_DOWN,
+#else
 		.cfg	= S3C_GPIO_OUTPUT,
 		.val	= S3C_GPIO_SETPIN_ZERO,
 		.pud	= S3C_GPIO_PULL_NONE,
+#endif
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPH2(3),
@@ -3425,9 +3449,15 @@ static struct gpio_init_data aries_init_gpios[] = {
 #endif
 	}, { /* GPIO_EAR_SEND_END */
 		.num	= S5PV210_GPH3(6),
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+		.cfg	= S3C_GPIO_INPUT,
+		.val	= S3C_GPIO_SETPIN_NONE,
+		.pud	= S3C_GPIO_PULL_DOWN,
+#else
 		.cfg	= S3C_GPIO_SFN(GPIO_EAR_SEND_END_AF),
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_NONE,
+#endif
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPH3(7),
@@ -3640,9 +3670,15 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPJ2(6),
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+		.cfg	= S3C_GPIO_OUTPUT,
+		.val	= S3C_GPIO_SETPIN_NONE,
+		.pud	= S3C_GPIO_PULL_DOWN,
+#else
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_DOWN,
+#endif
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPJ2(7),
@@ -4119,7 +4155,11 @@ static unsigned int aries_sleep_gpio_table[][3] = {
 #endif
 	{ S5PV210_GPJ2(4), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
 	{ S5PV210_GPJ2(5), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
+    //#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+    //	{ S5PV210_GPJ2(6), S3C_GPIO_SLP_PREV,	S3C_GPIO_PULL_NONE},
+    //#else
 	{ S5PV210_GPJ2(6), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
+    //#endif
 	{ S5PV210_GPJ2(7), S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE},
 
 	{ S5PV210_GPJ3(0), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
@@ -4255,9 +4295,14 @@ void s3c_config_sleep_gpio(void)
 	s3c_gpio_cfgpin(S5PV210_GPH2(0), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH2(0), S3C_GPIO_PULL_DOWN);
 
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+	s3c_gpio_cfgpin(S5PV210_GPH2(2), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH2(2), S3C_GPIO_PULL_DOWN);
+#else
 	s3c_gpio_cfgpin(S5PV210_GPH2(2), S3C_GPIO_OUTPUT);
 	s3c_gpio_setpull(S5PV210_GPH2(2), S3C_GPIO_PULL_NONE);
 	gpio_set_value(S5PV210_GPH2(2), 0);
+#endif
 
 	s3c_gpio_cfgpin(S5PV210_GPH2(3), S3C_GPIO_OUTPUT);
 	s3c_gpio_setpull(S5PV210_GPH2(3), S3C_GPIO_PULL_NONE);
@@ -4814,9 +4859,13 @@ static void __init aries_machine_init(void)
 #endif
 
 	/* headset/earjack detection */
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+    gpio_request(GPIO_EAR_MICBIAS_EN, "ear_micbias_enable");
+#else
 	//FIXME
 	//if (system_rev >= 0x09)	        
 		//gpio_request(GPIO_EAR_MICBIAS_EN, "ear_micbias_enable");
+#endif
 
 	gpio_request(GPIO_TOUCH_EN, "touch en");
 

@@ -29,7 +29,6 @@
 #include <asm/mach-types.h>
 
 /* clock sources for the mmc bus clock, order as for the ctrl2[5..4] */
-
 char *s5pv210_hsmmc_clksrcs[4] = {
 	[0] = "hsmmc",		/* HCLK */
 	[1] = "hsmmc",		/* HCLK */
@@ -299,6 +298,10 @@ static struct s3c_sdhci_platdata hsmmc0_platdata = {
 #endif
 };
 
+#if defined(CONFIG_S3C_DEV_HSMMC1)
+static struct s3c_sdhci_platdata hsmmc1_platdata = { 0 };
+#endif
+
 #if defined(CONFIG_S3C_DEV_HSMMC2)
 static struct s3c_sdhci_platdata hsmmc2_platdata = {
 #if defined(CONFIG_S5PV210_SD_CH2_8BIT)
@@ -316,6 +319,11 @@ void s3c_sdhci_set_platdata(void)
 {
 #if defined(CONFIG_S3C_DEV_HSMMC)
 	s3c_sdhci0_set_platdata(&hsmmc0_platdata);
+#endif
+#if defined(CONFIG_S3C_DEV_HSMMC1)
+	if (machine_is_aries())
+		hsmmc1_platdata.built_in = 1;
+	s3c_sdhci1_set_platdata(&hsmmc1_platdata);
 #endif
 #if defined(CONFIG_S3C_DEV_HSMMC2)
 	if (machine_is_herring()) {

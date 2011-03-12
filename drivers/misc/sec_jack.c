@@ -31,6 +31,9 @@
 #include <linux/gpio_event.h>
 #include <linux/sec_jack.h>
 
+#undef pr_debug
+#define pr_debug pr_info
+
 #define MAX_ZONE_LIMIT		10
 #define SEND_KEY_CHECK_TIME_MS	30		/* 30ms */
 #define DET_CHECK_TIME_MS	200		/* 200ms */
@@ -105,6 +108,7 @@ static bool sec_jack_buttons_filter(struct input_handle *handle,
 {
 	struct sec_jack_info *hi = handle->handler->private;
 
+    pr_debug("%s: type=%d, code=%d, value=%d\n", __func__, type, code, value);
 	if (type != EV_KEY || code != KEY_UNKNOWN)
 		return false;
 
@@ -113,6 +117,7 @@ static bool sec_jack_buttons_filter(struct input_handle *handle,
 	/* This is called in timer handler of gpio_input driver.
 	 * We use workqueue to read adc value.
 	 */
+    pr_debug("%s: queueing work for type=%d, code=%d, value=%d\n", __func__, type, code, value);
 	queue_work(hi->queue, &hi->buttons_work);
 
 	return true;
@@ -128,6 +133,7 @@ static int sec_jack_buttons_connect(struct input_handler *handler,
 	int err;
 	int i;
 
+    pr_debug("%s\n", __func__);
 	/* bind input_handler to input device related to only sec_jack */
 	if (dev->name != sec_jack_input_data.name)
 		return -ENODEV;
@@ -170,6 +176,7 @@ static int sec_jack_buttons_connect(struct input_handler *handler,
 
 static void sec_jack_buttons_disconnect(struct input_handle *handle)
 {
+    pr_debug("%s\n", __func__);
 	input_close_device(handle);
 	input_unregister_handle(handle);
 }
@@ -187,12 +194,16 @@ static void sec_jack_set_type(struct sec_jack_info *hi, int jack_type)
 	if (jack_type == SEC_HEADSET_4POLE) {
 		/* for a 4 pole headset, enable detection of send/end key */
 		if (hi->send_key_dev == NULL)
+            //#if !defined(CONFIG_SAMSUNG_CAPTIVATE)
 			/* enable to get events again */
 			hi->send_key_dev = platform_device_register_data(NULL,
 					GPIO_EVENT_DEV_NAME,
 					hi->dev_id,
 					&sec_jack_input_data,
 					sizeof(sec_jack_input_data));
+        //#else
+            //pr_debug("%s: enable send/end\n", __func__);
+        //#endif
 	} else {
 		/* for all other jacks, disable send/end key detection */
 		if (hi->send_key_dev != NULL) {
@@ -308,6 +319,7 @@ void sec_jack_buttons_work(struct work_struct *work)
 
 	/* when button is pressed */
 	adc = pdata->get_adc_value();
+    pr_debug("%s: adc=%d\n", __func__, adc);
 
 	for (i = 0; i < pdata->num_buttons_zones; i++)
 		if (adc >= btn_zones[i].adc_low &&

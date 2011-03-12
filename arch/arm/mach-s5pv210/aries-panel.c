@@ -987,4 +987,3 @@ struct s5p_tft_panel_data aries_hitachi_panel_data = {
 	.brightness_set = R61408_brightness_setting_table,
 	.pwm_reg_offset = 4,
 };
-
