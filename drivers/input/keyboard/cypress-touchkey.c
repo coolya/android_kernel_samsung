@@ -107,7 +107,6 @@ static void all_keys_up(struct cypress_touchkey_devdata *devdata)
 
 static int recovery_routine(struct cypress_touchkey_devdata *devdata)
 {
-	dev_err(&devdata->client->dev, "%s: recovery_routine\n", __func__);
 	int ret = -1;
 	int retry = 10;
 	u8 data;
@@ -150,7 +149,7 @@ static irqreturn_t touchkey_interrupt_thread(int irq, void *touchkey_devdata)
 	int ret;
 	int scancode;
 	struct cypress_touchkey_devdata *devdata = touchkey_devdata;
-dev_err(&devdata->client->dev, "%s: touchkey_interrupt_thread\n", __func__);
+
 	ret = i2c_touchkey_read_byte(devdata, &data);
 	if (ret || (data & ESD_STATE_MASK)) {
 		ret = recovery_routine(devdata);
@@ -187,8 +186,6 @@ err:
 static irqreturn_t touchkey_interrupt_handler(int irq, void *touchkey_devdata)
 {
 	struct cypress_touchkey_devdata *devdata = touchkey_devdata;
-
-		dev_err(&devdata->client->dev, "%s: touchkey_interrupt_handler\n", __func__);
 
 	if (devdata->is_powering_on) {
 		dev_err(&devdata->client->dev, "%s: ignoring spurious boot "

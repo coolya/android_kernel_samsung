@@ -709,6 +709,11 @@ static int s5pv210_cpufreq_notifier_event(struct notifier_block *this,
 	return NOTIFY_DONE;
 }
 
+static struct freq_attr *s5pv210_cpufreq_attr[] = {
+	&cpufreq_freq_attr_scaling_available_freqs,
+	NULL,
+};
+
 static struct cpufreq_driver s5pv210_cpufreq_driver = {
 	.flags		= CPUFREQ_STICKY,
 	.verify		= s5pv210_cpufreq_verify_speed,
@@ -716,6 +721,7 @@ static struct cpufreq_driver s5pv210_cpufreq_driver = {
 	.get		= s5pv210_cpufreq_getspeed,
 	.init		= s5pv210_cpufreq_driver_init,
 	.name		= "s5pv210",
+	.attr		= s5pv210_cpufreq_attr,
 #ifdef CONFIG_PM
 	.suspend	= s5pv210_cpufreq_suspend,
 	.resume		= s5pv210_cpufreq_resume,
