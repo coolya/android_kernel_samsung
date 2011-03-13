@@ -31,8 +31,8 @@
 #include <linux/gpio_event.h>
 #include <linux/sec_jack.h>
 
-#undef pr_debug
-#define pr_debug pr_info
+//#undef pr_debug
+//#define pr_debug pr_info
 
 #define MAX_ZONE_LIMIT		10
 #define SEND_KEY_CHECK_TIME_MS	30		/* 30ms */
@@ -112,12 +112,12 @@ static bool sec_jack_buttons_filter(struct input_handle *handle,
 	if (type != EV_KEY || code != KEY_UNKNOWN)
 		return false;
 
+    pr_debug("%s: queueing type=%d, code=%d, value=%d\n", __func__, type, code, value);
 	hi->pressed = value;
 
 	/* This is called in timer handler of gpio_input driver.
 	 * We use workqueue to read adc value.
 	 */
-    pr_debug("%s: queueing work for type=%d, code=%d, value=%d\n", __func__, type, code, value);
 	queue_work(hi->queue, &hi->buttons_work);
 
 	return true;
@@ -133,11 +133,11 @@ static int sec_jack_buttons_connect(struct input_handler *handler,
 	int err;
 	int i;
 
-    pr_debug("%s\n", __func__);
 	/* bind input_handler to input device related to only sec_jack */
 	if (dev->name != sec_jack_input_data.name)
 		return -ENODEV;
 
+    pr_debug("%s\n", __func__);
 	hi = handler->private;
 	pdata = hi->pdata;
 	btn_zones = pdata->buttons_zones;
@@ -192,18 +192,18 @@ static void sec_jack_set_type(struct sec_jack_info *hi, int jack_type)
 		return;
 
 	if (jack_type == SEC_HEADSET_4POLE) {
+#if !defined(CONFIG_SAMSUNG_CAPTIVATE)
 		/* for a 4 pole headset, enable detection of send/end key */
 		if (hi->send_key_dev == NULL)
-            //#if !defined(CONFIG_SAMSUNG_CAPTIVATE)
 			/* enable to get events again */
 			hi->send_key_dev = platform_device_register_data(NULL,
 					GPIO_EVENT_DEV_NAME,
 					hi->dev_id,
 					&sec_jack_input_data,
 					sizeof(sec_jack_input_data));
-        //#else
-            //pr_debug("%s: enable send/end\n", __func__);
-        //#endif
+#else
+        pr_info("%s: skipping send/end enable, buttons not yet implemented", __func__);
+#endif
 	} else {
 		/* for all other jacks, disable send/end key detection */
 		if (hi->send_key_dev != NULL) {
@@ -226,6 +226,7 @@ static void sec_jack_set_type(struct sec_jack_info *hi, int jack_type)
 
 static void handle_jack_not_inserted(struct sec_jack_info *hi)
 {
+    pr_debug("%s\n", __func__);
 	sec_jack_set_type(hi, SEC_JACK_NO_DEVICE);
 	hi->pdata->set_micbias_state(false);
 }
@@ -239,6 +240,7 @@ static void determine_jack_type(struct sec_jack_info *hi)
 	int i;
 	unsigned npolarity = !hi->pdata->det_active_high;
 
+    pr_debug("%s\n", __func__);
 	while (gpio_get_value(hi->pdata->det_gpio) ^ npolarity) {
 		adc = hi->pdata->get_adc_value();
 		pr_debug("%s: adc = %d\n", __func__, adc);
@@ -277,6 +279,8 @@ static irqreturn_t sec_jack_detect_irq_thread(int irq, void *dev_id)
 	struct sec_jack_platform_data *pdata = hi->pdata;
 	int time_left_ms = DET_CHECK_TIME_MS;
 	unsigned npolarity = !hi->pdata->det_active_high;
+
+    pr_debug("%s", __func__);
 
 	/* set mic bias to enable adc */
 	pdata->set_micbias_state(true);
@@ -320,7 +324,6 @@ void sec_jack_buttons_work(struct work_struct *work)
 	/* when button is pressed */
 	adc = pdata->get_adc_value();
     pr_debug("%s: adc=%d\n", __func__, adc);
-
 	for (i = 0; i < pdata->num_buttons_zones; i++)
 		if (adc >= btn_zones[i].adc_low &&
 		    adc <= btn_zones[i].adc_high) {

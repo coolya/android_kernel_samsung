@@ -361,8 +361,13 @@
 #define GPIO_KBC1				S5PV210_GPH2(1)
 #define GPIO_KBC1_AF			3
 
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+#define GPIO_EAR_SEND_END35     S5PV210_GPH2(2)
+#define GPIO_EAR_SEND_END35_AF  0xFF
+#else
 #define GPIO_KBC2				S5PV210_GPH2(2)
 #define GPIO_KBC2_AF			3
+#endif
 
 #define GPIO_GPH23				S5PV210_GPH2(3)
 

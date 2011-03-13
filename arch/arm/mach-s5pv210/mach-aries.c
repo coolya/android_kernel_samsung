@@ -98,6 +98,9 @@
 
 #include "aries.h"
 
+//#undef pr_debug
+//#define pr_debug pr_info
+
 struct class *sec_class;
 EXPORT_SYMBOL(sec_class);
 
@@ -963,7 +966,6 @@ static struct max8998_adc_table_data temper_table_tft[] =  {
 	{ 1702,		(-90)	},
 	{ 1720,		(-100)	},
 };
-
 struct max8998_charger_callbacks *callbacks;
 static enum cable_type_t set_cable_status;
 
@@ -1572,7 +1574,7 @@ static void set_shared_mic_bias(void)
 
 static void wm8994_set_mic_bias(bool on)
 {
-    pr_debug("%s: system_rev=%d\n", system_rev);
+    pr_debug("%s: on=%d\n", __func__, on ? 1 : 0);
 	if (system_rev < 0x09) {
 		unsigned long flags;
 		spin_lock_irqsave(&mic_bias_lock, flags);
@@ -1585,25 +1587,24 @@ static void wm8994_set_mic_bias(bool on)
 
 static void sec_jack_set_micbias_state(bool on)
 {
-    pr_debug("%s: system_rev=%d\n", system_rev);
 	if (system_rev < 0x09) {
 		unsigned long flags;
 		spin_lock_irqsave(&mic_bias_lock, flags);
 		jack_mic_bias = on;
 		set_shared_mic_bias();
 		spin_unlock_irqrestore(&mic_bias_lock, flags);
-	} else {
+    } else {
 #if defined(CONFIG_SAMSUNG_CAPTIVATE)
+        pr_debug("%s: on=%d\n", __func__, on ? 1 : 0);
 		gpio_set_value(GPIO_EARPATH_SEL, on);
 		gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
 #else
-        //FIXME
+	        //FIXME
 		//gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
 #endif
     }
 }
 
-    
 static struct wm8994_platform_data wm8994_pdata = {
 	.ldo = GPIO_CODEC_LDO_EN,
 #if defined(CONFIG_SAMSUNG_CAPTIVATE)
@@ -2737,7 +2738,7 @@ struct sec_jack_platform_data sec_jack_pdata = {
 	.num_buttons_zones = ARRAY_SIZE(sec_jack_buttons_zones),
 	.det_gpio = GPIO_DET_35,
 #if defined(CONFIG_SAMSUNG_CAPTIVATE)
-    .send_end_gpio = GPIO_KBC2,
+	.send_end_gpio = GPIO_EAR_SEND_END35,
 #else
 	.send_end_gpio = GPIO_EAR_SEND_END,
 #endif
@@ -3359,7 +3360,7 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.val	= S3C_GPIO_SETPIN_ZERO,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
-	}, { /* GPIO_KBC2 */
+	}, { /* GPIO_SEND_END_35 */
 		.num	= S5PV210_GPH2(2),
 #if defined(CONFIG_SAMSUNG_CAPTIVATE)
 		.cfg	= S3C_GPIO_INPUT,
@@ -3672,13 +3673,11 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.num	= S5PV210_GPJ2(6),
 #if defined(CONFIG_SAMSUNG_CAPTIVATE)
 		.cfg	= S3C_GPIO_OUTPUT,
-		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_DOWN,
 #else
 		.cfg	= S3C_GPIO_INPUT,
+#endif
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_DOWN,
-#endif
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPJ2(7),
@@ -4155,11 +4154,7 @@ static unsigned int aries_sleep_gpio_table[][3] = {
 #endif
 	{ S5PV210_GPJ2(4), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
 	{ S5PV210_GPJ2(5), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
-    //#if defined(CONFIG_SAMSUNG_CAPTIVATE)
-    //	{ S5PV210_GPJ2(6), S3C_GPIO_SLP_PREV,	S3C_GPIO_PULL_NONE},
-    //#else
 	{ S5PV210_GPJ2(6), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
-    //#endif
 	{ S5PV210_GPJ2(7), S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE},
 
 	{ S5PV210_GPJ3(0), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},

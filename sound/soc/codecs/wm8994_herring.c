@@ -688,7 +688,7 @@ static void wait_for_dc_servo(struct snd_soc_codec *codec, unsigned int op)
 	snd_soc_write(codec, WM8994_DC_SERVO_1, val);
 
 	start = jiffies;
-	pr_debug("Waiting for DC servo...\n");
+	pr_debug("%s: Waiting for DC servo...\n", __func__);
 
 	do {
 		count++;
@@ -710,10 +710,10 @@ int wm8994_configure_clock(struct snd_soc_codec *codec, int en)
 
 	if (en) {
 		clk_enable(wm8994->codec_clk);
-		DEBUG_LOG("USBOSC Enabled in Sleep Mode\n");
+		pr_debug("USBOSC Enabled in Sleep Mode\n");
 	} else {
 		clk_disable(wm8994->codec_clk);
-		DEBUG_LOG("USBOSC disable in Sleep Mode\n");
+		pr_debug("USBOSC disable in Sleep Mode\n");
 	}
 
 	return 0;
@@ -721,7 +721,7 @@ int wm8994_configure_clock(struct snd_soc_codec *codec, int en)
 
 void audio_ctrl_mic_bias_gpio(struct wm8994_platform_data *pdata, int enable)
 {
-	DEBUG_LOG("enable = [%d]", enable);
+	pr_debug("%s: enable = [%d]", __func__, enable);
 
 	if (!pdata)
 		pr_err("failed to turn off micbias pin\n");
@@ -735,12 +735,12 @@ void audio_ctrl_mic_bias_gpio(struct wm8994_platform_data *pdata, int enable)
 
 static int wm8994_earsel_control(struct wm8994_platform_data *pdata, int en)
 {
-
 	if (!pdata) {
 		pr_err("failed to control wm8994 ear selection\n");
 		return -EINVAL;
 	}
 
+    pr_debug("%s: enable=%d\n", __func__, en);
 	gpio_set_value(pdata->ear_sel, en);
 
 	return 0;
@@ -755,7 +755,7 @@ void wm8994_disable_path(struct snd_soc_codec *codec)
 	u16 val;
 	enum audio_path path = wm8994->cur_path;
 
-	DEBUG_LOG("Path = [%d]", path);
+	pr_debug("Path = [%d]", path);
 
 	val = wm8994_read(codec, WM8994_POWER_MANAGEMENT_1);
 
@@ -927,7 +927,7 @@ void wm8994_disable_rec_path(struct snd_soc_codec *codec)
 
 	switch (mic) {
 	case MAIN:
-		DEBUG_LOG("Disabling MAIN Mic Path..\n");
+		pr_debug("Disabling MAIN Mic Path..\n");
 
 		val = wm8994_read(codec, WM8994_POWER_MANAGEMENT_2);
 		val &= ~(WM8994_IN1L_ENA_MASK | WM8994_MIXINL_ENA_MASK);
@@ -965,7 +965,7 @@ void wm8994_disable_rec_path(struct snd_soc_codec *codec)
 		break;
 
 	case SUB:
-		DEBUG_LOG("Disbaling SUB Mic path..\n");
+		pr_debug("Disbaling SUB Mic path..\n");
 		val = wm8994_read(codec, WM8994_POWER_MANAGEMENT_2);
 		val &= ~(WM8994_IN1R_ENA_MASK | WM8994_MIXINR_ENA_MASK);
 		wm8994_write(codec, WM8994_POWER_MANAGEMENT_2, val);
@@ -1003,7 +1003,7 @@ void wm8994_disable_rec_path(struct snd_soc_codec *codec)
 		break;
 
 	case BT_REC:
-		DEBUG_LOG("Disbaling BT Mic path..\n");
+		pr_debug("Disbaling BT Mic path..\n");
 		val = wm8994_read(codec, WM8994_AIF1_ADC1_LEFT_MIXER_ROUTING);
 		val &= ~(WM8994_AIF2DACL_TO_AIF1ADC1L_MASK |
 			WM8994_ADC1L_TO_AIF1ADC1L_MASK);
@@ -1021,7 +1021,7 @@ void wm8994_disable_rec_path(struct snd_soc_codec *codec)
 		break;
 
 	case MIC_OFF:
-		DEBUG_LOG("Mic is already OFF!\n");
+		pr_debug("Mic is already OFF!\n");
 		break;
 
 	default:
@@ -1103,8 +1103,11 @@ void wm8994_record_headset_mic(struct snd_soc_codec *codec)
 
 	u16 val;
 
-	DEBUG_LOG("Recording through Headset Mic\n");
+	pr_debug("Recording through Headset Mic\n");
 
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+	wm8994_earsel_control(wm8994->pdata, 1);
+#endif
 	wm8994_write(codec, WM8994_ANTIPOP_2, 0x68);
 
 	/* Enable high pass filter to control bounce on startup */
@@ -1216,7 +1219,7 @@ void wm8994_record_main_mic(struct snd_soc_codec *codec)
 
 	u16 val;
 
-	DEBUG_LOG("Recording through Main Mic\n");
+	pr_debug("Recording through Main Mic\n");
 	audio_ctrl_mic_bias_gpio(wm8994->pdata, 1);
 
 	/* Main mic volume issue fix: requested H/W */
@@ -1327,7 +1330,7 @@ void wm8994_record_bluetooth(struct snd_soc_codec *codec)
 {
 	u16 val;
 
-	DEBUG_LOG("BT Record Path for Voice Command\n");
+	pr_debug("BT Record Path for Voice Command\n");
 
 	wm8994_set_bluetooth_common_setting(codec);
 
@@ -1390,7 +1393,7 @@ void wm8994_set_playback_receiver(struct snd_soc_codec *codec)
 {
 	u16 val;
 
-	DEBUG_LOG("");
+	pr_debug("");
 
 	val = wm8994_read(codec, WM8994_LEFT_OPGA_VOLUME);
 	val &= ~(WM8994_MIXOUTL_MUTE_N_MASK);
@@ -1490,7 +1493,7 @@ void wm8994_set_playback_headset(struct snd_soc_codec *codec)
 	u8 testlow = 0;
 	u8 testhigh = 0;
 
-	DEBUG_LOG("");
+	pr_debug("");
 
 	wm8994_earsel_control(wm8994->pdata, 0);
 
@@ -1666,7 +1669,7 @@ void wm8994_set_playback_speaker(struct snd_soc_codec *codec)
 
 	u16 val;
 
-	DEBUG_LOG("");
+	pr_debug("");
 
 	/* Disable end point for preventing pop up noise.*/
 	val = wm8994_read(codec, WM8994_POWER_MANAGEMENT_1);
@@ -1962,7 +1965,7 @@ void wm8994_set_playback_bluetooth(struct snd_soc_codec *codec)
 {
 	u16 val;
 
-	DEBUG_LOG("BT Playback Path for SCO\n");
+	pr_debug("BT Playback Path for SCO\n");
 
 	wm8994_set_bluetooth_common_setting(codec);
 
@@ -2105,7 +2108,7 @@ void wm8994_set_voicecall_receiver(struct snd_soc_codec *codec)
 
 	int val;
 
-	DEBUG_LOG("");
+	pr_debug("");
 
 	audio_ctrl_mic_bias_gpio(wm8994->pdata, 1);
 
@@ -2205,7 +2208,7 @@ void wm8994_set_voicecall_headset(struct snd_soc_codec *codec)
 	u8 testlow = 0;
 	u8 testhigh = 0;
 
-	DEBUG_LOG("");
+	pr_debug("");
 
 	wm8994_earsel_control(wm8994->pdata, 1);
 
@@ -2367,7 +2370,7 @@ void wm8994_set_voicecall_headphone(struct snd_soc_codec *codec)
 	u8 testlow = 0;
 	u8 testhigh = 0;
 
-	DEBUG_LOG("");
+	pr_debug("");
 	audio_ctrl_mic_bias_gpio(wm8994->pdata, 1);
 
 	wm8994_earsel_control(wm8994->pdata, 1);
@@ -2514,7 +2517,7 @@ void wm8994_set_voicecall_speaker(struct snd_soc_codec *codec)
 
 	int val;
 
-	DEBUG_LOG("");
+	pr_debug("");
 
 	audio_ctrl_mic_bias_gpio(wm8994->pdata, 1);
 
@@ -2598,7 +2601,7 @@ void wm8994_set_voicecall_bluetooth(struct snd_soc_codec *codec)
 {
 	int val;
 
-	DEBUG_LOG("");
+	pr_debug("");
 
 	wm8994_set_voicecall_common_setting(codec);
 
@@ -2680,7 +2683,7 @@ void wm8994_set_voicecall_tty_vco(struct snd_soc_codec *codec)
 	u8 testlow = 0;
 	u8 testhigh = 0;
 
-	DEBUG_LOG("");
+	pr_debug("");
 	audio_ctrl_mic_bias_gpio(wm8994->pdata, 1);
 
 	wm8994_earsel_control(wm8994->pdata, 1);
@@ -2834,7 +2837,7 @@ void wm8994_set_voicecall_tty_hco(struct snd_soc_codec *codec)
 	u8 testlow = 0;
 	u8 testhigh = 0;
 
-	DEBUG_LOG("");
+	pr_debug("");
 
 	wm8994_earsel_control(wm8994->pdata, 1);
 
@@ -3001,7 +3004,7 @@ void wm8994_set_voicecall_tty_full(struct snd_soc_codec *codec)
 	u8 testlow = 0;
 	u8 testhigh = 0;
 
-	DEBUG_LOG("");
+	pr_debug("");
 
 	wm8994_earsel_control(wm8994->pdata, 1);
 
@@ -3188,7 +3191,7 @@ int wm8994_set_codec_gain(struct snd_soc_codec *codec, u16 mode, u16 device)
 			gain_set_bits |= PLAYBACK_HP_NO_MIC;
 			break;
 		default:
-			pr_err("playback modo gain flag is wrong\n");
+			DEBUG_LOG_ERR("playback modo gain flag is wrong\n");
 			break;
 		}
 	} else if (mode == VOICECALL_MODE) {
@@ -3221,7 +3224,7 @@ int wm8994_set_codec_gain(struct snd_soc_codec *codec, u16 mode, u16 device)
 			gain_set_bits |= (VOICECALL_HP | VOICECALL_TTY_FULL);
 			break;
 		default:
-			pr_err("voicemode gain flag is wrong\n");
+			DEBUG_LOG_ERR("voicemode gain flag is wrong\n");
 		}
 	} else if (mode  == RECORDING_MODE) {
 		default_gain_table_p = recording_gain_table;
@@ -3265,12 +3268,12 @@ int wm8994_set_codec_gain(struct snd_soc_codec *codec, u16 mode, u16 device)
 			gain_set_bits |= RECORDING_VC_BT;
 			break;
 		default:
-			pr_err("recording gain flag is wrong\n");
+			DEBUG_LOG_ERR("recording gain flag is wrong\n");
 		}
 
 	}
 
-	DEBUG_LOG("Set gain mode = 0x%x, device = 0x%x, gain_bits = 0x%x,\
+	pr_debug("Set gain mode = 0x%x, device = 0x%x, gain_bits = 0x%x,\
 		table_num=%d, gain_code = %d\n",
 		mode, device, gain_set_bits, table_num, wm8994->gain_code);
 
