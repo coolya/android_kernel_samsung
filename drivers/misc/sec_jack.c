@@ -192,7 +192,6 @@ static void sec_jack_set_type(struct sec_jack_info *hi, int jack_type)
 		return;
 
 	if (jack_type == SEC_HEADSET_4POLE) {
-#if !defined(CONFIG_SAMSUNG_CAPTIVATE)
 		/* for a 4 pole headset, enable detection of send/end key */
 		if (hi->send_key_dev == NULL)
 			/* enable to get events again */
@@ -201,9 +200,6 @@ static void sec_jack_set_type(struct sec_jack_info *hi, int jack_type)
 					hi->dev_id,
 					&sec_jack_input_data,
 					sizeof(sec_jack_input_data));
-#else
-        pr_info("%s: skipping send/end enable, buttons not yet implemented", __func__);
-#endif
 	} else {
 		/* for all other jacks, disable send/end key detection */
 		if (hi->send_key_dev != NULL) {

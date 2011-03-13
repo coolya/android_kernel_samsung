@@ -1497,7 +1497,11 @@ void wm8994_set_playback_headset(struct snd_soc_codec *codec)
 
 	DEBUG_LOG("");
 
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+	wm8994_earsel_control(wm8994->pdata, 1); //keep earsel enabled otherwise adc disappears and sendend button fails
+#else
 	wm8994_earsel_control(wm8994->pdata, 0);
+#endif
 
 	/* Enable the Timeslot0 to DAC1L */
 	val = wm8994_read(codec, WM8994_DAC1_LEFT_MIXER_ROUTING);
