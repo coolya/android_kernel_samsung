@@ -172,7 +172,7 @@ config SAMSUNG_GALAXYSB
 	 Select Samsung Galaxy S GT-I9000B
 
 config SAMSUNG_CAPTIVATE
-	bool "select SGHI879"
+	bool "select SGHI897"
 	depends on MACH_ARIES
 	help
 	 Select Samsung Captivate
