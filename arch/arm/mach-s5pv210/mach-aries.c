@@ -1951,7 +1951,7 @@ static int ce147_regulator_init(void)
 		}
 	}
 	if (IS_ERR_OR_NULL(cam_avdd)) {
-		cam_sensor_regulator = regulator_get(NULL, "cam_avdd");
+		cam_avdd = regulator_get(NULL, "cam_avdd");
 		if (IS_ERR_OR_NULL(cam_avdd)) {
 			pr_err("failed to get cam_avdd regulator");
 			return -EINVAL;
