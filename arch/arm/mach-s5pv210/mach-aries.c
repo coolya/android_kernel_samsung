@@ -1594,7 +1594,7 @@ static void sec_jack_set_micbias_state(bool on)
 		set_shared_mic_bias();
 		spin_unlock_irqrestore(&mic_bias_lock, flags);
     } else {
-#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+#if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined (CONFIG_SAMSUNG_VIBRANT)
         pr_debug("%s: on=%d\n", __func__, on ? 1 : 0);
 		gpio_set_value(GPIO_EARPATH_SEL, on);
 		gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
@@ -1607,7 +1607,7 @@ static void sec_jack_set_micbias_state(bool on)
 
 static struct wm8994_platform_data wm8994_pdata = {
 	.ldo = GPIO_CODEC_LDO_EN,
-#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+#if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined (CONFIG_SAMSUNG_VIBRANT)
     .ear_sel = GPIO_EARPATH_SEL,
 #else
 	//FIXME
@@ -2772,7 +2772,7 @@ struct sec_jack_platform_data sec_jack_pdata = {
 	.buttons_zones = sec_jack_buttons_zones,
 	.num_buttons_zones = ARRAY_SIZE(sec_jack_buttons_zones),
 	.det_gpio = GPIO_DET_35,
-#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+#if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined(CONFIG_SAMSUNG_VIBRANT)
 	.send_end_gpio = GPIO_EAR_SEND_END35,
 #else
 	.send_end_gpio = GPIO_EAR_SEND_END,
@@ -3397,7 +3397,7 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, { /* GPIO_SEND_END_35 */
 		.num	= S5PV210_GPH2(2),
-#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+#if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined (CONFIG_SAMSUNG_VIBRANT)
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_DOWN,
@@ -3485,7 +3485,7 @@ static struct gpio_init_data aries_init_gpios[] = {
 #endif
 	}, { /* GPIO_EAR_SEND_END */
 		.num	= S5PV210_GPH3(6),
-#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+#if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined (CONFIG_SAMSUNG_VIBRANT)
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_DOWN,
@@ -4325,7 +4325,7 @@ void s3c_config_sleep_gpio(void)
 	s3c_gpio_cfgpin(S5PV210_GPH2(0), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH2(0), S3C_GPIO_PULL_DOWN);
 
-#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+#if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined (CONFIG_SAMSUNG_VIBRANT)
 	s3c_gpio_cfgpin(S5PV210_GPH2(2), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH2(2), S3C_GPIO_PULL_DOWN);
 #else
@@ -4889,7 +4889,7 @@ static void __init aries_machine_init(void)
 #endif
 
 	/* headset/earjack detection */
-#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+#if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined (CONFIG_SAMSUNG_VIBRANT)
     gpio_request(GPIO_EAR_MICBIAS_EN, "ear_micbias_enable");
 #else
 	//FIXME
