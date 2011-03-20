@@ -3,6 +3,8 @@
 
 //#include <mach/gpio.h>
 
+#define S5PV210_GPE1_3_CAM_A_CLKOUT	(0x2 << 12)
+
 #define GPIO_LEVEL_LOW      	0
 #define GPIO_LEVEL_HIGH     	1
 #define GPIO_LEVEL_NONE     	2
