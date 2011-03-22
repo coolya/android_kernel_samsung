@@ -1107,7 +1107,7 @@ void wm8994_record_headset_mic(struct snd_soc_codec *codec)
 
 	DEBUG_LOG("Recording through Headset Mic\n");
 
-#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+#if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined (CONFIG_SAMSUNG_VIBRANT)
 	wm8994_earsel_control(wm8994->pdata, 1);
 #endif
 	wm8994_write(codec, WM8994_ANTIPOP_2, 0x68);
