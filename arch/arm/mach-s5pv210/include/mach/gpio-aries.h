@@ -3,6 +3,8 @@
 
 //#include <mach/gpio.h>
 
+#define S5PV210_GPE1_3_CAM_A_CLKOUT	(0x2 << 12)
+
 #define GPIO_LEVEL_LOW      	0
 #define GPIO_LEVEL_HIGH     	1
 #define GPIO_LEVEL_NONE     	2
@@ -361,7 +363,7 @@
 #define GPIO_KBC1				S5PV210_GPH2(1)
 #define GPIO_KBC1_AF			3
 
-#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)  || defined (CONFIG_SAMSUNG_VIBRANT)
 #define GPIO_EAR_SEND_END35     S5PV210_GPH2(2)
 #define GPIO_EAR_SEND_END35_AF  0xFF
 #else
@@ -482,7 +484,11 @@
 
 #define GPIO_FM_INT				S5PV210_GPJ2(4)
 
+#if !defined(CONFIG_SAMSUNG_VIBRANT)
 #define GPIO_FM_RST				S5PV210_GPJ2(5)
+#else
+#define GPIO_MICBIAS_EN2		S5PV210_GPJ2(5) //SGH-T959 REV0.5(HWREV = 0x0e) or 0.6 (HWREV = 0x0f)
+#endif
 
 #define GPIO_EARPATH_SEL		S5PV210_GPJ2(6)
 
@@ -512,7 +518,7 @@
 
 #define GPIO_AP_PMIC_SCL		S5PV210_GPJ4(3)
 
-#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)  || defined (CONFIG_SAMSUNG_VIBRANT)
 #define GPIO_EAR_MICBIAS_EN		S5PV210_GPJ4(4)
 #else
 #define GPIO_TV_EN				S5PV210_GPJ4(4)
