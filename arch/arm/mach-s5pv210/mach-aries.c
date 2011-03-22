@@ -1597,7 +1597,7 @@ static void sec_jack_set_micbias_state(bool on)
 		set_shared_mic_bias();
 		spin_unlock_irqrestore(&mic_bias_lock, flags);
     } else {
-#if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined (CONFIG_SAMSUNG_VIBRANT)
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
         pr_debug("%s: on=%d\n", __func__, on ? 1 : 0);
 		gpio_set_value(GPIO_EARPATH_SEL, on);
 		gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
