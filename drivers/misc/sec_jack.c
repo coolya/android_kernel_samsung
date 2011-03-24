@@ -438,6 +438,8 @@ static int sec_jack_probe(struct platform_device *pdev)
 
 #if defined (CONFIG_SAMSUNG_CAPTIVATE) || defined(CONFIG_SAMSUNG_VIBRANT)
 	pdata->det_active_high = 1;
+#else
+	pdata->det_active_high = 0;
 #endif
 
 	return 0;

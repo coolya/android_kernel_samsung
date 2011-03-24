@@ -1577,15 +1577,23 @@ static void set_shared_mic_bias(void)
 
 static void wm8994_set_mic_bias(bool on)
 {
-    pr_debug("%s: on=%d\n", __func__, on ? 1 : 0);
+    pr_debug("%s: system_rev=%d, on=%d\n", __func__, system_rev, on ? 1 : 0);
 	if (system_rev < 0x09) {
 		unsigned long flags;
 		spin_lock_irqsave(&mic_bias_lock, flags);
 		wm8994_mic_bias = on;
 		set_shared_mic_bias();
 		spin_unlock_irqrestore(&mic_bias_lock, flags);
-	} else
+	} else {
+#if defined(CONFIG_SAMSUNG_VIBRANT)
+        if((HWREV == 0x0A) || (HWREV == 0x0C) || (HWREV == 0x0D) || (HWREV == 0x0E) ) //0x0A:00, 0x0C:00, 0x0D:01, 0x0E:05
+            gpio_set_value(GPIO_MICBIAS_EN, on);
+        else
+            gpio_set_value(GPIO_MICBIAS_EN2, on);
+#else
 		gpio_set_value(GPIO_MICBIAS_EN, on);
+#endif
+    }
 }
 
 static void sec_jack_set_micbias_state(bool on)
@@ -1601,27 +1609,21 @@ static void sec_jack_set_micbias_state(bool on)
         pr_debug("%s: on=%d\n", __func__, on ? 1 : 0);
 		gpio_set_value(GPIO_EARPATH_SEL, on);
 		gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
-#elif defined (CONFIG_SAMSUNG_VIBRANT)
+#elif defined (CONFIG_SAMSUNG_VIBRANT) || defined(CONFIG_SAMSUNG_GALAXYS)
         pr_debug("%s: on=%d\n", __func__, on ? 1 : 0);
 		gpio_set_value(GPIO_EARPATH_SEL, on);
-        if((HWREV == 0x0A) || (HWREV == 0x0C) || (HWREV == 0x0D) || (HWREV == 0x0E) ) //0x0A:00, 0x0C:00, 0x0D:01, 0x0E:05
-            gpio_set_value(GPIO_MICBIAS_EN, on);
-        else
-            gpio_set_value(GPIO_MICBIAS_EN2, on);
 #else
-	        //FIXME
-		//gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
+		gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
 #endif
     }
 }
 
 static struct wm8994_platform_data wm8994_pdata = {
 	.ldo = GPIO_CODEC_LDO_EN,
-#if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined (CONFIG_SAMSUNG_VIBRANT)
+#if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined (CONFIG_SAMSUNG_VIBRANT) || defined(CONFIG_SAMSUNG_GALAXYS)
     .ear_sel = GPIO_EARPATH_SEL,
 #else
-	//FIXME
-	//.ear_sel = GPIO_EAR_SEL,
+	.ear_sel = GPIO_EAR_SEL,
 #endif
 	.set_mic_bias = wm8994_set_mic_bias,
 };
@@ -3716,7 +3718,7 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPJ2(6),
-#if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined(CONFIG_SAMSUNG_VIBRANT)
+#if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined(CONFIG_SAMSUNG_VIBRANT) || defined(CONFIG_SAMSUNG_GALAXYS)
 		.cfg	= S3C_GPIO_OUTPUT,
 #else
 		.cfg	= S3C_GPIO_INPUT,
@@ -4898,10 +4900,11 @@ static void __init aries_machine_init(void)
 	/* headset/earjack detection */
 #if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined (CONFIG_SAMSUNG_VIBRANT)
     gpio_request(GPIO_EAR_MICBIAS_EN, "ear_micbias_enable");
+#elif defined(CONFIG_SAMSUNG_GALAXYS)
+    //no EAR_MICBIAS_EN on galaxys
 #else
-	//FIXME
-	//if (system_rev >= 0x09)	        
-		//gpio_request(GPIO_EAR_MICBIAS_EN, "ear_micbias_enable");
+	if (system_rev >= 0x09)
+		gpio_request(GPIO_EAR_MICBIAS_EN, "ear_micbias_enable");
 #endif
 
 	gpio_request(GPIO_TOUCH_EN, "touch en");
