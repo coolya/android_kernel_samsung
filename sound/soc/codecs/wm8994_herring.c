@@ -721,7 +721,7 @@ int wm8994_configure_clock(struct snd_soc_codec *codec, int en)
 
 void audio_ctrl_mic_bias_gpio(struct wm8994_platform_data *pdata, int enable)
 {
-	DEBUG_LOG("enable = [%d]", enable);
+	DEBUG_LOG("%s: enable = [%d]", __func__, enable);
 
 	if (!pdata)
 		pr_err("failed to turn off micbias pin\n");
@@ -735,6 +735,8 @@ void audio_ctrl_mic_bias_gpio(struct wm8994_platform_data *pdata, int enable)
 
 static int wm8994_earsel_control(struct wm8994_platform_data *pdata, int en)
 {
+
+	DEBUG_LOG("%s: enable = [%d]", __func__, en);
 
 	if (!pdata) {
 		pr_err("failed to control wm8994 ear selection\n");
@@ -1105,6 +1107,9 @@ void wm8994_record_headset_mic(struct snd_soc_codec *codec)
 
 	DEBUG_LOG("Recording through Headset Mic\n");
 
+#if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined (CONFIG_SAMSUNG_VIBRANT)
+	wm8994_earsel_control(wm8994->pdata, 1);
+#endif
 	wm8994_write(codec, WM8994_ANTIPOP_2, 0x68);
 
 	/* Enable high pass filter to control bounce on startup */
@@ -1492,7 +1497,11 @@ void wm8994_set_playback_headset(struct snd_soc_codec *codec)
 
 	DEBUG_LOG("");
 
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+	wm8994_earsel_control(wm8994->pdata, 1); //keep earsel enabled otherwise adc disappears and sendend button fails
+#else
 	wm8994_earsel_control(wm8994->pdata, 0);
+#endif
 
 	/* Enable the Timeslot0 to DAC1L */
 	val = wm8994_read(codec, WM8994_DAC1_LEFT_MIXER_ROUTING);
