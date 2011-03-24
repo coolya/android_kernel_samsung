@@ -4819,7 +4819,14 @@ static void __init sound_init(void)
 	reg |= 0x1;
 	__raw_writel(reg, S5P_CLK_OUT);
 
+#if defined(CONFIG_SAMSUNG_VIBRANT)
+    if((HWREV == 0x0A) || (HWREV == 0x0C) || (HWREV == 0x0D) || (HWREV == 0x0E) ) //0x0A:00, 0x0C:00, 0x0D:01, 0x0E:05
+        gpio_request(GPIO_MICBIAS_EN, "micbias_enable");
+    else
+        gpio_request(GPIO_MICBIAS_EN2, "micbias_enable");
+#else
 	gpio_request(GPIO_MICBIAS_EN, "micbias_enable");
+#endif
 }
 
 static bool console_flushed;
