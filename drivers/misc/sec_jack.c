@@ -31,8 +31,8 @@
 #include <linux/gpio_event.h>
 #include <linux/sec_jack.h>
 
-//#undef pr_debug
-//#define pr_debug pr_info
+#undef pr_debug
+#define pr_debug pr_info
 
 #define MAX_ZONE_LIMIT		10
 #define SEND_KEY_CHECK_TIME_MS	30		/* 30ms */

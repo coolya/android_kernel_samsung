@@ -98,8 +98,8 @@
 
 #include "aries.h"
 
-//#undef pr_debug
-//#define pr_debug pr_info
+#undef pr_debug
+#define pr_debug pr_info
 
 struct class *sec_class;
 EXPORT_SYMBOL(sec_class);
