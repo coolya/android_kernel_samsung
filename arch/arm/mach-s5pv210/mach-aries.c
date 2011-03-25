@@ -1598,21 +1598,18 @@ static void sec_jack_set_micbias_state(bool on)
 		set_shared_mic_bias();
 		spin_unlock_irqrestore(&mic_bias_lock, flags);
     } else {
-#if defined(CONFIG_SAMSUNG_CAPTIVATE)
         pr_debug("%s: on=%d\n", __func__, on ? 1 : 0);
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
 		gpio_set_value(GPIO_EARPATH_SEL, on);
 		gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
-#elif defined (CONFIG_SAMSUNG_VIBRANT) || defined(CONFIG_SAMSUNG_GALAXYS) || defined(CONFIG_SAMSUNG_GALAXYSB)
-        pr_debug("%s: on=%d\n", __func__, on ? 1 : 0);
+#elif defined(CONFIG_SAMSUNG_GALAXYS) || defined(CONFIG_SAMSUNG_GALAXYSB)
 		gpio_set_value(GPIO_EARPATH_SEL, on);
-#if defined(CONFIG_SAMSUNG_VIBRANT) //hate ifdefs? here's a nested one for your pleasure . . .
+        gpio_set_value(GPIO_MICBIAS_EN, on);
+#elif defined(CONFIG_SAMSUNG_VIBRANT)
         if((HWREV == 0x0A) || (HWREV == 0x0C) || (HWREV == 0x0D) || (HWREV == 0x0E) ) //0x0A:00, 0x0C:00, 0x0D:01, 0x0E:05
             gpio_set_value(GPIO_MICBIAS_EN, on);
         else
             gpio_set_value(GPIO_MICBIAS_EN2, on);
-#else
-		gpio_set_value(GPIO_MICBIAS_EN, on);
-#endif
 #else
 		gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
 #endif
