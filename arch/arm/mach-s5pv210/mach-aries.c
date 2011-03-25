@@ -1601,7 +1601,7 @@ static void sec_jack_set_micbias_state(bool on)
 #if defined(CONFIG_SAMSUNG_CAPTIVATE)
         pr_debug("%s: on=%d\n", __func__, on ? 1 : 0);
 		gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
-#elif defined(CONFIG_SAMSUNG_GALAXYS) || defined(CONFIG_SAMSUNG_GALAXYSB)
+#elif defined defined(CONFIG_SAMSUNG_GALAXYS) || defined(CONFIG_SAMSUNG_GALAXYSB)
         pr_debug("%s: on=%d\n", __func__, on ? 1 : 0);
 		gpio_set_value(GPIO_MICBIAS_EN, on);
 #elif defined(CONFIG_SAMSUNG_VIBRANT)
