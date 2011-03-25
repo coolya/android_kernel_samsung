@@ -3415,7 +3415,7 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.val	= S3C_GPIO_SETPIN_ZERO,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
-	}, { /* GPIO_SEND_END_35 */
+	}, { /* GPIO_EAR_SEND_END_35 */
 		.num	= S5PV210_GPH2(2),
 #if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined (CONFIG_SAMSUNG_VIBRANT)
 		.cfg	= S3C_GPIO_INPUT,
@@ -3720,7 +3720,11 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPJ2(5),
+#if defined(CONFIG_SAMSUNG_VIBRANT)
+		.cfg	= S3C_GPIO_OUTPUT,
+#else
 		.cfg	= S3C_GPIO_INPUT,
+#endif
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_DOWN,
 		.drv	= S3C_GPIO_DRVSTR_1X,
