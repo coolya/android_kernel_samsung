@@ -191,16 +191,6 @@ static void sec_jack_set_type(struct sec_jack_info *hi, int jack_type)
 	if (jack_type == hi->cur_jack_type)
 		return;
 
-    switch(jack_type) {
-        case SEC_HEADSET_3POLE:
-        case SEC_HEADSET_4POLE:
-            gpio_set_value(GPIO_EARPATH_SEL, 1);
-            break;
-        default:
-            gpio_set_value(GPIO_EARPATH_SEL, 0);
-            break;
-    }
-
 	if (jack_type == SEC_HEADSET_4POLE) {
 		/* for a 4 pole headset, enable detection of send/end key */
 		if (hi->send_key_dev == NULL)
