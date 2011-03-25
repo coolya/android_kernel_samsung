@@ -1602,14 +1602,18 @@ static void sec_jack_set_micbias_state(bool on)
 #if defined(CONFIG_SAMSUNG_CAPTIVATE)
 		gpio_set_value(GPIO_EARPATH_SEL, on);
 		gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
-#elif defined(CONFIG_SAMSUNG_GALAXYS) || defined(CONFIG_SAMSUNG_GALAXYSB)
+#elif defined(CONFIG_SAMSUNG_VIBRANT) || defined(CONFIG_SAMSUNG_GALAXYS) || defined(CONFIG_SAMSUNG_GALAXYSB)
 		gpio_set_value(GPIO_EARPATH_SEL, on);
-        gpio_set_value(GPIO_MICBIAS_EN, on);
-#elif defined(CONFIG_SAMSUNG_VIBRANT)
+#if defined(CONFIG_SAMSUNG_VIBRANT)
         if((HWREV == 0x0A) || (HWREV == 0x0C) || (HWREV == 0x0D) || (HWREV == 0x0E) ) //0x0A:00, 0x0C:00, 0x0D:01, 0x0E:05
             gpio_set_value(GPIO_MICBIAS_EN, on);
-        else
+        else {
+            gpio_set_value(GPIO_MICBIAS_EN, on);
             gpio_set_value(GPIO_MICBIAS_EN2, on);
+        }
+#else
+        gpio_set_value(GPIO_MICBIAS_EN, on);
+#endif
 #else
 		gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
 #endif
