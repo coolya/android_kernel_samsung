@@ -1585,14 +1585,7 @@ static void wm8994_set_mic_bias(bool on)
 		set_shared_mic_bias();
 		spin_unlock_irqrestore(&mic_bias_lock, flags);
 	} else {
-#if defined(CONFIG_SAMSUNG_VIBRANT)
-        if((HWREV == 0x0A) || (HWREV == 0x0C) || (HWREV == 0x0D) || (HWREV == 0x0E) ) //0x0A:00, 0x0C:00, 0x0D:01, 0x0E:05
-            gpio_set_value(GPIO_MICBIAS_EN, on);
-        else
-            gpio_set_value(GPIO_MICBIAS_EN2, on);
-#else
 		gpio_set_value(GPIO_MICBIAS_EN, on);
-#endif
     }
 }
 
@@ -4826,8 +4819,10 @@ static void __init sound_init(void)
 #if defined(CONFIG_SAMSUNG_VIBRANT)
     if((HWREV == 0x0A) || (HWREV == 0x0C) || (HWREV == 0x0D) || (HWREV == 0x0E) ) //0x0A:00, 0x0C:00, 0x0D:01, 0x0E:05
         gpio_request(GPIO_MICBIAS_EN, "micbias_enable");
-    else
-        gpio_request(GPIO_MICBIAS_EN2, "micbias_enable");
+    else {
+        gpio_request(GPIO_MICBIAS_EN2, "micbias_enable2");
+        gpio_request(GPIO_MICBIAS_EN, "micbias_enable");
+    }
 #else
 	gpio_request(GPIO_MICBIAS_EN, "micbias_enable");
 #endif
@@ -4919,7 +4914,7 @@ static void __init aries_machine_init(void)
 	/* headset/earjack detection */
 #if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined (CONFIG_SAMSUNG_VIBRANT)
     gpio_request(GPIO_EAR_MICBIAS_EN, "ear_micbias_enable");
-#elif defined(CONFIG_SAMSUNG_GALAXYS)
+#elif defined(CONFIG_SAMSUNG_GALAXYS) || defined(CONFIG_SAMSUNG_GALAXYSB)
     //no EAR_MICBIAS_EN on galaxys
 #else
 	if (system_rev >= 0x09)
