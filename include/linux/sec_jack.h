@@ -44,6 +44,9 @@ struct sec_jack_buttons_zone {
 };
 
 struct sec_jack_platform_data {
+#if defined(CONFIG_SAMSUNG_VIBRANT)
+	void	(*set_earpath_sel) (bool);
+#endif
 	void	(*set_micbias_state) (bool);
 	int	(*get_adc_value) (void);
 	struct sec_jack_zone	*zones;

@@ -191,6 +191,18 @@ static void sec_jack_set_type(struct sec_jack_info *hi, int jack_type)
 	if (jack_type == hi->cur_jack_type)
 		return;
 
+#if defined(CONFIG_SAMSUNG_VIBRANT)
+    switch(jack_type) {
+        case SEC_HEADSET_4POLE:
+        case SEC_HEADSET_3POLE:
+        case SEC_JACK_NO_DEVICE:
+            pdata->set_earpath_sel(true);
+            break;
+        default:
+            pdata->set_earpath_sel(false);
+            break;
+    }
+#endif
 	if (jack_type == SEC_HEADSET_4POLE) {
 		/* for a 4 pole headset, enable detection of send/end key */
 		if (hi->send_key_dev == NULL)

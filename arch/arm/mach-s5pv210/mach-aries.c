@@ -1589,6 +1589,11 @@ static void wm8994_set_mic_bias(bool on)
     }
 }
 
+static void sec_jack_set_earpath_sel(bool on)
+{
+    gpio_set_value(GPIO_EARPATH_SEL, on);
+}
+
 static void sec_jack_set_micbias_state(bool on)
 {
 	if (system_rev < 0x09) {
@@ -1602,18 +1607,16 @@ static void sec_jack_set_micbias_state(bool on)
 #if defined(CONFIG_SAMSUNG_CAPTIVATE)
 		gpio_set_value(GPIO_EARPATH_SEL, on);
 		gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
-#elif defined(CONFIG_SAMSUNG_VIBRANT) || defined(CONFIG_SAMSUNG_GALAXYS) || defined(CONFIG_SAMSUNG_GALAXYSB)
+#elif defined(CONFIG_SAMSUNG_GALAXYS) || defined(CONFIG_SAMSUNG_GALAXYSB)
 		gpio_set_value(GPIO_EARPATH_SEL, on);
-#if defined(CONFIG_SAMSUNG_VIBRANT)
+        gpio_set_value(GPIO_MICBIAS_EN, on);
+#elif defined(CONFIG_SAMSUNG_VIBRANT)
         if((HWREV == 0x0A) || (HWREV == 0x0C) || (HWREV == 0x0D) || (HWREV == 0x0E) ) //0x0A:00, 0x0C:00, 0x0D:01, 0x0E:05
             gpio_set_value(GPIO_MICBIAS_EN, on);
         else {
             gpio_set_value(GPIO_MICBIAS_EN, on);
             gpio_set_value(GPIO_MICBIAS_EN2, on);
         }
-#else
-        gpio_set_value(GPIO_MICBIAS_EN, on);
-#endif
 #else
 		gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
 #endif
@@ -2779,6 +2782,9 @@ static int sec_jack_get_adc_value(void)
 }
 
 struct sec_jack_platform_data sec_jack_pdata = {
+#if defined(CONFIG_SAMSUNG_VIBRANT)
+	.set_earpath_sel = sec_jack_set_earpath_sel,
+#endif
 	.set_micbias_state = sec_jack_set_micbias_state,
 	.get_adc_value = sec_jack_get_adc_value,
 	.zones = sec_jack_zones,
@@ -4816,17 +4822,6 @@ static void __init sound_init(void)
 	reg &= ~0x1;
 	reg |= 0x1;
 	__raw_writel(reg, S5P_CLK_OUT);
-
-#if defined(CONFIG_SAMSUNG_VIBRANT)
-    if((HWREV == 0x0A) || (HWREV == 0x0C) || (HWREV == 0x0D) || (HWREV == 0x0E) ) //0x0A:00, 0x0C:00, 0x0D:01, 0x0E:05
-        gpio_request(GPIO_MICBIAS_EN, "micbias_enable");
-    else {
-        gpio_request(GPIO_MICBIAS_EN2, "micbias_enable2");
-        gpio_request(GPIO_MICBIAS_EN, "micbias_enable");
-    }
-#else
-	gpio_request(GPIO_MICBIAS_EN, "micbias_enable");
-#endif
 }
 
 static bool console_flushed;
@@ -4913,14 +4908,27 @@ static void __init aries_machine_init(void)
 #endif
 
 	/* headset/earjack detection */
-#if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined (CONFIG_SAMSUNG_VIBRANT)
+    gpio_request(GPIO_EARPATH_SEL, "earpath_sel");
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
     gpio_request(GPIO_EAR_MICBIAS_EN, "ear_micbias_enable");
+	gpio_request(GPIO_MICBIAS_EN, "micbias_enable");
 #elif defined(CONFIG_SAMSUNG_GALAXYS) || defined(CONFIG_SAMSUNG_GALAXYSB)
-    //no EAR_MICBIAS_EN on galaxys
+	gpio_request(GPIO_MICBIAS_EN, "micbias_enable");
+#elif defined(CONFIG_SAMSUNG_VIBRANT)
+    gpio_set_value(GPIO_EARPATH_SEL, 1); // we start off 1 on Vibrant
+
+    if((HWREV == 0x0A) || (HWREV == 0x0C) || (HWREV == 0x0D) || (HWREV == 0x0E) ) //0x0A:00, 0x0C:00, 0x0D:01, 0x0E:05
+        gpio_request(GPIO_MICBIAS_EN, "micbias_enable");
+    else {
+        gpio_request(GPIO_MICBIAS_EN2, "micbias_enable2");
+        gpio_request(GPIO_MICBIAS_EN, "micbias_enable");
+    }
 #else
+	gpio_request(GPIO_MICBIAS_EN, "micbias_enable");
 	if (system_rev >= 0x09)
 		gpio_request(GPIO_EAR_MICBIAS_EN, "ear_micbias_enable");
 #endif
+
 
 	gpio_request(GPIO_TOUCH_EN, "touch en");
 
