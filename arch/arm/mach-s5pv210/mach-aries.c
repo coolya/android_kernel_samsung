@@ -1608,8 +1608,10 @@ static void sec_jack_set_micbias_state(bool on)
 #if defined(CONFIG_SAMSUNG_VIBRANT) //hate ifdefs? here's a nested one for your pleasure . . .
         if((HWREV == 0x0A) || (HWREV == 0x0C) || (HWREV == 0x0D) || (HWREV == 0x0E) ) //0x0A:00, 0x0C:00, 0x0D:01, 0x0E:05
             gpio_set_value(GPIO_MICBIAS_EN, on);
-        else
+        else {
             gpio_set_value(GPIO_MICBIAS_EN2, on);
+            gpio_set_value(GPIO_MICBIAS_EN, on);
+        }
 #else
 		gpio_set_value(GPIO_MICBIAS_EN, on);
 #endif
@@ -4912,10 +4914,10 @@ static void __init aries_machine_init(void)
 #endif
 
 	/* headset/earjack detection */
-#if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined (CONFIG_SAMSUNG_VIBRANT)
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
     gpio_request(GPIO_EAR_MICBIAS_EN, "ear_micbias_enable");
-#elif defined(CONFIG_SAMSUNG_GALAXYS) || defined(CONFIG_SAMSUNG_GALAXYSB)
-    //no EAR_MICBIAS_EN on galaxys
+#elif defined (CONFIG_SAMSUNG_VIBRANT) || defined(CONFIG_SAMSUNG_GALAXYS) || defined(CONFIG_SAMSUNG_GALAXYSB)
+    /* nothing */
 #else
 	if (system_rev >= 0x09)
 		gpio_request(GPIO_EAR_MICBIAS_EN, "ear_micbias_enable");
