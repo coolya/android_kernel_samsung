@@ -85,7 +85,7 @@ CONFIG_RT_GROUP_SCHED=y
 # CONFIG_RELAY is not set
 # CONFIG_NAMESPACES is not set
 CONFIG_BLK_DEV_INITRD=y
-CONFIG_INITRAMFS_SOURCE="out/target/product/vibrant/recovery/root"
+CONFIG_INITRAMFS_SOURCE="out/target/product/vibrant/recovery.cpio"
 CONFIG_INITRAMFS_ROOT_UID=squash
 CONFIG_INITRAMFS_ROOT_GID=squash
 CONFIG_RD_GZIP=y
