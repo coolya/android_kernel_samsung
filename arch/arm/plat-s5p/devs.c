@@ -47,6 +47,8 @@
 #define S3C_UMS_ADB_PRODUCT_ID		0x4E22
 #define S3C_RNDIS_PRODUCT_ID		0x4E23
 #define S3C_RNDIS_ADB_PRODUCT_ID	0x4E24
+#define S3C_UMS_RNDIS_ADB_PRODUCT_ID	0x4E25
+#define S3C_UMS_RNDIS_MTP_ADB_PRODUCT_ID	0x4E26
 #define MAX_USB_SERIAL_NUM	17
 
 static char *usb_functions_ums[] = {
@@ -66,9 +68,23 @@ static char *usb_functions_ums_adb[] = {
 	"adb",
 };
 
+static char *usb_functions_ums_rndis_adb[] = {
+	"usb_mass_storage",
+	"rndis",
+	"adb",
+};
+
+static char *usb_functions_ums_rndis_mtp_adb[] = {
+	"usb_mass_storage",
+	"rndis",
+    "mtp",
+	"adb",
+};
+
 static char *usb_functions_all[] = {
 	"rndis",
 	"usb_mass_storage",
+    "mtp",
 	"adb",
 };
 static struct android_usb_product usb_products[] = {
@@ -92,6 +108,16 @@ static struct android_usb_product usb_products[] = {
 		.num_functions	= ARRAY_SIZE(usb_functions_rndis_adb),
 		.functions	= usb_functions_rndis_adb,
 	},
+	{
+		.product_id	= S3C_UMS_RNDIS_ADB_PRODUCT_ID,
+		.num_functions	= ARRAY_SIZE(usb_functions_ums_rndis_adb),
+		.functions	= usb_functions_ums_rndis_adb,
+	},
+	{
+		.product_id	= S3C_UMS_RNDIS_MTP_ADB_PRODUCT_ID,
+		.num_functions	= ARRAY_SIZE(usb_functions_ums_rndis_mtp_adb),
+		.functions	= usb_functions_ums_rndis_mtp_adb,
+	},
 };
 
 static char device_serial[MAX_USB_SERIAL_NUM] = "0123456789ABCDEF";
@@ -106,8 +132,8 @@ static struct android_usb_platform_data android_usb_pdata = {
 	.serial_number		= device_serial,
 	.num_products		= ARRAY_SIZE(usb_products),
 	.products		= usb_products,
-	.num_functions		= ARRAY_SIZE(usb_functions_all),
-	.functions		= usb_functions_all,
+	.num_functions		= ARRAY_SIZE(usb_functions_ums_rndis_adb),
+	.functions		= usb_functions_ums_rndis_adb,
 };
 
 static struct usb_ether_platform_data rndis_pdata = {
