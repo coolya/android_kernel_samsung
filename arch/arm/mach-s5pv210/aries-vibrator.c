@@ -31,8 +31,8 @@
 
 #define GPD0_TOUT_1		2 << 4
 
-#define PWM_PERIOD		(89284 / 2)
-#define PWM_DUTY		(87280 / 2)
+#define PWM_PERIOD		(87084 / 2)
+#define PWM_DUTY		(70000 / 2)
 #define MAX_TIMEOUT		10000 /* 10s */
 
 static struct vibrator {
