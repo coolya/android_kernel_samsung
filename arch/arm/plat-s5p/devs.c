@@ -47,8 +47,8 @@
 #define S3C_UMS_ADB_PRODUCT_ID		0x4E22
 #define S3C_RNDIS_PRODUCT_ID		0x4E23
 #define S3C_RNDIS_ADB_PRODUCT_ID	0x4E24
-#define S3C_UMS_RNDIS_ADB_PRODUCT_ID	0x4E25
-#define S3C_UMS_RNDIS_MTP_ADB_PRODUCT_ID	0x4E26
+#define S3C_RNDIS_UMS_ADB_PRODUCT_ID	0x4E25
+
 #define MAX_USB_SERIAL_NUM	17
 
 static char *usb_functions_ums[] = {
@@ -68,24 +68,29 @@ static char *usb_functions_ums_adb[] = {
 	"adb",
 };
 
-static char *usb_functions_ums_rndis_adb[] = {
-	"usb_mass_storage",
+/* rndis has to be first so that it always has interface 0 */
+static char *usb_functions_rndis_ums_adb[] = {
 	"rndis",
-	"adb",
-};
-
-static char *usb_functions_ums_rndis_mtp_adb[] = {
 	"usb_mass_storage",
-	"rndis",
-    "mtp",
 	"adb",
 };
 
 static char *usb_functions_all[] = {
+#ifdef CONFIG_USB_ANDROID_RNDIS
 	"rndis",
+#endif
+#ifdef CONFIG_USB_ANDROID_MASS_STORAGE
 	"usb_mass_storage",
-    "mtp",
+#endif
+#ifdef CONFIG_USB_ANDROID_ADB
 	"adb",
+#endif
+#ifdef CONFIG_USB_ANDROID_MTP
+    "mtp",
+#endif
+#ifdef CONFIG_USB_ANDROID_ACM
+    "acm",
+#endif
 };
 static struct android_usb_product usb_products[] = {
 	{
@@ -109,14 +114,9 @@ static struct android_usb_product usb_products[] = {
 		.functions	= usb_functions_rndis_adb,
 	},
 	{
-		.product_id	= S3C_UMS_RNDIS_ADB_PRODUCT_ID,
-		.num_functions	= ARRAY_SIZE(usb_functions_ums_rndis_adb),
-		.functions	= usb_functions_ums_rndis_adb,
-	},
-	{
-		.product_id	= S3C_UMS_RNDIS_MTP_ADB_PRODUCT_ID,
-		.num_functions	= ARRAY_SIZE(usb_functions_ums_rndis_mtp_adb),
-		.functions	= usb_functions_ums_rndis_mtp_adb,
+		.product_id	= S3C_RNDIS_UMS_ADB_PRODUCT_ID,
+		.num_functions	= ARRAY_SIZE(usb_functions_rndis_ums_adb),
+		.functions	= usb_functions_rndis_ums_adb,
 	},
 };
 
@@ -128,12 +128,20 @@ static struct android_usb_platform_data android_usb_pdata = {
 	.vendor_id		= S3C_VENDOR_ID,
 	.product_id		= S3C_UMS_PRODUCT_ID,
 	.manufacturer_name	= "Samsung",
+#if defined(CONFIG_SAMSUNG_GALAXYS) || defined(CONFIG_SAMSUNG_GALAXYSB)
+	.product_name		= "Galaxy S",
+#elif defined(CONFIG_SAMSUNG_CAPTIVATE)
+	.product_name		= "Captivate",
+#elif defined(CONFIG_SAMSUNG_VIBRANT)
+	.product_name		= "Vibrant",
+#else
 	.product_name		= "Nexus S",
+#endif
 	.serial_number		= device_serial,
 	.num_products		= ARRAY_SIZE(usb_products),
 	.products		= usb_products,
-	.num_functions		= ARRAY_SIZE(usb_functions_ums_rndis_adb),
-	.functions		= usb_functions_ums_rndis_adb,
+	.num_functions		= ARRAY_SIZE(usb_functions_all),
+	.functions		= usb_functions_all,
 };
 
 static struct usb_ether_platform_data rndis_pdata = {
