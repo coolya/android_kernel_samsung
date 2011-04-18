@@ -944,7 +944,7 @@ CONFIG_BLK_DEV_RAM_SIZE=8192
 # CONFIG_MG_DISK is not set
 CONFIG_MISC_DEVICES=y
 # CONFIG_AD525X_DPOT is not set
-# CONFIG_ANDROID_PMEM is not set
+CONFIG_ANDROID_PMEM=y
 
 #
 # Reserved memory configurations
