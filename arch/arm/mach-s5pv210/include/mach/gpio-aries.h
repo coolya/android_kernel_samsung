@@ -356,6 +356,7 @@
 #define GPIO_GPH16				S5PV210_GPH1(6)
 
 #define GPIO_PHONE_ACTIVE		S5PV210_GPH1(7)
+#define GPIO_PHONE_ACTIVE_AF	2
 
 #define GPIO_KBC0				S5PV210_GPH2(0)
 #define GPIO_KBC0_AF			3
@@ -511,8 +512,8 @@
 
 #define GPIO_AP_PMIC_SDA		S5PV210_GPJ4(0)
 
-#define  _3_GPIO_TOUCH_INT		S5PV210_GPJ4(1)
-#define _3_GPIO_TOUCH_INT_AF		S3C_GPIO_SFN(0xf)
+#define _3_GPIO_TOUCH_INT		S5PV210_GPJ4(1)
+#define _3_GPIO_TOUCH_INT_AF	S3C_GPIO_SFN(0xf)
 
 #define GPIO_MICBIAS_EN			S5PV210_GPJ4(2)
 
@@ -648,14 +649,10 @@
 #define 	GPIO_FLM_TXD_AF 	2
 
 #define		GPIO_AP_PS_HOLD		S5PV210_GPH0(0)
-#define		GPIO_AP_PS_HOLD_AF	1 //?
-
-
-#define		GPIO_PHONE_ACTIVE		S5PV210_GPH1(7)
-#define		GPIO_PHONE_ACTIVE_AF	2 //?
+#define		GPIO_AP_PS_HOLD_AF	1
 
 #define		GPIO_N_POWER		S5PV210_GPH2(6)
-#define		GPIO_N_POWER_AF		2 //?
+#define		GPIO_N_POWER_AF		2
 
 #if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 #define		GPIO_BT_RST			S5PV210_GPB(6)
@@ -668,4 +665,8 @@
 
 #define 	GPIO_JACK_INT_N 	S5PV210_GPH2(7)
 #define		GPIO_JACK_INT_N_AF	0xFF
+
+#define _3_GPIO_TOUCH_CE		S5PV210_GPJ3(3)
 #endif
+/* end of __GPIO_HERRING_H_ */
+
