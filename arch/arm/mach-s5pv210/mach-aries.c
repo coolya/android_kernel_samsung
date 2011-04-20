@@ -147,7 +147,7 @@ static int aries_notifier_call(struct notifier_block *this,
 					unsigned long code, void *_cmd)
 {
 	int mode = REBOOT_MODE_NONE;
-	unsigned int temp;
+/*	unsigned int temp; // unused (codeworkx - dani.hillenbrand@googlemail.com) */
 
 	if ((code == SYS_RESTART) && _cmd) {
 		if (!strcmp((char *)_cmd, "recovery"))
@@ -309,56 +309,6 @@ static struct s3cfb_lcd s6e63m0 = {
 		.inv_hsync = 1,
 		.inv_vsync = 1,
 		.inv_vden = 1,
-	},
-};
-
-static struct s3cfb_lcd nt35580 = {
-	.width = 480,
-	.height = 800,
-	.p_width = 52,
-	.p_height = 86,
-	.bpp = 24,
-	.freq = 60,
-	.timing = {
-		.h_fp = 10,
-		.h_bp = 20,
-		.h_sw = 10,
-		.v_fp = 6,
-		.v_fpe = 1,
-		.v_bp = 8,
-		.v_bpe = 1,
-		.v_sw = 2,
-	},
-	.polarity = {
-		.rise_vclk = 1,
-		.inv_hsync = 1,
-		.inv_vsync = 1,
-		.inv_vden = 1,
-	},
-};
-
-static struct s3cfb_lcd r61408 = {
-	.width = 480,
-	.height = 800,
-	.p_width = 52,
-	.p_height = 86,
-	.bpp = 24,
-	.freq = 60,
-	.timing = {
-		.h_fp = 100,
-		.h_bp = 2,
-		.h_sw = 2,
-		.v_fp = 8,
-		.v_fpe = 1,
-		.v_bp = 10,
-		.v_bpe = 1,
-		.v_sw = 2,
-	},
-	.polarity = {
-		.rise_vclk = 1,
-		.inv_hsync = 1,
-		.inv_vsync = 1,
-		.inv_vden = 0,
 	},
 };
 
@@ -1226,32 +1176,6 @@ static struct s3c_platform_fb tl2796_data __initdata = {
 	.reset_lcd	= panel_reset_lcd,
 };
 
-static struct s3c_platform_fb nt35580_data __initdata = {
-	.hw_ver		= 0x62,
-	.clk_name	= "sclk_fimd",
-	.nr_wins	= 5,
-	.default_win	= CONFIG_FB_S3C_DEFAULT_WINDOW,
-	.swap		= FB_SWAP_HWORD | FB_SWAP_WORD,
-
-	.lcd			= &nt35580,
-	.cfg_gpio	= panel_cfg_gpio,
-	.backlight_on	= panel_backlight_on,
-	.reset_lcd	= panel_reset_lcd,
-};
-
-static struct s3c_platform_fb r61408_data __initdata = {
-	.hw_ver		= 0x62,
-	.clk_name	= "sclk_fimd",
-	.nr_wins	= 5,
-	.default_win	= CONFIG_FB_S3C_DEFAULT_WINDOW,
-	.swap		= FB_SWAP_HWORD | FB_SWAP_WORD,
-
-	.lcd			= &r61408,
-	.cfg_gpio	= panel_cfg_gpio,
-	.backlight_on	= panel_backlight_on,
-	.reset_lcd	= panel_reset_lcd,
-};
-
 #define LCD_BUS_NUM     3
 #define DISPLAY_CS      S5PV210_MP01(1)
 #define SUB_DISPLAY_CS  S5PV210_MP01(2)
@@ -1269,43 +1193,6 @@ static struct spi_board_info spi_board_info[] __initdata = {
 		.controller_data = (void *)DISPLAY_CS,
 	},
 };
-
-static struct spi_board_info spi_board_info_sony[] __initdata = {
-	{
-		.modalias	= "nt35580",
-		.platform_data	= &aries_sony_panel_data,
-		.max_speed_hz	= 1200000,
-		.bus_num	= LCD_BUS_NUM,
-		.chip_select	= 0,
-		.mode		= SPI_MODE_3,
-		.controller_data = (void *)DISPLAY_CS,
-	},
-};
-
-static struct spi_board_info spi_board_info_hydis[] __initdata = {
-	{
-		.modalias	= "nt35580",
-		.platform_data	= &aries_hydis_panel_data,
-		.max_speed_hz	= 1200000,
-		.bus_num	= LCD_BUS_NUM,
-		.chip_select	= 0,
-		.mode		= SPI_MODE_3,
-		.controller_data = (void *)DISPLAY_CS,
-	},
-};
-
-static struct spi_board_info spi_board_info_hitachi[] __initdata = {
-	{
-		.modalias	= "nt35580",
-		.platform_data	= &aries_hitachi_panel_data,
-		.max_speed_hz	= 1200000,
-		.bus_num	= LCD_BUS_NUM,
-		.chip_select	= 0,
-		.mode		= SPI_MODE_3,
-		.controller_data = (void *)DISPLAY_CS,
-	},
-};
-
 
 static struct spi_gpio_platform_data tl2796_spi_gpio_data = {
 	.sck	= DISPLAY_CLK,
@@ -2262,8 +2149,10 @@ static struct s3c_platform_jpeg jpeg_plat __initdata = {
 #endif
 
 /* I2C0 */
+/* unused (codeworkx - dani.hillenbrand@googlemail.com)
 static struct i2c_board_info i2c_devs0[] __initdata = {
 };
+*/
 
 static struct i2c_board_info i2c_devs4[] __initdata = {
 	{
@@ -2273,8 +2162,10 @@ static struct i2c_board_info i2c_devs4[] __initdata = {
 };
 
 /* I2C1 */
+/* unused (codeworkx - dani.hillenbrand@googlemail.com)
 static struct i2c_board_info i2c_devs1[] __initdata = {
 };
+*/
 
 static void mxt224_power_on(void)
 {
@@ -2353,93 +2244,7 @@ static struct i2c_board_info i2c_devs2[] __initdata = {
 
 static void mxt224_init(void)
 {
-#if defined (ENABLE_VIRTUAL_KEYS)		
-	mxt224_data.max_y = 950;
-	t9_config[8] = 45;
-	t9_config[9] = 3;
-	t9_config[23] = 0;
-	t9_config[24] = 0;
-	t9_config[27] = 0;
-	t9_config[28] = 0;
-	t9_config[29] = 0;
-	t9_config[30] = 0;
-#else
 	return;
-#endif
-}
-
-#if defined (CONFIG_SAMSUNG_GALAXYS) || defined (CONFIG_SAMSUNG_GALAXYSB)
-static ssize_t aries_virtual_keys_show(struct kobject *kobj,
-					struct kobj_attribute *attr, char *buf)
-{
-	return sprintf(buf,
-		__stringify(EV_KEY) ":" __stringify(KEY_BACK) ":425:930:75:75" /*:x:y:w:h*/
-		":" __stringify(EV_KEY) ":"
-					__stringify(KEY_MENU) ":60:930:75:75"
-		":" __stringify(EV_KEY) ":"
-					__stringify(KEY_SEARCH) ":0:0:0:0"
-		":" __stringify(EV_KEY) ":"
-					__stringify(KEY_HOME) ":0:0:0:0"
-		"\n");
-}
-#elif defined (CONFIG_SAMSUNG_CAPTIVATE)
-static ssize_t aries_virtual_keys_show(struct kobject *kobj,
-					struct kobj_attribute *attr, char *buf)
-{
-	return sprintf(buf,
-		__stringify(EV_KEY) ":" __stringify(KEY_MENU) ":71:839:73:62"
-		":" __stringify(EV_KEY) ":"
-					__stringify(KEY_HOME) ":183:839:73:62"
-		":" __stringify(EV_KEY) ":"
-					__stringify(KEY_BACK) ":294:839:73:62"
-		":" __stringify(EV_KEY) ":"
-					__stringify(KEY_SEARCH) ":406:839:73:62"
-		"\n");
-}
-#else
-static ssize_t aries_virtual_keys_show(struct kobject *kobj,
-					struct kobj_attribute *attr, char *buf)
-{
-	return sprintf(buf,
-		__stringify(EV_KEY) ":" __stringify(KEY_BACK) ":71:839:73:62"
-		":" __stringify(EV_KEY) ":"
-					__stringify(KEY_MENU) ":183:839:73:62"
-		":" __stringify(EV_KEY) ":"
-					__stringify(KEY_SEARCH) ":294:839:73:62"
-		":" __stringify(EV_KEY) ":"
-					__stringify(KEY_HOME) ":406:839:73:62"
-		"\n");
-}
-#endif
-
-static struct kobj_attribute aries_virtual_keys_attr = {
-	.attr = {
-		.name = "virtualkeys.mxt224_ts_input",
-		.mode = S_IRUGO,
-	},
-	.show = &aries_virtual_keys_show,
-};
-
-static struct attribute *aries_properties_attrs[] = {
-	&aries_virtual_keys_attr.attr,
-	NULL,
-};
-
-static struct attribute_group aries_properties_attr_group = {
-	.attrs = aries_properties_attrs,
-};
-
-static void aries_virtual_keys_init(void)
-{
-	struct kobject *properties_kobj;
-	int ret;
-
-	properties_kobj = kobject_create_and_add("board_properties", NULL);
-	if (properties_kobj)
-		ret = sysfs_create_group(properties_kobj,
-						&aries_properties_attr_group);
-	if (!properties_kobj || ret)
-		pr_err("failed to create board_properties\n");
 }
 
 /* I2C2 */
@@ -4941,14 +4746,9 @@ static void __init aries_machine_init(void)
 	/* max8998 */
 	i2c_register_board_info(6, i2c_devs6, ARRAY_SIZE(i2c_devs6));
 
-#if defined (ENABLE_VIRTUAL_KEYS)
-	/* virtual keys */	
-	aries_virtual_keys_init();
-#else
 	/* cypress touchkey */
 	touch_keypad_gpio_init();
 	i2c_register_board_info(10, i2c_devs10, ARRAY_SIZE(i2c_devs10));
-#endif	
 
 	/* FSA9480 */
 	fsa9480_gpio_init();
@@ -4982,7 +4782,6 @@ static void __init aries_machine_init(void)
 #endif
 
 	s5ka3dfx_request_gpio();
-
 	ce147_init();
 
 #ifdef CONFIG_VIDEO_FIMC
