@@ -353,14 +353,18 @@ static void bma023_work_func(struct work_struct *work)
 						  struct bma023_data, work);
 	struct acceleration accel;
 	unsigned long delay = delay_to_jiffies(atomic_read(&bma023->delay));
-
 	bma023_measure(bma023, &accel);
-
+	
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)	
+	input_report_rel(bma023->input, REL_X, (-(accel.y)));
+	input_report_rel(bma023->input, REL_Y, accel.x);
+	input_report_rel(bma023->input, REL_Z, accel.z);
+#else
 	input_report_rel(bma023->input, REL_X, accel.x);
 	input_report_rel(bma023->input, REL_Y, accel.y);
 	input_report_rel(bma023->input, REL_Z, accel.z);
+#endif
 	input_sync(bma023->input);
-
 	schedule_delayed_work(&bma023->work, delay);
 }
 
