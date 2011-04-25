@@ -70,7 +70,7 @@
 static u8 reg_defaults[5] = {
 	0x00, /* PROX: read only register */
 	0x08, /* GAIN: large LED drive level */
-	0xC2, /* HYS: receiver sensitivity */
+	0x40, /* HYS: receiver sensitivity */
 	0x04, /* CYCLE: */
 	0x01, /* OPMOD: normal operating mode */
 };
@@ -88,6 +88,8 @@ struct gp2a_data {
 	struct input_dev *light_input_dev;
 	struct gp2a_platform_data *pdata;
 	struct i2c_client *i2c_client;
+	struct class *lightsensor_class;
+	struct device *switch_cmd_dev;
 	int irq;
 	struct work_struct work_light;
 	struct hrtimer timer;
@@ -100,6 +102,7 @@ struct gp2a_data {
 	struct mutex power_lock;
 	struct wake_lock prx_wake_lock;
 	struct workqueue_struct *wq;
+	char val_state;
 };
 
 int gp2a_i2c_write(struct gp2a_data *gp2a, u8 reg, u8 *val)
@@ -369,13 +372,23 @@ static enum hrtimer_restart gp2a_timer_func(struct hrtimer *timer)
 irqreturn_t gp2a_irq_handler(int irq, void *data)
 {
 	struct gp2a_data *ip = data;
+	u8 setting;
 	int val = gpio_get_value(ip->pdata->p_out);
 	if (val < 0) {
 		pr_err("%s: gpio_get_value error %d\n", __func__, val);
 		return IRQ_HANDLED;
 	}
 
-	gp2a_dbgmsg("gp2a: proximity val=%d\n", val);
+	if (val != ip->val_state) {
+		if (val)
+			setting = 0x40;
+		else
+			setting = 0x20;
+		gp2a_i2c_write(ip, REGS_HYS, &setting);
+	}
+
+	ip->val_state = val;
+	pr_err("gp2a: proximity val = %d\n", val);
 
 	/* 0 is close, 1 is far */
 	input_report_abs(ip->proximity_input_dev, ABS_DISTANCE, val);
@@ -408,7 +421,7 @@ static int gp2a_setup_irq(struct gp2a_data *gp2a)
 	}
 
 	irq = gpio_to_irq(pdata->p_out);
-	rc = request_irq(irq,
+	rc = request_threaded_irq(irq, NULL,
 			 gp2a_irq_handler,
 			 IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
 			 "proximity_int",
@@ -434,6 +447,29 @@ err_gpio_direction_input:
 done:
 	return rc;
 }
+
+static ssize_t lightsensor_file_state_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct gp2a_data *gp2a = dev_get_drvdata(dev);
+	int adc = 0;
+
+	adc = lightsensor_get_adcvalue(gp2a);
+	return sprintf(buf, "%d\n", adc);
+}
+
+static DEVICE_ATTR(lightsensor_file_state, 0644, lightsensor_file_state_show,
+	NULL);
+
+static const struct file_operations light_fops = {
+	.owner  = THIS_MODULE,
+};
+
+static struct miscdevice light_device = {
+    .minor  = MISC_DYNAMIC_MINOR,
+    .name   = "light",
+    .fops   = &light_fops,
+};
 
 static int gp2a_i2c_probe(struct i2c_client *client,
 			  const struct i2c_device_id *id)
@@ -486,7 +522,7 @@ static int gp2a_i2c_probe(struct i2c_client *client,
 	}
 	gp2a->proximity_input_dev = input_dev;
 	input_set_drvdata(input_dev, gp2a);
-	input_dev->name = "proximity";
+	input_dev->name = "proximity_sensor";
 	input_set_capability(input_dev, EV_ABS, ABS_DISTANCE);
 	input_set_abs_params(input_dev, ABS_DISTANCE, 0, 1, 0, 0);
 
@@ -528,7 +564,7 @@ static int gp2a_i2c_probe(struct i2c_client *client,
 		goto err_input_allocate_device_light;
 	}
 	input_set_drvdata(input_dev, gp2a);
-	input_dev->name = "lightsensor-level";
+	input_dev->name = "light_sensor";
 	input_set_capability(input_dev, EV_ABS, ABS_MISC);
 	input_set_abs_params(input_dev, ABS_MISC, 0, 1, 0, 0);
 
@@ -546,6 +582,34 @@ static int gp2a_i2c_probe(struct i2c_client *client,
 		pr_err("%s: could not create sysfs group\n", __func__);
 		goto err_sysfs_create_group_light;
 	}
+
+	/* set sysfs for light sensor */
+
+	ret = misc_register(&light_device);
+	if (ret)
+		pr_err(KERN_ERR "misc_register failed - light\n");
+
+	gp2a->lightsensor_class = class_create(THIS_MODULE, "lightsensor");
+	if (IS_ERR(gp2a->lightsensor_class))
+		pr_err("Failed to create class(lightsensor)!\n");
+
+	gp2a->switch_cmd_dev = device_create(gp2a->lightsensor_class,
+		NULL, 0, NULL, "switch_cmd");
+	if (IS_ERR(gp2a->switch_cmd_dev))
+		pr_err("Failed to create device(switch_cmd_dev)!\n");
+
+	if (device_create_file(gp2a->switch_cmd_dev,
+		&dev_attr_lightsensor_file_state) < 0)
+		pr_err("Failed to create device file(%s)!\n",
+			dev_attr_lightsensor_file_state.attr.name);
+
+	dev_set_drvdata(gp2a->switch_cmd_dev, gp2a);
+
+#ifdef CONFIG_ARIES_NTT
+	/* set initial proximity value as 1 */
+	input_report_abs(gp2a->proximity_input_dev, ABS_DISTANCE, 1);
+	input_sync(gp2a->proximity_input_dev);
+#endif
 	goto done;
 
 	/* error, unwind it all */
@@ -611,7 +675,6 @@ static int gp2a_i2c_remove(struct i2c_client *client)
 	free_irq(gp2a->irq, NULL);
 	gpio_free(gp2a->pdata->p_out);
 	if (gp2a->power_state) {
-		gp2a->power_state = 0;
 		if (gp2a->power_state & LIGHT_ENABLED)
 			gp2a_light_disable(gp2a);
 		gp2a->pdata->power(false);
