@@ -37,13 +37,11 @@ config SND_VOODOO_RECORD_PRESETS
 	    - Loud environment - concert
 
 config SND_VOODOO_FM
-	bool "FM radio: restore a normal frequency response"
-	depends on SND_VOODOO && SND_ARIES_SOC_WM8994
-	default n if S5PC110_T959_BOARD=y || S5PC110_KEPLER_BOARD=y || S5PV210_VICTORY=y || M110S=y
-	default y
+	bool "FM radio: frequency response and levels optimizations"
+	depends on SND_VOODOO && ARIES_EUR
+	default n
 	help
 	  Adds a control to enable or disable the high-pass filter on FM radio
-
 
 config SND_VOODOO_MODULE
 	tristate "Build also as module (incomplete)"
