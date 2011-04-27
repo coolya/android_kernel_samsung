@@ -58,7 +58,7 @@ config S5P_HIGH_RES_TIMERS
 	help
 	  Support for HRtimer and Dynamic Tick system.
 
-config S5P_HIGH_RES_TIMER_HZ
+config S5P_HIGH_RES_TIMERS_HZ
 	int
 	depends on S5P_HIGH_RES_TIMERS
 	default "256"
