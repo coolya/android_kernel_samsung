@@ -2,15 +2,17 @@
 
 setup ()
 {
-    if [ x == "x$ANDROID_BUILD_TOP" ] ; then
+    if [ x = "x$ANDROID_BUILD_TOP" ] ; then
         echo "Android build environment must be configured"
+        exit 1
     fi
+    . "$ANDROID_BUILD_TOP"/build/envsetup.sh
 
     KERNEL_DIR="$(dirname "$(readlink -f "$0")")"
     BUILD_DIR="$KERNEL_DIR/build"
     MODULES=("drivers/net/wireless/bcm4329/bcm4329.ko" "fs/cifs/cifs.ko" "drivers/net/tun.ko")
 
-    if [ x == "x$NO_CCACHE" ] && ccache -V &>/dev/null ; then
+    if [ x = "x$NO_CCACHE" ] && ccache -V &>/dev/null ; then
         CCACHE=ccache
         CCACHE_BASEDIR="$KERNEL_DIR"
         CCACHE_COMPRESS=1
@@ -21,7 +23,6 @@ setup ()
     fi
 
     CROSS_PREFIX="$ANDROID_TOOLCHAIN/arm-eabi-"
-    NUMPROCS=$(grep 'processor' /proc/cpuinfo | wc -l)
 }
 
 build ()
@@ -34,8 +35,8 @@ build ()
     mkdir -p "$target_dir/usr"
     cp "$KERNEL_DIR/usr/"*.list "$target_dir/usr"
     sed "s|usr/|$KERNEL_DIR/usr/|g" -i "$target_dir/usr/"*.list
-    make -j $NUMPROCS -C "$KERNEL_DIR" O="$target_dir" aries_${target}_defconfig HOSTCC="$CCACHE gcc"
-    make -j $NUMPROCS -C "$KERNEL_DIR" O="$target_dir" HOSTCC="$CCACHE gcc" CROSS_COMPILE="$CCACHE $CROSS_PREFIX" zImage modules
+    mka -C "$KERNEL_DIR" O="$target_dir" aries_${target}_defconfig HOSTCC="$CCACHE gcc"
+    mka -C "$KERNEL_DIR" O="$target_dir" HOSTCC="$CCACHE gcc" CROSS_COMPILE="$CCACHE $CROSS_PREFIX" zImage modules
     cp "$target_dir"/arch/arm/boot/zImage $ANDROID_BUILD_TOP/device/samsung/kernel
     for module in "${MODULES[@]}" ; do
         cp "$target_dir/$module" $ANDROID_BUILD_TOP/device/samsung/kernel
