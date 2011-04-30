@@ -54,6 +54,13 @@ config S5PV210_POWER_DOMAIN
 	help
 	  Enable S5PV210 power domain support.
 
+config S5PV210_CORESIGHT
+	bool "Coresight"
+	select OC_ETM
+	default y
+	help
+	  Support embedded trace cell
+
 # machine support
 
 config MACH_AQUILA
@@ -131,6 +138,7 @@ config MACH_HERRING
 	select ARCH_HAS_CPUFREQ
 	select S3C_DEV_HSMMC
 	select S3C_DEV_HSMMC1 if !S5PV210_SD_CH0_8BIT
+	select S3C_DEV_HSMMC2
 	select S3C_DEV_HSMMC3 if !S5PV210_SD_CH2_8BIT
 	select S5PV210_SETUP_SDHCI
 	select S5PV210_POWER_DOMAIN

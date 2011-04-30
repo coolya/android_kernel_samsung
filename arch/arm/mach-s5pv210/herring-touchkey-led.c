@@ -17,6 +17,8 @@
 #include <linux/earlysuspend.h>
 #include <asm/mach-types.h>
 
+#include "herring.h"
+
 static int led_gpios[] = { 2, 3, 6, 7 };
 
 static void herring_touchkey_led_onoff(int onoff)
@@ -48,7 +50,7 @@ static int __init herring_init_touchkey_led(void)
 	int i;
 	int ret = 0;
 
-	if (!machine_is_herring() || system_rev < 0x10)
+	if (!machine_is_herring() || !herring_is_tft_dev())
 		return 0;
 
 	for (i = 0; i < ARRAY_SIZE(led_gpios); i++) {

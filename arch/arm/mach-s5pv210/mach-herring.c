@@ -91,6 +91,8 @@
 #include <linux/input/mxt224.h>
 #include <linux/max17040_battery.h>
 #include <linux/mfd/max8998.h>
+#include <linux/regulator/max8893.h>
+#include <linux/wimax/samsung/wimax732.h>
 #include <linux/switch.h>
 
 #include "herring.h"
@@ -199,11 +201,28 @@ static void uart_switch_init(void)
 	}
 	s3c_gpio_setpull(GPIO_UART_SEL, S3C_GPIO_PULL_NONE);
 	s3c_gpio_cfgpin(GPIO_UART_SEL, S3C_GPIO_OUTPUT);
+
 	gpio_direction_output(GPIO_UART_SEL, 1);
 
 	gpio_export(GPIO_UART_SEL, 1);
 
 	gpio_export_link(uartswitch_dev, "UART_SEL", GPIO_UART_SEL);
+
+	if (herring_is_cdma_wimax_dev()) {
+		ret = gpio_request(GPIO_UART_SEL1, "UART_SEL1");
+		if (ret < 0) {
+			pr_err("Failed to request GPIO_UART_SEL1!\n");
+			gpio_free(GPIO_UART_SEL);
+			return;
+		}
+
+		s3c_gpio_cfgpin(GPIO_UART_SEL1, S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(GPIO_UART_SEL1, S3C_GPIO_PULL_NONE);
+		gpio_direction_output(GPIO_UART_SEL1, 0);
+
+		gpio_export(GPIO_UART_SEL1, 1);
+		gpio_export_link(uartswitch_dev, "UART_SEL1", GPIO_UART_SEL1);
+	}
 }
 
 static void herring_switch_init(void)
@@ -761,6 +780,25 @@ static struct max8998_regulator_data herring_regulators[] = {
 	{ MAX8998_BUCK4, &herring_buck4_data },
 };
 
+static struct max8998_regulator_data herring_cdma_wimax_regulators[] = {
+	{ MAX8998_LDO2,  &herring_ldo2_data },
+	{ MAX8998_LDO3,  &herring_ldo3_data },
+	{ MAX8998_LDO4,  &herring_ldo4_data },
+	{ MAX8998_LDO7,  &herring_ldo7_data },
+	{ MAX8998_LDO8,  &herring_ldo8_data },
+	{ MAX8998_LDO9,  &herring_ldo9_data },
+	{ MAX8998_LDO11, &herring_ldo11_data },
+	{ MAX8998_LDO13, &herring_ldo13_data },
+	{ MAX8998_LDO14, &herring_ldo14_data },
+	{ MAX8998_LDO15, &herring_ldo15_data },
+	{ MAX8998_LDO16, &herring_ldo16_data },
+	{ MAX8998_LDO17, &herring_ldo17_data },
+	{ MAX8998_BUCK1, &herring_buck1_data },
+	{ MAX8998_BUCK2, &herring_buck2_data },
+	{ MAX8998_BUCK3, &herring_buck3_data },
+	{ MAX8998_BUCK4, &herring_buck4_data },
+};
+
 static struct max8998_adc_table_data temper_table_oled[] =  {
 	/* ADC, Temperature (C/10) */
 	{  222,		700	},
@@ -929,6 +967,92 @@ static struct max8998_adc_table_data temper_table_tft[] =  {
 	{ 1702,		(-90)	},
 	{ 1720,		(-100)	},
 };
+
+static struct max8998_adc_table_data temper_table_cdma_wimax_oled[] =  {
+	/* ADC, Temperature (C/10) */
+	{ 116,		700	},
+	{ 122,		690	},
+	{ 128,		680	},
+	{ 134,		670	},
+	{ 140,		660	},
+	{ 146,		650	},
+	{ 152,		640	},
+	{ 158,		630	},
+	{ 164,		620	},
+	{ 170,		610	},
+	{ 176,		600	},
+	{ 182,		590	},
+	{ 188,		580	},
+	{ 194,		570	},
+	{ 200,		560	},
+	{ 206,		550	},
+	{ 212,		540	},
+	{ 218,		530	},
+	{ 222,		520	},
+	{ 230,		510	},
+	{ 238,		500	},
+	{ 245,		490	},
+	{ 260,		480	},
+	{ 290,		470	},
+	{ 325,		460	},
+	{ 360,		450	},
+	{ 395,		440	},
+	{ 430,		430	},
+	{ 465,		420	},
+	{ 500,		410	},
+	{ 535,		400	},
+	{ 575,		390	},
+	{ 615,		380	},
+	{ 642,		370	},
+	{ 695,		360	},
+	{ 717,		350	},
+	{ 737,		340	},
+	{ 760,		330	},
+	{ 782,		320	},
+	{ 803,		310	},
+	{ 825,		300	},
+	{ 847,		290	},
+	{ 870,		280	},
+	{ 900,		270	},
+	{ 942,		260	},
+	{ 966,		250	},
+	{ 990,		240	},
+	{ 1014,		230	},
+	{ 1038,		220	},
+	{ 1062,		210	},
+	{ 1086,		200	},
+	{ 1110,		190	},
+	{ 1134,		180	},
+	{ 1158,		170	},
+	{ 1182,		160	},
+	{ 1206,		150	},
+	{ 1228,		140	},
+	{ 1251,		130	},
+	{ 1274,		120	},
+	{ 1297,		110	},
+	{ 1320,		100	},
+	{ 1341,		90	},
+	{ 1362,		80	},
+	{ 1384,		70	},
+	{ 1405,		60	},
+	{ 1427,		50	},
+	{ 1450,		40	},
+	{ 1474,		30	},
+	{ 1498,		20	},
+	{ 1514,		10	},
+	{ 1533,		0	},
+	{ 1544,		(-10)	},
+	{ 1567,		(-20)	},
+	{ 1585,		(-30)	},
+	{ 1604,		(-40)	},
+	{ 1623,		(-50)	},
+	{ 1641,		(-60)	},
+	{ 1659,		(-70)	},
+	{ 1678,		(-80)	},
+	{ 1697,		(-90)	},
+	{ 1715,		(-100)	},
+};
+
 struct max8998_charger_callbacks *callbacks;
 static enum cable_type_t set_cable_status;
 
@@ -948,10 +1072,17 @@ static struct max8998_charger_data herring_charger = {
 
 static void set_adc_table(void)
 {
-	if (system_rev < 0x30) {
-		herring_charger.adc_table = temper_table_oled;
-		herring_charger.adc_array_size =
-			ARRAY_SIZE(temper_table_oled);
+	if (!herring_is_tft_dev()) {
+		if (herring_is_cdma_wimax_dev()) {
+			herring_charger.adc_table =
+				temper_table_cdma_wimax_oled;
+			herring_charger.adc_array_size =
+				ARRAY_SIZE(temper_table_cdma_wimax_oled);
+		} else {
+			herring_charger.adc_table = temper_table_oled;
+			herring_charger.adc_array_size =
+				ARRAY_SIZE(temper_table_oled);
+		}
 	} else {
 		herring_charger.adc_table = temper_table_tft;
 		herring_charger.adc_array_size =
@@ -1030,7 +1161,7 @@ static void panel_cfg_gpio(struct platform_device *pdev)
 	s3c_gpio_setpull(S5PV210_MP04(3), S3C_GPIO_PULL_NONE);
 
 	/* OLED_ID */
-	if (system_rev >= 0x30) {
+	if (herring_is_tft_dev()) {
 		s3c_gpio_cfgpin(GPIO_OLED_ID, S3C_GPIO_INPUT);
 		s3c_gpio_setpull(GPIO_OLED_ID, S3C_GPIO_PULL_DOWN);
 	}
@@ -1101,7 +1232,7 @@ void lcd_cfg_gpio_early_suspend(void)
 	gpio_set_value(GPIO_DISPLAY_SI, 0);
 
 	/* OLED_ID */
-	if (system_rev < 0x30) {
+	if (!herring_is_tft_dev()) {
 		s3c_gpio_cfgpin(GPIO_OLED_ID, S3C_GPIO_INPUT);
 		s3c_gpio_setpull(GPIO_OLED_ID, S3C_GPIO_PULL_DOWN);
 		/* gpio_set_value(GPIO_OLED_ID, 0); */
@@ -1120,7 +1251,7 @@ void lcd_cfg_gpio_late_resume(void)
 	s3c_gpio_cfgpin(GPIO_OLED_DET, S3C_GPIO_INPUT);
 	s3c_gpio_setpull(GPIO_OLED_DET, S3C_GPIO_PULL_NONE);
 	/* OLED_ID */
-	if (system_rev < 0x30) {
+	if (!herring_is_tft_dev()) {
 		s3c_gpio_cfgpin(GPIO_OLED_ID, S3C_GPIO_OUTPUT);
 		s3c_gpio_setpull(GPIO_OLED_ID, S3C_GPIO_PULL_NONE);
 		/* gpio_set_value(GPIO_OLED_ID, 0); */
@@ -1422,6 +1553,430 @@ static struct platform_device s3c_device_i2c14 = {
 	.id			= 14,
 	.dev.platform_data	= &i2c14_platdata,
 };
+
+/* max8893 wimax PMIC */
+static struct i2c_gpio_platform_data i2c15_platdata = {
+	.sda_pin		= GPIO_WIMAX_PM_SDA,
+	.scl_pin		= GPIO_WIMAX_PM_SCL,
+};
+
+static struct platform_device s3c_device_i2c15 = {
+	.name			= "i2c-gpio",
+	.id			= 15,
+	.dev.platform_data	= &i2c15_platdata,
+};
+
+static struct regulator_init_data herring_max8893_buck_data = {
+	.constraints	= {
+		.name		= "max8893_buck",
+		.min_uV		= 1200000,
+		.max_uV		= 1200000,
+		.apply_uV	= 1,
+		.valid_ops_mask	= REGULATOR_CHANGE_VOLTAGE |
+				  REGULATOR_CHANGE_STATUS,
+	},
+};
+
+static struct regulator_init_data herring_max8893_ldo1_data = {
+	.constraints	= {
+		.name		= "max8893_ldo1",
+		.min_uV		= 2800000,
+		.max_uV		= 2800000,
+		.apply_uV	= 1,
+		.valid_ops_mask	= REGULATOR_CHANGE_VOLTAGE |
+				  REGULATOR_CHANGE_STATUS,
+	},
+};
+
+static struct regulator_init_data herring_max8893_ldo2_data = {
+	.constraints	= {
+		.name		= "max8893_ldo2",
+		.min_uV		= 2800000,
+		.max_uV		= 2800000,
+		.apply_uV	= 1,
+		.valid_ops_mask	= REGULATOR_CHANGE_VOLTAGE |
+				  REGULATOR_CHANGE_STATUS,
+	},
+};
+
+static struct regulator_init_data herring_max8893_ldo3_data = {
+	.constraints	= {
+		.name		= "max8893_ldo3",
+		.min_uV		= 3300000,
+		.max_uV		= 3300000,
+		.apply_uV	= 1,
+		.valid_ops_mask	= REGULATOR_CHANGE_VOLTAGE |
+				  REGULATOR_CHANGE_STATUS,
+	},
+};
+
+static struct regulator_init_data herring_max8893_ldo4_data = {
+	.constraints	= {
+		.name		= "max8893_ldo4",
+		.min_uV		= 2900000,
+		.max_uV		= 2900000,
+		.apply_uV	= 1,
+		.valid_ops_mask	= REGULATOR_CHANGE_VOLTAGE |
+				  REGULATOR_CHANGE_STATUS,
+	},
+};
+
+static struct regulator_init_data herring_max8893_ldo5_data = {
+	.constraints	= {
+		.name		= "max8893_ldo5",
+		.min_uV		= 2800000,
+		.max_uV		= 2800000,
+		.apply_uV	= 1,
+		.valid_ops_mask	= REGULATOR_CHANGE_VOLTAGE |
+				  REGULATOR_CHANGE_STATUS,
+	},
+};
+
+static struct max8893_subdev_data herring_max8893_subdev_data[] = {
+	{
+		.id = MAX8893_BUCK,
+		.initdata = &herring_max8893_buck_data,
+	},
+	{
+		.id = MAX8893_LDO1,
+		.initdata = &herring_max8893_ldo1_data,
+	},
+	{
+		.id = MAX8893_LDO2,
+		.initdata = &herring_max8893_ldo2_data,
+	},
+	{
+		.id = MAX8893_LDO3,
+		.initdata = &herring_max8893_ldo3_data,
+	},
+	{
+		.id = MAX8893_LDO4,
+		.initdata = &herring_max8893_ldo4_data,
+	},
+	{
+		.id = MAX8893_LDO5,
+		.initdata = &herring_max8893_ldo5_data,
+	},
+};
+
+static struct max8893_platform_data herring_max8893_pdata = {
+	.num_subdevs = ARRAY_SIZE(herring_max8893_subdev_data),
+	.subdevs = herring_max8893_subdev_data,
+};
+
+static struct i2c_board_info i2c_devs15[] __initdata = {
+	{
+		I2C_BOARD_INFO("max8893", 0x3E),
+		.platform_data	= &herring_max8893_pdata,
+	},
+};
+
+static struct wimax_cfg wimax_config;
+
+static unsigned int wimax_sdio_on_table[][4] = {
+	{GPIO_WIMAX_SDIO_CLK, 2, GPIO_LEVEL_NONE, S3C_GPIO_PULL_UP},
+	{GPIO_WIMAX_SDIO_CMD, 2, GPIO_LEVEL_NONE, S3C_GPIO_PULL_UP},
+	{GPIO_WIMAX_SDIO_D0, 2, GPIO_LEVEL_NONE, S3C_GPIO_PULL_UP},
+	{GPIO_WIMAX_SDIO_D1, 2, GPIO_LEVEL_NONE, S3C_GPIO_PULL_UP},
+	{GPIO_WIMAX_SDIO_D2, 2, GPIO_LEVEL_NONE, S3C_GPIO_PULL_UP},
+	{GPIO_WIMAX_SDIO_D3, 2, GPIO_LEVEL_NONE, S3C_GPIO_PULL_UP},
+};
+
+static unsigned int wimax_sdio_off_table[][4] = {
+	{GPIO_WIMAX_SDIO_CLK, 0, GPIO_LEVEL_NONE, S3C_GPIO_PULL_NONE},
+	{GPIO_WIMAX_SDIO_CMD, 0, GPIO_LEVEL_NONE, S3C_GPIO_PULL_NONE},
+	{GPIO_WIMAX_SDIO_D0, 0, GPIO_LEVEL_NONE, S3C_GPIO_PULL_NONE},
+	{GPIO_WIMAX_SDIO_D1, 0, GPIO_LEVEL_NONE, S3C_GPIO_PULL_NONE},
+	{GPIO_WIMAX_SDIO_D2, 0, GPIO_LEVEL_NONE, S3C_GPIO_PULL_NONE},
+	{GPIO_WIMAX_SDIO_D3, 0, GPIO_LEVEL_NONE, S3C_GPIO_PULL_NONE},
+};
+
+static int wimax_sdio_en(int onoff)
+{
+	u32 i;
+	u32 sdio;
+	unsigned int (*wimax_gpio_table)[4];
+
+	wimax_gpio_table = onoff ? wimax_sdio_on_table : wimax_sdio_off_table;
+
+	for (i = 0; i < ARRAY_SIZE(wimax_sdio_on_table); i++) {
+		sdio = wimax_gpio_table[i][0];
+		s3c_gpio_cfgpin(sdio,
+			S3C_GPIO_SFN(wimax_gpio_table[i][1]));
+		s3c_gpio_setpull(sdio, wimax_gpio_table[i][3]);
+
+		if (wimax_gpio_table[i][2] != GPIO_LEVEL_NONE)
+			gpio_set_value(sdio, wimax_gpio_table[i][2]);
+	}
+	return 0;
+}
+
+static void wimax_deinit_gpios(void);
+/* signal wimax modem to wakeup if asleep */
+static void wimax_wakeup_assert(int enable)
+{
+	if (herring_is_cdma_wimax_rev(0) || herring_is_cdma_wimax_rev(1))
+		gpio_set_value(GPIO_WIMAX_WAKEUP, !enable);
+	else
+		gpio_set_value(GPIO_USB_SEL, !enable);
+}
+
+static int get_wimax_sleep_mode(void)
+{
+	return gpio_get_value(GPIO_WIMAX_IF_MODE1);
+}
+
+static int is_wimax_active(void)
+{
+	return gpio_get_value(GPIO_WIMAX_CON0);
+}
+
+/* signal AP is active*/
+static void signal_ap_active(int enable)
+{
+	gpio_set_value(GPIO_WIMAX_CON1, enable);
+}
+
+/* switch USB path to AP */
+void switch_usb_ap(void)
+{
+	gpio_set_value(GPIO_USB_HS_SEL, 1);
+	msleep(10);
+}
+
+/* switch USB path to WiMAX */
+void switch_usb_wimax(void)
+{
+	gpio_set_value(GPIO_USB_HS_SEL, 0);
+	msleep(10);
+}
+
+void wimax_init_gpios(void)
+{
+	s3c_gpio_cfgpin(GPIO_WIMAX_RESET_N, S3C_GPIO_OUTPUT);
+	gpio_set_value(GPIO_WIMAX_RESET_N, 0);
+
+	s3c_gpio_cfgpin(GPIO_WIMAX_DBGEN_28V, S3C_GPIO_OUTPUT);
+	gpio_set_value(GPIO_WIMAX_DBGEN_28V, 0);
+
+	s3c_gpio_cfgpin(GPIO_WIMAX_I2C_CON, S3C_GPIO_OUTPUT);
+	gpio_set_value(GPIO_WIMAX_I2C_CON, 1);
+	msleep(10);
+
+	if (herring_is_cdma_wimax_rev(0) || herring_is_cdma_wimax_rev(1)) {
+		s3c_gpio_setpull(GPIO_USB_SEL, S3C_GPIO_PULL_UP);
+		s3c_gpio_cfgpin(GPIO_WIMAX_WAKEUP, S3C_GPIO_OUTPUT);
+	} else {
+		/* g_pdata->wimax_int set Input and Pull up */
+		s3c_gpio_setpull(GPIO_WIMAX_WAKEUP, S3C_GPIO_PULL_UP);
+		s3c_gpio_cfgpin(GPIO_USB_SEL, S3C_GPIO_OUTPUT);
+	}
+	wimax_wakeup_assert(0);
+
+	/*
+	* IDLE, VI setting pin: high for suspend idle,
+	* low for suspend vi
+	*/
+	s3c_gpio_cfgpin(GPIO_WIMAX_IF_MODE1, S3C_GPIO_OUTPUT);
+	gpio_set_value(GPIO_WIMAX_IF_MODE1, 1);
+
+	s3c_gpio_cfgpin(GPIO_WIMAX_IF_MODE0, S3C_GPIO_OUTPUT);
+
+	/* IDLE, VI interrupt for WiMAX */
+	s3c_gpio_cfgpin(GPIO_WIMAX_CON2, S3C_GPIO_OUTPUT);
+	gpio_set_value(GPIO_WIMAX_CON2, 1);/* active low interrupt */
+
+	/* PDA Active */
+	s3c_gpio_cfgpin(GPIO_WIMAX_CON1, S3C_GPIO_OUTPUT);
+	signal_ap_active(1);
+
+}
+
+static void hw_set_wimax_mode(void)
+{
+	bool	legacy_rev;
+
+	legacy_rev = herring_is_cdma_wimax_rev(0) ||
+		herring_is_cdma_wimax_rev(1);
+
+	switch (wimax_config.wimax_mode) {
+	case SDIO_MODE:
+		pr_debug("SDIO MODE");
+		if (legacy_rev)
+			gpio_set_value(GPIO_WIMAX_WAKEUP, 1);
+		else
+			gpio_set_value(GPIO_USB_SEL, 1);
+		gpio_set_value(GPIO_WIMAX_IF_MODE0, 1);
+		break;
+	case WTM_MODE:
+	case AUTH_MODE:
+		if (legacy_rev)
+			gpio_set_value(GPIO_WIMAX_WAKEUP, 0);
+		else
+			gpio_set_value(GPIO_USB_SEL, 0);
+		gpio_set_value(GPIO_WIMAX_IF_MODE0, 0);
+		break;
+	case DM_MODE:
+		pr_debug("DM MODE");
+		if (legacy_rev)
+			gpio_set_value(GPIO_WIMAX_WAKEUP, 1);
+		else
+			gpio_set_value(GPIO_USB_SEL, 1);
+		gpio_set_value(GPIO_WIMAX_IF_MODE0, 0);
+		break;
+	case USB_MODE:
+	case USIM_RELAY_MODE:
+		pr_debug("USB MODE");
+		if (legacy_rev)
+			gpio_set_value(GPIO_WIMAX_WAKEUP, 0);
+		else
+			gpio_set_value(GPIO_USB_SEL, 0);
+		gpio_set_value(GPIO_WIMAX_IF_MODE0, 1);
+		break;
+	}
+}
+
+void wimax_hsmmc_presence_check(void)
+{
+	sdhci_s3c_force_presence_change(&s3c_device_hsmmc2);
+}
+
+int gpio_wimax_power(int enable)
+{
+	if (!enable)
+		goto wimax_power_off;
+
+	if (gpio_get_value(GPIO_WIMAX_EN)) {
+		pr_debug("Already Wimax powered ON");
+		return WIMAX_ALREADY_POWER_ON;
+	}
+	/* wait for sdio remove complete*/
+	while (!wimax_config.card_removed)
+		msleep(100);
+
+	pr_debug("Wimax power ON");
+
+	wimax_sdio_en(1);
+	wimax_init_gpios();
+
+	if (wimax_config.wimax_mode != SDIO_MODE)
+		switch_usb_wimax();
+
+	gpio_set_value(GPIO_WIMAX_I2C_CON, 1);
+	msleep(10);
+
+	gpio_set_value(GPIO_WIMAX_EN, 1);
+
+	msleep(10);
+	pr_debug("RESET");
+
+	gpio_set_value(GPIO_WIMAX_RESET_N, 1);
+
+	/* Delay important for bootloader initialization */
+	msleep(1800);
+
+	/*Dont force detect if the card is already detected*/
+	if (wimax_config.card_removed)
+		wimax_hsmmc_presence_check();
+
+	return WIMAX_POWER_SUCCESS;
+
+wimax_power_off:
+	wimax_deinit_gpios();
+
+	pr_debug("Wimax power OFF");
+
+	/*Dont force detect if the card is already detected as removed*/
+	if (!wimax_config.card_removed)
+		wimax_hsmmc_presence_check();
+
+	/*Not critial, just some safty margin*/
+	msleep(200);
+	wimax_sdio_en(0);
+
+	return WIMAX_POWER_SUCCESS;
+}
+
+static struct wimax732_platform_data wimax732_pdata = {
+	.power	= gpio_wimax_power,
+	.set_mode	= hw_set_wimax_mode,
+	.signal_ap_active	= signal_ap_active,
+	.get_sleep_mode	= get_wimax_sleep_mode,
+	.is_modem_awake	= is_wimax_active,
+	.wakeup_assert	= wimax_wakeup_assert,
+	.g_cfg		= &wimax_config,
+	.wimax_int	= GPIO_USB_SEL, /* GPIO_USB_SEL,*/
+};
+
+static struct platform_device s3c_device_cmc732 = {
+	.name			= "wimax732_driver",
+	.id			= 1,
+	.dev.platform_data	= &wimax732_pdata,
+};
+
+void wimax_deinit_gpios(void)
+{
+	/* Disable WiMAX JTAG for freerun */
+	s3c_gpio_cfgpin(GPIO_WIMAX_DBGEN_28V, S3C_GPIO_INPUT);
+	s3c_gpio_setpull(GPIO_WIMAX_DBGEN_28V, S3C_GPIO_PULL_NONE);
+
+	/* g_pdata->wimax_int set Output low */
+	s3c_gpio_cfgpin(GPIO_USB_SEL, S3C_GPIO_INPUT);
+	s3c_gpio_setpull(GPIO_USB_SEL, S3C_GPIO_PULL_NONE);
+
+	/* MODE pin */
+	s3c_gpio_cfgpin(GPIO_WIMAX_WAKEUP, S3C_GPIO_INPUT);
+	s3c_gpio_setpull(GPIO_WIMAX_WAKEUP, S3C_GPIO_PULL_NONE);
+
+	s3c_gpio_cfgpin(GPIO_WIMAX_IF_MODE0, S3C_GPIO_INPUT);
+	s3c_gpio_setpull(GPIO_WIMAX_IF_MODE0, S3C_GPIO_PULL_NONE);
+
+	/* WiMAX active */
+	s3c_gpio_cfgpin(GPIO_WIMAX_CON0, S3C_GPIO_INPUT);
+	s3c_gpio_setpull(GPIO_WIMAX_CON0, S3C_GPIO_PULL_NONE);
+
+	/* IDLE, VI setting pin: high for suspend idle,
+	   low for suspend vi */
+	s3c_gpio_cfgpin(GPIO_WIMAX_IF_MODE1, S3C_GPIO_INPUT);
+	s3c_gpio_setpull(GPIO_WIMAX_IF_MODE1, S3C_GPIO_PULL_NONE);
+
+	/* IDLE, VI interrupt for WiMAX */
+	s3c_gpio_cfgpin(GPIO_WIMAX_CON2, S3C_GPIO_INPUT);
+	s3c_gpio_setpull(GPIO_WIMAX_CON2, S3C_GPIO_PULL_NONE);
+
+	/* PDA Active */
+	s3c_gpio_cfgpin(GPIO_WIMAX_CON1, S3C_GPIO_INPUT);
+	s3c_gpio_setpull(GPIO_WIMAX_CON1, S3C_GPIO_PULL_NONE);
+
+	/* power related */
+	s3c_gpio_cfgpin(GPIO_WIMAX_RESET_N, S3C_GPIO_INPUT);
+	s3c_gpio_setpull(GPIO_WIMAX_RESET_N, S3C_GPIO_PULL_NONE);
+
+	s3c_gpio_cfgpin(GPIO_WIMAX_EN, S3C_GPIO_OUTPUT);
+	s3c_gpio_setpull(GPIO_WIMAX_EN, S3C_GPIO_PULL_NONE);
+
+	/* EEPROM switch to WiMAX */
+	s3c_gpio_cfgpin(GPIO_WIMAX_I2C_CON, S3C_GPIO_INPUT);
+	s3c_gpio_setpull(GPIO_WIMAX_I2C_CON, S3C_GPIO_PULL_NONE);
+
+	gpio_set_value(GPIO_WIMAX_EN, 0);
+	s3c_gpio_cfgpin(GPIO_WIMAX_I2C_CON, S3C_GPIO_INPUT);
+
+	s3c_gpio_cfgpin(GPIO_UART_SEL, S3C_GPIO_OUTPUT);
+	s3c_gpio_setpull(GPIO_UART_SEL, S3C_GPIO_PULL_NONE);
+
+	s3c_gpio_cfgpin(GPIO_UART_SEL1, S3C_GPIO_OUTPUT);
+	s3c_gpio_setpull(GPIO_UART_SEL1, S3C_GPIO_PULL_NONE);
+
+	s3c_gpio_cfgpin(GPIO_USB_HS_SEL, S3C_GPIO_OUTPUT);
+	s3c_gpio_setpull(GPIO_USB_HS_SEL, S3C_GPIO_PULL_NONE);
+	switch_usb_ap();
+
+	if (herring_is_cdma_wimax_rev(0) || herring_is_cdma_wimax_rev(1))
+		wimax732_pdata.wimax_int = GPIO_USB_SEL;
+	else
+		wimax732_pdata.wimax_int = GPIO_WIMAX_WAKEUP;
+}
 
 static void touch_keypad_gpio_init(void)
 {
@@ -2269,7 +2824,7 @@ static struct i2c_board_info i2c_devs2[] __initdata = {
 
 static void mxt224_init(void)
 {
-	if (system_rev < 0x30)
+	if (!herring_is_tft_dev())
 		return;
 	mxt224_data.max_y = 950;
 	t9_config[8] = 45;
@@ -3517,9 +4072,9 @@ static struct gpio_init_data herring_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPJ2(1),
-		.cfg	= S3C_GPIO_INPUT,
+		.cfg	= S3C_GPIO_OUTPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_DOWN,
+		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPJ2(2),
@@ -3800,14 +4355,98 @@ void s3c_config_gpio_table(void)
 			if (herring_init_gpios[i].val != S3C_GPIO_SETPIN_NONE)
 				gpio_set_value(gpio, herring_init_gpios[i].val);
 
-			s3c_gpio_set_drvstrength(gpio, herring_init_gpios[i].drv);
+			s3c_gpio_set_drvstrength(gpio,
+					herring_init_gpios[i].drv);
 		}
+	}
+
+	if (herring_is_cdma_wimax_dev()) {
+		/* WiMAX_I2C_CON */
+		gpio = S5PV210_GPC1(1);
+		s3c_gpio_cfgpin(gpio, S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(gpio, S3C_GPIO_PULL_UP);
+		gpio_set_value(gpio, S3C_GPIO_SETPIN_ONE);
+		s3c_gpio_set_drvstrength(gpio, S3C_GPIO_DRVSTR_4X);
+
+		gpio = S5PV210_GPC1(3);
+		s3c_gpio_cfgpin(gpio, S3C_GPIO_INPUT);
+		s3c_gpio_setpull(gpio, S3C_GPIO_PULL_UP);
+		gpio_set_value(gpio, S3C_GPIO_SETPIN_NONE);
+		s3c_gpio_set_drvstrength(gpio, S3C_GPIO_DRVSTR_4X);
+
+		gpio = S5PV210_GPC1(4);
+		s3c_gpio_cfgpin(gpio, S3C_GPIO_INPUT);
+		s3c_gpio_setpull(gpio, S3C_GPIO_PULL_UP);
+		gpio_set_value(gpio, S3C_GPIO_SETPIN_NONE);
+		s3c_gpio_set_drvstrength(gpio, S3C_GPIO_DRVSTR_4X);
+
+		gpio = S5PV210_GPG2(0);
+		s3c_gpio_setpull(gpio, S3C_GPIO_PULL_NONE);
+		gpio = S5PV210_GPG2(1);
+		s3c_gpio_setpull(gpio, S3C_GPIO_PULL_NONE);
+		gpio = S5PV210_GPG2(3);
+		s3c_gpio_setpull(gpio, S3C_GPIO_PULL_NONE);
+		gpio = S5PV210_GPG2(4);
+		s3c_gpio_setpull(gpio, S3C_GPIO_PULL_NONE);
+		gpio = S5PV210_GPG2(5);
+		s3c_gpio_setpull(gpio, S3C_GPIO_PULL_NONE);
+		gpio = S5PV210_GPG2(6);
+		s3c_gpio_setpull(gpio, S3C_GPIO_PULL_NONE);
+
+		/* WIMAX_EN */
+		gpio = S5PV210_GPH1(0);
+		s3c_gpio_cfgpin(gpio, S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(gpio, S3C_GPIO_PULL_NONE);
+		gpio_set_value(gpio, S3C_GPIO_SETPIN_ZERO);
+		s3c_gpio_set_drvstrength(gpio, S3C_GPIO_DRVSTR_1X);
+
+		/* GPIO_CP_RST, CDMA modem specific setting */
+		gpio = S5PV210_GPH3(7);
+		s3c_gpio_cfgpin(gpio, S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(gpio, S3C_GPIO_PULL_DOWN);
+		gpio_set_value(gpio, S3C_GPIO_SETPIN_ZERO);
+		s3c_gpio_set_drvstrength(gpio, S3C_GPIO_DRVSTR_4X);
+
+		gpio = S5PV210_MP05(2);
+		s3c_gpio_cfgpin(gpio, S3C_GPIO_INPUT);
+		s3c_gpio_setpull(gpio, S3C_GPIO_PULL_UP);
+		gpio_set_value(gpio, S3C_GPIO_SETPIN_NONE);
+		s3c_gpio_set_drvstrength(gpio, S3C_GPIO_DRVSTR_4X);
+
+		gpio = S5PV210_MP05(3);
+		s3c_gpio_cfgpin(gpio, S3C_GPIO_INPUT);
+		s3c_gpio_setpull(gpio, S3C_GPIO_PULL_UP);
+		gpio_set_value(gpio, S3C_GPIO_SETPIN_NONE);
+		s3c_gpio_set_drvstrength(gpio, S3C_GPIO_DRVSTR_4X);
 	}
 }
 
 #define S5PV210_PS_HOLD_CONTROL_REG (S3C_VA_SYS+0xE81C)
 static void herring_power_off(void)
 {
+	int phone_wait_cnt = 0;
+
+	if (herring_is_cdma_wimax_dev()) {
+		/* confirm phone is powered-off  */
+		while (1) {
+			if (gpio_get_value(GPIO_PHONE_ACTIVE)) {
+				pr_info("%s: Try to Turn Phone Off by CP_RST\n",
+					__func__);
+				gpio_set_value(GPIO_CP_RST, 0);
+				if (phone_wait_cnt > 1) {
+					pr_info("%s: PHONE OFF Fail\n",
+					__func__);
+					break;
+				}
+				phone_wait_cnt++;
+				mdelay(100);
+			} else {
+				pr_info("%s: PHONE OFF Success\n", __func__);
+				break;
+			}
+		}
+	}
+
 	while (1) {
 		/* Check reboot charging */
 		if (set_cable_status) {
@@ -3935,20 +4574,20 @@ static unsigned int herring_sleep_gpio_table[][3] = {
 	{ S5PV210_GPF3(5), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
 
 	{ S5PV210_GPG0(0), S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE},
-	{ S5PV210_GPG0(1), S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG0(1), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_NONE},
 	{ S5PV210_GPG0(2), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
-	{ S5PV210_GPG0(3), S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE},
-	{ S5PV210_GPG0(4), S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE},
-	{ S5PV210_GPG0(5), S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE},
-	{ S5PV210_GPG0(6), S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG0(3), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG0(4), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG0(5), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG0(6), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_NONE},
 
 	{ S5PV210_GPG1(0), S3C_GPIO_SLP_OUT1,	S3C_GPIO_PULL_NONE},
 	{ S5PV210_GPG1(1), S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE},
 	{ S5PV210_GPG1(2), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
-	{ S5PV210_GPG1(3), S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE},
-	{ S5PV210_GPG1(4), S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE},
-	{ S5PV210_GPG1(5), S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE},
-	{ S5PV210_GPG1(6), S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG1(3), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG1(4), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG1(5), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG1(6), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_NONE},
 
 	{ S5PV210_GPG2(0), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
 	{ S5PV210_GPG2(1), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
@@ -3998,7 +4637,7 @@ static unsigned int herring_sleep_gpio_table[][3] = {
 	{ S5PV210_GPJ2(4), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
 	{ S5PV210_GPJ2(5), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
 	{ S5PV210_GPJ2(6), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
-	{ S5PV210_GPJ2(7), S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ2(7), S3C_GPIO_SLP_OUT1,	S3C_GPIO_PULL_NONE},
 
 	{ S5PV210_GPJ3(0), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
 	{ S5PV210_GPJ3(1), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
@@ -4078,6 +4717,287 @@ static unsigned int herring_sleep_gpio_table[][3] = {
 	/* Memory part ending and off part ending */
 };
 
+static unsigned int herring_cdma_wimax_sleep_gpio_table[][3] = {
+	{ S5PV210_GPA0(0), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPA0(1), S3C_GPIO_SLP_PREV,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPA0(2), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPA0(3), S3C_GPIO_SLP_OUT1,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPA0(4), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPA0(5), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPA0(6), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPA0(7), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+
+	{ S5PV210_GPA1(0), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPA1(1), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPA1(2), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPA1(3), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+
+	{ S5PV210_GPB(0),  S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPB(1),  S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPB(2),  S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPB(3),  S3C_GPIO_SLP_PREV,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPB(4),  S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPB(5),  S3C_GPIO_SLP_PREV,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPB(6),  S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPB(7),  S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+
+	{ S5PV210_GPC0(0), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPC0(1), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPC0(2), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPC0(3), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPC0(4), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+
+	/*WIMAX PMIC SDA*/
+	{ S5PV210_GPC1(0), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+
+	/*Wimax eeprom switch*/
+	{ S5PV210_GPC1(1), S3C_GPIO_SLP_PREV,   S3C_GPIO_PULL_NONE},
+
+	/*WIMAX PMIC SCL*/
+	{ S5PV210_GPC1(2), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+
+	/*WIMAX EEPROM I2C LINES*/
+	{ S5PV210_GPC1(3), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPC1(4), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+
+	/*WIMAX DBGEN*/
+	{ S5PV210_GPD0(0), S3C_GPIO_SLP_PREV,   S3C_GPIO_PULL_NONE},
+
+	{ S5PV210_GPD0(1), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPD0(2), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+
+	/*WIMAX RESET_N*/
+	{ S5PV210_GPD0(3), S3C_GPIO_SLP_PREV,   S3C_GPIO_PULL_NONE},
+
+	{ S5PV210_GPD1(0), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPD1(1), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPD1(2), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPD1(3), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPD1(4), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPD1(5), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+
+	{ S5PV210_GPE0(0), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPE0(1), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPE0(2), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPE0(3), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPE0(4), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPE0(5), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPE0(6), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPE0(7), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+
+
+	{ S5PV210_GPE1(0), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPE1(1), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPE1(2), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPE1(3), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPE1(4), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+
+	{ S5PV210_GPF0(0), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF0(1), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF0(2), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF0(3), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF0(4), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF0(5), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF0(6), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF0(7), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+
+	{ S5PV210_GPF1(0), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF1(1), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF1(2), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF1(3), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF1(4), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF1(5), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF1(6), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF1(7), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+
+
+	{ S5PV210_GPF2(0), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF2(1), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF2(2), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF2(3), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF2(4), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF2(5), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF2(6), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF2(7), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+
+	{ S5PV210_GPF3(0), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF3(1), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF3(2), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF3(3), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF3(4), S3C_GPIO_SLP_PREV,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPF3(5), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+
+
+	{ S5PV210_GPG0(0), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPG0(1), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG0(2), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPG0(3), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG0(4), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG0(5), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG0(6), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+
+	{ S5PV210_GPG1(0), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPG1(1), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPG1(2), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPG1(3), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG1(4), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG1(5), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG1(6), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+
+	/*wimax SDIO pins*/
+	{ S5PV210_GPG2(0), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG2(1), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG2(2), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPG2(3), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG2(4), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG2(5), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG2(6), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+
+	{ S5PV210_GPG3(0), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG3(1), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG3(2), S3C_GPIO_SLP_PREV,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG3(3), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG3(4), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG3(5), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPG3(6), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+
+	/*WIMAX*/
+	{ S5PV210_GPH1(0), S3C_GPIO_SLP_PREV,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPH1(2), S3C_GPIO_SLP_PREV,   S3C_GPIO_PULL_NONE},
+
+	{ S5PV210_GPH2(7), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPH3(0), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_UP},
+	{ S5PV210_GPH3(3), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+
+	/* Alive part ending and off part start*/
+	{ S5PV210_GPI(0),  S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPI(1),  S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPI(2),  S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPI(3),  S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPI(4),  S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPI(5),  S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPI(6),  S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+
+	{ S5PV210_GPJ0(0), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ0(1), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ0(2), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ0(3), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ0(4), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ0(5), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ0(6), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ0(7), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+
+	{ S5PV210_GPJ1(0), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ1(1), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ1(2), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ1(3), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ1(4), S3C_GPIO_SLP_PREV,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ1(5), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+
+	{ S5PV210_GPJ2(0), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ2(1), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ2(2), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ2(3), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ2(4), S3C_GPIO_SLP_PREV, 	S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ2(5), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+
+	{ S5PV210_GPJ2(6), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ2(7), S3C_GPIO_SLP_OUT1,   S3C_GPIO_PULL_NONE},
+
+	{ S5PV210_GPJ3(0), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ3(1), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ3(2), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ3(3), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ3(4), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ3(5), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ3(6), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ3(7), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+
+	{ S5PV210_GPJ4(0), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ4(1), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_GPJ4(2), S3C_GPIO_SLP_PREV,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ4(3), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_GPJ4(4), S3C_GPIO_SLP_PREV,   S3C_GPIO_PULL_NONE},
+
+	 /* memory part */
+	{ S5PV210_MP01(0), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP01(1), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+
+	/*WIMAX*/
+	{ S5PV210_MP01(2), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+
+	{ S5PV210_MP01(3), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP01(4), S3C_GPIO_SLP_OUT1,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_MP01(5), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP01(6), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP01(7), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+
+	{ S5PV210_MP02(0), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP02(1), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP02(2), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_MP02(3), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+
+	{ S5PV210_MP03(0), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP03(1), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP03(2), S3C_GPIO_SLP_OUT1,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_MP03(3), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP03(4), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_MP03(5), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP03(6), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP03(7), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+
+	/*WIMAX*/
+	{ S5PV210_MP04(0), S3C_GPIO_SLP_PREV,   S3C_GPIO_PULL_NONE},
+
+	{ S5PV210_MP04(1), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+
+	/*WIMAX*/
+	{ S5PV210_MP04(2), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+
+	{ S5PV210_MP04(3), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+	{ S5PV210_MP04(4), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP04(5), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP04(6), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+
+	/*WIMAX*/
+	{ S5PV210_MP04(7), S3C_GPIO_SLP_PREV,   S3C_GPIO_PULL_NONE},
+
+	{ S5PV210_MP05(0), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_MP05(1), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_MP05(2), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+	{ S5PV210_MP05(3), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
+
+	/*WIMAX*/
+	{ S5PV210_MP05(4), S3C_GPIO_SLP_PREV,   S3C_GPIO_PULL_NONE},
+
+	{ S5PV210_MP05(5), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},
+
+	/*WIMAX*/
+	{ S5PV210_MP05(6), S3C_GPIO_SLP_PREV,   S3C_GPIO_PULL_NONE},
+
+	{ S5PV210_MP05(7), S3C_GPIO_SLP_PREV,   S3C_GPIO_PULL_NONE},
+
+	{ S5PV210_MP06(0), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP06(1), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP06(2), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP06(3), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP06(4), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP06(5), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP06(6), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP06(7), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+
+	{ S5PV210_MP07(0), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP07(1), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP07(2), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP07(3), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP07(4), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP07(5), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP07(6), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+	{ S5PV210_MP07(7), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
+
+	/* Memory part ending and off part ending */
+};
+
 void s3c_config_sleep_gpio_table(int array_size, unsigned int (*gpio_table)[3])
 {
 	u32 i, gpio;
@@ -4089,7 +5009,87 @@ void s3c_config_sleep_gpio_table(int array_size, unsigned int (*gpio_table)[3])
 	}
 }
 
-void s3c_config_sleep_gpio(void)
+void s3c_config_cdma_wimax_sleep_gpio(void)
+{
+	s3c_gpio_cfgpin(S5PV210_GPH0(0), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH0(0), S3C_GPIO_PULL_DOWN);
+
+	s3c_gpio_cfgpin(S5PV210_GPH0(1), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH0(1), S3C_GPIO_PULL_DOWN);
+
+	s3c_gpio_cfgpin(S5PV210_GPH0(2), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH0(2), S3C_GPIO_PULL_NONE);
+
+	s3c_gpio_cfgpin(S5PV210_GPH0(3), S3C_GPIO_OUTPUT);
+	s3c_gpio_setpull(S5PV210_GPH0(3), S3C_GPIO_PULL_NONE);
+	gpio_set_value(S5PV210_GPH0(3), 0);
+
+	s3c_gpio_cfgpin(S5PV210_GPH0(4), S3C_GPIO_OUTPUT);
+	s3c_gpio_setpull(S5PV210_GPH0(4), S3C_GPIO_PULL_NONE);
+	gpio_set_value(S5PV210_GPH0(4), 0);
+
+	s3c_gpio_cfgpin(S5PV210_GPH0(5), S3C_GPIO_OUTPUT);
+	s3c_gpio_setpull(S5PV210_GPH0(5), S3C_GPIO_PULL_NONE);
+	gpio_set_value(S5PV210_GPH0(5), 0);
+
+	s3c_gpio_cfgpin(S5PV210_GPH1(0), S3C_GPIO_OUTPUT);
+	s3c_gpio_setpull(S5PV210_GPH1(0), S3C_GPIO_PULL_NONE);
+	gpio_set_value(S5PV210_GPH1(0), 0);
+
+	s3c_gpio_cfgpin(S5PV210_GPH1(1), S3C_GPIO_OUTPUT);
+	s3c_gpio_setpull(S5PV210_GPH1(1), S3C_GPIO_PULL_DOWN);
+	gpio_set_value(S5PV210_GPH1(1), 0);
+
+	s3c_gpio_cfgpin(S5PV210_GPH1(2), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH1(2), S3C_GPIO_PULL_UP);
+	gpio_set_value(S5PV210_GPH1(2), 0);
+
+	s3c_gpio_cfgpin(S5PV210_GPH1(4), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH1(4), S3C_GPIO_PULL_DOWN);
+
+	s3c_gpio_cfgpin(S5PV210_GPH1(5), S3C_GPIO_OUTPUT);
+	s3c_gpio_setpull(S5PV210_GPH1(5), S3C_GPIO_PULL_DOWN);
+	gpio_set_value(S5PV210_GPH1(5), 0);
+
+	s3c_gpio_cfgpin(S5PV210_GPH1(6), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH1(6), S3C_GPIO_PULL_DOWN);
+
+	s3c_gpio_cfgpin(S5PV210_GPH1(7), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH1(7), S3C_GPIO_PULL_NONE);
+
+	s3c_gpio_cfgpin(S5PV210_GPH2(0), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH2(0), S3C_GPIO_PULL_NONE);
+
+	s3c_gpio_cfgpin(S5PV210_GPH2(2), S3C_GPIO_OUTPUT);
+	s3c_gpio_setpull(S5PV210_GPH2(2), S3C_GPIO_PULL_NONE);
+	gpio_set_value(S5PV210_GPH2(2), 0);
+
+	s3c_gpio_cfgpin(S5PV210_GPH2(6), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH2(6), S3C_GPIO_PULL_UP);
+
+	s3c_gpio_cfgpin(S5PV210_GPH2(3), S3C_GPIO_OUTPUT);
+	s3c_gpio_setpull(S5PV210_GPH2(3), S3C_GPIO_PULL_NONE);
+	gpio_set_value(S5PV210_GPH2(3), 0);
+
+	s3c_gpio_cfgpin(S5PV210_GPH3(0), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH3(0), S3C_GPIO_PULL_UP);
+
+	s3c_gpio_cfgpin(S5PV210_GPH3(3), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH3(3), S3C_GPIO_PULL_NONE);
+
+	s3c_gpio_cfgpin(S5PV210_GPH3(4), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH3(4), S3C_GPIO_PULL_UP);
+
+	s3c_gpio_cfgpin(S5PV210_GPH3(5), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH3(5), S3C_GPIO_PULL_DOWN);
+
+	s3c_gpio_cfgpin(S5PV210_GPH3(7), S3C_GPIO_OUTPUT);
+	s3c_gpio_setpull(S5PV210_GPH3(7), S3C_GPIO_PULL_UP);
+	gpio_set_value(S5PV210_GPH3(7), 1);
+
+}
+
+void s3c_config_gsm_sleep_gpio(void)
 {
 	/* setting the alive mode registers */
 	s3c_gpio_cfgpin(S5PV210_GPH0(1), S3C_GPIO_INPUT);
@@ -4149,6 +5149,14 @@ void s3c_config_sleep_gpio(void)
 
 	s3c_gpio_cfgpin(S5PV210_GPH3(4), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH3(4), S3C_GPIO_PULL_DOWN);
+}
+
+void s3c_config_sleep_gpio(void)
+{
+	if (herring_is_cdma_wimax_dev())
+		s3c_config_cdma_wimax_sleep_gpio();
+	else
+		s3c_config_gsm_sleep_gpio();
 }
 EXPORT_SYMBOL(s3c_config_sleep_gpio);
 
@@ -4546,12 +5554,23 @@ static void herring_init_gpio(void)
 	s3c_config_gpio_table();
 	s3c_config_sleep_gpio_table(ARRAY_SIZE(herring_sleep_gpio_table),
 			herring_sleep_gpio_table);
+	if (herring_is_cdma_wimax_dev())
+		s3c_config_sleep_gpio_table(
+				ARRAY_SIZE(herring_cdma_wimax_sleep_gpio_table),
+				herring_cdma_wimax_sleep_gpio_table);
+
 }
 
 static void __init fsa9480_gpio_init(void)
 {
-	s3c_gpio_cfgpin(GPIO_USB_SEL, S3C_GPIO_OUTPUT);
-	s3c_gpio_setpull(GPIO_USB_SEL, S3C_GPIO_PULL_NONE);
+	if (herring_is_cdma_wimax_dev()) {
+		s3c_gpio_cfgpin(GPIO_USB_HS_SEL, S3C_GPIO_OUTPUT);
+		gpio_set_value(GPIO_USB_HS_SEL, 1);
+	} else {
+		s3c_gpio_cfgpin(GPIO_USB_SEL, S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(GPIO_USB_SEL, S3C_GPIO_PULL_NONE);
+	}
+
 	s3c_gpio_cfgpin(GPIO_UART_SEL, S3C_GPIO_OUTPUT);
 	s3c_gpio_setpull(GPIO_UART_SEL, S3C_GPIO_PULL_NONE);
 
@@ -4585,6 +5604,18 @@ static void __init sound_init(void)
 	__raw_writel(reg, S5P_CLK_OUT);
 
 	gpio_request(GPIO_MICBIAS_EN, "micbias_enable");
+}
+
+static s8 accel_rotation_wimax_rev0[9] = {
+	0, -1, 0,
+	-1, 0, 0,
+	0, 0, -1,
+};
+
+static void __init accel_init(void)
+{
+	if (herring_is_cdma_wimax_rev0())
+		kr3dm_data.rotation = accel_rotation_wimax_rev0;
 }
 
 static bool console_flushed;
@@ -4636,7 +5667,7 @@ static void __init herring_machine_init(void)
 	setup_ram_console_mem();
 	s3c_usb_set_serial();
 	platform_add_devices(herring_devices, ARRAY_SIZE(herring_devices));
-	if (system_rev < 0x30)
+	if (!herring_is_tft_dev())
 		platform_device_register(&s3c_device_i2c5);
 
 	/* Find out S5PC110 chip version */
@@ -4682,10 +5713,16 @@ static void __init herring_machine_init(void)
 #endif
 	k3g_irq_init();
 	set_adc_table();
+	accel_init();
 	/* H/W I2C lines */
 	if (system_rev >= 0x05) {
 		/* gyro sensor */
-		i2c_register_board_info(0, i2c_devs0, ARRAY_SIZE(i2c_devs0));
+		if (herring_is_cdma_wimax_dev() && herring_is_cdma_wimax_rev0())
+			i2c_register_board_info(5, i2c_devs0,
+							ARRAY_SIZE(i2c_devs0));
+		else
+			i2c_register_board_info(0, i2c_devs0,
+							ARRAY_SIZE(i2c_devs0));
 		/* magnetic and accel sensor */
 		i2c_register_board_info(1, i2c_devs1, ARRAY_SIZE(i2c_devs1));
 	}
@@ -4698,8 +5735,17 @@ static void __init herring_machine_init(void)
 	/* accel sensor for rev04 */
 	if (system_rev == 0x04)
 		i2c_register_board_info(5, i2c_devs5, ARRAY_SIZE(i2c_devs5));
+
+	if (herring_is_cdma_wimax_dev()) {
+		struct max8998_platform_data *pdata =
+			(struct max8998_platform_data *)&max8998_pdata;
+		pdata->num_regulators =
+			ARRAY_SIZE(herring_cdma_wimax_regulators);
+		pdata->regulators = herring_cdma_wimax_regulators;
+	}
+
 	i2c_register_board_info(6, i2c_devs6, ARRAY_SIZE(i2c_devs6));
-	if (system_rev < 0x30) {
+	if (!herring_is_tft_dev()) {
 		/* Touch Key */
 		touch_keypad_gpio_init();
 		i2c_register_board_info(10, i2c_devs10, ARRAY_SIZE(i2c_devs10));
@@ -4725,7 +5771,13 @@ static void __init herring_machine_init(void)
        /* nfc sensor */
 	i2c_register_board_info(14, i2c_devs14, ARRAY_SIZE(i2c_devs14));
 
-	if (system_rev < 0x30) {
+	/* max8893 wimax PMIC */
+	if (herring_is_cdma_wimax_dev()) {
+		platform_device_register(&s3c_device_i2c15);
+		i2c_register_board_info(15, i2c_devs15, ARRAY_SIZE(i2c_devs15));
+	}
+
+	if (!herring_is_tft_dev()) {
 		spi_register_board_info(spi_board_info,
 					ARRAY_SIZE(spi_board_info));
 		s3cfb_set_platdata(&tl2796_data);
@@ -4808,6 +5860,9 @@ static void __init herring_machine_init(void)
 	uart_switch_init();
 
 	herring_init_wifi_mem();
+
+	if (herring_is_cdma_wimax_dev())
+		platform_device_register(&s3c_device_cmc732);
 
 	/* write something into the INFORM6 register that we can use to
 	 * differentiate an unclear reboot from a clean reboot (which

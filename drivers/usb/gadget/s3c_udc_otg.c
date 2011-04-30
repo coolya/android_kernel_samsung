@@ -593,12 +593,7 @@ static void reconfig_usbd(void)
 	while (readl(S3C_UDC_OTG_GRSTCTL) & 0x20)
 		;
 
-	/* 13. Clear NAK bit of EP0, EP1, EP2*/
-	/* For Slave mode*/
-	writel(DEPCTL_EPDIS|DEPCTL_CNAK|(0<<0),
-	       S3C_UDC_OTG_DOEPCTL(EP0_CON)); /* EP0: Control OUT */
-
-	/* 14. Initialize OTG Link Core.*/
+	/* 13. Initialize OTG Link Core.*/
 	writel(GAHBCFG_INIT, S3C_UDC_OTG_GAHBCFG);
 }
 
