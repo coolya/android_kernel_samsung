@@ -1150,6 +1150,22 @@ static struct platform_device s3c_device_i2c12 = {
 	.dev.platform_data	= &i2c12_platdata,
 };
 
+#if defined (CONFIG_SAMSUNG_CAPTIVATE)
+static struct i2c_gpio_platform_data	i2c13_platdata = {
+    .sda_pin		= GPIO_A1026_SDA,
+    .scl_pin		= GPIO_A1026_SCL,
+    .udelay			= 1,	/* 250KHz */
+    .sda_is_open_drain	= 0,
+    .scl_is_open_drain	= 0,
+    .scl_is_output_only	= 0,
+  };
+static struct platform_device s3c_device_i2c13 = {
+  	.name				= "i2c-gpio",
+  	.id					= 13,
+  	.dev.platform_data	= &i2c13_platdata,
+  };
+#endif
+
 static void touch_keypad_gpio_init(void)
 {
 	int ret = 0;
@@ -2243,6 +2259,13 @@ static struct i2c_board_info i2c_devs12[] __initdata = {
 	},
 };
 
+#if defined (CONFIG_SAMSUNG_CAPTIVATE)
+static struct i2c_board_info i2c_devs13[] __initdata = {
+  	{
+  		I2C_BOARD_INFO("A1026_driver", (0x3E)),
+  	},
+};
+#endif
 
 static struct resource ram_console_resource[] = {
 	{
@@ -4249,6 +4272,9 @@ static struct platform_device *aries_devices[] __initdata = {
 	&s3c_device_i2c9,  /* max1704x:fuel_guage */
 	&s3c_device_i2c11, /* optical sensor */
 	&s3c_device_i2c12, /* magnetic sensor */
+#if defined (CONFIG_SAMSUNG_CAPTIVATE)
+	&s3c_device_i2c13,
+#endif
 #ifdef CONFIG_USB_GADGET
 	&s3c_device_usbgadget,
 #endif
@@ -4579,6 +4605,10 @@ static void __init aries_machine_init(void)
 	
 	/* yamaha magnetic sensor */
 	i2c_register_board_info(12, i2c_devs12, ARRAY_SIZE(i2c_devs12));
+
+#if defined (CONFIG_SAMSUNG_CAPTIVATE)
+  	i2c_register_board_info(13, i2c_devs13, ARRAY_SIZE(i2c_devs13)); /* audience A1026 */
+#endif
 
 	/* panel */
 	spi_register_board_info(spi_board_info, ARRAY_SIZE(spi_board_info));
