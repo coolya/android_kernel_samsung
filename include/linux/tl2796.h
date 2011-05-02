@@ -41,6 +41,7 @@ struct s5p_panel_data {
 	int gpio_rdx;
 	int gpio_csx;
 	int gpio_wrx;
+	int gpio_rst;
 	int gpio_db[8];
 	int (*configure_mtp_gpios)(struct s5p_panel_data *pdata, bool enable);
 	u16 factory_v255_regs[3];

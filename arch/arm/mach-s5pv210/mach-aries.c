@@ -1169,6 +1169,13 @@ static void touch_keypad_onoff(int onoff)
 		msleep(25);
 }
 
+static void touch_keypad_gpio_sleep(int onoff) {
+	if (onoff == TOUCHKEY_ON)
+		s3c_gpio_slp_cfgpin(_3_GPIO_TOUCH_EN, S3C_GPIO_SLP_OUT1);
+	else
+		s3c_gpio_slp_cfgpin(_3_GPIO_TOUCH_EN, S3C_GPIO_SLP_OUT0);
+}
+
 static const int touch_keypad_code[] = {
 #if defined (CONFIG_SAMSUNG_GALAXYS) || defined (CONFIG_SAMSUNG_GALAXYSB)
 	KEY_MENU,
@@ -1187,6 +1194,7 @@ static struct touchkey_platform_data touchkey_data = {
 	.keycode_cnt = ARRAY_SIZE(touch_keypad_code),
 	.keycode = touch_keypad_code,
 	.touchkey_onoff = touch_keypad_onoff,
+	.touchkey_sleep_onoff = touch_keypad_gpio_sleep,
 	.fw_name = "cypress-touchkey.bin",
 	.scl_pin = _3_TOUCH_SCL_28V,
 	.sda_pin = _3_TOUCH_SDA_28V,
@@ -2062,7 +2070,7 @@ static struct i2c_board_info i2c_devs10[] __initdata = {
 
 static struct i2c_board_info i2c_devs5[] __initdata = {
 	{
-		I2C_BOARD_INFO("smb380", (0x38)),
+		I2C_BOARD_INFO("bma023", 0x38),
 	},
 };
 
@@ -2228,13 +2236,13 @@ static struct yas529_platform_data yas529_pdata = {
 	.reset_line = GPIO_MSENSE_nRST,
 	.reset_asserted = GPIO_LEVEL_LOW,
 };
-
 static struct i2c_board_info i2c_devs12[] __initdata = {
 	{
 		I2C_BOARD_INFO("yas529", 0x2e),
 		.platform_data = &yas529_pdata,
 	},
 };
+
 
 static struct resource ram_console_resource[] = {
 	{

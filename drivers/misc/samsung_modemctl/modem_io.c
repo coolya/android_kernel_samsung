@@ -347,7 +347,12 @@ static void handle_raw_rx(struct modemctl *mc)
 		if (fifo_skip(&mc->raw_rx, 1) != 1)
 			goto purge_raw_fifo;
 
-		skb->protocol = __constant_htons(ETH_P_IP);
+		/* Get the ethertype from the version in the IP header. */
+		if (skb->data[0] >> 4 == 6)
+			skb->protocol = __constant_htons(ETH_P_IPV6);
+		else
+			skb->protocol = __constant_htons(ETH_P_IP);
+
 		dev->stats.rx_packets++;
 		dev->stats.rx_bytes += skb->len;
 

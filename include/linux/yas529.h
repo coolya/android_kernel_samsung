@@ -15,14 +15,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
+#define GEOMAGNETIC_INPUT_NAME          "geomagnetic"
+#define GEOMAGNETIC_INPUT_RAW_NAME      "geomagnetic_raw"
  */
 
 #ifndef YAS529_H_
 #define YAS529_H_
 #define YAS_I2C_DEVICE_NAME     "yas529"
 #define GEOMAGNETIC_DEVICE_NAME         "yas529"
-#define GEOMAGNETIC_INPUT_NAME          "geomagnetic"
-#define GEOMAGNETIC_INPUT_RAW_NAME      "geomagnetic_raw"
+
 
 struct yas529_platform_data {
 	int reset_line;

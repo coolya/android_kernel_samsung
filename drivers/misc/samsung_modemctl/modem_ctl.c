@@ -36,6 +36,437 @@
 #include "modem_ctl.h"
 #include "modem_ctl_p.h"
 
+/* supports modem delta update */
+#include "modem_ctl_recovery.h"
+
+/* Defines the primitives for writing and reading from and to the oneDRAM.
+ *  All these primitives are used by the functions of file operation.
+ */
+static u32 onedram_checksum(u32 org, u8 *data, u32 len)
+{
+	u32 temp = org;
+	u32 i;
+
+	for (i = 0; i < len; i++)
+		temp += *(data + i);
+
+	return temp;
+}
+
+static inline u32 read_semaphore(struct modemctl *mc)
+{
+	return ioread32(mc->mmio + OFF_SEM) & 1;
+}
+
+static void return_semaphore(struct modemctl *mc)
+{
+	iowrite32(0, mc->mmio + OFF_SEM);
+}
+
+static u32 get_mailbox_ab(struct modemctl *mc)
+{
+	return ioread32(mc->mmio + OFF_MBOX_BP);
+}
+
+static void set_mailbox_ba(struct modemctl *mc, u32 data)
+{
+	iowrite32(data, mc->mmio + OFF_MBOX_AP);
+}
+
+static void write_single_data(struct modemctl *mc, int offset, int data)
+{
+	*(u32 *)(mc->mmio + offset) = data;
+}
+
+static int read_multiple_data(struct modemctl *mc, int offset, char *buf,
+			    size_t size)
+{
+	if (!read_semaphore(mc)) {
+		pr_err("Semaphore is held by modem!");
+		return -EINVAL;
+	}
+
+	if (!buf) {
+		pr_err("Invalid buffer!");
+		return -EINVAL;
+	}
+
+	memcpy(buf, mc->mmio + offset, size);
+
+	return size;
+}
+
+static int dpram_write_from_user(struct modemctl *mc, int addr,
+				const char __user *data, size_t size)
+{
+	if (!read_semaphore(mc)) {
+		pr_err("Semaphore is held by modem!");
+		return -EINVAL;
+	}
+
+	if (copy_from_user(mc->mmio + addr, data, size) < 0) {
+		pr_err("[%s:%d] Copy from user failed\n", __func__, __LINE__);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+
+static int modem_pwr_status(struct modemctl *mc)
+{
+	pr_debug("%s\n", __func__);
+	return gpio_get_value(mc->gpio_phone_active);
+}
+
+
+static int dpram_modem_pwroff(struct modemctl *mc)
+{
+	pr_debug("%s\n", __func__);
+
+	gpio_set_value(mc->gpio_phone_on, 0);
+	gpio_set_value(mc->gpio_cp_reset, 0);
+	mdelay(100);
+
+	return 0;
+}
+
+static int dpram_modem_reset(struct modemctl *mc)
+{
+	pr_debug("%s\n", __func__);
+
+	gpio_set_value(mc->gpio_phone_on, 1);
+	msleep(50);
+	gpio_set_value(mc->gpio_cp_reset, 0);
+	msleep(100);
+	gpio_set_value(mc->gpio_cp_reset, 1);
+	msleep(500);
+	gpio_set_value(mc->gpio_phone_on, 0);
+
+	return 0;
+}
+
+static int dpram_modem_pwron(struct modemctl *mc)
+{
+	int err = -1;
+	int msec;
+
+	pr_debug("%s\n", __func__);
+
+	return_semaphore(mc);
+
+	dpram_modem_reset(mc);
+
+	for (msec = 0; msec < 10000; msec++) {
+		if (modem_pwr_status(mc)) {
+			err = 0;
+			break;
+		}
+		msleep(1);
+	}
+
+	return err;
+}
+
+static int acquire_semaphore(struct modemctl *mc)
+{
+	int retrycnt = 20;
+
+	while (!read_semaphore(mc)) {
+		set_mailbox_ba(mc, DPRAM_BOOT_SEM_REQ);
+		dpram_modem_reset(mc);
+
+		msleep(100);
+		if (!(retrycnt--)) {
+			pr_debug("failed to get semaphore!");
+			return -1;
+		}
+	}
+
+	pr_debug("We have Semaphore!");
+	dpram_modem_pwroff(mc);
+	set_mailbox_ba(mc, 0x0);
+	return 0;
+}
+
+static int dpram_write_delta(struct modemctl *mc,
+					char __user *firmware, int size)
+{
+	int ret = 0;
+
+	pr_debug("%s\n", __func__);
+	acquire_semaphore(mc);
+	/* write the sizeof firmware */
+	write_single_data(mc, DPRAM_FIRMWARE_SIZE_ADDR, size);
+	/* write the data of firmware */
+	dpram_write_from_user(mc, DPRAM_FIRMWARE_ADDR, firmware, size);
+	return ret;
+}
+
+static int dpram_write_full(struct modemctl *mc,
+					char __user *firmware, int size)
+{
+	struct onedram_head_t onedram;
+	u32 data_offset = ONEDRAM_DL_DATA_OFFSET;
+	u32 head_offset = ONEDRAM_DL_HEADER_OFFSET;
+	u32 checksum;
+
+	pr_debug("%s\n", __func__);
+
+	acquire_semaphore(mc);
+
+	/* write full data of firmware */
+	dpram_write_from_user(mc, data_offset, firmware, size);
+	/* check checksum */
+	checksum = onedram_checksum(0, (u8 *)(mc->mmio + data_offset), size);
+
+	onedram.signature	= ONEDRAM_DL_SIGNATURE;
+	onedram.is_boot_update	= 0;
+	onedram.is_nv_update	= 0;
+	onedram.length		= size;
+	onedram.checksum	= checksum;
+
+	/* write header info */
+	memcpy(mc->mmio + head_offset, (u8 *)&onedram, sizeof(onedram));
+
+	return 0;
+}
+
+static int dpram_update_delta(struct modemctl *mc)
+{
+	int err = 0;
+	int msec = 0;
+	u32 val;
+
+	pr_debug("%s\n", __func__);
+
+	acquire_semaphore(mc);
+	/* write boot magic */
+	write_single_data(mc, DPRAM_BOOT_MAGIC_ADDR,
+				DPRAM_BOOT_MAGIC_RECOVERY_FOTA);
+	write_single_data(mc, DPRAM_BOOT_TYPE_ADDR,
+				DPRAM_BOOT_TYPE_DPRAM_DELTA);
+	/* At this point modem is powered off.  So power on modem */
+	err = dpram_modem_pwron(mc);
+	if (err < 0) {
+		pr_err("modem_reset() fail : %d", modem_pwr_status(mc));
+		return err;
+	}
+	/* clear mailboxBA */
+	set_mailbox_ba(mc, 0xFFFFFFFF);
+	/* wait for job sync message */
+	while (true) {
+		val = get_mailbox_ab(mc);
+		if ((val & STATUS_JOB_MAGIC_M) == STATUS_JOB_MAGIC_CODE) {
+			err = 0;
+			break;
+		}
+		msleep(1);
+		if (++msec > 20000) {
+			err = -2;
+			pr_err("Failed to sync with modem (%x)", val);
+			return err;
+		}
+		if ((msec % 1000) == 0)
+			pr_info("Waiting for sync message... 0x%08x (pwr:%s)", \
+			val, modem_pwr_status(mc) ? "ON" : "OFF");
+	}
+	if (err == 0) {
+		pr_info("Modem ready to start the firmware update");
+		/* let modem start the job */
+		set_mailbox_ba(mc, STATUS_JOB_MAGIC_CODE);
+		/* If we have the semaphore, toss it to modem. */
+		return_semaphore(mc);
+	}
+
+	return err;
+
+}
+
+static int dpram_update_full(struct modemctl *mc)
+{
+	int err;
+
+	pr_debug("%s\n", __func__);
+
+	err = dpram_modem_pwron(mc);
+	if (err < 0) {
+		pr_err("dpram_modem_pwron() fail : %d", modem_pwr_status(mc));
+		return -1;
+	}
+	/* clear mailboxBA */
+	set_mailbox_ba(mc, 0xFFFFFFFF);
+
+	return 0;
+}
+
+static int dpram_process_modem_update(struct modemctl *mc,
+		struct dpram_firmware *pfw)
+{
+	int ret = 0;
+
+	if (pfw->is_delta) {
+		mc->is_modem_delta_update = 1;
+
+		if (dpram_write_delta(mc, pfw->firmware, pfw->size) < 0) {
+			pr_err("firmware write failed\n");
+			ret = -1;
+		} else if (dpram_update_delta(mc) < 0) {
+			pr_err("Firmware update failed\n");
+			ret = -1;
+		}
+	} else {
+		if (dpram_write_full(mc, pfw->firmware, pfw->size) < 0) {
+			pr_err("firmware full write failed\n");
+			ret = -1;
+		} else if (dpram_update_full(mc) < 0) {
+			pr_err("Firmware full update failed\n");
+			ret = -1;
+		}
+	}
+
+	return ret;
+}
+
+static int dpram_chk_delta_update(struct modemctl *mc,
+				int __user *pct, char __user *msg)
+{
+	u32 status;
+	int percent = 0;
+	int err = 0;
+	char buf[DPRAM_MODEM_MSG_SIZE];
+	int debugprint = false;
+	int wait = 0;
+	/* check mailboxAB for the modem status */
+	status = get_mailbox_ab(mc);
+
+	debugprint = (mc->dpram_prev_status != status);
+	if (debugprint)
+		pr_info("Job status : 0x%08x (pwr:%s)\n", status, \
+			modem_pwr_status(mc) ? "ON" : "OFF");
+
+	if ((status & STATUS_JOB_MAGIC_M) != STATUS_JOB_MAGIC_CODE) {
+		if (debugprint)
+			pr_info("Job not accepted yet\n");
+		err = 1;
+		percent = 0;
+		strncpy(buf, "Job not accepted yet", DPRAM_MODEM_MSG_SIZE);
+		goto out;
+	}
+	if (status & STATUS_JOB_STARTED_M) {
+		return_semaphore(mc);
+		percent = status & STATUS_JOB_PROGRESS_M;
+		if (debugprint)
+			pr_info("Job progress pct=%d\n", percent);
+		err = 3;
+	} else {
+		percent = 0;
+		if (debugprint)
+			pr_info("Job NOT started yet...\n");
+		err = 2;
+	}
+	if (status & STATUS_JOB_ENDED_M) {
+		percent = status & STATUS_JOB_PROGRESS_M;
+		/* wait till we have semaphore */
+		pr_info("Wait for semaphore");
+		while (true) {
+			msleep(10);
+			if (read_semaphore(mc)) {
+				pr_info("We have semaphore");
+				break;
+			}
+			if (wait++ > 1000) {
+				pr_info("Proceeding without semaphore");
+				break;
+			}
+		}
+		read_multiple_data(mc, DPRAM_MODEM_STRING_MSG_ADDR, buf,
+							DPRAM_MODEM_MSG_SIZE);
+		if (status & STATUS_JOB_ERROR_M) {
+			err = -1;
+			pr_err("Job ended with error msg : %s\n", buf);
+		} else if (status & STATUS_JOB_COMPLETE_M) {
+			err = 0;
+			pr_info("Job completed successfully : %s\n", buf);
+		}
+	}
+out:
+	mc->dpram_prev_status = status;
+	if (put_user(percent, pct) < 0)
+		pr_err("[%s:%d] Copy to user failed\n", __func__, __LINE__);
+	if (copy_to_user((void *)msg, (void *)buf, DPRAM_MODEM_MSG_SIZE) < 0)
+		pr_err("[%s:%d] Copy to user failed\n", __func__, __LINE__);
+	return err;
+}
+
+static int dpram_chk_full_update(struct modemctl *mc,
+					int __user *pct, char __user *msg)
+{
+	int err;
+	u32 status = 0;
+	u32 phone_active = 0;
+	bool is_reboot = 0;
+
+	err = 3;
+	mc->dpram_prev_status = 0xFFFFFFFF;
+	mc->dpram_prev_phone_active = 0xFFFFFFFF;
+
+retry:
+	phone_active = modem_pwr_status(mc);
+	status = get_mailbox_ab(mc);
+
+	pr_debug("PHONE %d Mailbox 0x%x\n", phone_active, status);
+	if ((mc->dpram_prev_phone_active != phone_active) ||
+			(mc->dpram_prev_status != status)) {
+		mc->dpram_prev_phone_active = phone_active;
+		mc->dpram_prev_status = status;
+	}
+
+	if (!phone_active) {
+		if (status == ONEDRAM_DL_COMPLETE) {
+			pr_info("*OK* ONEDRAM_DL_COMPLETE\n");
+			err = 0;
+		} else if (status == ONEDRAM_DL_DONE_AND_RESET) {
+			pr_info("*OK* ONEDRAM_DONE_AND_RESET\n");
+			dpram_modem_pwron(mc);
+			goto retry;
+		}
+	}
+
+	if (status == ONEDRAM_DL_CHECKSUM_ERR) {
+		pr_info("*ERROR* ONEDRAM_DL_CHECKSUM_ERR\n");
+		is_reboot = 1;
+	} else if (status == ONEDRAM_DL_ERASE_WRITE_ERR) {
+		pr_info("*ERROR* ONEDRAM_DL_ERASE_WRITE_ERR\n");
+		is_reboot = 1;
+	} else if (status == ONEDRAM_DL_BOOT_UPDATE_ERR) {
+		pr_info("*ERROR* ONEDRAM_DL_BOOT_UPDATE_ERR\n");
+		is_reboot = 1;
+	} else if (status == ONEDRAM_DL_REWRITE_FAIL_ERR) {
+		pr_info("*ERROR* ONEDRAM_DL_REWRITE_FAIL_ERR\n");
+		is_reboot = 1;
+	} else if (status == ONEDRAM_DL_LENGTH_CH_FAIL) {
+		pr_info("*ERROR* ONEDRAM_DL_LENGTH_CH_FAIL\n");
+		is_reboot = 1;
+	} else {
+		if (status != mc->dpram_prev_status)
+			pr_info("*ERROR* %d, 0x%x\n", phone_active, status);
+	}
+
+	if (is_reboot) {
+		pr_info("system reboot necessary\n");
+		err = -1;
+	}
+
+	if (err <= 0) {
+		pr_info("Update done.\n");
+		acquire_semaphore(mc);
+		write_single_data(mc, 0, 0xffffffff);
+	}
+
+	return err;
+}
+
 /* The modem_ctl portion of this driver handles modem lifecycle
  * transitions (OFF -> ON -> RUNNING -> ABNORMAL), the firmware
  * download mechanism (via /dev/modem_ctl), and interrupts from
@@ -306,7 +737,8 @@ static int modem_start(struct modemctl *mc, int ramdump)
 	msleep(1500);
 
 #else
-	if (readl(mc->mmio + OFF_MBOX_BP) != MODEM_MSG_SBL_DONE) {
+	if (!mc->is_cdma_modem &&
+			readl(mc->mmio + OFF_MBOX_BP) != MODEM_MSG_SBL_DONE) {
 		pr_err("[MODEM] bootloader not ready\n");
 		return -EIO;
 	}
@@ -328,12 +760,17 @@ static int modem_start(struct modemctl *mc, int ramdump)
 		if (ret == 0)
 			return -ENODEV;
 	} else {
-		mc->status = MODEM_BOOTING_NORMAL;
-		writel(MODEM_CMD_BINARY_LOAD, mc->mmio + OFF_MBOX_AP);
+		if (mc->is_cdma_modem)
+			mc->status = MODEM_RUNNING;
+		else {
+			mc->status = MODEM_BOOTING_NORMAL;
+			writel(MODEM_CMD_BINARY_LOAD, mc->mmio + OFF_MBOX_AP);
 
-		ret = wait_event_timeout(mc->wq, modem_running(mc), 25 * HZ);
-		if (ret == 0)
-			return -ENODEV;
+			ret = wait_event_timeout(mc->wq,
+						modem_running(mc), 25 * HZ);
+			if (ret == 0)
+				return -ENODEV;
+		}
 	}
 
 	pr_info("[MODEM] modem_start() DONE\n");
@@ -356,18 +793,31 @@ static int modem_reset(struct modemctl *mc)
 	/* write outbound mbox to assert outbound IRQ */
 	writel(0, mc->mmio + OFF_MBOX_AP);
 
-	/* ensure cp_reset pin set to low */
-	gpio_set_value(mc->gpio_cp_reset, 0);
-	msleep(100);
+	if (mc->is_cdma_modem) {
+		gpio_set_value(mc->gpio_phone_on, 1);
+		msleep(50);
 
-	gpio_set_value(mc->gpio_cp_reset, 0);
-	msleep(100);
+		/* ensure cp_reset pin set to low */
+		gpio_set_value(mc->gpio_cp_reset, 0);
+		msleep(100);
 
-	gpio_set_value(mc->gpio_cp_reset, 1);
+		gpio_set_value(mc->gpio_cp_reset, 1);
+		msleep(500);
 
-	/* Follow RESET timming delay not Power-On timming,
-	   because CP_RST & PHONE_ON have been set high already. */
-	msleep(100); /*wait modem stable */
+	} else {
+		/* ensure cp_reset pin set to low */
+		gpio_set_value(mc->gpio_cp_reset, 0);
+		msleep(100);
+
+		gpio_set_value(mc->gpio_cp_reset, 0);
+		msleep(100);
+
+		gpio_set_value(mc->gpio_cp_reset, 1);
+
+		/* Follow RESET timming delay not Power-On timming,
+		because CP_RST & PHONE_ON have been set high already. */
+		msleep(100); /*wait modem stable */
+	}
 
 	gpio_set_value(mc->gpio_pda_active, 1);
 
@@ -388,7 +838,9 @@ static long modemctl_ioctl(struct file *filp,
 			   unsigned int cmd, unsigned long arg)
 {
 	struct modemctl *mc = filp->private_data;
-	int ret;
+	struct dpram_firmware fw;
+	struct stat_info *pst;
+	int ret = 0;
 
 	mutex_lock(&mc->ctl_lock);
 	switch (cmd) {
@@ -404,6 +856,34 @@ static long modemctl_ioctl(struct file *filp,
 		break;
 	case IOCTL_MODEM_OFF:
 		ret = modem_off(mc);
+		break;
+
+	/* CDMA modem update in recovery mode */
+	case IOCTL_MODEM_FW_UPDATE:
+		pr_info("IOCTL_MODEM_FW_UPDATE\n");
+		if (arg == NULL) {
+			pr_err("No firmware");
+			break;
+		}
+
+		if (copy_from_user((void *)&fw, (void *)arg, sizeof(fw)) < 0) {
+			pr_err("copy from user failed!");
+			ret = -EINVAL;
+		} else if (dpram_process_modem_update(mc, &fw) < 0) {
+			pr_err("firmware write failed\n");
+			ret = -EIO;
+		}
+		break;
+	case IOCTL_MODEM_CHK_STAT:
+		pst = (struct stat_info *)arg;
+		if (mc->is_modem_delta_update)
+			ret = dpram_chk_delta_update(mc, &(pst->pct), pst->msg);
+		else
+			ret = dpram_chk_full_update(mc, &(pst->pct), pst->msg);
+		break;
+	case IOCTL_MODEM_PWROFF:
+		pr_info("IOCTL_MODEM_PWROFF\n");
+		dpram_modem_pwroff(mc);
 		break;
 	default:
 		ret = -EINVAL;
@@ -424,7 +904,10 @@ static const struct file_operations modemctl_fops = {
 
 static irqreturn_t modemctl_bp_irq_handler(int irq, void *_mc)
 {
-	pr_info("[MODEM] bp_irq()\n");
+	int value = 0;
+
+	value = gpio_get_value(((struct modemctl *)_mc)->gpio_phone_active);
+	pr_info("[MODEM] bp_irq() PHONE_ACTIVE_PIN=%d\n", value);
 	return IRQ_HANDLED;
 
 }
@@ -628,6 +1111,8 @@ static int __devinit modemctl_probe(struct platform_device *pdev)
 	mc->gpio_phone_active = pdata->gpio_phone_active;
 	mc->gpio_pda_active = pdata->gpio_pda_active;
 	mc->gpio_cp_reset = pdata->gpio_cp_reset;
+	mc->gpio_phone_on = pdata->gpio_phone_on;
+	mc->is_cdma_modem = pdata->is_cdma_modem;
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!res)
