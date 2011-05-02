@@ -1152,12 +1152,12 @@ static struct platform_device s3c_device_i2c12 = {
 
 #if defined (CONFIG_SAMSUNG_CAPTIVATE)
 static struct i2c_gpio_platform_data	i2c13_platdata = {
-  	.sda_pin		= GPIO_A1026_SDA,
-  	.scl_pin		= GPIO_A1026_SCL,
-  	.udelay			= 1,	/* 250KHz */		
-  	.sda_is_open_drain	= 0,
-  	.scl_is_open_drain	= 0,
-  	.scl_is_output_only	= 0,
+    .sda_pin		= GPIO_A1026_SDA,
+    .scl_pin		= GPIO_A1026_SCL,
+    .udelay			= 1,	/* 250KHz */
+    .sda_is_open_drain	= 0,
+    .scl_is_open_drain	= 0,
+    .scl_is_output_only	= 0,
   };
 static struct platform_device s3c_device_i2c13 = {
   	.name				= "i2c-gpio",

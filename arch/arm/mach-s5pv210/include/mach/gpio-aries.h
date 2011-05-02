@@ -579,7 +579,7 @@
 
 #if defined(CONFIG_SAMSUNG_CAPTIVATE)
 #define GPIO_A1026_SCL			S5PV210_MP04(4)
-#define GPIO_A1026_SCL_AF		2  
+#define GPIO_A1026_SCL_AF		2
 #else
 #define GPIO_MP044			S5PV210_MP04(4)
 #endif
