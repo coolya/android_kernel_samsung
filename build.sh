@@ -39,7 +39,7 @@ build ()
     mka -C "$KERNEL_DIR" O="$target_dir" HOSTCC="$CCACHE gcc" CROSS_COMPILE="$CCACHE $CROSS_PREFIX" zImage modules
     cp "$target_dir"/arch/arm/boot/zImage $ANDROID_BUILD_TOP/device/samsung/$target/kernel
     for module in "${MODULES[@]}" ; do
-        cp "$target_dir/$module" $ANDROID_BUILD_TOP/device/samsung/kernel
+        cp "$target_dir/$module" $ANDROID_BUILD_TOP/device/samsung/$target
     done
 }
     
