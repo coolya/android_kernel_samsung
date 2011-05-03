@@ -1361,6 +1361,7 @@ static struct wm8994_platform_data wm8994_pdata = {
 
 /* External camera module setting */
 static DEFINE_MUTEX(s5ka3dfx_lock);
+static struct regulator *s5ka3dfx_vga_avdd;
 static struct regulator *s5ka3dfx_vga_vddio;
 static struct regulator *s5ka3dfx_cam_isp_host;
 static struct regulator *s5ka3dfx_vga_dvdd;
@@ -1384,12 +1385,28 @@ static int s5ka3dfx_request_gpio(void)
 		gpio_free(GPIO_CAM_VGA_nSTBY);
 		return -EINVAL;
 	}
+	/* CAM_IO_EN - GPB(7) */
+	err = gpio_request(GPIO_GPB7, "GPB7");
+
+	if(err) {
+		pr_err("Failed to request GPB2 for camera control\n");
+		gpio_free(GPIO_CAM_VGA_nSTBY);
+		gpio_free(GPIO_CAM_VGA_nRST);
+		return -EINVAL;
+	}
 
 	return 0;
 }
 
 static int s5ka3dfx_power_init(void)
 {
+	/*if (IS_ERR_OR_NULL(s5ka3dfx_vga_avdd))
+		s5ka3dfx_vga_avdd = regulator_get(NULL, "vga_avdd");
+
+	if (IS_ERR_OR_NULL(s5ka3dfx_vga_avdd)) {
+		pr_err("Failed to get regulator vga_avdd\n");
+		return -EINVAL;
+	}*/
 
 	if (IS_ERR_OR_NULL(s5ka3dfx_vga_vddio))
 		s5ka3dfx_vga_vddio = regulator_get(NULL, "vga_vddio");
@@ -1428,15 +1445,14 @@ static int s5ka3dfx_power_on(void)
 		return -EINVAL;
 	}
 
-	/* CAM_IO_EN - GPB(7) */
-	err = gpio_request(GPIO_GPB7, "GPB7");
-
-	if(err) {
-		printk(KERN_ERR "failed to request GPB7 for camera control\n");
-
-		return err;
+	s5ka3dfx_request_gpio();
+	/* Turn VGA_AVDD_2.8V on */
+	/*err = regulator_enable(s5ka3dfx_vga_avdd);
+	if (err) {
+		pr_err("Failed to enable regulator vga_avdd\n");
+		return -EINVAL;
 	}
-
+	msleep(3);*/
 	// Turn CAM_ISP_SYS_2.8V on
 	gpio_direction_output(GPIO_GPB7, 0);
 	gpio_set_value(GPIO_GPB7, 1);
@@ -1447,7 +1463,7 @@ static int s5ka3dfx_power_on(void)
 	err = regulator_enable(s5ka3dfx_vga_vddio);
 	if (err) {
 		pr_err("Failed to enable regulator vga_vddio\n");
-		goto off_vga_vddio;
+		return -EINVAL;//goto off_vga_vddio;
 	}
 	udelay(20);
 
@@ -1466,7 +1482,7 @@ static int s5ka3dfx_power_on(void)
 	udelay(10);
 
 	/* Mclk enable */
-	s3c_gpio_cfgpin(GPIO_CAM_MCLK, S5PV210_GPE1_3_CAM_A_CLKOUT);
+	s3c_gpio_cfgpin(GPIO_CAM_MCLK, S3C_GPIO_SFN(0x02));
 	udelay(430);
 
 	/* Turn CAM_ISP_HOST_2.8V on */
@@ -1481,8 +1497,6 @@ static int s5ka3dfx_power_on(void)
 	gpio_direction_output(GPIO_CAM_VGA_nRST, 0);
 	gpio_set_value(GPIO_CAM_VGA_nRST, 1);
 	mdelay(5);
-
-	gpio_free(GPIO_GPB7);
 
 	return 0;
 off_cam_isp_host:
@@ -1502,7 +1516,12 @@ off_vga_dvdd:
 		pr_err("Failed to disable regulator vga_vddio\n");
 		result = err;
 	}
-off_vga_vddio:
+/*off_vga_vddio:
+	err = regulator_disable(s5ka3dfx_vga_avdd);
+	if (err) {
+		pr_err("Failed to disable regulator vga_avdd\n");
+		result = err;
+	}*/
 
 	return result;
 }
@@ -1511,7 +1530,7 @@ static int s5ka3dfx_power_off(void)
 {
 	int err;
 
-	if ( !s5ka3dfx_vga_vddio ||
+	if (/*!s5ka3dfx_vga_avdd ||*/ !s5ka3dfx_vga_vddio ||
 		!s5ka3dfx_cam_isp_host || !s5ka3dfx_vga_dvdd) {
 		pr_err("Faild to get all regulator\n");
 		return -EINVAL;
@@ -1534,15 +1553,6 @@ static int s5ka3dfx_power_off(void)
 
 	udelay(1);
 
-	/* CAM_IO_EN - GPB(7) */
-	err = gpio_request(GPIO_GPB7, "GPB7");
-
-	if(err) {
-		printk(KERN_ERR "failed to request GPB7 for camera control\n");
-
-		return err;
-	}
-
 	/* Turn VGA_VDDIO_2.8V off */
 	err = regulator_disable(s5ka3dfx_vga_vddio);
 	if (err) {
@@ -1563,12 +1573,12 @@ static int s5ka3dfx_power_off(void)
 
 	udelay(1);
 
-
-
-
-	// Turn CAM_ISP_SYS_2.8V off
-	gpio_direction_output(GPIO_GPB7, 1);
-	gpio_set_value(GPIO_GPB7, 0);
+	/* Turn VGA_AVDD_2.8V off */
+	/*err = regulator_disable(s5ka3dfx_vga_avdd);
+	if (err) {
+		pr_err("Failed to disable regulator vga_avdd\n");
+		return -EINVAL;
+	}*/
 
 	gpio_free(GPIO_GPB7);
 	gpio_free(GPIO_CAM_VGA_nRST);
@@ -1585,23 +1595,18 @@ static int s5ka3dfx_power_en(int onoff)
 	 * on if something odd happens and we are closed
 	 * by camera framework before we even completely opened.
 	 */
-	 pr_err("%s/n", __func__);
 	if (onoff != s5ka3dfx_powered_on) {
-		if (onoff){
-			pr_err("%s ON/n", __func__);
+		if (onoff)
 			err = s5ka3dfx_power_on();
-			pr_err("%s ON %d/n", __func__, err);
-		} else {
-			pr_err("%s OFF/n", __func__);
+		else {
 			err = s5ka3dfx_power_off();
 			s3c_i2c0_force_stop();
-			pr_err("%s OFF %d/n", __func__, err);
 		}
 		if (!err)
 			s5ka3dfx_powered_on = onoff;
 	}
 	mutex_unlock(&s5ka3dfx_lock);
-	pr_err("%s/n", __func__);
+
 	return err;
 }
 
