@@ -2211,7 +2211,7 @@ static void max17040_power_supply_unregister(struct power_supply *psy)
 static struct max17040_platform_data max17040_pdata = {
 	.power_supply_register = max17040_power_supply_register,
 	.power_supply_unregister = max17040_power_supply_unregister,
-	.rcomp_value = 0xD700,
+	.rcomp_value = 0xB00,
 };
 
 static struct i2c_board_info i2c_devs9[] __initdata = {
