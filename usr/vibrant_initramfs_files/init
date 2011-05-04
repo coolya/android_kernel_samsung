@@ -15,19 +15,19 @@ eval $(busybox grep -m 1 -A 1 BOOT_IMAGE_OFFSETS /stage1/boot.bin | busybox tail
 load_offset=$boot_offset
 load_len=$boot_len
 
+busybox mount -t yaffs2 /dev/block/mtdblock2 /system
 busybox mount -t yaffs2 /dev/block/mtdblock3 /cache
+
 if busybox test -e /cache/.startrecovery || busybox grep -q bootmode=2 /proc/cmdline ; then
 	busybox rm -fr /cache/.startrecovery
 	load_offset=$recovery_offset
 	load_len=$recovery_len
-fi
-
-busybox mount -t yaffs2 /dev/block/mtdblock2 /system
-if ! busybox test -e /system/build.prop ; then
+elif ! busybox test -e /system/build.prop ; then
 	busybox echo 'install_zip("/sdcard/update-cm-7-INITIAL-Vibrant-signed.zip");' > /cache/recovery/extendedcommand
 	load_offset=$recovery_offset
 	load_len=$recovery_len
 fi
+
 busybox umount /cache
 busybox umount /system
 
