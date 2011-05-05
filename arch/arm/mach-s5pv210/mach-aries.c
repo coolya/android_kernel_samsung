@@ -1150,6 +1150,22 @@ static struct platform_device s3c_device_i2c12 = {
 	.dev.platform_data	= &i2c12_platdata,
 };
 
+#if defined (CONFIG_SAMSUNG_CAPTIVATE)
+static struct i2c_gpio_platform_data	i2c13_platdata = {
+    .sda_pin		= GPIO_A1026_SDA,
+    .scl_pin		= GPIO_A1026_SCL,
+    .udelay			= 1,	/* 250KHz */
+    .sda_is_open_drain	= 0,
+    .scl_is_open_drain	= 0,
+    .scl_is_output_only	= 0,
+  };
+static struct platform_device s3c_device_i2c13 = {
+  	.name				= "i2c-gpio",
+  	.id					= 13,
+  	.dev.platform_data	= &i2c13_platdata,
+  };
+#endif
+
 static void touch_keypad_gpio_init(void)
 {
 	int ret = 0;
@@ -1167,6 +1183,13 @@ static void touch_keypad_onoff(int onoff)
 		msleep(30);
 	else
 		msleep(25);
+}
+
+static void touch_keypad_gpio_sleep(int onoff) {
+	if (onoff == TOUCHKEY_ON)
+		s3c_gpio_slp_cfgpin(_3_GPIO_TOUCH_EN, S3C_GPIO_SLP_OUT1);
+	else
+		s3c_gpio_slp_cfgpin(_3_GPIO_TOUCH_EN, S3C_GPIO_SLP_OUT0);
 }
 
 static const int touch_keypad_code[] = {
@@ -1187,6 +1210,7 @@ static struct touchkey_platform_data touchkey_data = {
 	.keycode_cnt = ARRAY_SIZE(touch_keypad_code),
 	.keycode = touch_keypad_code,
 	.touchkey_onoff = touch_keypad_onoff,
+	.touchkey_sleep_onoff = touch_keypad_gpio_sleep,
 	.fw_name = "cypress-touchkey.bin",
 	.scl_pin = _3_TOUCH_SCL_28V,
 	.sda_pin = _3_TOUCH_SDA_28V,
@@ -1960,6 +1984,7 @@ static int s5ka3dfx_power_on(void)
 		pr_err("Failed to enable regulator vga_avdd\n");
 		return -EINVAL;
 	}
+
 	msleep(3);*/
 	// Turn CAM_ISP_SYS_2.8V on
 	gpio_direction_output(GPIO_GPB7, 0);
@@ -2424,7 +2449,7 @@ static void max17040_power_supply_unregister(struct power_supply *psy)
 static struct max17040_platform_data max17040_pdata = {
 	.power_supply_register = max17040_power_supply_register,
 	.power_supply_unregister = max17040_power_supply_unregister,
-	.rcomp_value = 0xD700,
+	.rcomp_value = 0xB000,
 };
 
 static struct i2c_board_info i2c_devs9[] __initdata = {
@@ -2477,6 +2502,13 @@ static struct i2c_board_info i2c_devs12[] __initdata = {
 	},
 };
 
+#if defined (CONFIG_SAMSUNG_CAPTIVATE)
+static struct i2c_board_info i2c_devs13[] __initdata = {
+  	{
+  		I2C_BOARD_INFO("A1026_driver", (0x3E)),
+  	},
+};
+#endif
 
 static struct resource ram_console_resource[] = {
 	{
@@ -4483,6 +4515,9 @@ static struct platform_device *aries_devices[] __initdata = {
 	&s3c_device_i2c9,  /* max1704x:fuel_guage */
 	&s3c_device_i2c11, /* optical sensor */
 	&s3c_device_i2c12, /* magnetic sensor */
+#if defined (CONFIG_SAMSUNG_CAPTIVATE)
+	&s3c_device_i2c13,
+#endif
 #ifdef CONFIG_USB_GADGET
 	&s3c_device_usbgadget,
 #endif
@@ -4813,6 +4848,10 @@ static void __init aries_machine_init(void)
 	
 	/* yamaha magnetic sensor */
 	i2c_register_board_info(12, i2c_devs12, ARRAY_SIZE(i2c_devs12));
+
+#if defined (CONFIG_SAMSUNG_CAPTIVATE)
+  	i2c_register_board_info(13, i2c_devs13, ARRAY_SIZE(i2c_devs13)); /* audience A1026 */
+#endif
 
 	/* panel */
 	spi_register_board_info(spi_board_info, ARRAY_SIZE(spi_board_info));

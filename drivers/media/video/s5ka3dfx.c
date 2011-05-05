@@ -92,6 +92,7 @@ struct s5ka3dfx_state {
 
 enum {
 	S5KA3DFX_PREVIEW_QCIF,
+	S5KA3DFX_PREVIEW_QVGA,
 	S5KA3DFX_PREVIEW_VGA,
 };
 
@@ -103,6 +104,7 @@ struct s5ka3dfx_enum_framesize {
 
 struct s5ka3dfx_enum_framesize s5ka3dfx_framesize_list[] = {
 	{ S5KA3DFX_PREVIEW_QCIF, 176, 144 },
+	{ S5KA3DFX_PREVIEW_QVGA, 320, 240 },
 	{ S5KA3DFX_PREVIEW_VGA, 640, 480 }
 };
 
@@ -215,7 +217,8 @@ static struct s5ka3dfx_regset_table init_vt_reg[] = {
 
 static struct s5ka3dfx_regset_table frame_size[] = {
 	S5KA3DFX_REGSET_TABLE_ELEMENT(0, s5ka3dfx_QCIF),
-	S5KA3DFX_REGSET_TABLE_ELEMENT(1, s5ka3dfx_Return_VGA),
+	S5KA3DFX_REGSET_TABLE_ELEMENT(1, s5ka3dfx_QVGA),
+	S5KA3DFX_REGSET_TABLE_ELEMENT(2, s5ka3dfx_Return_VGA),
 };
 static int s5ka3dfx_reset(struct v4l2_subdev *sd)
 {

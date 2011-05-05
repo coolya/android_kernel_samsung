@@ -283,7 +283,11 @@ unsigned int universal_sdhci2_detect_ext_cd(void)
 void universal_sdhci2_cfg_ext_cd(void)
 {
 	printk(KERN_DEBUG "Universal :SD Detect configuration\n");
-	s3c_gpio_setpull(S5PV210_GPH3(4), S3C_GPIO_PULL_NONE);
+#if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined(CONFIG_SAMSUNG_VIBRANT)
+    s3c_gpio_setpull(S5PV210_GPH3(4), S3C_GPIO_PULL_UP);
+#else
+    s3c_gpio_setpull(S5PV210_GPH3(4), S3C_GPIO_PULL_NONE);
+#endif
 	set_irq_type(IRQ_EINT(28), IRQ_TYPE_EDGE_BOTH);
 }
 

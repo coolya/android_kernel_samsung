@@ -145,9 +145,21 @@ static int kr3dm_read_accel_xyz(struct kr3dm_data *kr3dm,
 		return -EIO;
 	}
 
-	acc->x = acc_data[0];
-	acc->y = acc_data[2];
-	acc->z = acc_data[4];
+	if (kr3dm->pdata->rotation) {
+		acc->x = acc_data[0] * kr3dm->pdata->rotation[0] +
+				acc_data[2] * kr3dm->pdata->rotation[1] +
+				acc_data[4] * kr3dm->pdata->rotation[2];
+		acc->y = acc_data[0] * kr3dm->pdata->rotation[3] +
+				acc_data[2] * kr3dm->pdata->rotation[4] +
+				acc_data[4] * kr3dm->pdata->rotation[5];
+		acc->z = acc_data[0] * kr3dm->pdata->rotation[6] +
+				acc_data[2] * kr3dm->pdata->rotation[7] +
+				acc_data[4] * kr3dm->pdata->rotation[8];
+	} else {
+		acc->x = acc_data[0];
+		acc->y = acc_data[2];
+		acc->z = acc_data[4];
+	}
 
 	return 0;
 }

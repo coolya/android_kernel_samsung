@@ -1,48 +1,65 @@
-#/bin/bash
+#/bin/bash -x
+
+setup ()
+{
+    if [ x = "x$ANDROID_BUILD_TOP" ] ; then
+        echo "Android build environment must be configured"
+        exit 1
+    fi
+    . "$ANDROID_BUILD_TOP"/build/envsetup.sh
+
+    KERNEL_DIR="$(dirname "$(readlink -f "$0")")"
+    BUILD_DIR="$KERNEL_DIR/build"
+    MODULES=("drivers/net/wireless/bcm4329/bcm4329.ko" "fs/cifs/cifs.ko" "drivers/net/tun.ko")
+
+    if [ x = "x$NO_CCACHE" ] && ccache -V &>/dev/null ; then
+        CCACHE=ccache
+        CCACHE_BASEDIR="$KERNEL_DIR"
+        CCACHE_COMPRESS=1
+        CCACHE_DIR="$BUILD_DIR/.ccache"
+        export CCACHE_DIR CCACHE_COMPRESS CCACHE_BASEDIR
+    else
+        CCACHE=""
+    fi
+
+    CROSS_PREFIX="$ANDROID_TOOLCHAIN/arm-eabi-"
+}
+
+build ()
+{
+    local target=$1
+    echo "Building for $target"
+    local target_dir="$BUILD_DIR/$target"
+    local module
+    rm -fr "$target_dir"
+    mkdir -p "$target_dir/usr"
+    cp "$KERNEL_DIR/usr/"*.list "$target_dir/usr"
+    sed "s|usr/|$KERNEL_DIR/usr/|g" -i "$target_dir/usr/"*.list
+    mka -C "$KERNEL_DIR" O="$target_dir" aries_${target}_defconfig HOSTCC="$CCACHE gcc"
+    mka -C "$KERNEL_DIR" O="$target_dir" HOSTCC="$CCACHE gcc" CROSS_COMPILE="$CCACHE $CROSS_PREFIX" zImage modules
+    cp "$target_dir"/arch/arm/boot/zImage $ANDROID_BUILD_TOP/device/samsung/$target/kernel
+    for module in "${MODULES[@]}" ; do
+        cp "$target_dir/$module" $ANDROID_BUILD_TOP/device/samsung/$target
+    done
+}
+    
+setup
+
+if [ "$1" = clean ] ; then
+    rm -fr "$BUILD_DIR"/*
+    exit 0
+fi
+
+targets=("$@")
+if [ 0 = "${#targets[@]}" ] ; then
+    targets=(captivate galaxys galaxysb vibrant)
+fi
 
 START=$(date +%s)
 
-DEVICE="$1"
-
-case "$DEVICE" in
-	clean)
-		make clean
-		exit
-		;;
-	captivate)
-		cfg=aries_captivate_defconfig
-		;;
-	galaxys)
-		cfg=aries_galaxys_defconfig
-		;;
-	galaxysb)
-		cfg=aries_galaxysb_defconfig
-		;;
-	vibrant)
-		cfg=aries_vibrant_defconfig
-		;;
-	*)
-		echo "Usage: $0 DEVICE"
-		echo "Example: ./build.sh galaxys"
-		echo "Supported Devices: captivate, galaxys, galaxysb, vibrant"
-		exit 2
-		;;
-esac
-
-export KBUILD_BUILD_VERSION="1"
-echo "Using config ${cfg}"
-
-make ${cfg}  || { echo "Failed to make config"; exit 1; }
-make -j $(grep 'processor' /proc/cpuinfo | wc -l) || { echo "Failed to make kernel"; exit 1; }
-
-echo -n "Copying Kernel and Modules to device tree..."
-{
-cp arch/arm/boot/zImage ../../../device/samsung/$DEVICE/zImage
-cp drivers/net/tun.ko ../../../device/samsung/$DEVICE/tun.ko
-cp drivers/net/wireless/bcm4329/bcm4329.ko ../../../device/samsung/$DEVICE/bcm4329.ko
-cp fs/cifs/cifs.ko ../../../device/samsung/$DEVICE/cifs.ko
-} || { echo "failed to copy kernel and modules"; exit 1; }
-echo "done."
+for target in "${targets[@]}" ; do 
+    build $target
+done
 
 END=$(date +%s)
 ELAPSED=$((END - START))

@@ -390,6 +390,15 @@ void jbd2_journal_commit_transaction(journal_t *journal)
 		jbd_debug(3, "superblock not updated\n");
 	}
 
+	if (journal->j_running_transaction == NULL) {
+		/* If we're going to trigger the J_ASSERT below, let's
+		   print some debugging information to figure out why
+		   kjournald decided to wake up and call us */
+		printk(KERN_ERR "JBD2 ASSERT DEBUG: commit_sequence=%d, "
+		       "commit_request=%d\n", journal->j_commit_sequence,
+		       journal->j_commit_request);
+	}
+
 	J_ASSERT(journal->j_running_transaction != NULL);
 	J_ASSERT(journal->j_committing_transaction == NULL);
 

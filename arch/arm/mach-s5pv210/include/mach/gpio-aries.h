@@ -577,9 +577,19 @@
 #define GPIO_DISPLAY_SI			S5PV210_MP04(3)
 #define GPIO_DISPLAY_SI_AF		S3C_GPIO_SFN(1)
 
-#define GPIO_MP044				S5PV210_MP04(4)
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+#define GPIO_A1026_SCL			S5PV210_MP04(4)
+#define GPIO_A1026_SCL_AF		2
+#else
+#define GPIO_MP044			S5PV210_MP04(4)
+#endif
 
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+#define GPIO_A1026_SDA			S5PV210_MP04(5)
+#define GPIO_A1026_SDA_AF		2
+#else
 #define GPIO_LVDS_RST			S5PV210_MP04(5)
+#endif
 
 #define GPIO_GPS_CLK_EN			S5PV210_MP04(6)
 
@@ -669,4 +679,3 @@
 #define _3_GPIO_TOUCH_CE		S5PV210_GPJ3(3)
 #endif
 /* end of __GPIO_HERRING_H_ */
-

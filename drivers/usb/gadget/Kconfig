@@ -942,6 +942,12 @@ config USB_ANDROID_RNDIS_DWORD_ALIGNED
         help
 	  Provides dword aligned for DMA controller.
 
+config USB_ANDROID_ACCESSORY
+	boolean "Android USB accessory function"
+	depends on USB_ANDROID
+	help
+	  Provides Android USB Accessory support for android gadget driver.
+
 config USB_CDC_COMPOSITE
 	tristate "CDC Composite Device (Ethernet and ACM)"
 	depends on NET
