@@ -33,6 +33,7 @@ nod /dev/mtd/mtd2ro 644 0 0 c 90 5
 slink /init /stage1/init 777 0 0
 dir /proc 755 0 0
 dir /stage1 755 0 0
+dir /system 755 0 0
 dir /cache 755 0 0
 file /stage1/busybox usr/vibrant_initramfs_files/busybox 755 0 0
 file /stage1/init usr/vibrant_initramfs_files/init 755 0 0
