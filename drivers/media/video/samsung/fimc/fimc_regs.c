@@ -1430,10 +1430,6 @@ int fimc50_hwset_output_offset(struct fimc_control *ctrl, u32 pixelformat,
 {
 	u32 cfg_y = 0, cfg_cb = 0, cfg_cr = 0;
 
-	if (!crop->left && !crop->top && (bounds->width == crop->width) &&
-		(bounds->height == crop->height))
-		return -EINVAL;
-
 	fimc_dbg("%s: left: %d, top: %d, width: %d, height: %d\n",
 		__func__, crop->left, crop->top, crop->width, crop->height);
 
