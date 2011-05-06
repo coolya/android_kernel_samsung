@@ -437,12 +437,17 @@ static struct regulator_consumer_supply ldo3_consumer[] = {
 	REGULATOR_SUPPLY("pd_io", "s3c-usbgadget")
 };
 
+static struct regulator_consumer_supply ldo5_consumer[] = {
+	REGULATOR_SUPPLY("vtf", NULL),
+};
+
 static struct regulator_consumer_supply ldo7_consumer[] = {
 	{	.supply	= "vlcd", },
 };
 
 static struct regulator_consumer_supply ldo8_consumer[] = {
-	REGULATOR_SUPPLY("pd_core", "s3c-usbgadget")
+	REGULATOR_SUPPLY("pd_core", "s3c-usbgadget"),
+        REGULATOR_SUPPLY("tvout", NULL),
 };
 
 static struct regulator_consumer_supply ldo11_consumer[] = {
@@ -466,7 +471,7 @@ static struct regulator_consumer_supply ldo15_consumer[] = {
 };
 
 static struct regulator_consumer_supply ldo16_consumer[] = {
-	{	.supply	= "cam_avdd", },
+	{	.supply	= "vga_avdd", },
 };
 
 static struct regulator_consumer_supply ldo17_consumer[] = {
@@ -1358,7 +1363,6 @@ static struct wm8994_platform_data wm8994_pdata = {
 	.set_mic_bias = wm8994_set_mic_bias,
 };
 
-
 /*
  * Guide for Camera Configuration for Crespo board
  * ITU CAM CH A: LSI s5k4ecgx
@@ -1379,9 +1383,9 @@ static struct regulator *cam_vga_dvdd_regulator;/*14*/
 static struct regulator *cam_vga_avdd_regulator;/*16*/
 static bool ce147_powered_on;
 
-
 static int ce147_regulator_init(void)
 {
+/*BUCK 4*/
 	if (IS_ERR_OR_NULL(cam_isp_core_regulator)) {
 		cam_isp_core_regulator = regulator_get(NULL, "cam_isp_core");
 		if (IS_ERR_OR_NULL(cam_isp_core_regulator)) {
@@ -1389,13 +1393,7 @@ static int ce147_regulator_init(void)
 			return -EINVAL;
 		}
 	}
-	if (IS_ERR_OR_NULL(cam_isp_host_regulator)) {
-		cam_isp_host_regulator = regulator_get(NULL, "cam_isp_host");
-		if (IS_ERR_OR_NULL(cam_isp_host_regulator)) {
-			pr_err("failed to get cam_isp_host regulator");
-			return -EINVAL;
-		}
-	}
+/*ldo 11*/
 	if (IS_ERR_OR_NULL(cam_af_regulator)) {
 		cam_af_regulator = regulator_get(NULL, "cam_af");
 		if (IS_ERR_OR_NULL(cam_af_regulator)) {
@@ -1403,25 +1401,53 @@ static int ce147_regulator_init(void)
 			return -EINVAL;
 		}
 	}
+/*ldo 12*/
 	if (IS_ERR_OR_NULL(cam_sensor_core_regulator)) {
 		cam_sensor_core_regulator = regulator_get(NULL, "cam_sensor");
 		if (IS_ERR_OR_NULL(cam_sensor_core_regulator)) {
-			pr_err("failed to get cam_af regulator");
+			pr_err("failed to get cam_sensor regulator");
 			return -EINVAL;
 		}
 	}
+/*ldo 13*/
+	if (IS_ERR_OR_NULL(cam_vga_vddio_regulator)) {
+		cam_vga_vddio_regulator = regulator_get(NULL, "vga_vddio");
+		if (IS_ERR_OR_NULL(cam_vga_vddio_regulator)) {
+			pr_err("failed to get vga_vddio regulator");
+			return -EINVAL;
+		}
+	}
+/*ldo 14*/
+	if (IS_ERR_OR_NULL(cam_vga_dvdd_regulator)) {
+		cam_vga_dvdd_regulator = regulator_get(NULL, "vga_dvdd");
+		if (IS_ERR_OR_NULL(cam_vga_dvdd_regulator)) {
+			pr_err("failed to get vga_dvdd regulator");
+			return -EINVAL;
+		}
+	}
+/*ldo 15*/
+	if (IS_ERR_OR_NULL(cam_isp_host_regulator)) {
+		cam_isp_host_regulator = regulator_get(NULL, "cam_isp_host");
+		if (IS_ERR_OR_NULL(cam_isp_host_regulator)) {
+			pr_err("failed to get cam_isp_host regulator");
+			return -EINVAL;
+		}
+	}
+/*ldo 16*/
 	if (IS_ERR_OR_NULL(cam_vga_avdd_regulator)) {
-		cam_vga_avdd_regulator = regulator_get(NULL, "cam_avdd");
+		cam_vga_avdd_regulator = regulator_get(NULL, "vga_avdd");
 		if (IS_ERR_OR_NULL(cam_vga_avdd_regulator)) {
-			pr_err("failed to get cam_avdd regulator");
+			pr_err("failed to get vga_avdd regulator");
 			return -EINVAL;
 		}
 	}
-
 	pr_debug("cam_isp_core_regulator = %p\n", cam_isp_core_regulator);
 	pr_debug("cam_isp_host_regulator = %p\n", cam_isp_host_regulator);
 	pr_debug("cam_af_regulator = %p\n", cam_af_regulator);
-	//pr_debug("cam_sensor_regulator = %p\n", cam_sensor_regulator);
+	pr_debug("cam_sensor_core_regulator = %p\n", cam_sensor_core_regulator);
+	pr_debug("cam_vga_vddio_regulator = %p\n", cam_vga_vddio_regulator);
+	pr_debug("cam_vga_dvdd_regulator = %p\n", cam_vga_dvdd_regulator);
+	pr_debug("cam_vga_avdd_regulator = %p\n", cam_vga_avdd_regulator);
 	return 0;
 }
 
@@ -1752,7 +1778,7 @@ static int ce147_power_off(void)
 
 static int ce147_power_en(int onoff)
 {
-	int bd_level;
+/*	int bd_level; // unused variable */
 	int err = 0;
 #if 0
 	if(onoff){
@@ -1984,7 +2010,6 @@ static int s5ka3dfx_power_on(void)
 		pr_err("Failed to enable regulator vga_avdd\n");
 		return -EINVAL;
 	}
-
 	msleep(3);*/
 	// Turn CAM_ISP_SYS_2.8V on
 	gpio_direction_output(GPIO_GPB7, 0);
@@ -2213,17 +2238,9 @@ static struct s3c_platform_jpeg jpeg_plat __initdata = {
 };
 #endif
 
-
-
-
-
-
-
 /* I2C0 */
-/* unused (codeworkx - dani.hillenbrand@googlemail.com)
 static struct i2c_board_info i2c_devs0[] __initdata = {
 };
-*/
 
 static struct i2c_board_info i2c_devs4[] __initdata = {
 	{
@@ -2233,10 +2250,8 @@ static struct i2c_board_info i2c_devs4[] __initdata = {
 };
 
 /* I2C1 */
-/* unused (codeworkx - dani.hillenbrand@googlemail.com)
 static struct i2c_board_info i2c_devs1[] __initdata = {
 };
-*/
 
 static void mxt224_power_on(void)
 {
