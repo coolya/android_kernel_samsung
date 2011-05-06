@@ -2715,6 +2715,9 @@ static struct platform_device sec_device_jack = {
 #define S3C_GPIO_SETPIN_ONE          1
 #define S3C_GPIO_SETPIN_NONE	     2
 
+// just4info
+// S3C_GPIO_SFN(0xF) = S3C_GPIO_EINT = S3C_GPIO_SPECIAL(0xF)
+
 struct gpio_init_data {
 	uint num;
 	uint cfg;
@@ -2885,13 +2888,15 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.num	= S5PV210_GPD1(0),
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_NONE,
+		.pud	= S3C_GPIO_PULL_DOWN,
+//		.pud	= S3C_GPIO_PULL_NONE, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPD1(1),
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_NONE,
+		.pud	= S3C_GPIO_PULL_DOWN,
+//		.pud	= S3C_GPIO_PULL_NONE, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPD1(2),
@@ -2909,17 +2914,17 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.num	= S5PV210_GPD1(4),
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_DOWN,
+		.pud	= S3C_GPIO_PULL_NONE,
+//		.pud	= S3C_GPIO_PULL_DOWN, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPD1(5),
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_DOWN,
+		.pud	= S3C_GPIO_PULL_NONE,
+//		.pud	= S3C_GPIO_PULL_DOWN, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
-	},
-
-	{
+	}, {
 		.num	= S5PV210_GPE0(0),
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
@@ -3032,7 +3037,8 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.num	= S5PV210_GPG0(2),
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_DOWN,
+		.pud	= S3C_GPIO_PULL_NONE,
+//		.pud	= S3C_GPIO_PULL_DOWN, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPG0(3),
@@ -3068,15 +3074,21 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPG1(1),
-		.cfg	= S3C_GPIO_OUTPUT,
-		.val	= S3C_GPIO_SETPIN_ZERO,
-		.pud	= S3C_GPIO_PULL_NONE,
+		.cfg	= S3C_GPIO_INPUT,
+//		.cfg	= S3C_GPIO_OUTPUT, JVB-MERGE <<<<<<<<
+		.val	= S3C_GPIO_SETPIN_NONE,
+//		.val	= S3C_GPIO_SETPIN_ZERO, JVB-MERGE <<<<<<<<
+		.pud	= S3C_GPIO_PULL_DOWN,
+//		.pud	= S3C_GPIO_PULL_NONE, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPG1(2),
-		.cfg	= S3C_GPIO_INPUT,
-		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_DOWN,
+		.cfg	= S3C_GPIO_OUTPUT,
+//		.cfg	= S3C_GPIO_INPUT, JVB-MERGE <<<<<<<<
+		.val	= S3C_GPIO_SETPIN_ZERO,
+//		.val	= S3C_GPIO_SETPIN_NONE, JVB-MERGE <<<<<<<<
+		.pud	= S3C_GPIO_PULL_NONE,
+//		.pud	= S3C_GPIO_PULL_DOWN, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPG1(3),
@@ -3106,9 +3118,12 @@ static struct gpio_init_data aries_init_gpios[] = {
 
 	{
 		.num	= S5PV210_GPG2(0),
-		.cfg	= S3C_GPIO_INPUT,
-		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_DOWN,
+		.cfg	= S3C_GPIO_OUTPUT,
+//		.cfg	= S3C_GPIO_INPUT, JVB-MERGE <<<<<<<<
+		.val	= S3C_GPIO_SETPIN_ZERO,
+//		.val	= S3C_GPIO_SETPIN_NONE, JVB-MERGE <<<<<<<<
+		.pud	= S3C_GPIO_PULL_NONE,
+//		.pud	= S3C_GPIO_PULL_DOWN, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPG2(1),
@@ -3120,7 +3135,8 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.num	= S5PV210_GPG2(2),
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_DOWN,
+		.pud	= S3C_GPIO_PULL_NONE,
+//		.pud	= S3C_GPIO_PULL_DOWN, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPG2(3),
@@ -3156,9 +3172,12 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPG3(1),
-		.cfg	= S3C_GPIO_INPUT,
-		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_DOWN,
+		.cfg	= S3C_GPIO_OUPUT,
+//		.cfg	= S3C_GPIO_INPUT, JVB-MERGE <<<<<<<<
+		.val	= S3C_GPIO_SETPIN_ZERO,
+//		.val	= S3C_GPIO_SETPIN_NONE, JVB-MERGE <<<<<<<<
+		.pud	= S3C_GPIO_PULL_NONE,
+//		.pud	= S3C_GPIO_PULL_DOWN, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 #if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
@@ -3169,9 +3188,12 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 #else
 		.num	= S5PV210_GPG3(2),
-		.cfg	= S3C_GPIO_OUTPUT,
-		.val	= S3C_GPIO_SETPIN_ZERO,
-		.pud	= S3C_GPIO_PULL_NONE,
+		.cfg	= S3C_GPIO_INPUT,
+//		.cfg	= S3C_GPIO_OUTPUT, JVB-MERGE <<<<<<<<
+		.val	= S3C_GPIO_SETPIN_NONE,
+//		.val	= S3C_GPIO_SETPIN_ZERO, JVB-MERGE <<<<<<<<
+		.pud	= S3C_GPIO_PULL_DOWN,
+//		.pud	= S3C_GPIO_PULL_NONE, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 #endif
 	}, {
@@ -3246,30 +3268,49 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, { /* GPIO_DET_35 - 3.5" ear jack */
 		.num	= S5PV210_GPH0(6),
-		.cfg	= S3C_GPIO_SFN(GPIO_DET_35_AF),
+		.cfg	= S3C_GPIO_SFN(GPIO_DET_35_AF), // S3C_GPIO_EINT <<<<<<<<
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPH0(7),
-		.cfg	= S3C_GPIO_SFN(0xF),
+		.cfg	= S3C_GPIO_SFN(0xF), // S3C_GPIO_EINT <<<<<<<<
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	},
 
 	{
+#if defined (CONFIG_SAMSUNG_CAPTIVATE)
+		.num	= S5PV210_GPH1(0),
+		.cfg	= S3C_GPIO_OUTPUT,
+		.val	= S3C_GPIO_SETPIN_NONE,
+		.pud	= S3C_GPIO_PULL_DOWN,
+		.drv	= S3C_GPIO_DRVSTR_1X,
+#else
 		.num	= S5PV210_GPH1(0),
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_DOWN,
 		.drv	= S3C_GPIO_DRVSTR_1X,
+#endif
 	}, {
+#if defined (CONFIG_SAMSUNG_CAPTIVATE)
 		.num	= S5PV210_GPH1(1),
 		.cfg	= S3C_GPIO_OUTPUT,
-		.val	= S3C_GPIO_SETPIN_ZERO,
-		.pud	= S3C_GPIO_PULL_NONE,
+		.val	= S3C_GPIO_SETPIN_NONE,
+		.pud	= S3C_GPIO_PULL_DOWN,
 		.drv	= S3C_GPIO_DRVSTR_1X,
+#else
+		.num	= S5PV210_GPH1(1),
+		.cfg	= S3C_GPIO_INPUT,
+//		.cfg	= S3C_GPIO_OUTPUT, JVB-MERGE <<<<<<<<
+		.val	= S3C_GPIO_SETPIN_NONE,
+//		.val	= S3C_GPIO_SETPIN_ZERO, JVB-MERGE <<<<<<<<
+		.pud	= S3C_GPIO_PULL_DOWN,
+//		.pud	= S3C_GPIO_PULL_NONE, JVB-MERGE <<<<<<<<
+		.drv	= S3C_GPIO_DRVSTR_1X,
+#endif
 	}, {
 		.num	= S5PV210_GPH1(2),
 		.cfg	= S3C_GPIO_INPUT,
@@ -3286,23 +3327,26 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.num	= S5PV210_GPH1(4),
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_NONE,
+		.pud	= S3C_GPIO_PULL_DOWN,
+//		.pud	= S3C_GPIO_PULL_NONE, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, { /* NFC_EN */
 		.num	= S5PV210_GPH1(5),
 		.cfg	= S3C_GPIO_OUTPUT,
 		.val	= S3C_GPIO_SETPIN_ONE,
-		.pud	= S3C_GPIO_PULL_NONE,
+		.pud	= S3C_GPIO_PULL_DOWN,
+//		.pud	= S3C_GPIO_PULL_NONE, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, { /* NFC_FIRM */
 		.num	= S5PV210_GPH1(6),
 		.cfg	= S3C_GPIO_OUTPUT,
 		.val	= S3C_GPIO_SETPIN_ZERO,
-		.pud	= S3C_GPIO_PULL_NONE,
+		.pud	= S3C_GPIO_PULL_DOWN,
+//		.pud	= S3C_GPIO_PULL_NONE, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPH1(7),
-		.cfg	= S3C_GPIO_SFN(0xF),
+		.cfg	= S3C_GPIO_SFN(0xF), // S3C_GPIO_EINT <<<<<<<<
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
@@ -3322,21 +3366,21 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, { /* GPIO_EAR_SEND_END_35 */
 		.num	= S5PV210_GPH2(2),
-#if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined (CONFIG_SAMSUNG_VIBRANT)
 		.cfg	= S3C_GPIO_INPUT,
+// 		.cfg	= S3C_GPIO_OUTPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
+//		.val	= S3C_GPIO_SETPIN_ZERO, JVB-MERGE <<<<<<<<
 		.pud	= S3C_GPIO_PULL_DOWN,
-#else
-		.cfg	= S3C_GPIO_OUTPUT,
-		.val	= S3C_GPIO_SETPIN_ZERO,
-		.pud	= S3C_GPIO_PULL_NONE,
-#endif
+//		.pud	= S3C_GPIO_PULL_NONE, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPH2(3),
-		.cfg	= S3C_GPIO_OUTPUT,
-		.val	= S3C_GPIO_SETPIN_ZERO,
-		.pud	= S3C_GPIO_PULL_NONE,
+		.cfg	= S3C_GPIO_INPUT,
+//		.cfg	= S3C_GPIO_OUTPUT, JVB-MERGE <<<<<<<<
+		.val	= S3C_GPIO_SETPIN_NONE,
+//		.val	= S3C_GPIO_SETPIN_ZERO, JVB-MERGE <<<<<<<<
+		.pud	= S3C_GPIO_PULL_DOWN,
+//		.pud	= S3C_GPIO_PULL_NONE, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPH2(4),
@@ -3346,13 +3390,13 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPH2(5),
-		.cfg	= S3C_GPIO_SFN(0xF),
+		.cfg	= S3C_GPIO_SFN(0xF), // S3C_GPIO_EINT <<<<<<<<
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_DOWN,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPH2(6),
-		.cfg	= S3C_GPIO_SFN(0xF),
+		.cfg	= S3C_GPIO_SFN(0xF), // S3C_GPIO_EINT <<<<<<<<
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
@@ -3368,7 +3412,8 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.num	= S5PV210_GPH3(0),
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_UP,
+		.pud	= S3C_GPIO_PULL_DOWN,
+//		.pud	= S3C_GPIO_PULL_UP, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPH3(1),
@@ -3397,9 +3442,10 @@ static struct gpio_init_data aries_init_gpios[] = {
 	}, {
 #if defined (CONFIG_SAMSUNG_GALAXYS) || defined (CONFIG_SAMSUNG_GALAXYSB) /* HOME Key */
 		.num	= S5PV210_GPH3(5),
-		.cfg	= S3C_GPIO_SFN(0xF),
+		.cfg	= S3C_GPIO_SFN(0xF), // S3C_GPIO_EINT <<<<<<<<
 		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_DOWN,
+		.pud	= S3C_GPIO_PULL_NONE,
+//		.pud	= S3C_GPIO_PULL_DOWN, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 #else
 		.num	= S5PV210_GPH3(5),
@@ -3409,17 +3455,19 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 #endif
 	}, { /* GPIO_EAR_SEND_END */
-		.num	= S5PV210_GPH3(6),
 #if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined (CONFIG_SAMSUNG_VIBRANT)
+		.num	= S5PV210_GPH3(6),
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_DOWN,
+		.drv	= S3C_GPIO_DRVSTR_1X,
 #else
-		.cfg	= S3C_GPIO_SFN(GPIO_EAR_SEND_END_AF),
+		.num	= S5PV210_GPH3(6),
+		.cfg	= S3C_GPIO_SFN(GPIO_EAR_SEND_END_AF), // S3C_GPIO_EINT <<<<<<<<
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_NONE,
-#endif
 		.drv	= S3C_GPIO_DRVSTR_1X,
+#endif
 	}, {
 		.num	= S5PV210_GPH3(7),
 		.cfg	= S3C_GPIO_OUTPUT,
@@ -3476,13 +3524,15 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.num	= S5PV210_GPJ0(0),
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_DOWN,
+		.pud	= S3C_GPIO_PULL_NONE,
+//		.pud	= S3C_GPIO_PULL_DOWN, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPJ0(1),
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_DOWN,
+		.pud	= S3C_GPIO_PULL_NONE,
+//		.pud	= S3C_GPIO_PULL_DOWN, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPJ0(2),
@@ -3504,7 +3554,7 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPJ0(5),
-		.cfg	= S3C_GPIO_SFN(0xF),
+		.cfg	= S3C_GPIO_SFN(0xF), // S3C_GPIO_INPUT <<<<<<<<
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_DOWN,
 		.drv	= S3C_GPIO_DRVSTR_1X,
@@ -3532,9 +3582,12 @@ static struct gpio_init_data aries_init_gpios[] = {
 
 	{
 		.num	= S5PV210_GPJ1(0),
-		.cfg	= S3C_GPIO_OUTPUT,
-		.val	= S3C_GPIO_SETPIN_ZERO,
-		.pud	= S3C_GPIO_PULL_NONE,
+		.cfg	= S3C_GPIO_INPUT,
+//		.cfg	= S3C_GPIO_OUTPUT, JVB-MERGE <<<<<<<<
+		.val	= S3C_GPIO_SETPIN_NONE,
+//		.val	= S3C_GPIO_SETPIN_ZERO, JVB-MERGE <<<<<<<<
+		.pud	= S3C_GPIO_PULL_DOWN,
+//		.pud	= S3C_GPIO_PULL_NONE, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPJ1(1),
@@ -3544,9 +3597,12 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPJ1(2),
-		.cfg	= S3C_GPIO_OUTPUT,
-		.val	= S3C_GPIO_SETPIN_ZERO,
-		.pud	= S3C_GPIO_PULL_NONE,
+		.cfg	= S3C_GPIO_INPUT,
+//		.cfg	= S3C_GPIO_OUTPUT, JVB-MERGE <<<<<<<<
+		.val	= S3C_GPIO_SETPIN_NONE,
+//		.val	= S3C_GPIO_SETPIN_ZERO, JVB-MERGE <<<<<<<<
+		.pud	= S3C_GPIO_PULL_DOWN,
+//		.pud	= S3C_GPIO_PULL_NONE, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPJ1(3),
@@ -3598,7 +3654,7 @@ static struct gpio_init_data aries_init_gpios[] = {
 	},
 #endif
 	{
-		.num	= S5PV210_GPJ2(2),
+		.num	= S5PV210_GPJ2(2), // doesn't exist
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_DOWN,
@@ -3612,37 +3668,54 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 #else
 		.num	= S5PV210_GPJ2(3),
-		.cfg	= S3C_GPIO_OUTPUT,
-		.val	= S3C_GPIO_SETPIN_ZERO,
-		.pud	= S3C_GPIO_PULL_NONE,
+		.cfg	= S3C_GPIO_INPUT,
+//		.cfg	= S3C_GPIO_OUTPUT, JVB-MERGE <<<<<<<<
+		.val	= S3C_GPIO_SETPIN_NONE,
+//		.val	= S3C_GPIO_SETPIN_ZERO, JVB-MERGE <<<<<<<<
+		.pud	= S3C_GPIO_PULL_DOWN,
+//		.pud	= S3C_GPIO_PULL_NONE, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 #endif
 	}, {
 		.num	= S5PV210_GPJ2(4),
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_DOWN,
+		.pud	= S3C_GPIO_PULL_UP,
+//		.pud	= S3C_GPIO_PULL_DOWN, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
-		.num	= S5PV210_GPJ2(5),
 #if defined(CONFIG_SAMSUNG_VIBRANT)
+		.num	= S5PV210_GPJ2(5),
 		.cfg	= S3C_GPIO_OUTPUT,
-#else
-		.cfg	= S3C_GPIO_INPUT,
-#endif
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_DOWN,
 		.drv	= S3C_GPIO_DRVSTR_1X,
+#else
+		.num	= S5PV210_GPJ2(5),
+		.cfg	= S3C_GPIO_OUTPUT,
+//		.cfg	= S3C_GPIO_INPUT, JVB-MERGE <<<<<<<<
+		.val	= S3C_GPIO_SETPIN_ZERO,
+//		.val	= S3C_GPIO_SETPIN_NONE, JVB-MERGE <<<<<<<<
+		.pud	= S3C_GPIO_PULL_NONE,
+//		.pud	= S3C_GPIO_PULL_DOWN, JVB-MERGE <<<<<<<<
+		.drv	= S3C_GPIO_DRVSTR_1X,
+#endif
 	}, {
-		.num	= S5PV210_GPJ2(6),
 #if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined(CONFIG_SAMSUNG_VIBRANT) || defined(CONFIG_SAMSUNG_GALAXYS)
+		.num	= S5PV210_GPJ2(6),
 		.cfg	= S3C_GPIO_OUTPUT,
+		.val	= S3C_GPIO_SETPIN_ZERO,
+//		.val	= S3C_GPIO_SETPIN_NONE, JVB-MERGE <<<<<<<<
+		.pud	= S3C_GPIO_PULL_NONE,
+//		.pud	= S3C_GPIO_PULL_DOWN, JVB-MERGE <<<<<<<<
+		.drv	= S3C_GPIO_DRVSTR_1X,
 #else
+		.num	= S5PV210_GPJ2(6),
 		.cfg	= S3C_GPIO_INPUT,
-#endif
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_DOWN,
 		.drv	= S3C_GPIO_DRVSTR_1X,
+#endif
 	}, {
 		.num	= S5PV210_GPJ2(7),
 		.cfg	= S3C_GPIO_OUTPUT,
@@ -3697,7 +3770,8 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.num	= S5PV210_GPJ3(7),
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_DOWN,
+		.pud	= S3C_GPIO_PULL_NONE,
+//		.pud	= S3C_GPIO_PULL_DOWN, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	},
 
@@ -3709,7 +3783,7 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPJ4(1),
-		.cfg	= S3C_GPIO_SFN(0xF),
+		.cfg	= S3C_GPIO_SFN(0xF), // S3C_GPIO_EINT <<<<<<<<
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
@@ -3729,7 +3803,8 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.num	= S5PV210_GPJ4(4),
 		.cfg	= S3C_GPIO_OUTPUT,
 		.val	= S3C_GPIO_SETPIN_ZERO,
-		.pud	= S3C_GPIO_PULL_NONE,
+		.pud	= S3C_GPIO_PULL_DOWN,
+//		.pud	= S3C_GPIO_PULL_NONE, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	},
 
@@ -3746,7 +3821,7 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.pud	= S3C_GPIO_PULL_DOWN,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
-		.num	= S5PV210_MP01(5),
+		.num	= S5PV210_MP01(5), // doesn't exist
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_DOWN,
@@ -3775,15 +3850,21 @@ static struct gpio_init_data aries_init_gpios[] = {
 
 	{
 		.num	= S5PV210_MP03(3),
-		.cfg	= S3C_GPIO_INPUT,
-		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_DOWN,
+		.cfg	= S3C_GPIO_OUTPUT,
+//		.cfg	= S3C_GPIO_INPUT, JVB-MERGE <<<<<<<<
+		.val	= S3C_GPIO_SETPIN_ZERO,
+//		.val	= S3C_GPIO_SETPIN_NONE, JVB-MERGE <<<<<<<<
+		.pud	= S3C_GPIO_PULL_NONE,
+//		.pud	= S3C_GPIO_PULL_DOWN, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_MP03(5),
-		.cfg	= S3C_GPIO_INPUT,
-		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_DOWN,
+		.cfg	= S3C_GPIO_OUTPUT,
+//		.cfg	= S3C_GPIO_INPUT, JVB-MERGE <<<<<<<<
+		.val	= S3C_GPIO_SETPIN_ZERO,
+//		.val	= S3C_GPIO_SETPIN_NONE, JVB-MERGE <<<<<<<<
+		.pud	= S3C_GPIO_PULL_NONE,
+//		.pud	= S3C_GPIO_PULL_DOWN, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_MP03(6),
@@ -3815,13 +3896,15 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.num	= S5PV210_MP04(4),
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_NONE,
+		.pud	= S3C_GPIO_PULL_DOWN,
+//		.pud	= S3C_GPIO_PULL_NONE, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, { /* NFC_SDA_18V - has external pull up resistor */
 		.num	= S5PV210_MP04(5),
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
-		.pud	= S3C_GPIO_PULL_NONE,
+		.pud	= S3C_GPIO_PULL_DOWN,
+//		.pud	= S3C_GPIO_PULL_NONE, JVB-MERGE <<<<<<<<
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_MP04(6),
@@ -3838,25 +3921,25 @@ static struct gpio_init_data aries_init_gpios[] = {
 	},
 
 	{
-		.num	= S5PV210_MP05(0),
+		.num	= S5PV210_MP05(0), // doesn't exist
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
-		.num	= S5PV210_MP05(1),
+		.num	= S5PV210_MP05(1), // doesn't exist
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
-		.num	= S5PV210_MP05(2),
+		.num	= S5PV210_MP05(2), // doesn't exist
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
-		.num	= S5PV210_MP05(3),
+		.num	= S5PV210_MP05(3), // doesn't exist
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_NONE,
