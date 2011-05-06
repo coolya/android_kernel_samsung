@@ -3172,7 +3172,7 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPG3(1),
-		.cfg	= S3C_GPIO_OUPUT,
+		.cfg	= S3C_GPIO_OUTPUT,
 //		.cfg	= S3C_GPIO_INPUT, JVB-MERGE <<<<<<<<
 		.val	= S3C_GPIO_SETPIN_ZERO,
 //		.val	= S3C_GPIO_SETPIN_NONE, JVB-MERGE <<<<<<<<
@@ -4275,7 +4275,7 @@ static unsigned int aries_sleep_gpio_table[][3] = {
 #else
 	{ S5PV210_GPG3(6), S3C_GPIO_SLP_OUT1,	S3C_GPIO_PULL_NONE},
 #endif
-/*
+*/
 
 	/* Alive part ending and off part start*/
 	// GPI ----------------------------------------------------
