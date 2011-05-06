@@ -23,7 +23,7 @@ if busybox test -e /cache/.startrecovery || busybox grep -q bootmode=2 /proc/cmd
 	load_offset=$recovery_offset
 	load_len=$recovery_len
 elif ! busybox test -e /system/build.prop ; then
-	busybox echo 'install_zip("/sdcard/update-cm-7-INITIAL-GalaxyS-signed.zip");' > /cache/recovery/extendedcommand
+	busybox echo 'install_zip("/sdcard/update-cm-7-INITIAL-Captivate-signed.zip");' > /cache/recovery/extendedcommand
 	load_offset=$recovery_offset
 	load_len=$recovery_len
 fi
