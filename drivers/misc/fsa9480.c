@@ -513,6 +513,7 @@ static int __devexit fsa9480_remove(struct i2c_client *client)
 static int fsa9480_suspend(struct i2c_client *client)
 {
 	struct fsa9480_usbsw *usbsw = i2c_get_clientdata(client);
+    int ret;
 
 	/* mask interrupts */
 	ret = i2c_smbus_write_word_data(client, FSA9480_REG_INT1_MASK, 0x1fff);
@@ -523,6 +524,7 @@ static int fsa9480_suspend(struct i2c_client *client)
 static int fsa9480_resume(struct i2c_client *client)
 {
 	struct fsa9480_usbsw *usbsw = i2c_get_clientdata(client);
+    int ret;
 
 	/* unmask attach/detach only */
 	ret = i2c_smbus_write_word_data(client, FSA9480_REG_INT1_MASK, 0x1ffc);
