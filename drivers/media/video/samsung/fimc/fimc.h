@@ -37,7 +37,7 @@
 #define FIMC_PHYBUFS		4
 #define FIMC_OUTBUFS		3
 #define FIMC_INQUEUES		10
-#define FIMC_MAX_CTXS		1
+#define FIMC_MAX_CTXS		2
 #define FIMC_TPID		3
 #define FIMC_CAPBUFS		16
 #define FIMC_ONESHOT_TIMEOUT	200
@@ -65,7 +65,10 @@
 #define FIMC_SCLK		1
 #define FIMC_OVLY_MODE FIMC_OVLY_DMA_AUTO
 
+#define PINGPONG_2ADDR_MODE
+#if defined(PINGPONG_2ADDR_MODE)
 #define FIMC_PINGPONG 2
+#endif
 
 /*
  * ENUMERATIONS
@@ -416,7 +419,7 @@ struct fimc_prv_data {
 };
 
 /* debug macro */
-#define FIMC_LOG_DEFAULT	( FIMC_LOG_WARN | FIMC_LOG_ERR )
+#define FIMC_LOG_DEFAULT	(FIMC_LOG_WARN | FIMC_LOG_ERR)
 
 #define FIMC_DEBUG(fmt, ...)						\
 	do {								\
@@ -483,7 +486,7 @@ extern void fimc_dma_free(struct fimc_control *ctrl,
 extern u32 fimc_mapping_rot_flip(u32 rot, u32 flip);
 extern int fimc_get_scaler_factor(u32 src, u32 tar, u32 *ratio, u32 *shift);
 extern void fimc_get_nv12t_size(int img_hres, int img_vres,
-					int *y_size, int *cb_size);
+					int *y_size, int *cb_size, int rotate);
 extern void fimc_clk_en(struct fimc_control *ctrl, bool on);
 
 /* camera */

@@ -572,9 +572,6 @@ static void tl2796_read_mtp_info(struct s5p_lcd *lcd)
 			s9_to_s16(data[c * 7 + 5] << 8 | data[c * 7 + 6]);
 	}
 
-	tl2796_parallel_read(lcd, 0xfc, data, 0);
-	msleep(5);
-
 	tl2796_parallel_setup_gpios(lcd, false);
 
 	tl2796_adjust_brightness_from_mtp(lcd);

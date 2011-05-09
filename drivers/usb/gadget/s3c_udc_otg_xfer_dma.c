@@ -166,10 +166,6 @@ static int setdma_tx(struct s3c_ep *ep, struct s3c_request *req)
 	ctrl = readl(S3C_UDC_OTG_DIEPCTL(ep_num));
 	writel(DEPCTL_EPENA|DEPCTL_CNAK|ctrl, S3C_UDC_OTG_DIEPCTL(ep_num));
 
-	ctrl = readl(S3C_UDC_OTG_DIEPCTL(EP0_CON));
-	ctrl = (ctrl&~(EP_MASK<<DEPCTL_NEXT_EP_BIT))|(ep_num<<DEPCTL_NEXT_EP_BIT);
-	writel(ctrl, S3C_UDC_OTG_DIEPCTL(EP0_CON));
-
 	DEBUG_IN_EP("%s:EP%d TX DMA start : DIEPDMA0 = 0x%x, DIEPTSIZ0 = 0x%x, DIEPCTL0 = 0x%x\n"
 			"\tbuf = 0x%p, pktcnt = %d, xfersize = %d\n",
 			__func__, ep_num,
@@ -353,7 +349,7 @@ static void process_ep_in_intr(struct s3c_udc *dev)
 
 static void process_ep_out_intr(struct s3c_udc *dev)
 {
-	u32 ep_intr, ep_intr_status;
+	u32 ep_intr, ep_intr_status, ep_ctrl;
 	u8 ep_num = 0;
 
 	ep_intr = readl(S3C_UDC_OTG_DAINT);
@@ -379,7 +375,15 @@ static void process_ep_out_intr(struct s3c_udc *dev)
 
 				if (ep_intr_status & TRANSFER_DONE) {
 					complete_rx(dev, ep_num);
-					s3c_udc_pre_setup();
+
+					writel((3<<29)|(1<<19)|sizeof(struct usb_ctrlrequest),
+						S3C_UDC_OTG_DOEPTSIZ(EP0_CON));
+					writel(virt_to_phys(&usb_ctrl),
+						S3C_UDC_OTG_DOEPDMA(EP0_CON));
+
+					ep_ctrl = readl(S3C_UDC_OTG_DOEPCTL(EP0_CON));
+					writel(ep_ctrl|DEPCTL_EPENA|DEPCTL_SNAK,
+						S3C_UDC_OTG_DOEPCTL(EP0_CON));
 				}
 
 			} else {

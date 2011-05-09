@@ -510,9 +510,24 @@ static int __devexit fsa9480_remove(struct i2c_client *client)
 }
 
 #ifdef CONFIG_PM
+static int fsa9480_suspend(struct i2c_client *client)
+{
+	struct fsa9480_usbsw *usbsw = i2c_get_clientdata(client);
+    int ret;
+
+	/* mask interrupts */
+	ret = i2c_smbus_write_word_data(client, FSA9480_REG_INT1_MASK, 0x1fff);
+
+	return 0;
+}
+
 static int fsa9480_resume(struct i2c_client *client)
 {
 	struct fsa9480_usbsw *usbsw = i2c_get_clientdata(client);
+    int ret;
+
+	/* unmask attach/detach only */
+	ret = i2c_smbus_write_word_data(client, FSA9480_REG_INT1_MASK, 0x1ffc);
 
 	/* device detection */
 	fsa9480_detect_dev(usbsw);
@@ -539,6 +554,7 @@ static struct i2c_driver fsa9480_i2c_driver = {
 	},
 	.probe = fsa9480_probe,
 	.remove = __devexit_p(fsa9480_remove),
+    .suspend = fsa9480_suspend,
 	.resume = fsa9480_resume,
 	.id_table = fsa9480_id,
 };

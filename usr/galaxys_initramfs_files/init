@@ -1,0 +1,41 @@
+#!/stage1/busybox sh
+export _PATH="$PATH"
+export PATH=/stage1
+
+busybox cd /
+busybox date >>boot.txt
+busybox rm init
+busybox mount -t proc proc /proc
+busybox mount -t sysfs sysfs /sys
+
+bml_over_mtd dump boot 72 reservoir 2004 /stage1/boot.bin
+
+eval $(busybox grep -m 1 -A 1 BOOT_IMAGE_OFFSETS /stage1/boot.bin | busybox tail -n 1)
+
+load_offset=$boot_offset
+load_len=$boot_len
+
+busybox mount -t yaffs2 /dev/block/mtdblock2 /system
+busybox mount -t yaffs2 /dev/block/mtdblock3 /cache
+
+if busybox test -e /cache/.startrecovery || busybox grep -q bootmode=2 /proc/cmdline ; then
+	busybox rm -fr /cache/.startrecovery
+	load_offset=$recovery_offset
+	load_len=$recovery_len
+elif ! busybox test -e /system/build.prop ; then
+	busybox echo 'install_zip("/sdcard/update-cm-7-INITIAL-GalaxyS-signed.zip");' > /cache/recovery/extendedcommand
+	load_offset=$recovery_offset
+	load_len=$recovery_len
+fi
+
+busybox umount /cache
+busybox umount /system
+
+busybox dd bs=512 if=/stage1/boot.bin skip=$load_offset count=$load_len | busybox zcat | busybox cpio -i
+
+busybox umount /sys
+busybox umount /proc
+busybox date >>boot.txt
+busybox rm -fr /stage1 /dev/*
+export PATH="${_PATH}"
+exec /init

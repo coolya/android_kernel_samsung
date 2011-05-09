@@ -38,7 +38,8 @@ struct kr3dm_acceldata {
 
 #ifdef __KERNEL__
 struct kr3dm_platform_data {
-	int gpio_acc_int;  /* gpio for kr3dm int output */
+	int gpio_acc_int;	/* gpio for kr3dm int output */
+	s8 *rotation;		/* rotation matrix, if NULL assume Id */
 };
 #endif /* __KERNEL__ */
 

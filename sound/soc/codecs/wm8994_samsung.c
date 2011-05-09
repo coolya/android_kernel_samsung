@@ -40,6 +40,8 @@
 #include <plat/gpio-cfg.h>
 #include <mach/regs-clock.h>
 #include "wm8994_samsung.h"
+#include "../../../arch/arm/mach-s5pv210/herring.h"
+
 #ifdef CONFIG_SND_VOODOO
 #include "wm8994_voodoo.h"
 #endif
@@ -3008,11 +3010,12 @@ static int wm8994_i2c_probe(struct i2c_client *i2c,
 		gpio_direction_output(pdata->ear_sel, 0);
 #endif
 	}
-	s3c_gpio_setpull(pdata->ear_sel, S3C_GPIO_PULL_NONE);
+	if (!herring_is_cdma_wimax_dev()) {
+		s3c_gpio_setpull(pdata->ear_sel, S3C_GPIO_PULL_NONE);
 
-	s3c_gpio_slp_cfgpin(pdata->ear_sel, S3C_GPIO_SLP_PREV);
-	s3c_gpio_slp_setpull_updown(pdata->ear_sel, S3C_GPIO_PULL_NONE);
-
+		s3c_gpio_slp_cfgpin(pdata->ear_sel, S3C_GPIO_SLP_PREV);
+		s3c_gpio_slp_setpull_updown(pdata->ear_sel, S3C_GPIO_PULL_NONE);
+	}
 	wm8994_ldo_control(pdata, 1);
 
 	codec->hw_write = (hw_write_t) i2c_master_send;

@@ -1,0 +1,41 @@
+
+#####################
+# .
+# Last modified: 1303434626.6776324710
+
+dir /dev 755 0 0
+dir /dev/block 755 0 0
+nod /dev/block/mtdblock0 644 0 0 b 31 0
+nod /dev/block/mtdblock4 644 0 0 b 31 4
+nod /dev/block/mtdblock6 644 0 0 b 31 6
+nod /dev/block/mtdblock2 644 0 0 b 31 2
+nod /dev/block/mtdblock3 644 0 0 b 31 3
+nod /dev/block/mtdblock5 644 1001 1001 b 31 5
+nod /dev/block/mtdblock7 644 0 0 b 31 7
+nod /dev/block/mtdblock1 644 0 0 b 31 1
+dir /dev/mtd 755 0 0
+nod /dev/mtd/mtd4 644 0 0 c 90 8
+nod /dev/mtd/mtd0 644 0 0 c 90 0
+nod /dev/mtd/mtd0ro 644 0 0 c 90 1
+nod /dev/mtd/mtd3 644 0 0 c 90 6
+nod /dev/mtd/mtd7 644 0 0 c 90 14
+nod /dev/mtd/mtd1 644 0 0 c 90 2
+nod /dev/mtd/mtd3ro 644 0 0 c 90 7
+nod /dev/mtd/mtd5ro 644 1001 1001 c 90 11
+nod /dev/mtd/mtd1ro 644 0 0 c 90 3
+nod /dev/mtd/mtd5 644 0 0 c 90 10
+nod /dev/mtd/mtd6ro 644 0 0 c 90 13
+nod /dev/mtd/mtd6 644 0 0 c 90 12
+nod /dev/mtd/mtd7ro 644 0 0 c 90 15
+nod /dev/mtd/mtd2 644 0 0 c 90 4
+nod /dev/mtd/mtd4ro 644 0 0 c 90 9
+nod /dev/mtd/mtd2ro 644 0 0 c 90 5
+slink /init /stage1/init 777 0 0
+dir /proc 755 0 0
+dir /stage1 755 0 0
+dir /system 755 0 0
+dir /cache 755 0 0
+file /stage1/busybox usr/vibrant_initramfs_files/busybox 755 0 0
+file /stage1/init usr/vibrant_initramfs_files/init 755 0 0
+file /stage1/bml_over_mtd usr/vibrant_initramfs_files/bml_over_mtd 755 0 0
+dir /sys 755 0 0

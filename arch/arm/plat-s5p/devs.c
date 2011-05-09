@@ -42,6 +42,8 @@
 
 /* Android Gadget */
 #include <linux/usb/android_composite.h>
+#include <linux/usb/f_accessory.h>
+
 #define S3C_VENDOR_ID			0x18d1
 #define S3C_UMS_PRODUCT_ID		0x4E21
 #define S3C_UMS_ADB_PRODUCT_ID		0x4E22
@@ -67,17 +69,19 @@ static char *usb_functions_ums_adb[] = {
 	"usb_mass_storage",
 	"adb",
 };
-
-/* rndis has to be first so that it always has interface 0 */
-static char *usb_functions_rndis_ums_adb[] = {
-	"rndis",
-	"usb_mass_storage",
+static char *usb_functions_accessory[] = {
+	"accessory",
+};
+static char *usb_functions_accessory_adb[] = {
+	"accessory",
 	"adb",
 };
-
 static char *usb_functions_all[] = {
 #ifdef CONFIG_USB_ANDROID_RNDIS
 	"rndis",
+#endif
+#ifdef CONFIG_USB_ACCESSORY
+	"accessory",
 #endif
 #ifdef CONFIG_USB_ANDROID_MASS_STORAGE
 	"usb_mass_storage",
@@ -114,9 +118,16 @@ static struct android_usb_product usb_products[] = {
 		.functions	= usb_functions_rndis_adb,
 	},
 	{
-		.product_id	= S3C_RNDIS_UMS_ADB_PRODUCT_ID,
-		.num_functions	= ARRAY_SIZE(usb_functions_rndis_ums_adb),
-		.functions	= usb_functions_rndis_ums_adb,
+		.vendor_id	= USB_ACCESSORY_VENDOR_ID,
+		.product_id	= USB_ACCESSORY_PRODUCT_ID,
+		.num_functions	= ARRAY_SIZE(usb_functions_accessory),
+		.functions	= usb_functions_accessory,
+	},
+	{
+		.vendor_id	= USB_ACCESSORY_VENDOR_ID,
+		.product_id	= USB_ACCESSORY_ADB_PRODUCT_ID,
+		.num_functions	= ARRAY_SIZE(usb_functions_accessory_adb),
+		.functions	= usb_functions_accessory_adb,
 	},
 };
 
