@@ -1,6 +1,6 @@
-/* linux/drivers/mtd/onenand/samsung_fascinate.h
+/* linux/drivers/mtd/onenand/samsung_galaxys.h
  *
- * Partition Layout for Samsung Fascinate
+ * Partition Layout for Samsung Galaxy S
  *
  */
 
@@ -29,7 +29,7 @@ struct mtd_partition s3c_partition_info[] = {
    #########################################################################################
    #########################################################################################*/ 
                                                                    
-    {
+        {
 		.name		= "boot",
 		.offset		= (72*SZ_256K),
 		.size		= (30*SZ_256K), //101
@@ -49,17 +49,24 @@ struct mtd_partition s3c_partition_info[] = {
 		.offset		= (882*SZ_256K),
 		.size		= (320*SZ_256K), //1201
 	},
-	{
-		.name		= "datadata",
-		.offset		= (1202*SZ_256K),
-		.size		= (688*SZ_256K), //1889
+	{       /* we should consider moving this before the modem at the end
+	           that would allow us to change the partitions before without
+	           loosing ths sensible data*/
+		.name		= "efs",
+		.offset		= (1890*SZ_256K),
+		.size		= (50*SZ_256K), //1939
 	},
 	{       /* the modem firmware has to be mtd5 as the userspace samsung ril uses
 	           this device hardcoded, but I placed it at the end of the NAND to be
 	           able to change the other partition layout without moving it */
 		.name		= "radio",
-		.offset		= (1890*SZ_256K),
-		.size		= (104*SZ_256K), //1993
+		.offset		= (1940*SZ_256K),
+		.size		= (60*SZ_256K), //1999
+	},
+	{
+		.name		= "datadata",
+		.offset		= (1202*SZ_256K),
+		.size		= (688*SZ_256K), //1889
 	},
 	{       /* The reservoir area is used by Samsung's Block Management Layer (BML)
 	           to map good blocks from this reservoir to bad blocks in user
@@ -72,6 +79,20 @@ struct mtd_partition s3c_partition_info[] = {
 		.size		= (44*SZ_256K), //2047
 	},
 
+
+
+		/* param.lfs partition is used to config the bootloader.
+		   Params: SERIAL_SPEED, LCD_LEVEL, BOOT_DELAY, LOAD_RAMDISK, SWITCH_SEL, PHONE_DEBUG_ON, 
+		   LCD_DIM_LEVEL, LCD_DIM_TIME, MELODY_MODE, REBOOT_MODE, NATION_SEL, LANGUAGE_SEL, 
+		   SET_DEFAULT_PARAM, VERSION_LINE, COMMAND_LINE, BOOT_VERSION
+		*/
+/*  
+	{
+		.name		= "param",
+		.offset		= (52*SZ_256K),
+		.size		= (20*SZ_256K), //71
+	},
+*/
 };
 
 
