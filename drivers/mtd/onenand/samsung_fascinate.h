@@ -60,7 +60,7 @@ struct mtd_partition s3c_partition_info[] = {
 	           this device hardcoded, but I placed it at the end of the NAND to be
 	           able to change the other partition layout without moving it */
 		.name		= "radio",
-		.offset		= (3902*SZ_256K),
+		.offset		= (3952*SZ_256K),
 		.size		= (60*SZ_256K), //4011
 	},
 	{
