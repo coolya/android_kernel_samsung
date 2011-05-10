@@ -1,6 +1,6 @@
-/* linux/drivers/mtd/onenand/samsung_galaxys.h
+/* linux/drivers/mtd/onenand/samsung_fascinate.h
  *
- * Partition Layout for Samsung Galaxy S
+ * Partition Layout for Samsung Fascinate
  *
  */
 
