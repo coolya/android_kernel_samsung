@@ -1333,7 +1333,7 @@ static void sec_jack_set_micbias_state(bool on)
         pr_debug("%s: on=%d\n", __func__, on ? 1 : 0);
 		gpio_set_value(GPIO_EARPATH_SEL, on);
 		gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
-#elif defined (CONFIG_SAMSUNG_VIBRANT) || defined(CONFIG_SAMSUNG_GALAXYS) || defined(CONFIG_SAMSUNG_GALAXYSB)
+#else
         pr_debug("%s: on=%d\n", __func__, on ? 1 : 0);
 		gpio_set_value(GPIO_EARPATH_SEL, on);
 #if defined(CONFIG_SAMSUNG_VIBRANT) //hate ifdefs? here's a nested one for your pleasure . . .
@@ -1346,19 +1346,13 @@ static void sec_jack_set_micbias_state(bool on)
 #else
 		gpio_set_value(GPIO_MICBIAS_EN, on);
 #endif
-#else
-		gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
 #endif
     }
 }
 
 static struct wm8994_platform_data wm8994_pdata = {
 	.ldo = GPIO_CODEC_LDO_EN,
-#if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined (CONFIG_SAMSUNG_VIBRANT) || defined(CONFIG_SAMSUNG_GALAXYS) || defined(CONFIG_SAMSUNG_GALAXYSB)
-    .ear_sel = GPIO_EARPATH_SEL,
-#else
-	.ear_sel = GPIO_EAR_SEL,
-#endif
+        .ear_sel = GPIO_EARPATH_SEL,
 	.set_mic_bias = wm8994_set_mic_bias,
 };
 
@@ -5107,11 +5101,6 @@ static void __init aries_machine_init(void)
 	/* headset/earjack detection */
 #if defined(CONFIG_SAMSUNG_CAPTIVATE)
     gpio_request(GPIO_EAR_MICBIAS_EN, "ear_micbias_enable");
-#elif defined (CONFIG_SAMSUNG_VIBRANT) || defined(CONFIG_SAMSUNG_GALAXYS) || defined(CONFIG_SAMSUNG_GALAXYSB)
-    /* nothing */
-#else
-	if (system_rev >= 0x09)
-		gpio_request(GPIO_EAR_MICBIAS_EN, "ear_micbias_enable");
 #endif
 
 	gpio_request(GPIO_TOUCH_EN, "touch en");
