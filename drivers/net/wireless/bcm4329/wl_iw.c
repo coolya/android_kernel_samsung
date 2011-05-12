@@ -21,7 +21,7 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
- * $Id: wl_iw.c,v 1.51.4.9.2.6.4.142.4.69 2010/12/21 03:00:08 Exp $
+ * $Id: wl_iw.c,v 1.51.4.9.2.6.4.142.4.78 2011/02/11 21:27:52 Exp $
  */
 
 
@@ -54,6 +54,7 @@ typedef const struct si_pub  si_t;
 #define WL_INFORM(x)
 #define WL_WSEC(x)
 #define WL_SCAN(x)
+#define WL_PNO(x)
 #define WL_TRACE_COEX(x)
 
 #include <wl_iw.h>
@@ -161,12 +162,13 @@ extern int dhd_wait_pend8021x(struct net_device *dev);
 #endif 
 
 static void *g_scan = NULL;
-static volatile uint g_scan_specified_ssid;	
-static wlc_ssid_t g_specific_ssid;		
+static volatile uint g_scan_specified_ssid;
+static wlc_ssid_t g_specific_ssid;
 
 static wlc_ssid_t g_ssid;
 
-static wl_iw_ss_cache_ctrl_t g_ss_cache_ctrl;	
+bool btcoex_is_sco_active(struct net_device *dev);
+static wl_iw_ss_cache_ctrl_t g_ss_cache_ctrl;
 #if defined(CONFIG_FIRST_SCAN)
 static volatile uint g_first_broadcast_scan;
 static volatile uint g_first_counter_scans;
@@ -594,6 +596,36 @@ wl_iw_set_passive_scan(
 	return error;
 }
 
+
+static int
+wl_iw_set_txpower(
+	struct net_device *dev,
+	struct iw_request_info *info,
+	union iwreq_data *wrqu,
+	char *extra
+)
+{
+	int error = 0;
+	char *p = extra;
+	int txpower = -1;
+
+	txpower = bcm_atoi(extra + strlen(TXPOWER_SET_CMD) + 1);
+	if ((txpower >= 0) && (txpower <= 127)) {
+		txpower |= WL_TXPWR_OVERRIDE;
+		txpower = htod32(txpower);
+
+		error = dev_wlc_intvar_set(dev, "qtxpower", txpower);
+		p += snprintf(p, MAX_WX_STRING, "OK");
+		WL_TRACE(("%s: set TXpower 0x%X is OK\n", __FUNCTION__, txpower));
+	} else {
+		WL_ERROR(("%s: set tx power failed\n", __FUNCTION__));
+		p += snprintf(p, MAX_WX_STRING, "FAIL");
+	}
+
+	wrqu->data.length = p - extra + 1;
+	return error;
+}
+
 static int
 wl_iw_get_macaddr(
 	struct net_device *dev,
@@ -738,25 +770,38 @@ wl_iw_set_power_mode(
 #endif
 
 
-static bool btcoex_is_sco_active(struct net_device *dev)
+bool btcoex_is_sco_active(struct net_device *dev)
 {
 	int ioc_res = 0;
 	bool res = false;
-	int temp = 0;
+	int sco_id_cnt = 0;
+	int param27;
+	int i;
 
-	ioc_res = dev_wlc_intvar_get_reg(dev, "btc_params", 4, &temp);
+	for (i = 0; i < 12; i++) {
 
-	if (ioc_res == 0) {
-		WL_TRACE_COEX(("%s: read btc_params[4] = %x\n", __FUNCTION__, temp));
+		ioc_res = dev_wlc_intvar_get_reg(dev, "btc_params", 27, &param27);
 
-		if ((temp > 0xea0) && (temp < 0xed8)) {
-			WL_TRACE_COEX(("%s: BT SCO/eSCO is ACTIVE\n", __FUNCTION__));
-			res = true;
-		} else {
-			WL_TRACE_COEX(("%s: BT SCO/eSCO is NOT detected\n", __FUNCTION__));
+		WL_TRACE_COEX(("%s, sample[%d], btc params: 27:%x\n",
+			__FUNCTION__, i, param27));
+
+		if (ioc_res < 0) {
+			WL_ERROR(("%s ioc read btc params error\n", __FUNCTION__));
+			break;
 		}
-	} else {
-		WL_ERROR(("%s ioc read btc params error\n", __FUNCTION__));
+
+		if ((param27 & 0x6) == 2) {
+			sco_id_cnt++;
+		}
+
+		if (sco_id_cnt > 2) {
+			WL_TRACE_COEX(("%s, sco/esco detected, pkt id_cnt:%d  samples:%d\n",
+				__FUNCTION__, sco_id_cnt, i));
+			res = true;
+			break;
+		}
+
+		msleep(5);
 	}
 	return res;
 }
@@ -1043,22 +1088,6 @@ wl_iw_set_suspend(
 	return ret;
 }
 
-#ifdef CONFIG_US_NON_DFS_CHANNELS_ONLY
-static int
-wl_iw_set_dfs_channels(
-	struct net_device *dev,
-	struct iw_request_info *info,
-	union iwreq_data *wrqu,
-	char *extra
-)
-{
-	use_non_dfs_channels = *(extra + strlen(SETDFSCHANNELS_CMD) + 1) - '0';
-	use_non_dfs_channels = (use_non_dfs_channels != 0) ? false : true;
-	wl_iw_set_country_code(dev, NULL);
-	return 0;
-}
-#endif
-
 int
 wl_format_ssid(char* ssid_buf, uint8* ssid, int ssid_len)
 {
@@ -1343,9 +1372,10 @@ wl_iw_set_pno_set(
 	int nssid = 0;
 	cmd_tlv_t *cmd_tlv_temp;
 	char *str_ptr;
-	char *str_ptr_end;
 	int tlv_size_left;
 	int pno_time;
+	int pno_repeat;
+	int pno_freq_expo_max;
 
 #ifdef PNO_SET_DEBUG
 	int i;
@@ -1359,6 +1389,10 @@ wl_iw_set_pno_set(
 							'G', 'O', 'O', 'G',
 							'T',
 							'1','E',
+							'R',
+							'2',
+							'M',
+							'2',
 							0x00
 							};
 #endif
@@ -1402,6 +1436,7 @@ wl_iw_set_pno_set(
 
 	cmd_tlv_temp = (cmd_tlv_t *)str_ptr;
 	memset(ssids_local, 0, sizeof(ssids_local));
+	pno_repeat = pno_freq_expo_max = 0;
 
 	if ((cmd_tlv_temp->prefix == PNO_TLV_PREFIX) && \
 		(cmd_tlv_temp->version == PNO_TLV_VERSION) && \
@@ -1422,9 +1457,28 @@ wl_iw_set_pno_set(
 				goto exit_proc;
 			}
 			str_ptr++;
-			pno_time = simple_strtoul(str_ptr, &str_ptr_end, 16);
-			WL_ERROR((" got %d bytes left pno_time %d or %#x\n", \
-					tlv_size_left, pno_time, pno_time));
+			pno_time = simple_strtoul(str_ptr, &str_ptr, 16);
+			WL_PNO(("%s: pno_time=%d\n", __FUNCTION__, pno_time));
+
+			if (str_ptr[0] != 0) {
+				if ((str_ptr[0] != PNO_TLV_FREQ_REPEAT)) {
+					WL_ERROR(("%s pno repeat : corrupted field\n", \
+						__FUNCTION__));
+					goto exit_proc;
+				}
+				str_ptr++;
+				pno_repeat = simple_strtoul(str_ptr, &str_ptr, 16);
+				WL_PNO(("%s :got pno_repeat=%d\n", __FUNCTION__, pno_repeat));
+				if (str_ptr[0] != PNO_TLV_FREQ_EXPO_MAX) {
+					WL_ERROR(("%s FREQ_EXPO_MAX corrupted field size\n", \
+							__FUNCTION__));
+					goto exit_proc;
+				}
+				str_ptr++;
+				pno_freq_expo_max = simple_strtoul(str_ptr, &str_ptr, 16);
+				WL_PNO(("%s: pno_freq_expo_max=%d\n", \
+							__FUNCTION__, pno_freq_expo_max));
+			}
 		}
 	}
 	else {
@@ -1432,7 +1486,7 @@ wl_iw_set_pno_set(
 		goto exit_proc;
 	}
 
-	res = dhd_dev_pno_set(dev, ssids_local, nssid, pno_time);
+	res = dhd_dev_pno_set(dev, ssids_local, nssid, pno_time, pno_repeat, pno_freq_expo_max);
 
 exit_proc:
 	net_os_wake_unlock(dev);
@@ -1718,6 +1772,79 @@ int hstr_2_buf(const char *txt, u8 *buf, int len)
 
 	return 0;
 }
+
+#if defined(SOFTAP) && defined(SOFTAP_TLV_CFG)
+
+static int wl_iw_softap_cfg_tlv(
+	struct net_device *dev,
+	struct iw_request_info *info,
+	union iwreq_data *wrqu,
+	char *extra
+)
+{
+	int res = -1;
+	char *str_ptr;
+	int tlv_size_left;
+
+
+#define SOFTAP_TLV_DEBUG  1
+#ifdef SOFTAP_TLV_DEBUG
+char softap_cmd_example[] = {
+
+	'S', 'O', 'F', 'T', 'A', 'P', 'S', 'E', 'T', ' ',
+
+	SOFTAP_TLV_PREFIX, SOFTAP_TLV_VERSION,
+	SOFTAP_TLV_SUBVERSION, SOFTAP_TLV_RESERVED,
+
+	TLV_TYPE_SSID,		9, 'B', 'R', 'C', 'M', ',', 'G', 'O', 'O', 'G',
+
+	TLV_TYPE_SECUR,		4, 'O', 'P', 'E', 'N',
+
+	TLV_TYPE_KEY,		4, 0x31, 0x32, 0x33, 0x34,
+
+	TLV_TYPE_CHANNEL,	4, 0x06, 0x00, 0x00, 0x00
+};
+#endif
+
+
+#ifdef SOFTAP_TLV_DEBUG
+	{
+	int i;
+	if (!(extra = kmalloc(sizeof(softap_cmd_example) +10, GFP_KERNEL)))
+		return -ENOMEM;
+	memcpy(extra, softap_cmd_example, sizeof(softap_cmd_example));
+	wrqu->data.length = sizeof(softap_cmd_example);
+	print_buf(extra, wrqu->data.length, 16);
+	for (i = 0; i < wrqu->data.length; i++)
+		printf("%c ", extra[i]);
+	printf("\n");
+	}
+#endif
+
+	WL_ERROR(("\n### %s: info->cmd:%x, info->flags:%x, u.data=0x%p, u.len=%d\n",
+		__FUNCTION__, info->cmd, info->flags,
+		wrqu->data.pointer, wrqu->data.length));
+
+	if (g_onoff == G_WLAN_SET_OFF) {
+		WL_TRACE(("%s: driver is not up yet after START\n", __FUNCTION__));
+		return -1;
+	}
+
+	if (wrqu->data.length < (strlen(SOFTAP_SET_CMD) + sizeof(cmd_tlv_t))) {
+		WL_ERROR(("%s argument=%d  less %d\n", __FUNCTION__,
+			wrqu->data.length, strlen(SOFTAP_SET_CMD) + sizeof(cmd_tlv_t)));
+		return -1;
+	}
+
+	str_ptr =  extra + strlen(SOFTAP_SET_CMD)+1; 
+	tlv_size_left = wrqu->data.length - (strlen(SOFTAP_SET_CMD)+1);
+
+	memset(&my_ap, 0, sizeof(my_ap));
+
+	return res;
+}
+#endif
+
 
 #ifdef SOFTAP
 int init_ap_profile_from_string(char *param_str, struct ap_profile *ap_cfg)
@@ -3686,6 +3813,7 @@ wl_iw_handle_scanresults_ies(char **event_p, char *end,
 			wpa_snprintf_hex(buf + 10, 2+1, &(ie->len), 1);
 			wpa_snprintf_hex(buf + 12, 2*ie->len+1, ie->data, ie->len);
 			event = IWE_STREAM_ADD_POINT(info, event, end, &iwe, buf);
+			kfree(buf);
 #endif 
 			break;
 		}
@@ -5727,7 +5855,7 @@ wl_iw_combined_scan_set(struct net_device *dev, wlc_ssid_t* ssids_local, int nss
 		WL_SCAN(("scan_type=%d\n", iscan->iscan_ex_params_p->params.scan_type));
 		WL_SCAN(("\n###################\n"));
 	}
-#endif 
+#endif
 
 	if (params_size > WLC_IOCTL_MEDLEN) {
 			WL_ERROR(("Set ISCAN for %s due to params_size=%d  \n", \
@@ -5766,6 +5894,11 @@ static int iwpriv_set_cscan(struct net_device *dev, struct iw_request_info *info
 		WL_TRACE(("%s: driver is not up yet after START\n", __FUNCTION__));
 		return -1;
 	}
+
+#ifdef PNO_SET_DEBUG
+	wl_iw_set_pno_set(dev, info, wrqu, extra);
+	return 0;
+#endif
 
 	if (wrqu->data.length != 0) {
 
@@ -7113,10 +7246,8 @@ static int wl_iw_set_priv(
 			ret = wl_iw_set_dtim_skip(dev, info, (union iwreq_data *)dwrq, extra);
 		else if (strnicmp(extra, SETSUSPEND_CMD, strlen(SETSUSPEND_CMD)) == 0)
 			ret = wl_iw_set_suspend(dev, info, (union iwreq_data *)dwrq, extra);
-#ifdef CONFIG_US_NON_DFS_CHANNELS_ONLY
-		else if (strnicmp(extra, SETDFSCHANNELS_CMD, strlen(SETDFSCHANNELS_CMD)) == 0)
-			ret = wl_iw_set_dfs_channels(dev, info, (union iwreq_data *)dwrq, extra);
-#endif
+        else if (strnicmp(extra, TXPOWER_SET_CMD, strlen(TXPOWER_SET_CMD)) == 0)
+            ret = wl_iw_set_txpower(dev, info, (union iwreq_data *)dwrq, extra);
 #if defined(PNO_SUPPORT)
 		else if (strnicmp(extra, PNOSSIDCLR_SET_CMD, strlen(PNOSSIDCLR_SET_CMD)) == 0)
 			ret = wl_iw_set_pno_reset(dev, info, (union iwreq_data *)dwrq, extra);
@@ -7132,8 +7263,10 @@ static int wl_iw_set_priv(
 #ifdef CUSTOMER_HW2
 		else if (strnicmp(extra, "POWERMODE", strlen("POWERMODE")) == 0)
 			ret = wl_iw_set_power_mode(dev, info, (union iwreq_data *)dwrq, extra);
-		else if (strnicmp(extra, "BTCOEXMODE", strlen("BTCOEXMODE")) == 0)
+	    else if (strnicmp(extra, "BTCOEXMODE", strlen("BTCOEXMODE")) == 0) {
+			WL_TRACE_COEX(("%s:got Framwrork cmd: 'BTCOEXMODE'\n", __FUNCTION__));
 			ret = wl_iw_set_btcoex_dhcp(dev, info, (union iwreq_data *)dwrq, extra);
+	    }
 #else
 		else if (strnicmp(extra, "POWERMODE", strlen("POWERMODE")) == 0)
 			ret = wl_iw_set_btcoex_dhcp(dev, info, (union iwreq_data *)dwrq, extra);
@@ -7141,6 +7274,11 @@ static int wl_iw_set_priv(
 		else if (strnicmp(extra, "GETPOWER", strlen("GETPOWER")) == 0)
 			ret = wl_iw_get_power_mode(dev, info, (union iwreq_data *)dwrq, extra);
 #ifdef SOFTAP
+#ifdef SOFTAP_TLV_CFG
+		else if (strnicmp(extra, SOFTAP_SET_CMD, strlen(SOFTAP_SET_CMD)) == 0) {
+		    wl_iw_softap_cfg_tlv(dev, info, (union iwreq_data *)dwrq, extra);
+	    }
+#endif
 		else if (strnicmp(extra, "ASCII_CMD", strlen("ASCII_CMD")) == 0) {
 			wl_iw_process_private_ascii_cmd(dev, info, (union iwreq_data *)dwrq, extra);
 		} else if (strnicmp(extra, "AP_MAC_LIST_SET", strlen("AP_MAC_LIST_SET")) == 0) {
