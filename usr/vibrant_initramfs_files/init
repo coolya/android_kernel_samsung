@@ -26,6 +26,7 @@ elif ! busybox test -e /system/build.prop ; then
         busybox umount /cache
         erase_image cache
         busybox mount -t yaffs2 /dev/block/mtdblock3 /cache
+        busybox mkdir /cache/recovery
 	busybox echo 'install_zip("/sdcard/update-cm-7-INITIAL-Vibrant-signed.zip");' > /cache/recovery/extendedcommand
 	load_offset=$recovery_offset
 	load_len=$recovery_len
