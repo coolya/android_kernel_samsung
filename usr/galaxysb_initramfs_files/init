@@ -19,21 +19,32 @@ busybox mount -t yaffs2 /dev/block/mtdblock2 /system
 busybox mount -t yaffs2 /dev/block/mtdblock3 /cache
 
 if busybox test -e /cache/.startrecovery || busybox grep -q bootmode=2 /proc/cmdline ; then
+	# recovery boot
 	busybox rm -fr /cache/.startrecovery
 	load_offset=$recovery_offset
 	load_len=$recovery_len
 elif ! busybox test -e /system/build.prop ; then
+	# emergency boot
         busybox umount /cache
         erase_image cache
         busybox mount -t yaffs2 /dev/block/mtdblock3 /cache
         busybox mkdir /cache/recovery
-	busybox echo 'install_zip("/sdcard/update-cm-7-INITIAL-GalaxyS_B-signed.zip");' > /cache/recovery/extendedcommand
+
+	busybox mount -t vfat /dev/block/mmcblk0p1 /sdcard	
+
+	if busybox test -e /sdcard/update-cm-7-INITIAL-GalaxyS_B-signed.zip ; then
+		busybox echo 'install_zip("/sdcard/update-cm-7-INITIAL-GalaxyS_B-signed.zip");' > /cache/recovery/extendedcommand
+	else	
+		busybox echo 'install_zip("/sdcard/update.zip");' > /cache/recovery/extendedcommand
+  	fi
+
 	load_offset=$recovery_offset
 	load_len=$recovery_len
 fi
 
 busybox umount /cache
 busybox umount /system
+busybox umount /sdcard
 
 busybox dd bs=512 if=/stage1/boot.bin skip=$load_offset count=$load_len | busybox zcat | busybox cpio -i
 
