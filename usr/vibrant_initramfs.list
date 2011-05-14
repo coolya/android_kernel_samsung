@@ -5,6 +5,8 @@
 
 dir /dev 755 0 0
 dir /dev/block 755 0 0
+nod /dev/block/mmcblk0 644 0 0 b 179 0
+nod /dev/block/mmcblk0p1 644 0 0 b 179 1
 nod /dev/block/mtdblock0 644 0 0 b 31 0
 nod /dev/block/mtdblock4 644 0 0 b 31 4
 nod /dev/block/mtdblock6 644 0 0 b 31 6
