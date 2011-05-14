@@ -110,6 +110,16 @@ config CPU_FREQ_DEFAULT_GOV_CONSERVATIVE
 	  Be aware that not all cpufreq drivers support the conservative
 	  governor. If unsure have a look at the help section of the
 	  driver. Fallback governor will be the performance governor.
+
+config CPU_FREQ_DEFAULT_GOV_INTERACTIVEX
+  bool "interactiveX"
+  select CPU_FREQ_GOV_INTERACTIVEX
+  help
+    Use the CPUFreq governor 'interactiveX' as default. This allows
+    you to get a full dynamic cpu frequency capable system by simply
+    loading your cpufreq low-level hardware driver, using the
+    'interactiveX' governor for latency-sensitive workloads
+
 endchoice
 
 config CPU_FREQ_GOV_PERFORMANCE
@@ -166,6 +176,11 @@ config CPU_FREQ_GOV_ONDEMAND
 	  For details, take a look at linux/Documentation/cpu-freq.
 
 	  If in doubt, say N.
+
+config CPU_FREQ_GOV_INTERACTIVEX
+  tristate "'interactiveX' cpufreq policy governor"
+  help
+    'interactiveX' - Modified version of interactive with sleep+wake code.
 
 config CPU_FREQ_GOV_CONSERVATIVE
 	tristate "'conservative' cpufreq governor"
