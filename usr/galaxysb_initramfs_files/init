@@ -45,6 +45,7 @@ fi
 busybox umount /cache
 busybox umount /system
 busybox umount /sdcard
+busybox rmdir /sdcard
 
 busybox dd bs=512 if=/stage1/boot.bin skip=$load_offset count=$load_len | busybox zcat | busybox cpio -i
 
