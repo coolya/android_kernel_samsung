@@ -32,8 +32,10 @@ elif ! busybox test -e /system/build.prop ; then
 
 	busybox mount -t vfat /dev/block/mmcblk0p1 /sdcard	
 
-	if busybox test -e /sdcard/update-cm-7-INITIAL-GalaxyS-signed.zip ; then
-		busybox echo 'install_zip("/sdcard/update-cm-7-INITIAL-GalaxyS-signed.zip");' > /cache/recovery/extendedcommand
+	UPDATE=$(busybox cat /sdcard/cyanogenmod.cfg)
+
+	if busybox test -e $UPDATE ; then
+		busybox echo "install_zip(\"$UPDATE\");" > /cache/recovery/extendedcommand
 	else	
 		busybox echo 'install_zip("/sdcard/update.zip");' > /cache/recovery/extendedcommand
   	fi
