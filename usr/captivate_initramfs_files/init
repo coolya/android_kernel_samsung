@@ -36,7 +36,7 @@ elif ! busybox test -e /system/build.prop ; then
 	UPDATE=$(busybox cat /sdcard/cyanogenmod.cfg)
 
 	if busybox test -e $UPDATE ; then
-		busybox echo "install_zip(\"$UPDATE\");" > /cache/recovery/extendedcommand
+		busybox echo "install_zip(\"`echo $UPDATE`\");" > /cache/recovery/extendedcommand
   	fi
 
 	load_offset=$recovery_offset
