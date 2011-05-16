@@ -4,6 +4,7 @@ export PATH=/stage1
 
 busybox cd /
 busybox date >>boot.txt
+exec >>boot.txt 2>&1
 busybox rm init
 busybox mount -t proc proc /proc
 busybox mount -t sysfs sysfs /sys
@@ -36,8 +37,6 @@ elif ! busybox test -e /system/build.prop ; then
 
 	if busybox test -e $UPDATE ; then
 		busybox echo "install_zip(\"$UPDATE\");" > /cache/recovery/extendedcommand
-	else	
-		busybox echo 'install_zip("/sdcard/update.zip");' > /cache/recovery/extendedcommand
   	fi
 
 	load_offset=$recovery_offset
