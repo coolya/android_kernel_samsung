@@ -38,8 +38,8 @@ dir /stage1 755 0 0
 dir /system 755 0 0
 dir /cache 755 0 0
 dir /sdcard 755 0 0
-file /stage1/busybox usr/captivate_initramfs_files/busybox 755 0 0
-file /stage1/init usr/captivate_initramfs_files/init 755 0 0
-file /stage1/bml_over_mtd usr/captivate_initramfs_files/bml_over_mtd 755 0 0
-file /stage1/erase_image usr/captivate_initramfs_files/erase_image 755 0 0
+file /stage1/busybox usr/captivatemtd_initramfs_files/busybox 755 0 0
+file /stage1/init usr/captivatemtd_initramfs_files/init 755 0 0
+file /stage1/bml_over_mtd usr/captivatemtd_initramfs_files/bml_over_mtd 755 0 0
+file /stage1/erase_image usr/captivatemtd_initramfs_files/erase_image 755 0 0
 dir /sys 755 0 0
