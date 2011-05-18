@@ -61,7 +61,6 @@ static struct platform_device onedram = {
 /* Modem control */
 
 static void modemctl_cfg_gpio(void);
-#if defined(CONFIG_ARIES_EUR)
 static struct modemctl_platform_data mdmctl_data = {
 	.name = "xmm",
 	.gpio_phone_on = NULL,
@@ -83,33 +82,6 @@ static struct resource mdmctl_res[] = {
 		.flags = IORESOURCE_IRQ,
 		},
 	};
-#elif defined(CONFIG_ARIES_NTT)
-static struct modemctl_platform_data mdmctl_data = {
-	.name = "msm",
-	.gpio_phone_on = GPIO_PHONE_ON,
-	.gpio_phone_active = GPIO_PHONE_ACTIVE,
-	.gpio_pda_active = GPIO_PDA_ACTIVE,
-	.gpio_cp_reset = GPIO_CP_RST,
-	.gpio_usim_boot = GPIO_USIM_BOOT,
-	.gpio_flm_sel = GPIO_FLM_SEL,
-	.cfg_gpio = modemctl_cfg_gpio,
-	};
-
-static struct resource mdmctl_res[] = {
-	[0] = {
-		.start = IRQ_EINT(19),
-		.end = IRQ_EINT(19),
-		.flags = IORESOURCE_IRQ,
-		},
-	[1] = {
-		.start = IRQ_EINT(27),
-		.end = IRQ_EINT(27),
-		.flags = IORESOURCE_IRQ,
-		},
-	};
-#else
-# error Need configuration (EUR/NTT)
-#endif
 
 static struct platform_device modemctl = {
 		.name = "modemctl",
@@ -130,18 +102,6 @@ static void modemctl_cfg_gpio(void)
 	unsigned gpio_cp_rst = mdmctl_data.gpio_cp_reset;
 	unsigned gpio_pda_active = mdmctl_data.gpio_pda_active;
 	unsigned gpio_sim_ndetect = mdmctl_data.gpio_sim_ndetect;
-#if defined(CONFIG_ARIES_NTT)
-	unsigned gpio_flm_sel = mdmctl_data.gpio_flm_sel;
-	unsigned gpio_usim_boot = mdmctl_data.gpio_usim_boot;
-	
-    	err = gpio_request(gpio_phone_on, "PHONE_ON");
-    	if (err) {
-    	    printk("fail to request gpio %s\n","PHONE_ON");
-	} else {
-		gpio_direction_output(gpio_phone_on, GPIO_LEVEL_LOW);
-		s3c_gpio_setpull(gpio_phone_on, S3C_GPIO_PULL_NONE);
-	}
-#endif
 	err = gpio_request(gpio_cp_rst, "CP_RST");
 	if (err) {
 		printk("fail to request gpio %s\n","CP_RST");
@@ -163,23 +123,6 @@ static void modemctl_cfg_gpio(void)
 			printk("fail to request gpio %s\n","RST_REQN");
 		}
 	}
-
-#if defined(CONFIG_ARIES_NTT)
-	err = gpio_request(gpio_flm_sel, "FLM_SEL");
-	if (err) {
-		printk("fail to request gpio %s\n","FLM_SEL");
-	} else {
-		gpio_direction_output(gpio_flm_sel, GPIO_LEVEL_LOW);
-		s3c_gpio_setpull(gpio_flm_sel, S3C_GPIO_PULL_NONE);
-	}
-	err = gpio_request(gpio_usim_boot, "USIM_BOOT");
-	if (err) {
-		printk("fail to request gpio %s\n","USIM_BOOT");
-	} else {
-		gpio_direction_output(gpio_usim_boot, GPIO_LEVEL_LOW);
-		s3c_gpio_setpull(gpio_usim_boot, S3C_GPIO_PULL_NONE);
-	}
-#endif
 
 	s3c_gpio_cfgpin(gpio_phone_active, S3C_GPIO_SFN(0xF));
 	s3c_gpio_setpull(gpio_phone_active, S3C_GPIO_PULL_NONE);

@@ -165,6 +165,22 @@ config MACH_ARIES
 
 if MACH_ARIES
 choice
+	prompt "Select phone Type"
+	
+config PHONE_ARIES
+	bool "select aries"
+	depends on MACH_ARIES
+	help
+	 Select Aries Phone
+
+config PHONE_CRESPO
+	bool "select crespo"
+	depends on MACH_ARIES
+	help
+	 Select Crespo Phone
+
+endchoice
+choice
 	prompt "Select Device Type"
 
 config SAMSUNG_GALAXYS
