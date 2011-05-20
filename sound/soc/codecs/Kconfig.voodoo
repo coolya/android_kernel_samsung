@@ -45,22 +45,16 @@ config SND_VOODOO_FM
 
 config SND_VOODOO_MODULE
 	tristate "Build also as module (incomplete)"
-	depends on SND_VOODOO && m
+	depends on SND_VOODOO && m && n
 	default n
 	help
 	  requires additionnal source
 
-config SND_VOODOO_DEBUG
-	bool "Codec development tools (unsafe and introduce sound skipping)"
+config SND_VOODOO_DEVELOPMENT
+	bool "Codec development tools (unsafe)"
 	depends on SND_VOODOO
 	default n
 	help
 	  Allow to codec dump registers and load register-address/value batchs
 	  Powerful but also dangerous tool
 
-config SND_VOODOO_DEBUG_LOG
-	bool "Log every wm8994_write"
-	depends on SND_VOODOO_DEBUG
-	default n
-	help
-	  Log codec writes
