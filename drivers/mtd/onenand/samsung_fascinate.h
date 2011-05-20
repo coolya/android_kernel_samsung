@@ -29,7 +29,7 @@ struct mtd_partition s3c_partition_info[] = {
    #########################################################################################
    #########################################################################################*/ 
                                                                    
-    {
+        {
 		.name		= "boot",
 		.offset		= (72*SZ_256K),
 		.size		= (30*SZ_256K), //101
@@ -41,37 +41,108 @@ struct mtd_partition s3c_partition_info[] = {
 	},
 	{	
 		.name		= "system",
-		.offset		=  (132*SZ_256K),
-		.size		= (750*SZ_256K), //881
+		.offset		= (132*SZ_256K),
+		.size		= (1074*SZ_256K), //1205
 	},
-	{
-		.name		= "cache",
-		.offset		= (882*SZ_256K),
-		.size		= (320*SZ_256K), //1201
+	{	
+		.name		= "userdata",
+		.offset		= (1206*SZ_256K),
+		.size		= (2056*SZ_256K), //3261
 	},
-	{
-		.name		= "datadata",
-		.offset		= (1202*SZ_256K),
-		.size		= (688*SZ_256K), //1889
+	{       /* we should consider moving this before the modem at the end
+	           that would allow us to change the partitions before without
+	           loosing ths sensible data*/
+		.name		= "efs",
+		.offset		= (3902*SZ_256K),
+		.size		= (50*SZ_256K), //3951
 	},
 	{       /* the modem firmware has to be mtd5 as the userspace samsung ril uses
 	           this device hardcoded, but I placed it at the end of the NAND to be
 	           able to change the other partition layout without moving it */
 		.name		= "radio",
-		.offset		= (1890*SZ_256K),
-		.size		= (104*SZ_256K), //1993
+		.offset		= (3952*SZ_256K),
+		.size		= (60*SZ_256K), //4011
 	},
-	{       /* The reservoir area is used by Samsung's Block Management Layer (BML)
-	           to map good blocks from this reservoir to bad blocks in user
-	           partitions. A special tool (bml_over_mtd) is needed to write
-	           partition images using bad block mapping.
-	           Currently, this is required for flashing the "boot" partition,
-	           as Samsung's stock bootloader expects BML partitions.*/
-		.name		= "reservoir",
-		.offset		= (2004*SZ_256K),
-		.size		= (44*SZ_256K), //2047
+	{
+		.name		= "cache",
+		.offset		= (3262*SZ_256K),
+		.size		= (640*SZ_256K), //3901
 	},
-
+        { /* The reservoir area is used by Samsung's Block Management Layer (BML)
+             to map good blocks from this reservoir to bad blocks in user
+             partitions. A special tool (bml_over_mtd) is needed to write
+             partition images using bad block mapping.
+             Currently, this is required for flashing the "boot" partition,
+             as Samsung's stock bootloader expects BML partitions.*/
+                .name           = "reservoir",
+                .offset         = (4022*SZ_256K),
+                .size           = (44*SZ_256K), //4065
+         },
 };
 
 
+/* INFORMATIONS TAKEN FROM EPIC BOOTLOADER
+
+==== PARTITION INFORMATION ====
+ ID         : IBL+PBL (0x0)
+ ATTR       : RO SLC (0x1002)
+ FIRST_UNIT : 0
+ NO_UNITS   : 1
+===============================
+ ID         : PIT (0x1)
+ ATTR       : RO SLC (0x1002)
+ FIRST_UNIT : 1
+ NO_UNITS   : 1
+===============================
+ ID         : EFS (0x14)
+ ATTR       : RW STL SLC (0x1101)
+ FIRST_UNIT : 2
+ NO_UNITS   : 40
+===============================
+ ID         : SBL (0x3)
+ ATTR       : RO SLC (0x1002)
+ FIRST_UNIT : 42
+ NO_UNITS   : 5
+===============================
+ ID         : SBL2 (0x4)
+ ATTR       : RO SLC (0x1002)
+ FIRST_UNIT : 47
+ NO_UNITS   : 5
+===============================
+ ID         : PARAM (0x15)
+ ATTR       : RW STL SLC (0x1101)
+ FIRST_UNIT : 52
+ NO_UNITS   : 20
+===============================
+ ID         : KERNEL (0x6)
+ ATTR       : RO SLC (0x1002)
+ FIRST_UNIT : 72
+ NO_UNITS   : 30
+===============================
+ ID         : RECOVERY (0x7)
+ ATTR       : RO SLC (0x1002)
+ FIRST_UNIT : 102
+ NO_UNITS   : 30
+===============================
+ ID         : FACTORYFS (0x16)
+ ATTR       : RW STL SLC (0x1101)
+ FIRST_UNIT : 132
+ NO_UNITS   : 1074
+===============================
+ ID         : DATAFS (0x17)
+ ATTR       : RW STL SLC (0x1101)
+ FIRST_UNIT : 1206
+ NO_UNITS   : 2056
+===============================
+ ID         : CACHE (0x18)
+ ATTR       : RW STL SLC (0x1101)
+ FIRST_UNIT : 3262
+ NO_UNITS   : 700
+===============================
+ ID         : MODEM (0xb)
+ ATTR       : RO SLC (0x1002)
+ FIRST_UNIT : 3962
+ NO_UNITS   : 50
+===============================
+
+*/

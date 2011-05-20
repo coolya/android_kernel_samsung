@@ -82,10 +82,17 @@
 #define ATTACH_USB	1
 #define ATTACH_TA	2
 
-#define HIGH_BLOCK_TEMP			500
-#define HIGH_RECOVER_TEMP		420
-#define LOW_BLOCK_TEMP			0
-#define LOW_RECOVER_TEMP		20
+#if defined (CONFIG_SAMSUNG_GALAXYS) || defined (CONFIG_SAMSUNG_GALAXYSB)
+  #define HIGH_BLOCK_TEMP               630
+  #define HIGH_RECOVER_TEMP             580
+  #define LOW_BLOCK_TEMP               (-40)
+  #define LOW_RECOVER_TEMP               10
+#else
+  #define HIGH_BLOCK_TEMP		500
+  #define HIGH_RECOVER_TEMP		420
+  #define LOW_BLOCK_TEMP		  0
+  #define LOW_RECOVER_TEMP		 20
+#endif
 
 struct battery_info {
 	u32 batt_temp;		/* Battery Temperature (C) from ADC */
@@ -96,6 +103,7 @@ struct battery_info {
 	u32 batt_soc;
 	u32 charging_status;
 	bool batt_is_full;      /* 0 : Not full 1: Full */
+    u32 batt_max_soc;
 };
 
 struct adc_sample_info {
@@ -206,12 +214,23 @@ static int s3c_bat_get_property(struct power_supply *bat_ps,
 		val->intval = 1;
 		break;
 	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		if (chg->pdata && chg->pdata->psy_fuelgauge &&
+			chg->pdata->psy_fuelgauge->get_property &&
+			chg->pdata->psy_fuelgauge->get_property(chg->pdata->psy_fuelgauge,
+				POWER_SUPPLY_PROP_VOLTAGE_NOW, val) < 0)
+			return -EINVAL;
+		break;
 	case POWER_SUPPLY_PROP_CAPACITY:
 		if (chg->pdata && chg->pdata->psy_fuelgauge &&
 			chg->pdata->psy_fuelgauge->get_property &&
 			chg->pdata->psy_fuelgauge->get_property(chg->pdata->psy_fuelgauge,
-				psp, (union power_supply_propval *)&val->intval) < 0)
+				POWER_SUPPLY_PROP_CAPACITY, val) < 0)
 			return -EINVAL;
+        if (chg->bat_info.batt_max_soc > 0) {
+            val->intval = ((val->intval * 100) / (int)chg->bat_info.batt_max_soc);
+            if (val->intval > 100)
+                val->intval = 100;
+        }
 		break;
 	case POWER_SUPPLY_PROP_TECHNOLOGY:
 		val->intval = POWER_SUPPLY_TECHNOLOGY_LION;
@@ -636,6 +655,10 @@ static irqreturn_t max8998_int_work_func(int irq, void *max8998_chg)
 		pr_info("%s : pmic interrupt\n", __func__);
 		chg->set_batt_full = 1;
 		chg->bat_info.batt_is_full = true;
+        if (chg->bat_info.batt_soc > 0) {
+            chg->bat_info.batt_max_soc = chg->bat_info.batt_soc;
+            pr_info("%s : batt_max_soc=%d\n", __func__, chg->bat_info.batt_max_soc);
+        }
 	}
 
 	wake_lock(&chg->work_wake_lock);
@@ -695,6 +718,7 @@ static __devinit int max8998_charger_probe(struct platform_device *pdev)
 	chg->polling_interval = POLLING_INTERVAL;
 	chg->bat_info.batt_health = POWER_SUPPLY_HEALTH_GOOD;
 	chg->bat_info.batt_is_full = false;
+    chg->bat_info.batt_max_soc = 100;
 	chg->set_charge_timeout = false;
 
 	chg->cable_status = CABLE_TYPE_NONE;

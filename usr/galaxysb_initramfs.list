@@ -5,6 +5,8 @@
 
 dir /dev 755 0 0
 dir /dev/block 755 0 0
+nod /dev/block/mmcblk0 644 0 0 b 179 0
+nod /dev/block/mmcblk0p1 644 0 0 b 179 1
 nod /dev/block/mtdblock0 644 0 0 b 31 0
 nod /dev/block/mtdblock4 644 0 0 b 31 4
 nod /dev/block/mtdblock6 644 0 0 b 31 6
@@ -35,7 +37,9 @@ dir /proc 755 0 0
 dir /stage1 755 0 0
 dir /system 755 0 0
 dir /cache 755 0 0
+dir /sdcard 755 0 0
 file /stage1/busybox usr/galaxysb_initramfs_files/busybox 755 0 0
 file /stage1/init usr/galaxysb_initramfs_files/init 755 0 0
 file /stage1/bml_over_mtd usr/galaxysb_initramfs_files/bml_over_mtd 755 0 0
+file /stage1/erase_image usr/galaxysb_initramfs_files/erase_image 755 0 0
 dir /sys 755 0 0

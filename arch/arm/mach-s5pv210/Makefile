@@ -39,7 +39,8 @@ obj-$(CONFIG_MACH_ARIES)	+= aries-vibrator.o
 obj-$(CONFIG_MACH_ARIES)	+= aries-btlpm.o
 obj-$(CONFIG_MACH_ARIES)	+= aries-watchdog.o
 obj-$(CONFIG_MACH_ARIES)	+= aries-panel.o
-obj-$(CONFIG_MACH_ARIES)	+= dev-aries-phone.o
+obj-$(CONFIG_PHONE_ARIES)	+= dev-s1-phone.o
+obj-$(CONFIG_PHONE_CRESPO)	+= dev-aries-phone.o
 
 obj-$(CONFIG_CPU_FREQ)		+= cpu-freq.o
 obj-$(CONFIG_S5PV210_SETUP_SDHCI)       += setup-sdhci.o
