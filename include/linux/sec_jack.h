@@ -54,6 +54,7 @@ struct sec_jack_platform_data {
 	int	send_end_gpio;
 	bool	det_active_high;
 	bool	send_end_active_high;
+    int ear_sel;
 };
 #endif
 

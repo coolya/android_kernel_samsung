@@ -200,6 +200,9 @@ static void sec_jack_set_type(struct sec_jack_info *hi, int jack_type)
 					hi->dev_id,
 					&sec_jack_input_data,
 					sizeof(sec_jack_input_data));
+#if defined(CONFIG_SAMSUNG_VIBRANT)
+        gpio_set_value(pdata->ear_sel, 1);
+#endif
 	} else {
 		/* for all other jacks, disable send/end key detection */
 		if (hi->send_key_dev != NULL) {
@@ -209,6 +212,9 @@ static void sec_jack_set_type(struct sec_jack_info *hi, int jack_type)
 		}
 		/* micbias is left enabled for 4pole and disabled otherwise */
 		pdata->set_micbias_state(false);
+#if defined(CONFIG_SAMSUNG_VIBRANT)
+        gpio_set_value(pdata->ear_sel, 0);
+#endif
 	}
 
 	hi->cur_jack_type = jack_type;
