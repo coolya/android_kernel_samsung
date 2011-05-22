@@ -1304,49 +1304,31 @@ static bool jack_mic_bias;
 static void set_shared_mic_bias(void)
 {
 	gpio_set_value(GPIO_MICBIAS_EN, wm8994_mic_bias || jack_mic_bias);
+        gpio_set_value(GPIO_EARPATH_SEL, wm8994_mic_bias || jack_mic_bias);
+        //gpio_set_value(GPIO_MICBIAS_EN, on);
+        //gpio_set_value(GPIO_EARPATH_SEL, on);
+#if defined (CONFIG_SAMSUNG_VIBRANT)
+	gpio_set_value(GPIO_MICBIAS_EN2, wm8994_mic_bias || jack_mic_bias);
+	//gpio_set_value(GPIO_MICBIAS_EN2, on);
+#endif
 }
 
 static void wm8994_set_mic_bias(bool on)
 {
-    pr_debug("%s: system_rev=%d, on=%d\n", __func__, system_rev, on ? 1 : 0);
-	if (system_rev < 0x09) {
-		unsigned long flags;
-		spin_lock_irqsave(&mic_bias_lock, flags);
-		wm8994_mic_bias = on;
-		set_shared_mic_bias();
-		spin_unlock_irqrestore(&mic_bias_lock, flags);
-	} else {
-		gpio_set_value(GPIO_MICBIAS_EN, on);
-    }
+	unsigned long flags;
+	spin_lock_irqsave(&mic_bias_lock, flags);
+	wm8994_mic_bias = on;
+	set_shared_mic_bias();
+	spin_unlock_irqrestore(&mic_bias_lock, flags);
 }
 
 static void sec_jack_set_micbias_state(bool on)
 {
-	if (system_rev < 0x09) {
-		unsigned long flags;
-		spin_lock_irqsave(&mic_bias_lock, flags);
-		jack_mic_bias = on;
-		set_shared_mic_bias();
-		spin_unlock_irqrestore(&mic_bias_lock, flags);
-    } else {
-#if defined(CONFIG_SAMSUNG_CAPTIVATE)
-        pr_debug("%s: on=%d\n", __func__, on ? 1 : 0);
-		gpio_set_value(GPIO_EARPATH_SEL, on);
-		gpio_set_value(GPIO_EAR_MICBIAS_EN, on);
-#else
-        pr_debug("%s: on=%d\n", __func__, on ? 1 : 0);
-		gpio_set_value(GPIO_EARPATH_SEL, on);
-#if defined(CONFIG_SAMSUNG_VIBRANT) //hate ifdefs? here's a nested one for your pleasure . . .
-        if((HWREV == 0x0A) || (HWREV == 0x0C) || (HWREV == 0x0D) || (HWREV == 0x0E) ) //0x0A:00, 0x0C:00, 0x0D:01, 0x0E:05
-            gpio_set_value(GPIO_MICBIAS_EN, on);
-        else {
-            gpio_set_value(GPIO_MICBIAS_EN2, on);
-            gpio_set_value(GPIO_MICBIAS_EN, on);
-        }
-#else
-		gpio_set_value(GPIO_MICBIAS_EN, on);
-#endif
-#endif
+	unsigned long flags;
+	spin_lock_irqsave(&mic_bias_lock, flags);
+	jack_mic_bias = on;
+	set_shared_mic_bias();
+	spin_unlock_irqrestore(&mic_bias_lock, flags);
     }
 }
 
@@ -1355,11 +1337,6 @@ static struct wm8994_platform_data wm8994_pdata = {
         .ear_sel = GPIO_EARPATH_SEL,
 	.set_mic_bias = wm8994_set_mic_bias,
 };
-
-/*
- * Guide for Camera Configuration for Crespo board
- * ITU CAM CH A: LSI s5k4ecgx
- */
 
 #ifdef CONFIG_VIDEO_CE147
 /*
