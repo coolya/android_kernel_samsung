@@ -1329,7 +1329,6 @@ static void sec_jack_set_micbias_state(bool on)
 	jack_mic_bias = on;
 	set_shared_mic_bias();
 	spin_unlock_irqrestore(&mic_bias_lock, flags);
-    }
 }
 
 static struct wm8994_platform_data wm8994_pdata = {
@@ -2585,78 +2584,72 @@ static struct platform_device sec_device_btsleep = {
 	.id	= -1,
 };
 
+/* stock headset adc 2970 - 2990 */
 static struct sec_jack_zone sec_jack_zones[] = {
 	{
 		/* adc == 0, unstable zone, default to 3pole if it stays
-		 * in this range for a half second (20ms delays, 25 samples)
+		 * in this range for 300ms (15ms delays, 20 samples)
 		 */
 		.adc_high = 0,
-		.delay_ms = 20,
-		.check_count = 25,
+		.delay_ms = 15,
+		.check_count = 20,
 		.jack_type = SEC_HEADSET_3POLE,
 	},
 	{
-		/* 0 < adc <= 1000, unstable zone, default to 3pole if it stays
-		 * in this range for a second (10ms delays, 100 samples)
+		/* 0 < adc <= 900, unstable zone, default to 3pole if it stays
+		 * in this range for 800ms (10ms delays, 80 samples)
 		 */
-		.adc_high = 1000,
+		.adc_high = 900,
 		.delay_ms = 10,
-		.check_count = 100,
+		.check_count = 80,
 		.jack_type = SEC_HEADSET_3POLE,
 	},
 	{
-		/* 1000 < adc <= 2000, unstable zone, default to 4pole if it
-		 * stays in this range for a second (10ms delays, 100 samples)
+		/* 900 < adc <= 2000, unstable zone, default to 4pole if it
+		 * stays in this range for 800ms (10ms delays, 80 samples)
 		 */
 		.adc_high = 2000,
 		.delay_ms = 10,
-		.check_count = 100,
+		.check_count = 80,
 		.jack_type = SEC_HEADSET_4POLE,
 	},
 	{
-		/* 2000 < adc <= 3700, 4 pole zone, default to 4pole if it
-		 * stays in this range for 200ms (20ms delays, 10 samples)
+		/* 2000 < adc <= 3400, 4 pole zone, default to 4pole if it
+		 * stays in this range for 100ms (10ms delays, 10 samples)
 		 */
-		.adc_high = 3700,
-		.delay_ms = 20,
+		.adc_high = 3400,
+		.delay_ms = 10,
 		.check_count = 10,
 		.jack_type = SEC_HEADSET_4POLE,
 	},
 	{
-		/* adc > 3700, unstable zone, default to 3pole if it stays
-		 * in this range for a second (10ms delays, 100 samples)
+		/* adc > 3400, unstable zone, default to 3pole if it stays
+		 * in this range for two seconds (10ms delays, 200 samples)
 		 */
 		.adc_high = 0x7fffffff,
 		.delay_ms = 10,
-		.check_count = 100,
+		.check_count = 200,
 		.jack_type = SEC_HEADSET_3POLE,
 	},
 };
 
-/* To support 3-buttons earjack */
+/* Only support one button of earjack on mach aries.
+ * If your HW supports 3-buttons earjack made by Samsung and HTC,
+ * add some zones here.
+ */
 static struct sec_jack_buttons_zone sec_jack_buttons_zones[] = {
 	{
-		/* 0 <= adc <=110, stable zone */
+		/* 300 <= adc <=1000, stable zone */
+                /* stock headset button adc 390 - 420 */
 		.code		= KEY_MEDIA,
-		.adc_low	= 0,
-		.adc_high	= 110,
-	},
-	{
-		/* 130 <= adc <= 365, stable zone */
-		.code		= KEY_PREVIOUSSONG,
-		.adc_low	= 130,
-		.adc_high	= 365,
-	},
-	{
-		/* 385 <= adc <= 870, stable zone */
-		.code		= KEY_NEXTSONG,
-		.adc_low	= 385,
-		.adc_high	= 870,
+		.adc_low	= 300,
+		.adc_high	= 1000,
 	},
 };
 
 static int sec_jack_get_adc_value(void)
 {
+	pr_info("%s: sec_jack adc value = %i \n", __func__, s3c_adc_get_adc_data(3));
 	return s3c_adc_get_adc_data(3);
 }
 
