@@ -1303,11 +1303,20 @@ static bool wm8994_mic_bias;
 static bool jack_mic_bias;
 static void set_shared_mic_bias(void)
 {
-#if !defined(CONFIG_SAMSUNG_VIBRANT)
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+	if((HWREV == 0x04) || (HWREV == 0x08) || (HWREV == 0x0C) || (HWREV == 0x02) || (HWREV == 0x0A)) //0x08:00, 0x04:01, 0x0C:02, 0x02:03, 0x0A:04
+        gpio_set_value(GPIO_MICBIAS_EN, wm8994_mic_bias || jack_mic_bias);
+	else // from 05 board (0x06: 05, 0x0E: 06)
+        gpio_set_value(GPIO_EAR_MICBIAS_EN, wm8994_mic_bias || jack_mic_bias);
+#elif defined(CONFIG_SAMSUNG_VIBRANT)
+	if((HWREV == 0x0A) || (HWREV == 0x0C) || (HWREV == 0x0D) || (HWREV == 0x0E) ) //0x0A:00, 0x0C:00, 0x0D:01, 0x0E:05
+        gpio_set_value(GPIO_MICBIAS_EN, wm8994_mic_bias || jack_mic_bias);
+	else// from 06 board(0x0F: 06)
+        gpio_set_value(GPIO_MICBIAS_EN2, wm8994_mic_bias || jack_mic_bias);
+#else
 	gpio_set_value(GPIO_MICBIAS_EN, wm8994_mic_bias || jack_mic_bias);
-    gpio_set_value(GPIO_EARPATH_SEL, wm8994_mic_bias || jack_mic_bias);
-#else // CONFIG_SAMSUNG_VIBRANT
-	gpio_set_value(GPIO_MICBIAS_EN2, wm8994_mic_bias || jack_mic_bias);
+	/* high : earjack, low: TV_OUT */
+	gpio_set_value(GPIO_EARPATH_SEL, wm8994_mic_bias || jack_mic_bias);
 #endif
 }
 
