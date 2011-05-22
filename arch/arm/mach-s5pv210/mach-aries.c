@@ -1329,7 +1329,6 @@ static void sec_jack_set_micbias_state(bool on)
 	jack_mic_bias = on;
 	set_shared_mic_bias();
 	spin_unlock_irqrestore(&mic_bias_lock, flags);
-    }
 }
 
 static struct wm8994_platform_data wm8994_pdata = {
