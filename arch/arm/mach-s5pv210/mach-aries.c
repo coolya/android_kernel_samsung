@@ -1303,13 +1303,11 @@ static bool wm8994_mic_bias;
 static bool jack_mic_bias;
 static void set_shared_mic_bias(void)
 {
+#if !defined(CONFIG_SAMSUNG_VIBRANT)
 	gpio_set_value(GPIO_MICBIAS_EN, wm8994_mic_bias || jack_mic_bias);
-        gpio_set_value(GPIO_EARPATH_SEL, wm8994_mic_bias || jack_mic_bias);
-        //gpio_set_value(GPIO_MICBIAS_EN, on);
-        //gpio_set_value(GPIO_EARPATH_SEL, on);
-#if defined (CONFIG_SAMSUNG_VIBRANT)
+    gpio_set_value(GPIO_EARPATH_SEL, wm8994_mic_bias || jack_mic_bias);
+#else // CONFIG_SAMSUNG_VIBRANT
 	gpio_set_value(GPIO_MICBIAS_EN2, wm8994_mic_bias || jack_mic_bias);
-	//gpio_set_value(GPIO_MICBIAS_EN2, on);
 #endif
 }
 
@@ -1333,7 +1331,6 @@ static void sec_jack_set_micbias_state(bool on)
 
 static struct wm8994_platform_data wm8994_pdata = {
 	.ldo = GPIO_CODEC_LDO_EN,
-        .ear_sel = GPIO_EARPATH_SEL,
 	.set_mic_bias = wm8994_set_mic_bias,
 };
 
@@ -2666,6 +2663,7 @@ struct sec_jack_platform_data sec_jack_pdata = {
 #else
 	.send_end_gpio = GPIO_EAR_SEND_END,
 #endif
+    .ear_sel = GPIO_EARPATH_SEL,
 };
 
 static struct platform_device sec_device_jack = {
