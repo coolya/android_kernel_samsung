@@ -2603,6 +2603,46 @@ static struct sec_jack_zone sec_jack_zones[] = {
 		.check_count = 20,
 		.jack_type = SEC_HEADSET_3POLE,
 	},
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+    {
+        /* 0 < adc <= 700, unstable zone, default to 3pole if it stays
+         * in this range for 800ms (10ms delays, 80 samples)
+         */
+        .adc_high = 700,
+        .delay_ms = 10,
+        .check_count = 80,
+        .jack_type = SEC_HEADSET_3POLE,
+    },
+    {
+        /* 700 < adc <= 2500, unstable zone, default to 4pole if it
+         * stays in this range for 800ms (10ms delays, 80 samples)
+         */
+        .adc_high = 2500,
+        .delay_ms = 10,
+        .check_count = 80,
+        .jack_type = SEC_HEADSET_4POLE,
+    },
+#elif defined(CONFIG_SAMSUNG_VIBRANT)
+    {
+        /* 0 < adc <= 500, unstable zone, default to 3pole if it stays
+         * in this range for 800ms (10ms delays, 80 samples)
+         */
+        .adc_high = 500,
+        .delay_ms = 10,
+        .check_count = 80,
+        .jack_type = SEC_HEADSET_3POLE,
+    },
+    {
+        /* 500 < adc <= 3300, unstable zone, default to 4pole if it
+         * stays in this range for 800ms (10ms delays, 80 samples)
+         */
+        .adc_high = 3300,
+        .delay_ms = 10,
+        .check_count = 80,
+        .jack_type = SEC_HEADSET_4POLE,
+    },
+
+#else
 	{
 		/* 0 < adc <= 900, unstable zone, default to 3pole if it stays
 		 * in this range for 800ms (10ms delays, 80 samples)
@@ -2630,6 +2670,7 @@ static struct sec_jack_zone sec_jack_zones[] = {
 		.check_count = 10,
 		.jack_type = SEC_HEADSET_4POLE,
 	},
+#endif
 	{
 		/* adc > 3400, unstable zone, default to 3pole if it stays
 		 * in this range for two seconds (10ms delays, 200 samples)
