@@ -1304,6 +1304,8 @@ static bool jack_mic_bias;
 static void set_shared_mic_bias(void)
 {
 #if defined(CONFIG_SAMSUNG_CAPTIVATE)
+	/* high : earjack, low: TV_OUT */
+	gpio_set_value(GPIO_EARPATH_SEL, wm8994_mic_bias || jack_mic_bias);
 	if((HWREV == 0x04) || (HWREV == 0x08) || (HWREV == 0x0C) || (HWREV == 0x02) || (HWREV == 0x0A)) //0x08:00, 0x04:01, 0x0C:02, 0x02:03, 0x0A:04
         gpio_set_value(GPIO_MICBIAS_EN, wm8994_mic_bias || jack_mic_bias);
 	else // from 05 board (0x06: 05, 0x0E: 06)
@@ -1314,9 +1316,9 @@ static void set_shared_mic_bias(void)
 	else// from 06 board(0x0F: 06)
         gpio_set_value(GPIO_MICBIAS_EN2, wm8994_mic_bias || jack_mic_bias);
 #else
-	gpio_set_value(GPIO_MICBIAS_EN, wm8994_mic_bias || jack_mic_bias);
 	/* high : earjack, low: TV_OUT */
 	gpio_set_value(GPIO_EARPATH_SEL, wm8994_mic_bias || jack_mic_bias);
+	gpio_set_value(GPIO_MICBIAS_EN, wm8994_mic_bias || jack_mic_bias);
 #endif
 }
 
@@ -2601,6 +2603,46 @@ static struct sec_jack_zone sec_jack_zones[] = {
 		.check_count = 20,
 		.jack_type = SEC_HEADSET_3POLE,
 	},
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+    {
+        /* 0 < adc <= 700, unstable zone, default to 3pole if it stays
+         * in this range for 800ms (10ms delays, 80 samples)
+         */
+        .adc_high = 700,
+        .delay_ms = 10,
+        .check_count = 80,
+        .jack_type = SEC_HEADSET_3POLE,
+    },
+    {
+        /* 700 < adc <= 2500, unstable zone, default to 4pole if it
+         * stays in this range for 800ms (10ms delays, 80 samples)
+         */
+        .adc_high = 2500,
+        .delay_ms = 10,
+        .check_count = 80,
+        .jack_type = SEC_HEADSET_4POLE,
+    },
+#elif defined(CONFIG_SAMSUNG_VIBRANT)
+    {
+        /* 0 < adc <= 500, unstable zone, default to 3pole if it stays
+         * in this range for 800ms (10ms delays, 80 samples)
+         */
+        .adc_high = 500,
+        .delay_ms = 10,
+        .check_count = 80,
+        .jack_type = SEC_HEADSET_3POLE,
+    },
+    {
+        /* 500 < adc <= 3300, unstable zone, default to 4pole if it
+         * stays in this range for 800ms (10ms delays, 80 samples)
+         */
+        .adc_high = 3300,
+        .delay_ms = 10,
+        .check_count = 80,
+        .jack_type = SEC_HEADSET_4POLE,
+    },
+
+#else
 	{
 		/* 0 < adc <= 900, unstable zone, default to 3pole if it stays
 		 * in this range for 800ms (10ms delays, 80 samples)
@@ -2628,6 +2670,7 @@ static struct sec_jack_zone sec_jack_zones[] = {
 		.check_count = 10,
 		.jack_type = SEC_HEADSET_4POLE,
 	},
+#endif
 	{
 		/* adc > 3400, unstable zone, default to 3pole if it stays
 		 * in this range for two seconds (10ms delays, 200 samples)
@@ -3742,9 +3785,15 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
 		.num	= S5PV210_GPJ4(4), // GPIO_TV_EN, GPIO_EAR_MICBIAS_EN
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+		.cfg	= S3C_GPIO_OUTPUT,
+		.val	= S3C_GPIO_SETPIN_ZERO,
+		.pud	= S3C_GPIO_PULL_NONE,
+#else
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_DOWN,
+#endif
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	},
 
@@ -4293,7 +4342,7 @@ static unsigned int aries_sleep_gpio_table[][3] = {
 #elif defined (CONFIG_SAMSUNG_VIBRANT)
   	{ S5PV210_GPJ2(3), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},	//GPIO_GPJ23
   	{ S5PV210_GPJ2(4), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},	//NC
-  	{ S5PV210_GPJ2(5), S3C_GPIO_SLP_PREV,   S3C_GPIO_PULL_NONE},	//GPIO_SUB_MICBIAS_EN
+  	{ S5PV210_GPJ2(5), S3C_GPIO_SLP_PREV,   S3C_GPIO_PULL_NONE},	//GPIO_MICBIAS_EN2
 #else
   	{ S5PV210_GPJ2(3), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},	//GPIO_GPJ23
   	{ S5PV210_GPJ2(4), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_UP},

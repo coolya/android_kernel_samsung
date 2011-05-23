@@ -193,10 +193,6 @@ static void jack_input_selector(struct sec_jack_platform_data* pdata, int jack_t
     }
 #elif defined(CONFIG_SAMSUNG_CAPTIVATE)
     case SEC_HEADSET_3POLE:
-    {
-        gpio_set_value(pdata->ear_sel, 0);
-        break;
-    }
     case SEC_HEADSET_4POLE:
     {
         gpio_set_value(pdata->ear_sel, 1);    //1:headset, 0: TV_OUT
@@ -225,8 +221,11 @@ static void sec_jack_set_type(struct sec_jack_info *hi, int jack_type)
 	/* this can happen during slow inserts where we think we identified
 	 * the type but then we get another interrupt and do it again
 	 */
-	if (jack_type == hi->cur_jack_type)
+	if (jack_type == hi->cur_jack_type) {
+		if (jack_type != SEC_HEADSET_4POLE)
+			pdata->set_micbias_state(false);
 		return;
+    }
 
     jack_input_selector(pdata, jack_type);
 	if (jack_type == SEC_HEADSET_4POLE) {
