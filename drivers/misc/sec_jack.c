@@ -193,10 +193,6 @@ static void jack_input_selector(struct sec_jack_platform_data* pdata, int jack_t
     }
 #elif defined(CONFIG_SAMSUNG_CAPTIVATE)
     case SEC_HEADSET_3POLE:
-    {
-        gpio_set_value(pdata->ear_sel, 0);
-        break;
-    }
     case SEC_HEADSET_4POLE:
     {
         gpio_set_value(pdata->ear_sel, 1);    //1:headset, 0: TV_OUT
