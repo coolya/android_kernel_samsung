@@ -181,39 +181,6 @@ static void sec_jack_buttons_disconnect(struct input_handle *handle)
 	input_unregister_handle(handle);
 }
 
-static void jack_input_selector(struct sec_jack_platform_data* pdata, int jack_type)
-{
-    switch(jack_type) {
-#if defined(CONFIG_SAMSUNG_VIBRANT)
-    case SEC_HEADSET_3POLE:
-    case SEC_HEADSET_4POLE:
-    {
-        gpio_set_value(pdata->ear_sel, 1);    //1:headset, 0: TV_OUT
-        break;
-    }
-#elif defined(CONFIG_SAMSUNG_CAPTIVATE)
-    case SEC_HEADSET_3POLE:
-    case SEC_HEADSET_4POLE:
-    {
-        gpio_set_value(pdata->ear_sel, 1);    //1:headset, 0: TV_OUT
-        break;
-    }
-#endif
-    case SEC_TVOUT_DEVICE :
-    {
-        gpio_set_value(pdata->ear_sel, 0);    //1:headset, 0: TV_OUT                                                                              
-        break;
-    }
-    case SEC_UNKNOWN_DEVICE:
-    {
-        printk("unknown jack device attached. User must select jack device type\n");
-        break;
-    }
-    default :
-        break;
-    }
-}
-
 static void sec_jack_set_type(struct sec_jack_info *hi, int jack_type)
 {
 	struct sec_jack_platform_data *pdata = hi->pdata;
@@ -221,13 +188,9 @@ static void sec_jack_set_type(struct sec_jack_info *hi, int jack_type)
 	/* this can happen during slow inserts where we think we identified
 	 * the type but then we get another interrupt and do it again
 	 */
-	if (jack_type == hi->cur_jack_type) {
-		if (jack_type != SEC_HEADSET_4POLE)
-			pdata->set_micbias_state(false);
+	if (jack_type == hi->cur_jack_type)
 		return;
-    }
 
-    jack_input_selector(pdata, jack_type);
 	if (jack_type == SEC_HEADSET_4POLE) {
 		/* for a 4 pole headset, enable detection of send/end key */
 		if (hi->send_key_dev == NULL)
@@ -262,11 +225,6 @@ static void handle_jack_not_inserted(struct sec_jack_info *hi)
     pr_debug("%s\n", __func__);
 	sec_jack_set_type(hi, SEC_JACK_NO_DEVICE);
 	hi->pdata->set_micbias_state(false);
-#if !defined(CONFIG_SAMSUNG_VIBRANT)
-    gpio_set_value(hi->pdata->ear_sel, 0);
-#else
-    gpio_set_value(hi->pdata->ear_sel, 1);
-#endif
 }
 
 static void determine_jack_type(struct sec_jack_info *hi)
@@ -279,9 +237,6 @@ static void determine_jack_type(struct sec_jack_info *hi)
 	unsigned npolarity = !hi->pdata->det_active_high;
 
     pr_debug("%s\n", __func__);
-#if !defined(CONFIG_SAMSUNG_VIBRANT)
-    gpio_set_value(hi->pdata->ear_sel, 1);
-#endif
 	while (gpio_get_value(hi->pdata->det_gpio) ^ npolarity) {
 		adc = hi->pdata->get_adc_value();
 		pr_debug("%s: adc = %d\n", __func__, adc);
