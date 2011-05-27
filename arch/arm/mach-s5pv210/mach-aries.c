@@ -1314,6 +1314,7 @@ static void set_shared_mic_bias(void)
         gpio_set_value(GPIO_MICBIAS_EN2, jack_mic_bias);
         gpio_set_value(GPIO_MICBIAS_EN, wm8994_mic_bias);
     }
+    gpio_set_value(GPIO_EARPATH_SEL, jack_mic_bias);
 #else
 	gpio_set_value(GPIO_MICBIAS_EN, wm8994_mic_bias || jack_mic_bias);
     gpio_set_value(GPIO_EARPATH_SEL, wm8994_mic_bias || jack_mic_bias);
