@@ -48,7 +48,6 @@
 
 static DEFINE_SPINLOCK(bl_lock);
 int bl_on = 0;
-static DEFINE_SPINLOCK(touchkey_lock);
 struct cypress_touchkey_devdata *bl_devdata;
 static struct timer_list bl_timer;
 static void bl_off(struct work_struct *bl_off_work);
@@ -98,9 +97,7 @@ static int i2c_touchkey_write_byte(struct cypress_touchkey_devdata *devdata,
     unsigned long flags;
 
 	while (true) {
-        spin_lock_irqsave(&touchkey_lock, flags);
 		ret = i2c_smbus_write_byte(devdata->client, val);
-        spin_unlock_irqrestore(&touchkey_lock, flags);
 		if (!ret)
 			return 0;
 
