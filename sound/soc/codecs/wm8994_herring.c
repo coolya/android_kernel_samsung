@@ -4085,7 +4085,7 @@ void wm8994_set_fmradio_common(struct snd_soc_codec *codec)
 	wm8994_write(codec, WM8994_DAC2_RIGHT_MIXER_ROUTING, val);
 }
 
-void wm8994_set_headset_common(struct snd_soc_codec *codec,
+void wm8994_set_fmradio_headset_common(struct snd_soc_codec *codec,
 	enum wm8994_dc_servo_slots slots)
 {
 	struct wm8994_priv *wm8994 = codec->drvdata;
@@ -4187,7 +4187,7 @@ void wm8994_set_fmradio_headset(struct snd_soc_codec *codec)
 		WM8994_HPOUT1L_ENA);
 	wm8994_write(codec, WM8994_POWER_MANAGEMENT_1, val);
 
-	wm8994_set_headset_common(codec, DCS_FMRADIO);
+	wm8994_set_fmradio_headset_common(codec, DCS_FMRADIO);
 
 	/* enable power in analog domain */
 	val = wm8994_read(codec, WM8994_POWER_MANAGEMENT_2);
@@ -4407,7 +4407,7 @@ void wm8994_set_fmradio_speaker_headset_mix(struct snd_soc_codec *codec)
 
 	wm8994_write(codec, 0x5D, 0x0002);
 
-	wm8994_set_headset_common(codec, DCS_FMRADIO_SPK_HP);
+	wm8994_set_fmradio_headset_common(codec, DCS_FMRADIO_SPK_HP);
 
 	/* enable power in analog domain */
 	val = wm8994_read(codec, WM8994_POWER_MANAGEMENT_2);
