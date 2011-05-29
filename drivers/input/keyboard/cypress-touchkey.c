@@ -48,11 +48,12 @@
 
 #if 0 /* disable backlight notification for now */
 int bl_on = 0;
+#endif
 struct cypress_touchkey_devdata *bl_devdata;
+
 static struct timer_list bl_timer;
 static void bl_off(struct work_struct *bl_off_work);
 static DECLARE_WORK(bl_off_work, bl_off);
-#endif
 
 struct cypress_touchkey_devdata {
 	struct i2c_client *client;
@@ -122,12 +123,17 @@ static void all_keys_up(struct cypress_touchkey_devdata *devdata)
 	input_sync(devdata->input_dev);
 }
 
-#if 0 /* disable backlight notification for now */
 static void bl_off(struct work_struct *bl_off_work)
 {
+#if 0 /* disable backlight notification for now */
 	if (bl_devdata == NULL || unlikely(bl_devdata->is_dead) ||
 		bl_devdata->is_powering_on || bl_on || bl_devdata->is_sleeping)
 		return;
+#else
+	if (bl_devdata == NULL || unlikely(bl_devdata->is_dead) ||
+		bl_devdata->is_powering_on || bl_devdata->is_sleeping)
+		return;
+#endif
 
 	i2c_touchkey_write_byte(bl_devdata, bl_devdata->backlight_off);
 }
@@ -136,7 +142,6 @@ void bl_timer_callback(unsigned long data)
 {
 	schedule_work(&bl_off_work);
 }
-#endif
 
 static int recovery_routine(struct cypress_touchkey_devdata *devdata)
 {
@@ -212,9 +217,7 @@ static irqreturn_t touchkey_interrupt_thread(int irq, void *touchkey_devdata)
 	}
 
 	input_sync(devdata->input_dev);
-#if 0 /* disable backlight notification for now */
 	mod_timer(&bl_timer, jiffies + msecs_to_jiffies(BACKLIGHT_TIMEOUT));
-#endif
 err:
 	return IRQ_HANDLED;
 }
@@ -303,9 +306,7 @@ static void cypress_touchkey_early_resume(struct early_suspend *h)
 	enable_irq(devdata->client->irq);
 	devdata->is_powering_on = false;
 	devdata->is_sleeping = false;
-#if 0 /* disable backlight notification for now */
 	mod_timer(&bl_timer, jiffies + msecs_to_jiffies(BACKLIGHT_TIMEOUT));
-#endif
 }
 #endif
 
@@ -459,13 +460,13 @@ static int cypress_touchkey_probe(struct i2c_client *client,
 	if (misc_register(&bl_led_device))
 		printk("%s misc_register(%s) failed\n", __FUNCTION__, bl_led_device.name);
 	else {
-		bl_devdata = devdata;
 		if (sysfs_create_group(&bl_led_device.this_device->kobj, &bl_led_group) < 0)
 			pr_err("failed to create sysfs group for device %s\n", bl_led_device.name);
 	}
-
-	setup_timer(&bl_timer, bl_timer_callback, 0);
 #endif
+    bl_devdata = devdata;
+	setup_timer(&bl_timer, bl_timer_callback, 0);
+
 	return 0;
 
 err_req_irq:
@@ -504,9 +505,7 @@ static int __devexit i2c_touchkey_remove(struct i2c_client *client)
 	free_irq(client->irq, devdata);
 	all_keys_up(devdata);
 	input_unregister_device(devdata->input_dev);
-#if 0 /* disable backlight notification for now */
     del_timer(&bl_timer);
-#endif
 	kfree(devdata);
 	return 0;
 }
