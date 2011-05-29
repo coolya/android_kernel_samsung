@@ -1,0 +1,10 @@
+#
+# OneDRAM configuration
+#
+config DPRAM_BUILT_IN
+	tristate "onedram driver built-in"
+
+	---help---
+	  By default, n
+
+	  When in doubt, say N.
