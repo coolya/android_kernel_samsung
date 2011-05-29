@@ -52,7 +52,7 @@ fi
 
 targets=("$@")
 if [ 0 = "${#targets[@]}" ] ; then
-    targets=(captivatemtd galaxysmtd galaxysb vibrantmtd)
+    targets=(captivatemtd galaxysmtd galaxysbmtd vibrantmtd)
 fi
 
 START=$(date +%s)

@@ -855,7 +855,10 @@ static int s3cfb_register_framebuffer(struct s3cfb_global *ctrl)
 				s3cfb_check_var(&ctrl->fb[j]->var, ctrl->fb[j]);
 				s3cfb_set_par(ctrl->fb[j]);
 				s3cfb_draw_logo(ctrl->fb[j]);
-
+				s3cfb_release_window(ctrl->fb[j]);
+			} else if (j == pdata->default_win) {
+				s3cfb_check_var(&ctrl->fb[j]->var, ctrl->fb[j]);
+				s3cfb_set_par(ctrl->fb[j]);
 			}
 
 #else
