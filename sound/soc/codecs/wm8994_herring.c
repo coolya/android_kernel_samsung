@@ -22,8 +22,8 @@
 #include "wm8994_samsung.h"
 #include "../../../arch/arm/mach-s5pv210/herring.h"
 
-#ifdef CONFIG_SND_VOODOO
-#include "wm8994_voodoo.h"
+#ifdef CONFIG_SND_WM8994_EXTENSIONS
+#include "wm8994_extensions.h"
 #endif
 
 /*
@@ -1744,8 +1744,8 @@ void wm8994_record_main_mic(struct snd_soc_codec *codec)
 	else
 		wm8994_set_codec_gain(codec, RECORDING_MODE, RECORDING_MAIN);
 
-#ifdef CONFIG_SND_VOODOO_RECORD_PRESETS
-	voodoo_hook_record_main_mic();
+#ifdef CONFIG_SND_WM8994_EXTENSIONS_RECORD_PRESETS
+	wm8994_extensions_record_main_mic();
 #endif
 }
 
@@ -2182,8 +2182,8 @@ void wm8994_set_playback_speaker(struct snd_soc_codec *codec)
 	val |= WM8994_AIF1DAC1L_TO_DAC1L;
 	wm8994_write(codec, WM8994_DAC1_LEFT_MIXER_ROUTING, val);
 
-#ifdef CONFIG_SND_VOODOO
-	voodoo_hook_playback_speaker();
+#ifdef CONFIG_SND_WM8994_EXTENSIONS
+	wm8994_extensions_playback_speaker();
 #endif
 
 	/* Enbale bias,vmid and Left speaker */

@@ -1,12 +1,12 @@
 /*
- * wm8994.h  --  WM8994 Soc Audio driver
+ * wm8994_extensions.h  --  WM8994 Soc Audio driver extensions
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 
-#define VOODOO_SOUND_VERSION 9
+#define WM8994_EXTENSIONS_VERSION 9
 
 #if defined(CONFIG_MACH_HERRING) || defined (CONFIG_SAMSUNG_GALAXYS)	       \
 	|| defined (CONFIG_SAMSUNG_GALAXYSB)				       \
@@ -36,13 +36,13 @@ enum unified_path { HEADPHONES, RADIO_HEADPHONES, SPEAKER, MAIN_MICROPHONE };
 
 bool is_path(int unified_path);
 bool is_path_media_or_fm_no_call_no_record(void);
-unsigned int voodoo_hook_wm8994_write(struct snd_soc_codec *codec,
+unsigned int wm8994_extensions_write(struct snd_soc_codec *codec,
 				      unsigned int reg, unsigned int value);
-void voodoo_hook_fmradio_headset(void);
-void voodoo_hook_wm8994_pcm_probe(struct snd_soc_codec *codec);
-void voodoo_hook_wm8994_pcm_remove(void);
-void voodoo_hook_record_main_mic(void);
-void voodoo_hook_playback_speaker(void);
+void wm8994_extensions_fmradio_headset(void);
+void wm8994_extensions_pcm_probe(struct snd_soc_codec *codec);
+void wm8994_extensions_pcm_remove(void);
+void wm8994_extensions_record_main_mic(void);
+void wm8994_extensions_playback_speaker(void);
 
 void load_current_eq_values(void);
 void apply_saturation_prevention_drc(void);
