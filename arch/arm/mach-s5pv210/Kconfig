@@ -263,6 +263,17 @@ config S5PV210_SETUP_CSIS
 	help
 	  Common setup code for MIPI-CSIS
 
+config DVFS_LIMIT
+	bool "DVFS limit"
+	depends on CPU_FREQ
+	default n
+
+config CPU_DIDLE
+	bool "DEEP Idle"
+	depends on CPU_IDLE
+	default y
+
+
 config WIFI_CONTROL_FUNC
        bool "Enable WiFi control function abstraction"
        help
