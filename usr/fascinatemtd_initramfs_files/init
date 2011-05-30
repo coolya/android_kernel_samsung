@@ -9,7 +9,7 @@ busybox rm init
 busybox mount -t proc proc /proc
 busybox mount -t sysfs sysfs /sys
 
-bml_over_mtd dump boot 72 reservoir 4022 /stage1/boot.bin
+bml_over_mtd dump boot 72 reservoir 2004 /stage1/boot.bin
 
 eval $(busybox grep -m 1 -A 1 BOOT_IMAGE_OFFSETS /stage1/boot.bin | busybox tail -n 1)
 
