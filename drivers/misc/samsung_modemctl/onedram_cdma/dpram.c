@@ -70,8 +70,8 @@
 #define GPIO_ONEDRAM_INT_N		S5PV210_GPH1(3)
 #define GPIO_ONEDRAM_INT_N_AF	0xff
 
-#define IRQ_ONEDRAM_INT_N		IRQ_EINT11
-#define IRQ_PHONE_ACTIVE			IRQ_EINT15
+#define IRQ_ONEDRAM_INT_N		IRQ_EINT10
+#define IRQ_PHONE_ACTIVE		IRQ_EINT14
 
 
 /*****************************************************************************/
@@ -89,7 +89,7 @@
 #define DEV_TYPE_SERIAL			1 /* serial device for CSD */
 
 /* Device major & minor number */
-#define CSD_MAJOR_NUM			251
+#define CSD_MAJOR_NUM			240
 #define CSD_MINOR_NUM			0
 
 /* Maximum number of PDP context */
@@ -164,11 +164,10 @@ static int onedram_get_semaphore_for_init(const char *func);
 
 #define DRIVER_NAME 		"DPRAM"
 #define DRIVER_PROC_ENTRY	"driver/dpram"
-#define DRIVER_MAJOR_NUM	252
+#define DRIVER_MAJOR_NUM	255
 
 #ifdef _DEBUG
 #define _ENABLE_ERROR_DEVICE
-#if 0
 #define PRINT_WRITE
 #define PRINT_READ
 #define PRINT_WRITE_SHORT
@@ -176,7 +175,6 @@ static int onedram_get_semaphore_for_init(const char *func);
 #define PRINT_SEND_IRQ
 #define PRINT_RECV_IRQ
 #define PRINT_HEAD_TAIL
-#endif
 #endif
 
 //#define ENABLE_GPIO_PHONE_RST

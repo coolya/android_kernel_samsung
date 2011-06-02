@@ -4829,6 +4829,10 @@ static struct platform_device *aries_devices[] __initdata = {
 #endif
 #endif
 
+#ifdef CONFIG_PHONE_ARIES_CDMA
+	&sec_device_dpram,
+#endif
+
 #ifdef CONFIG_S3C_DEV_HSMMC
 	&s3c_device_hsmmc0,
 #endif
