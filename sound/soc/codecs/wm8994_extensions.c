@@ -34,7 +34,7 @@
 
 bool bypass_write_extension = false;
 
-short unsigned int debug_log_level = LOG_VERBOSE;
+short unsigned int debug_log_level = LOG_INFOS;
 
 #ifdef CONFIG_SND_WM8994_EXTENSIONS_HP_LEVEL_CONTROL
 unsigned short hp_level[2] = { CONFIG_SND_WM8994_EXTENSIONS_HP_LEVEL,
