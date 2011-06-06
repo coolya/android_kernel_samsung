@@ -168,6 +168,7 @@ static int onedram_get_semaphore_for_init(const char *func);
 
 #ifdef _DEBUG
 #define _ENABLE_ERROR_DEVICE
+#if 0
 #define PRINT_WRITE
 #define PRINT_READ
 #define PRINT_WRITE_SHORT
@@ -175,6 +176,7 @@ static int onedram_get_semaphore_for_init(const char *func);
 #define PRINT_SEND_IRQ
 #define PRINT_RECV_IRQ
 #define PRINT_HEAD_TAIL
+#endif
 #endif
 
 //#define ENABLE_GPIO_PHONE_RST
