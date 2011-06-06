@@ -70,8 +70,8 @@
 #define GPIO_ONEDRAM_INT_N		S5PV210_GPH1(3)
 #define GPIO_ONEDRAM_INT_N_AF	0xff
 
-#define IRQ_ONEDRAM_INT_N		IRQ_EINT10
-#define IRQ_PHONE_ACTIVE		IRQ_EINT14
+#define IRQ_ONEDRAM_INT_N		IRQ_EINT11
+#define IRQ_PHONE_ACTIVE		IRQ_EINT15
 
 
 /*****************************************************************************/

@@ -1,1 +1,1 @@
-obj-y	+= modemctl.o
+#obj-y	+= modemctl.o
