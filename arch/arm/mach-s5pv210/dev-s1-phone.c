@@ -21,8 +21,8 @@
 #include <mach/gpio-aries.h>
 
 #if defined(CONFIG_PHONE_ARIES_CDMA)
-#include "../../../drivers/misc/samsung_modemctl/onedram_cdma/onedram.h"
-#include "../../../drivers/misc/samsung_modemctl/modemctl_cdma/modemctl.h"
+#include "../../../drivers/misc/samsung_modemctl/dpram/onedram.h"
+#include "../../../drivers/misc/samsung_modemctl/dpram/modemctl.h"
 #else
 #include "../../../drivers/misc/samsung_modemctl/onedram/onedram.h"
 #include "../../../drivers/misc/samsung_modemctl/modemctl/modemctl.h"
