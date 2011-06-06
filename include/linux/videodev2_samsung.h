@@ -472,6 +472,9 @@ enum v4l2_slow_ae_mode {
 #define V4L2_CID_ESD_INT			(V4L2_CID_PRIVATE_BASE + 117)
 #define V4L2_CID_CAMERA_GET_FLASH_ONOFF		(V4L2_CID_PRIVATE_BASE + 118)
 #define V4L2_CID_CAMERA_THUMBNAIL_NULL          (V4L2_CID_PRIVATE_BASE + 119)
+#define V4L2_CID_CAMERA_LENS_SOFTLANDING          (V4L2_CID_PRIVATE_BASE + 120)
+
+
 
 /* Pixel format FOURCC depth Description */
 /* 12  Y/CbCr 4:2:0 64x32 macroblocks */
