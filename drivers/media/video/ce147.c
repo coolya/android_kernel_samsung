@@ -522,8 +522,11 @@ static int ce147_waitfordone_timeout(struct i2c_client *client,
 		cam_status = 0xFF;
 		err = ce147_i2c_read_multi(client,
 						cmd, NULL, 0, &cam_status, 1);
-		if (err < 0)
+		if (err < 0) {
+			dev_err(&client->dev, "%s: failed: i2c_read "
+				"i2c error \n", __func__);
 			return -EIO;
+		}
 
 		ce147_msg(&client->dev, "Status check returns %02x\n",
 				cam_status);
@@ -534,8 +537,11 @@ static int ce147_waitfordone_timeout(struct i2c_client *client,
 		msleep(polling_interval);
 	}
 
-	if (cam_status != value)
+	if (cam_status != value) {
+		dev_err(&client->dev, "%s: failed: i2c_read "
+				"time out occured \n", __func__);
 		return -EBUSY;
+	}
 	else
 		return jiffies_to_msecs(jiffies - jiffies_start);
 }
@@ -1623,6 +1629,7 @@ static int ce147_set_preview_stop(struct v4l2_subdev *sd)
 			return -EIO;
 		}
 
+		msleep(POLL_TIME_MS);
 		err = ce147_waitfordone_timeout(client, CMD_PREVIEW_STATUS,
 						0x00, 3000, POLL_TIME_MS);
 		if (err	< 0) {
@@ -4896,7 +4903,6 @@ static int ce147_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	struct ce147_state *state = to_state(sd);
 	int err = -ENOIOCTLCMD;
-	int offset = 134217728;
 	int value = ctrl->value;
 
 	mutex_lock(&state->ctrl_lock);
@@ -5141,6 +5147,10 @@ static int ce147_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		err = 0;
 		break;
 
+	case V4L2_CID_CAMERA_LENS_SOFTLANDING:
+		ce147_set_af_softlanding(sd);
+		err = 0;
+
 	default:
 		dev_err(&client->dev, "%s: no such control\n", __func__);
 		break;
@@ -5149,7 +5159,7 @@ static int ce147_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	if (err < 0)
 		dev_err(&client->dev, "%s: vidioc_s_ctrl failed	%d, "
 				"s_ctrl: id(%d), value(%d)\n",
-					__func__, err, (ctrl->id - offset),
+					__func__, err, (ctrl->id - V4L2_CID_PRIVATE_BASE),
 					ctrl->value);
 
 	mutex_unlock(&state->ctrl_lock);
