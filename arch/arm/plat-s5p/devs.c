@@ -204,7 +204,7 @@ static struct usb_mass_storage_platform_data ums_pdata = {
 	.vendor			= "Android",
 	.product		= "UMS Composite",
 	.release		= 1,
-#if defined(CONFIG_MACH_ARIES)
+#if defined(CONFIG_MACH_ARIES) && !defined(CONFIG_SAMSUNG_FASCINATE)
 	.nluns			= 2,
 #else
 	.nluns			= 1,

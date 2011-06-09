@@ -71,7 +71,7 @@
 #define GPIO_ONEDRAM_INT_N_AF	0xff
 
 #define IRQ_ONEDRAM_INT_N		IRQ_EINT11
-#define IRQ_PHONE_ACTIVE			IRQ_EINT15
+#define IRQ_PHONE_ACTIVE		IRQ_EINT15
 
 
 /*****************************************************************************/
@@ -89,7 +89,7 @@
 #define DEV_TYPE_SERIAL			1 /* serial device for CSD */
 
 /* Device major & minor number */
-#define CSD_MAJOR_NUM			251
+#define CSD_MAJOR_NUM			240
 #define CSD_MINOR_NUM			0
 
 /* Maximum number of PDP context */
@@ -164,7 +164,7 @@ static int onedram_get_semaphore_for_init(const char *func);
 
 #define DRIVER_NAME 		"DPRAM"
 #define DRIVER_PROC_ENTRY	"driver/dpram"
-#define DRIVER_MAJOR_NUM	252
+#define DRIVER_MAJOR_NUM	255
 
 #ifdef _DEBUG
 #define _ENABLE_ERROR_DEVICE
