@@ -2331,9 +2331,15 @@ static struct i2c_board_info i2c_devs10[] __initdata = {
 };
 
 static struct i2c_board_info i2c_devs5[] __initdata = {
+#if defined(CONFIG_SAMSUNG_FASCINATE)
+	{
+		I2C_BOARD_INFO("kr3dh", 0x19),
+	},
+#else
 	{
 		I2C_BOARD_INFO("bma023", 0x38),
 	},
+#endif
 };
 
 static struct i2c_board_info i2c_devs8[] __initdata = {
