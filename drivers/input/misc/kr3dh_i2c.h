@@ -19,7 +19,7 @@
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 /* to debugg kr3dh  uncomment below macro*/
-#define KR3DH_DEBUG 
+//#define KR3DH_DEBUG 
 
 /* KR3DH I2C Address */
 #define	SENS_ADD		(0x19 << 1)
