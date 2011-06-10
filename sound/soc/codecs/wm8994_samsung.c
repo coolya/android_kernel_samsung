@@ -3199,7 +3199,7 @@ static int wm8994_i2c_probe(struct i2c_client *i2c,
 		gpio_direction_output(pdata->ear_sel, 0);
 #endif
 	}
-	if (!herring_is_cdma_wimax_dev()) {
+	if (!herring_is_cdma_wimax_dev() && !phone_is_aries_cdma()) {
 		s3c_gpio_setpull(pdata->ear_sel, S3C_GPIO_PULL_NONE);
 
 		s3c_gpio_slp_cfgpin(pdata->ear_sel, S3C_GPIO_SLP_PREV);
