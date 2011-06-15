@@ -34,7 +34,7 @@
 
 bool bypass_write_extension = false;
 
-short unsigned int debug_log_level = LOG_INFOS;
+short unsigned int debug_log_level = LOG_OFF;
 
 #ifdef CONFIG_SND_WM8994_EXTENSIONS_HP_LEVEL_CONTROL
 unsigned short hp_level[2] = { CONFIG_SND_WM8994_EXTENSIONS_HP_LEVEL,
@@ -1641,75 +1641,77 @@ unsigned int wm8994_extensions_write(struct snd_soc_codec *codec_,
 
 	}
 	if (debug_log(LOG_VERBOSE))
-	// log every write to dmesg
+		// log every write to dmesg
 #ifdef NEXUS_S
-		printk("wm8994_extensions: codec_state=%u, stream_state=%u, "
-		       "cur_path=%i, rec_path=%i, "
-		       "power_state=%i\n",
-		       wm8994->codec_state, wm8994->stream_state,
-		       wm8994->cur_path, wm8994->rec_path,
-		       wm8994->power_state);
+		printk("wm8994_extensions: wm8994_write 0x%03X 0x%04X "
+			   "codec_state=%u, stream_state=%u, "
+			   "cur_path=%i, rec_path=%i, "
+			   "power_state=%i\n",
+			   reg, value,
+			   wm8994->codec_state, wm8994->stream_state,
+			   wm8994->cur_path, wm8994->rec_path,
+			   wm8994->power_state);
 #else
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 35)
 		printk("wm8994_extensions: wm8994_write 0x%03X 0x%04X "
-		       "codec_state=%u, stream_state=%u, "
-		       "cur_path=%i, rec_path=%i, "
+               "codec_state=%u, stream_state=%u, "
+               "cur_path=%i, rec_path=%i, "
 #ifndef M110S
-		       "fmradio_path=%i, fmr_mix_path=%i, "
+               "fmradio_path=%i, fmr_mix_path=%i, "
 #endif
-		       "input_source=%i, "
+               "input_source=%i, "
 #ifndef M110S
-		       "output_source=%i, "
+               "output_source=%i, "
 #endif
-		       "power_state=%i\n",
-		       reg, value,
-		       wm8994->codec_state, wm8994->stream_state,
+               "power_state=%i\n",
+               reg, value,
+               wm8994->codec_state, wm8994->stream_state,
 #ifndef M110S
-		       wm8994->fmradio_path, wm8994->fmr_mix_path,
+               wm8994->fmradio_path, wm8994->fmr_mix_path,
 #endif
-		       wm8994->cur_path, wm8994->rec_path,
-		       wm8994->input_source,
+               wm8994->cur_path, wm8994->rec_path,
+               wm8994->input_source,
 #ifndef M110S
-		       wm8994->output_source,
+               wm8994->output_source,
 #endif
-		       wm8994->power_state);
+               wm8994->power_state);
 #else
 		printk("wm8994_extensions: wm8994_write 0x%03X 0x%04X "
-		       "codec_state=%u, stream_state=%u, "
-		       "cur_path=%i, rec_path=%i, "
+               "codec_state=%u, stream_state=%u, "
+               "cur_path=%i, rec_path=%i, "
 #ifndef M110S
-		       "fmradio_path=%i, fmr_mix_path=%i, "
+               "fmradio_path=%i, fmr_mix_path=%i, "
 #endif
 #ifdef CONFIG_S5PC110_KEPLER_BOARD
-		       "call_record_path=%i, call_record_ch=%i, "
-		       "AUDIENCE_state=%i, "
-		       "Fac_SUB_MIC_state=%i, TTY_state=%i, "
+               "call_record_path=%i, call_record_ch=%i, "
+               "AUDIENCE_state=%i, "
+               "Fac_SUB_MIC_state=%i, TTY_state=%i, "
 #endif
-		       "power_state=%i, "
+               "power_state=%i, "
 #ifndef M110S
-		       "recognition_active=%i, ringtone_active=%i"
+               "recognition_active=%i, ringtone_active=%i"
 #endif
-		       "\n",
-		       reg, value,
-		       wm8994->codec_state, wm8994->stream_state,
-		       wm8994->cur_path, wm8994->rec_path,
+               "\n",
+               reg, value,
+               wm8994->codec_state, wm8994->stream_state,
+               wm8994->cur_path, wm8994->rec_path,
 #ifndef M110S
-		       wm8994->fmradio_path, wm8994->fmr_mix_path,
+               wm8994->fmradio_path, wm8994->fmr_mix_path,
 #endif
 #ifdef CONFIG_S5PC110_KEPLER_BOARD
-		       wm8994->call_record_path, wm8994->call_record_ch,
-		       wm8994->AUDIENCE_state,
-		       wm8994->Fac_SUB_MIC_state, wm8994->TTY_state,
+               wm8994->call_record_path, wm8994->call_record_ch,
+               wm8994->AUDIENCE_state,
+               wm8994->Fac_SUB_MIC_state, wm8994->TTY_state,
 #endif
-		       wm8994->power_state
+               wm8994->power_state
 #ifndef M110S
-		       ,wm8994->recognition_active,
-		       wm8994->ringtone_active
+               ,wm8994->recognition_active,
+               wm8994->ringtone_active
 #endif
-		       );
+               );
 #endif
 #endif
-	return value;
+        return value;
 }
 
 void wm8994_extensions_pcm_probe(struct snd_soc_codec *codec_)
