@@ -1,4 +1,4 @@
-#/bin/bash -x
+#!/bin/bash -x
 
 setup ()
 {
@@ -52,7 +52,7 @@ fi
 
 targets=("$@")
 if [ 0 = "${#targets[@]}" ] ; then
-    targets=(captivatemtd galaxysmtd galaxysbmtd vibrantmtd)
+    targets=(captivatemtd fascinatemtd galaxysmtd galaxysbmtd vibrantmtd)
 fi
 
 START=$(date +%s)

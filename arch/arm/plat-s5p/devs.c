@@ -145,6 +145,8 @@ static struct android_usb_platform_data android_usb_pdata = {
 	.product_name		= "Captivate",
 #elif defined(CONFIG_SAMSUNG_VIBRANT)
 	.product_name		= "Vibrant",
+#elif defined(CONFIG_SAMSUNG_FASCINATE)
+	.product_name		= "Fascinate",
 #else
 	.product_name		= "Nexus S",
 #endif
@@ -202,7 +204,7 @@ static struct usb_mass_storage_platform_data ums_pdata = {
 	.vendor			= "Android",
 	.product		= "UMS Composite",
 	.release		= 1,
-#if defined(CONFIG_MACH_ARIES)
+#if defined(CONFIG_MACH_ARIES) && !defined(CONFIG_SAMSUNG_FASCINATE)
 	.nluns			= 2,
 #else
 	.nluns			= 1,

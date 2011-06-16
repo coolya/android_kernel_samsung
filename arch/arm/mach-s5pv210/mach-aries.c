@@ -1241,6 +1241,15 @@ static struct gpio_event_direct_entry aries_keypad_key_map[] = {
 		.gpio	= S5PV210_GPH3(1),
 		.code	= KEY_VOLUMEUP,
 	}
+#elif defined(CONFIG_SAMSUNG_FASCINATE)
+	{
+		.gpio	= S5PV210_GPH3(1),
+		.code	= KEY_VOLUMEDOWN,
+	},
+	{
+		.gpio	= S5PV210_GPH3(3),
+		.code	= KEY_VOLUMEUP,
+	}
 #else
 	{
 		.gpio	= S5PV210_GPH3(1),
@@ -2322,9 +2331,15 @@ static struct i2c_board_info i2c_devs10[] __initdata = {
 };
 
 static struct i2c_board_info i2c_devs5[] __initdata = {
+#if defined(CONFIG_SAMSUNG_FASCINATE)
+	{
+		I2C_BOARD_INFO("kr3dh", 0x19),
+	},
+#else
 	{
 		I2C_BOARD_INFO("bma023", 0x38),
 	},
+#endif
 };
 
 static struct i2c_board_info i2c_devs8[] __initdata = {
@@ -3339,11 +3354,19 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.pud	= S3C_GPIO_PULL_DOWN,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
+#if defined(CONFIG_SAMSUNG_FASCINATE)
+		.num	= S5PV210_GPH1(3),
+		.cfg	= S3C_GPIO_INPUT,
+		.val	= S3C_GPIO_SETPIN_NONE,
+		.pud	= S3C_GPIO_PULL_DOWN,
+		.drv	= S3C_GPIO_DRVSTR_1X,
+#else
 		.num	= S5PV210_GPH1(3),
 		.cfg	= S3C_GPIO_INPUT,
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
+#endif
 	}, { /* NFC_IRQ */
 		.num	= S5PV210_GPH1(4),
 		.cfg	= S3C_GPIO_INPUT,
@@ -3363,11 +3386,19 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.pud	= S3C_GPIO_PULL_DOWN,
 		.drv	= S3C_GPIO_DRVSTR_1X,
 	}, {
+#if defined(CONFIG_SAMSUNG_FASCINATE)
+		.num	= S5PV210_GPH1(7), // GPIO_PHONE_ACTIVE
+		.cfg	= S3C_GPIO_INPUT,
+		.val	= S3C_GPIO_SETPIN_NONE,
+		.pud	= S3C_GPIO_PULL_DOWN,
+		.drv	= S3C_GPIO_DRVSTR_1X,
+#else
 		.num	= S5PV210_GPH1(7), // GPIO_PHONE_ACTIVE
 		.cfg	= S3C_GPIO_SFN(0xF),
 		.val	= S3C_GPIO_SETPIN_NONE,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
+#endif
 	},
 
 	// GPH2 ----------------------------
@@ -3481,11 +3512,19 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 #endif
 	}, {
+#if defined(CONFIG_SAMSUNG_FASCINATE)
+		.num	= S5PV210_GPH3(7), // GPIO_CP_RST	
+		.cfg	= S3C_GPIO_INPUT,
+		.val	= S3C_GPIO_SETPIN_NONE,
+		.pud	= S3C_GPIO_PULL_DOWN,
+		.drv	= S3C_GPIO_DRVSTR_1X,
+#else
 		.num	= S5PV210_GPH3(7), // GPIO_CP_RST	
 		.cfg	= S3C_GPIO_OUTPUT,
 		.val	= S3C_GPIO_SETPIN_ZERO,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
+#endif
 	},
 
 	// GPI ----------------------------
@@ -4048,8 +4087,11 @@ static unsigned int aries_sleep_gpio_table[][3] = {
 	// GPA1 ---------------------------------------------------
 	{ S5PV210_GPA1(0), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
 	{ S5PV210_GPA1(1), S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE},
+#if defined(CONFIG_SAMSUNG_FASCINATE)
+	{ S5PV210_GPA1(2), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN},
+#else
         { S5PV210_GPA1(2), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},
-//	{ S5PV210_GPA1(2), S3C_GPIO_SLP_INPUT,	S3C_GPIO_PULL_DOWN}, JVB-MERGE <<<<<<<<<<<<<<<<
+#endif
 	{ S5PV210_GPA1(3), S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE},
 
 	// GPB ----------------------------------------------------
@@ -4324,6 +4366,8 @@ static unsigned int aries_sleep_gpio_table[][3] = {
 	// GPJ1 ---------------------------------------------------
 #if defined (CONFIG_SAMSUNG_CAPTIVATE)
 	{ S5PV210_GPJ1(0), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},	//GPIO_PHONE_ON
+#elif defined(CONFIG_SAMSUNG_FASCINATE)
+  	{ S5PV210_GPJ1(0), S3C_GPIO_SLP_PREV,   S3C_GPIO_PULL_DOWN},
 #else
   	{ S5PV210_GPJ1(0), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},
 #endif
@@ -4840,6 +4884,10 @@ static struct platform_device *aries_devices[] __initdata = {
 #ifdef CONFIG_USB_ANDROID_RNDIS
 	&s3c_device_rndis,
 #endif
+#endif
+
+#ifdef CONFIG_PHONE_ARIES_CDMA
+	&sec_device_dpram,
 #endif
 
 #ifdef CONFIG_S3C_DEV_HSMMC

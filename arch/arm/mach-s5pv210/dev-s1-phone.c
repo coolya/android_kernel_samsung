@@ -20,8 +20,14 @@
 #include <mach/gpio.h>
 #include <mach/gpio-aries.h>
 
+#if defined(CONFIG_PHONE_ARIES_CDMA)
+#include "../../../drivers/misc/samsung_modemctl/dpram/onedram.h"
+#include "../../../drivers/misc/samsung_modemctl/dpram/modemctl.h"
+#else
 #include "../../../drivers/misc/samsung_modemctl/onedram/onedram.h"
 #include "../../../drivers/misc/samsung_modemctl/modemctl/modemctl.h"
+#endif
+
 
 /* onedram */
 static void onedram_cfg_gpio(void)
@@ -63,7 +69,11 @@ static struct platform_device onedram = {
 static void modemctl_cfg_gpio(void);
 static struct modemctl_platform_data mdmctl_data = {
 	.name = "xmm",
+#if defined(CONFIG_PHONE_ARIES_CDMA)
+	.gpio_phone_on = GPIO_PHONE_ON,
+#else
 	.gpio_phone_on = NULL,
+#endif
 	.gpio_phone_active = GPIO_PHONE_ACTIVE,
 	.gpio_pda_active = GPIO_PDA_ACTIVE,
 	.gpio_cp_reset = GPIO_CP_RST,
@@ -102,6 +112,15 @@ static void modemctl_cfg_gpio(void)
 	unsigned gpio_cp_rst = mdmctl_data.gpio_cp_reset;
 	unsigned gpio_pda_active = mdmctl_data.gpio_pda_active;
 	unsigned gpio_sim_ndetect = mdmctl_data.gpio_sim_ndetect;
+#if defined(CONFIG_PHONE_ARIES_CDMA)
+	err = gpio_request(gpio_phone_on, "PHONE_ON");
+	if (err) {
+		printk("fail to request gpio %s\n","PHONE_ON");
+	} else {
+		gpio_direction_output(gpio_phone_on, GPIO_LEVEL_LOW);
+		s3c_gpio_setpull(gpio_phone_on, S3C_GPIO_PULL_NONE);
+	}
+#endif
 	err = gpio_request(gpio_cp_rst, "CP_RST");
 	if (err) {
 		printk("fail to request gpio %s\n","CP_RST");
@@ -116,14 +135,14 @@ static void modemctl_cfg_gpio(void)
 		gpio_direction_output(gpio_pda_active, GPIO_LEVEL_HIGH);
 		s3c_gpio_setpull(gpio_pda_active, S3C_GPIO_PULL_NONE);
 	}
-
+#if !defined(CONFIG_PHONE_ARIES_CDMA)
 	if (mdmctl_data.gpio_reset_req_n) {
 		err = gpio_request(mdmctl_data.gpio_reset_req_n, "RST_REQN");
 		if (err) {
 			printk("fail to request gpio %s\n","RST_REQN");
 		}
 	}
-
+#endif
 	s3c_gpio_cfgpin(gpio_phone_active, S3C_GPIO_SFN(0xF));
 	s3c_gpio_setpull(gpio_phone_active, S3C_GPIO_PULL_NONE);
 	set_irq_type(gpio_phone_active, IRQ_TYPE_EDGE_BOTH);

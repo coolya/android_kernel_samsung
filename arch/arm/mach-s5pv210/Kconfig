@@ -173,6 +173,12 @@ config PHONE_ARIES
 	help
 	 Select Aries Phone
 
+config PHONE_ARIES_CDMA
+	bool "select aries cdma"
+	depends on MACH_ARIES
+	help
+	 Select Aries Cdma Phone
+
 config PHONE_CRESPO
 	bool "select crespo"
 	depends on MACH_ARIES
