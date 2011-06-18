@@ -79,6 +79,16 @@ unsigned int freq_uv_table[9][3] = {
 	{100000, 950, 950},
 };
 
+unsigned int gpu[6][2] = {
+  //stock  current
+  {200, 200},
+  {200, 200},
+  {200, 200},
+  {200, 200},
+  {200, 200},
+  {100, 100}
+};
+
 struct s5pv210_dvs_conf {
 	unsigned long       arm_volt;   /* uV */
 	unsigned long       int_volt;   /* uV */
@@ -609,6 +619,34 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 		}
 	}
 	cpufreq_notify_transition(&s3c_freqs.freqs, CPUFREQ_PRECHANGE);
+
+  /* Yeah, this is hacky as fuck. So what? */
+	
+  switch(s3c_freqs.old.armclk) {
+    case 1200000:
+      s3c_freqs.old.hclk_msys = gpu[0][1];
+      break;
+    case 1000000:
+      s3c_freqs.old.hclk_msys = gpu[1][1];
+      break;
+    case 800000:
+      s3c_freqs.old.hclk_msys = gpu[2][1];
+      break;
+    case 400000:
+      s3c_freqs.old.hclk_msys = gpu[3][1];
+      break;
+    case 200000:
+      s3c_freqs.old.hclk_msys = gpu[4][1];
+      break;
+    case 100000:
+      s3c_freqs.old.hclk_msys = gpu[5][1];
+      break;
+    }
+
+  /* Convert to khz */  
+	
+  s3c_freqs.old.hclk_msys *= 1000;
+  s3c_freqs.new.hclk_msys = gpu[index][1]*1000;
 
 	if (s3c_freqs.new.fclk != s3c_freqs.old.fclk || first_run)
 		pll_changing = 1;
