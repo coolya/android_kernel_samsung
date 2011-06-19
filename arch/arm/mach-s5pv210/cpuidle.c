@@ -220,8 +220,8 @@ static void s5p_enter_idle(void)
 	unsigned long tmp;
 
 	tmp = __raw_readl(S5P_IDLE_CFG);
-	tmp &= ~((3U<<30) | (3<<28) | (1<<0));
-	tmp |= ((2U<<30) | (2<<28));
+	tmp &= ~((3<<30) | (3<<28) | (1<<0));
+	tmp |= ((2<<30) | (2<<28));
 	__raw_writel(tmp, S5P_IDLE_CFG);
 
 	tmp = __raw_readl(S5P_PWR_CFG);
@@ -413,14 +413,7 @@ static int s5p_enter_didle_state(struct cpuidle_device *dev,
 static int s5p_enter_idle_bm(struct cpuidle_device *dev,
 				struct cpuidle_state *state)
 {
-#ifdef CONFIG_CPU_DIDLE
-	if (s5p_idle_bm_check())
-		return s5p_enter_idle_state(dev, state);
-	else
-		return s5p_enter_didle_state(dev, state);
-#else
 	return s5p_enter_idle_state(dev, state);
-#endif
 }
 
 static DEFINE_PER_CPU(struct cpuidle_device, s5p_cpuidle_device);
