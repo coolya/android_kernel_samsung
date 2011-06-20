@@ -263,7 +263,7 @@ handle_t *ext4_journal_start_sb(struct super_block *sb, int nblocks)
  * that sync() will call the filesystem's write_super callback if
  * appropriate.
  */
-int __ext4_journal_stop(const char *where, handle_t *handle)
+int __ext4_journal_stop(const char *where, unsigned int line, handle_t *handle)
 {
 	struct super_block *sb;
 	int err;
@@ -280,7 +280,7 @@ int __ext4_journal_stop(const char *where, handle_t *handle)
 	if (!err)
 		err = rc;
 	if (err)
-		__ext4_std_error(sb, where, err);
+		__ext4_std_error(sb, where, line, err);
 	return err;
 }
 
@@ -351,12 +351,13 @@ static void ext4_handle_error(struct super_block *sb)
 }
 
 void __ext4_error(struct super_block *sb, const char *function,
-		const char *fmt, ...)
+		  unsigned int line, const char *fmt, ...)
 {
 	va_list args;
 
 	va_start(args, fmt);
-	printk(KERN_CRIT "EXT4-fs error (device %s): %s: ", sb->s_id, function);
+	printk(KERN_CRIT "EXT4-fs error (device %s): %s:%d: comm %s: ",
+	       sb->s_id, function, line, current->comm);
 	vprintk(fmt, args);
 	printk("\n");
 	va_end(args);
@@ -364,14 +365,18 @@ void __ext4_error(struct super_block *sb, const char *function,
 	ext4_handle_error(sb);
 }
 
-void ext4_error_inode(const char *function, struct inode *inode,
+void ext4_error_inode(struct inode *inode, const char *function,
+		      unsigned int line, ext4_fsblk_t block,
 		      const char *fmt, ...)
 {
 	va_list args;
 
 	va_start(args, fmt);
-	printk(KERN_CRIT "EXT4-fs error (device %s): %s: inode #%lu: (comm %s) ",
-	       inode->i_sb->s_id, function, inode->i_ino, current->comm);
+	printk(KERN_CRIT "EXT4-fs error (device %s): %s:%d: inode #%lu: ",
+	       inode->i_sb->s_id, function, line, inode->i_ino);
+	if (block)
+		printk("block %llu: ", block);
+	printk("comm %s: ", current->comm);
 	vprintk(fmt, args);
 	printk("\n");
 	va_end(args);
@@ -379,8 +384,8 @@ void ext4_error_inode(const char *function, struct inode *inode,
 	ext4_handle_error(inode->i_sb);
 }
 
-void ext4_error_file(const char *function, struct file *file,
-		     const char *fmt, ...)
+void ext4_error_file(struct file *file, const char *function,
+		     unsigned int line, const char *fmt, ...)
 {
 	va_list args;
 	struct inode *inode = file->f_dentry->d_inode;
@@ -391,8 +396,10 @@ void ext4_error_file(const char *function, struct file *file,
 	if (!path)
 		path = "(unknown)";
 	printk(KERN_CRIT
-	       "EXT4-fs error (device %s): %s: inode #%lu (comm %s path %s): ",
-	       inode->i_sb->s_id, function, inode->i_ino, current->comm, path);
+	       "EXT4-fs error (device %s): %s:%d: inode #%lu "
+	       "(comm %s path %s): ",
+	       inode->i_sb->s_id, function, line, inode->i_ino,
+	       current->comm, path);
 	vprintk(fmt, args);
 	printk("\n");
 	va_end(args);
@@ -437,7 +444,8 @@ static const char *ext4_decode_error(struct super_block *sb, int errno,
 /* __ext4_std_error decodes expected errors from journaling functions
  * automatically and invokes the appropriate error response.  */
 
-void __ext4_std_error(struct super_block *sb, const char *function, int errno)
+void __ext4_std_error(struct super_block *sb, const char *function,
+		      unsigned int line, int errno)
 {
 	char nbuf[16];
 	const char *errstr;
@@ -450,8 +458,8 @@ void __ext4_std_error(struct super_block *sb, const char *function, int errno)
 		return;
 
 	errstr = ext4_decode_error(sb, errno, nbuf);
-	printk(KERN_CRIT "EXT4-fs error (device %s) in %s: %s\n",
-	       sb->s_id, function, errstr);
+	printk(KERN_CRIT "EXT4-fs error (device %s) in %s:%d: %s\n",
+	       sb->s_id, function, line, errstr);
 
 	ext4_handle_error(sb);
 }
@@ -467,12 +475,13 @@ void __ext4_std_error(struct super_block *sb, const char *function, int errno)
  */
 
 void __ext4_abort(struct super_block *sb, const char *function,
-		  const char *fmt, ...)
+		unsigned int line, const char *fmt, ...)
 {
 	va_list args;
 
 	va_start(args, fmt);
-	printk(KERN_CRIT "EXT4-fs error (device %s): %s: ", sb->s_id, function);
+	printk(KERN_CRIT "EXT4-fs error (device %s): %s:%d: ", sb->s_id,
+	       function, line);
 	vprintk(fmt, args);
 	printk("\n");
 	va_end(args);
@@ -504,13 +513,13 @@ void ext4_msg (struct super_block * sb, const char *prefix,
 }
 
 void __ext4_warning(struct super_block *sb, const char *function,
-		  const char *fmt, ...)
+		    unsigned int line, const char *fmt, ...)
 {
 	va_list args;
 
 	va_start(args, fmt);
-	printk(KERN_WARNING "EXT4-fs warning (device %s): %s: ",
-	       sb->s_id, function);
+	printk(KERN_WARNING "EXT4-fs warning (device %s): %s:%d: ",
+	       sb->s_id, function, line);
 	vprintk(fmt, args);
 	printk("\n");
 	va_end(args);
