@@ -2208,7 +2208,7 @@ static int mpage_da_map_blocks(struct mpage_da_data *mpd)
 	BUG_ON(!handle);
 
 	/*
-	 * Call ext4_get_blocks() to allocate any delayed allocation
+	 * Call ext4_map_blocks() to allocate any delayed allocation
 	 * blocks, or to convert an uninitialized extent to be
 	 * initialized (in the case where we have written into
 	 * one or more preallocated blocks).
@@ -2217,7 +2217,7 @@ static int mpage_da_map_blocks(struct mpage_da_data *mpd)
 	 * indicate that we are on the delayed allocation path.  This
 	 * affects functions in many different parts of the allocation
 	 * call path.  This flag exists primarily because we don't
-	 * want to change *many* call functions, so ext4_get_blocks()
+	 * want to change *many* call functions, so ext4_map_blocks()
 	 * will set the magic i_delalloc_reserved_flag once the
 	 * inode's allocation semaphore is taken.
 	 *
@@ -2334,7 +2334,7 @@ static void mpage_add_bh_to_extent(struct mpage_da_data *mpd,
 	 * XXX Don't go larger than mballoc is willing to allocate
 	 * This is a stopgap solution.  We eventually need to fold
 	 * mpage_da_submit_io() into this function and then call
-	 * ext4_get_blocks() multiple times in a loop
+	 * ext4_map_blocks() multiple times in a loop
 	 */
 	if (nrblocks >= 8*1024*1024/mpd->inode->i_sb->s_blocksize)
 		goto flush_it;
@@ -3959,7 +3959,7 @@ static ssize_t ext4_ext_direct_IO(int rw, struct kiocb *iocb,
 				return -ENOMEM;
 			/*
 			 * we save the io structure for current async
-			 * direct IO, so that later ext4_get_blocks()
+			 * direct IO, so that later ext4_map_blocks()
 			 * could flag the io structure whether there
 			 * is a unwritten extents needs to be converted
 			 * when IO is completed.
@@ -5698,7 +5698,7 @@ int ext4_writepage_trans_blocks(struct inode *inode)
  * Calculate the journal credits for a chunk of data modification.
  *
  * This is called from DIO, fallocate or whoever calling
- * ext4_get_blocks() to map/allocate a chunk of contiguous disk blocks.
+ * ext4_map_blocks() to map/allocate a chunk of contiguous disk blocks.
  *
  * journal buffers for data blocks are not included here, as DIO
  * and fallocate do no need to journal data buffers.
