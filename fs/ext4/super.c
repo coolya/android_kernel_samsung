@@ -63,6 +63,7 @@ static void ext4_clear_journal_err(struct super_block *sb,
 static int ext4_sync_fs(struct super_block *sb, int wait);
 static const char *ext4_decode_error(struct super_block *sb, int errno,
 				     char nbuf[16]);
+static int ext4_feature_set_ok(struct super_block *sb, int readonly);
 static int ext4_remount(struct super_block *sb, int *flags, char *data);
 static int ext4_statfs(struct dentry *dentry, struct kstatfs *buf);
 static int ext4_unfreeze(struct super_block *sb);
@@ -1983,6 +1984,13 @@ static void ext4_orphan_cleanup(struct super_block *sb,
 	if (bdev_read_only(sb->s_bdev)) {
 		ext4_msg(sb, KERN_ERR, "write access "
 			"unavailable, skipping orphan cleanup");
+		return;
+	}
+
+/* Check if feature set would not allow a r/w mount */
+	if (!ext4_feature_set_ok(sb, 0)) {
+		ext4_msg(sb, KERN_INFO, "Skipping orphan cleanup due to "
+			 "unknown ROCOMPAT features");
 		return;
 	}
 
