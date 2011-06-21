@@ -2606,7 +2606,7 @@ static void wm8994_set_gsm_voicecall_common_setting(struct snd_soc_codec *codec)
 
 void wm8994_set_voicecall_common_setting(struct snd_soc_codec *codec)
 {
-	if (herring_is_cdma_wimax_dev())
+	if (herring_is_cdma_wimax_dev() || phone_is_aries_cdma())
 		wm8994_set_cdma_voicecall_common_setting(codec);
 	else
 		wm8994_set_gsm_voicecall_common_setting(codec);
@@ -2829,7 +2829,7 @@ static void wm8994_set_gsm_voicecall_receiver(struct snd_soc_codec *codec)
 
 void wm8994_set_voicecall_receiver(struct snd_soc_codec *codec)
 {
-	if (herring_is_cdma_wimax_dev())
+	if (herring_is_cdma_wimax_dev() || phone_is_aries_cdma())
 		wm8994_set_cdma_voicecall_receiver(codec);
 	else
 		wm8994_set_gsm_voicecall_receiver(codec);
@@ -2950,7 +2950,7 @@ void wm8994_set_voicecall_headset(struct snd_soc_codec *codec)
 
 	wm8994_write(codec, WM8994_POWER_MANAGEMENT_3, 0x0030);
 
-	if (herring_is_cdma_wimax_dev())
+	if (herring_is_cdma_wimax_dev() || phone_is_aries_cdma())
 		wm8994_write(codec, WM8994_AIF2_CLOCKING_1, 0x0009);
 	else
 		wm8994_write(codec, WM8994_AIF2_CLOCKING_1, 0x0019);
@@ -3107,7 +3107,7 @@ void wm8994_set_voicecall_headphone(struct snd_soc_codec *codec)
 
 	wm8994_write(codec, WM8994_POWER_MANAGEMENT_3, 0x0030);
 
-	if (herring_is_cdma_wimax_dev())
+	if (herring_is_cdma_wimax_dev() || phone_is_aries_cdma())
 		wm8994_write(codec, WM8994_AIF2_CLOCKING_1, 0x0009);
 	else
 		wm8994_write(codec, WM8994_AIF2_CLOCKING_1, 0x0019);
@@ -3196,7 +3196,7 @@ void wm8994_set_voicecall_speaker(struct snd_soc_codec *codec)
 	wm8994_write(codec, WM8994_POWER_MANAGEMENT_4,
 			WM8994_AIF2ADCL_ENA | WM8994_ADCL_ENA);
 
-	if (herring_is_cdma_wimax_dev())
+	if (herring_is_cdma_wimax_dev() || phone_is_aries_cdma())
 		wm8994_write(codec, WM8994_AIF2_CLOCKING_1, 0x0009);
 	else
 		wm8994_write(codec, WM8994_AIF2_CLOCKING_1, 0x0019);
@@ -3294,7 +3294,7 @@ void wm8994_set_voicecall_bluetooth(struct snd_soc_codec *codec)
 	wm8994_write(codec, WM8994_DAC2_RIGHT_MIXER_ROUTING,
 		WM8994_AIF2DACR_TO_DAC2R | WM8994_AIF1DAC1R_TO_DAC2R);
 
-	if (herring_is_cdma_wimax_dev())
+	if (herring_is_cdma_wimax_dev() || phone_is_aries_cdma())
 		wm8994_write(codec, WM8994_AIF2_CLOCKING_1, 0x0009);
 	else
 		wm8994_write(codec, WM8994_AIF2_CLOCKING_1, 0x0019);
@@ -3429,7 +3429,7 @@ void wm8994_set_voicecall_tty_vco(struct snd_soc_codec *codec)
 
 	wm8994_write(codec, WM8994_POWER_MANAGEMENT_3, 0x0030);
 
-	if (herring_is_cdma_wimax_dev())
+	if (herring_is_cdma_wimax_dev() || phone_is_aries_cdma())
 		wm8994_write(codec, WM8994_AIF2_CLOCKING_1, 0x0009);
 	else
 		wm8994_write(codec, WM8994_AIF2_CLOCKING_1, 0x0019);
@@ -3595,7 +3595,7 @@ void wm8994_set_voicecall_tty_hco(struct snd_soc_codec *codec)
 		WM8994_MIXOUTLVOL_ENA | WM8994_MIXOUTRVOL_ENA |
 		WM8994_MIXOUTL_ENA | WM8994_MIXOUTR_ENA);
 
-	if (herring_is_cdma_wimax_dev())
+	if (herring_is_cdma_wimax_dev() || phone_is_aries_cdma())
 		wm8994_write(codec, WM8994_AIF2_CLOCKING_1, 0x0009);
 	else
 		wm8994_write(codec, WM8994_AIF2_CLOCKING_1, 0x0019);
@@ -3759,7 +3759,7 @@ void wm8994_set_voicecall_tty_full(struct snd_soc_codec *codec)
 
 	wm8994_write(codec, WM8994_POWER_MANAGEMENT_3, 0x0030);
 
-	if (herring_is_cdma_wimax_dev())
+	if (herring_is_cdma_wimax_dev() || phone_is_aries_cdma())
 		wm8994_write(codec, WM8994_AIF2_CLOCKING_1, 0x0009);
 	else
 		wm8994_write(codec, WM8994_AIF2_CLOCKING_1, 0x0019);
@@ -4725,7 +4725,7 @@ int wm8994_set_codec_gain(struct snd_soc_codec *codec, u16 mode, u16 device)
 
 	if (mode == PLAYBACK_MODE) {
 
-		if (herring_is_cdma_wimax_dev())
+		if (herring_is_cdma_wimax_dev() || phone_is_aries_cdma())
 			default_gain_table_p = cdma_playback_gain_table;
 		else
 			default_gain_table_p = playback_gain_table;
@@ -4766,7 +4766,7 @@ int wm8994_set_codec_gain(struct snd_soc_codec *codec, u16 mode, u16 device)
 			break;
 		}
 	} else if (mode == VOICECALL_MODE) {
-		if (herring_is_cdma_wimax_dev())
+		if (herring_is_cdma_wimax_dev() || phone_is_aries_cdma())
 			default_gain_table_p = cdma_voicecall_gain_table;
 		else
 			default_gain_table_p = voicecall_gain_table;
