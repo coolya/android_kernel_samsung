@@ -153,9 +153,6 @@ struct mfc_inst_ctx {
 	unsigned int postEnable;
 	unsigned int endOfFrame;
 	unsigned int forceSetFrameType;
-	unsigned int dynamic_framerate;
-	unsigned int dynamic_bitrate;
-	unsigned int dynamic_iperoid;
 	unsigned int img_width;
 	unsigned int img_height;
 	unsigned int dwAccess;  /* for Power Management. */
@@ -177,7 +174,6 @@ struct mfc_inst_ctx {
 	unsigned int shared_mem_vaddr;
 	unsigned int IsStartedIFrame;
 	struct mfc_shared_mem shared_mem;
-	mfc_buffer_type buf_type;
 };
 
 int mfc_load_firmware(const unsigned char *data, size_t size);

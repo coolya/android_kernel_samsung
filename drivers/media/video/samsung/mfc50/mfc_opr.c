@@ -53,6 +53,7 @@
 #define DEBUG_MAKE_RAW					0 /* Making Dec/Enc Debugging Files */
 #define ENABLE_DEBUG_MFC_INIT				0
 #define ENABLE_MFC_REGISTER_DEBUG			0 /* 0: Disable	1: Enable */
+#define ENABLE_ENC_MB					1
 
 #define ENABLE_CHECK_START_CODE				1
 #define ENABLE_CHECK_NULL_STREAM			1
@@ -70,10 +71,6 @@
 #define ENABLE_DEBUG_DEC_EXE_PARSER_ERR		1 /* Firstly, Set ENABLE_DEBUG_DEC_EXE_INTR_ERR is "1". */
 #endif
 #endif
-
-#define WRITEL_SHARED_MEM(data, address) \
-	{ writel(data, address); \
-	dmac_flush_range((void *)address, (void *)(address + 4));}
 
 #if DEBUG_MAKE_RAW
 #include <linux/kernel.h>
@@ -110,6 +107,7 @@ static int CheckNullStream(unsigned char *src_mem, unsigned int streamSize);
 
 static int mfc_mem_inst_no[MFC_MAX_INSTANCE_NUM];
 static bool mCheckType;
+
 
 /*
  * Debugging Functions	Definition
@@ -163,9 +161,6 @@ void mfc_fw_debug(mfc_wait_done_type command);
 static unsigned char pResLinearbuf[1280*720*3/2];
 #endif
 #endif
-
-static	unsigned int predisplay_Yaddr;
-static	unsigned int predisplay_Caddr;
 
 #define MC_STATUS_TIMEOUT	1000	/* ms */
 
@@ -240,12 +235,6 @@ static void mfc_set_dec_stream_buffer(struct mfc_inst_ctx *mfc_ctx, int buf_addr
 
 	mfc_debug_L0("inst_no : %d, buf_addr : 0x%08x, buf_size : 0x%08x\n", mfc_ctx->InstNo, buf_addr, buf_size);
 
-	if (mfc_ctx->buf_type == MFC_BUFFER_CACHE) {
-		unsigned char *in_vir;
-		in_vir = phys_to_virt(buf_addr);
-		dmac_unmap_area(in_vir, 1, ALIGN_TO_32B(buf_size));
-	}	
-	
 	port0_base_paddr = mfc_port0_base_paddr;
 
 	/* release buffer */
@@ -677,11 +666,7 @@ static void mfc_set_encode_init_param(struct mfc_inst_ctx *mfc_ctx, union mfc_ar
 
 	/* Set circular intra refresh MB count */
 	WRITEL(enc_init_mpeg4_arg->in_mb_refresh, MFC_ENC_CIR_CTRL);
-
-	if(enc_init_mpeg4_arg->in_frame_map == 1)
-	        WRITEL(MEM_STRUCT_TILE_ENC, MFC_ENC_MAP_FOR_CUR);
-	else
-		WRITEL(MEM_STRUCT_LINEAR, MFC_ENC_MAP_FOR_CUR);
+	WRITEL(MEM_STRUCT_TILE_ENC, MFC_ENC_MAP_FOR_CUR);
 
 	/* Set padding control */
 	WRITEL((enc_init_mpeg4_arg->in_pad_ctrl_on << 31) |
@@ -706,6 +691,14 @@ static void mfc_set_encode_init_param(struct mfc_inst_ctx *mfc_ctx, union mfc_ar
 		WRITEL(((enc_init_h264_arg->in_deblock_alpha_C0 * 2) & 0x1f), MFC_LF_ALPHA_OFF);
 		WRITEL(((enc_init_h264_arg->in_deblock_beta * 2) & 0x1f), MFC_LF_BETA_OFF);
 		WRITEL(1, MFC_EDFU_SF_EPB_ON_CTRL); /* Auto EPB insertion on, only for h264 */
+
+		/* if in_RC_mb_enable is '1' */
+#if ENABLE_ENC_MB
+		if (enc_init_h264_arg->in_RC_frm_enable != 1)
+			enc_init_h264_arg->in_RC_frm_enable = 1;
+		if (enc_init_h264_arg->in_RC_mb_enable != 1)
+			enc_init_h264_arg->in_RC_mb_enable = 1;
+#endif
 
 		WRITEL((enc_init_h264_arg->in_RC_frm_enable << 9) |
 			(enc_init_h264_arg->in_RC_mb_enable << 8) |
@@ -770,7 +763,7 @@ int mfc_load_firmware(const unsigned char *data, size_t size)
 
 	invalidate_kernel_vmap_range((void *)data, size);
 	memcpy((void *)fw_virbuf, data, size);
-	dmac_flush_range((void *)fw_virbuf, (void *)fw_virbuf + size);
+	flush_kernel_vmap_range((void *)fw_virbuf, size);
 
 	mfc_debug("mfc_load_firmware : MFC F/W Loading Stop.................(fw_virbuf: 0x%08x)\n", fw_virbuf);
 
@@ -1141,12 +1134,6 @@ static enum mfc_error_code mfc_encode_header(struct mfc_inst_ctx *mfc_ctx, union
 
 	init_arg->out_header_size = READL(MFC_SI_ENC_STREAM_SIZE);
 
-	if (mfc_ctx->buf_type == MFC_BUFFER_CACHE) {
-		unsigned char *in_vir;
-		in_vir = phys_to_virt(init_arg->out_p_addr.strm_ref_y);
-		dmac_map_area(in_vir, 1, init_arg->out_header_size);
-	}	
-		
 	mfc_debug("encoded header size (%d)\n", init_arg->out_header_size);
 
 	return MFCINST_RET_OK;
@@ -1200,46 +1187,8 @@ static enum mfc_error_code mfc_encode_one_frame(struct mfc_inst_ctx *mfc_ctx, un
 		WRITEL((0x1 << 1), MFC_SI_CH0_ENC_PARA);
 	else if (mfc_ctx->forceSetFrameType == I_FRAME)
 		WRITEL(0x1, MFC_SI_CH0_ENC_PARA);
-	else
-		WRITEL(0x0, MFC_SI_CH0_ENC_PARA);
 
 	mfc_ctx->forceSetFrameType = DONT_CARE;
-
-	/* Check MFC status */
-	if (mfc_ctx->buf_type == MFC_BUFFER_CACHE) {
-		unsigned char *in_vir;
-		unsigned int aligned_width;
-		unsigned int aligned_height;
-
-		in_vir = phys_to_virt(enc_arg->in_Y_addr);
-		aligned_width = ALIGN_TO_128B(mfc_ctx->img_width);
-		aligned_height = ALIGN_TO_32B(mfc_ctx->img_height);
-		dmac_unmap_area(in_vir, 1, aligned_width*aligned_height);
-
-		in_vir = phys_to_virt(enc_arg->in_CbCr_addr);
-		aligned_height = ALIGN_TO_32B(mfc_ctx->img_height/2);
-		dmac_unmap_area(in_vir, 1, aligned_width*aligned_height);
-	}	
-		
-        if (mfc_ctx->dynamic_framerate != 0) {
-		mfc_debug("mfc_ctx->dynamic_framerate = %d\n", mfc_ctx->dynamic_framerate);
-		WRITEL_SHARED_MEM((1 << 1), mfc_ctx->shared_mem_vaddr + 0x2c);
-		WRITEL_SHARED_MEM(mfc_ctx->dynamic_framerate,  mfc_ctx->shared_mem_vaddr + 0x94);
-        } 
-
-	if (mfc_ctx->dynamic_bitrate != 0) {
-		mfc_debug("mfc_ctx->dynamic_bitrate = 0x%x\n", mfc_ctx->dynamic_bitrate);
-		WRITEL_SHARED_MEM((1 << 2), mfc_ctx->shared_mem_vaddr + 0x2c);
-		WRITEL_SHARED_MEM(mfc_ctx->dynamic_bitrate,
-					  mfc_ctx->shared_mem_vaddr + 0x90);
-	}
-
-	if (mfc_ctx->dynamic_iperoid != 0) {
-		mfc_debug("mfc_ctx->dynamic_iperoid = 0x%x\n", mfc_ctx->dynamic_iperoid);
-		WRITEL_SHARED_MEM((1 << 0), mfc_ctx->shared_mem_vaddr + 0x2c);
-		WRITEL_SHARED_MEM(mfc_ctx->dynamic_bitrate,
-					  mfc_ctx->shared_mem_vaddr + 0x98);
-	}
 
 	/* Try frame encoding */
 	WRITEL((FRAME << 16) | (mfc_ctx->InstNo), MFC_SI_CH0_INST_ID);
@@ -1260,17 +1209,6 @@ static enum mfc_error_code mfc_encode_one_frame(struct mfc_inst_ctx *mfc_ctx, un
 	enc_arg->out_encoded_size = READL(MFC_SI_ENC_STREAM_SIZE);
 	enc_arg->out_encoded_Y_paddr = READL(MFC_SI_ENCODED_Y_ADDR);
 	enc_arg->out_encoded_C_paddr = READL(MFC_SI_ENCODED_C_ADDR);
-
-	if (mfc_ctx->buf_type == MFC_BUFFER_CACHE) {
-		unsigned char *in_vir;
-		in_vir = phys_to_virt(enc_arg->in_strm_st);
-		dmac_map_area(in_vir, 1, enc_arg->out_encoded_size);
-	}	
-	
-	WRITEL_SHARED_MEM(0,  mfc_ctx->shared_mem_vaddr + 0x2c);
-	mfc_ctx->dynamic_framerate = 0;
-	mfc_ctx->dynamic_bitrate = 0;
-        mfc_ctx->dynamic_iperoid = 0;
 
 	mfc_debug("-- frame type(%d) encodedSize(%d)\r\n",
 		   enc_arg->out_frame_type, enc_arg->out_encoded_size);
@@ -1374,7 +1312,7 @@ enum mfc_error_code mfc_init_decode(struct mfc_inst_ctx *mfc_ctx, union mfc_args
 		return ret_code;
 	}
 
-	if (init_arg->in_strm_size < 0)
+	if (nReturnErrCode < 0)
 		return MFCINST_ERR_DEC_INVALID_STRM;
 
 	mfc_set_dec_stream_buffer(mfc_ctx, init_arg->in_strm_buf, init_arg->in_strm_size);
@@ -1654,29 +1592,11 @@ static enum mfc_error_code mfc_decode_one_frame(struct mfc_inst_ctx *mfc_ctx, st
 
 	dec_arg->out_res_change = (READL(MFC_SI_DISPLAY_STATUS) >> 4) & 0x3;
 
-	frame_type = READL(MFC_SI_FRAME_TYPE);
-	mfc_ctx->FrameType = (enum mfc_frame_type)(frame_type & 0x3);
-	
 	if (((READL(MFC_SI_DISPLAY_STATUS) & 0x3) != DECODING_DISPLAY) &&
 		((READL(MFC_SI_DISPLAY_STATUS) & 0x3) != DISPLAY_ONLY)) {
 		dec_arg->out_display_Y_addr = 0;
 		dec_arg->out_display_C_addr = 0;
 		mfc_debug("DECODING_ONLY frame decoded\n");
-	} else if (mfc_ctx->IsPackedPB) {
-		if ((mfc_ctx->FrameType == MFC_RET_FRAME_P_FRAME) ||
-		    (mfc_ctx->FrameType == MFC_RET_FRAME_I_FRAME)) {
-			dec_arg->out_display_Y_addr = READL(MFC_SI_DISPLAY_Y_ADR) << 11;
-			dec_arg->out_display_C_addr = READL(MFC_SI_DISPLAY_C_ADR) << 11;
-		} else {
-   		       dec_arg->out_display_Y_addr = predisplay_Yaddr;
-			dec_arg->out_display_C_addr = predisplay_Caddr;
-		}
-		/* save the display addr */
-		predisplay_Yaddr =  READL(MFC_SI_DISPLAY_Y_ADR) << 11;
-		predisplay_Caddr = READL(MFC_SI_DISPLAY_C_ADR) << 11;
-		mfc_debug("(pre_Y_ADDR : 0x%08x  pre_C_ADDR : 0x%08x)\r\n",
-			(predisplay_Yaddr ),
-			(predisplay_Caddr ));
 	} else {
 		/* address shift */
 		dec_arg->out_display_Y_addr = READL(MFC_SI_DISPLAY_Y_ADR) << 11;
@@ -1692,6 +1612,9 @@ static enum mfc_error_code mfc_decode_one_frame(struct mfc_inst_ctx *mfc_ctx, st
 		dec_arg->out_display_status = 2;
 	else
 		dec_arg->out_display_status = 3;
+
+	frame_type = READL(MFC_SI_FRAME_TYPE);
+	mfc_ctx->FrameType = (enum mfc_frame_type)(frame_type & 0x3);
 
 	mfc_debug_L0("(Y_ADDR : 0x%08x  C_ADDR : 0x%08x)\r\n",
 			dec_arg->out_display_Y_addr, dec_arg->out_display_C_addr);
@@ -1774,25 +1697,6 @@ enum mfc_error_code mfc_exe_decode(struct mfc_inst_ctx *mfc_ctx, union mfc_args 
 
 	}
 
-	if (mfc_ctx->buf_type == MFC_BUFFER_CACHE) {
-		if (((READL(MFC_SI_DISPLAY_STATUS) & 0x3) == DECODING_DISPLAY) ||
-			 ((READL(MFC_SI_DISPLAY_STATUS) & 0x3) == DISPLAY_ONLY)) {
-				 unsigned char *out_Y_vir;
-				 unsigned char *out_C_vir;
-				 unsigned int aligned_width;
-				 unsigned int aligned_height;
-
-				 out_Y_vir = phys_to_virt(dec_arg->out_display_Y_addr);
-				 aligned_width = ALIGN_TO_128B(mfc_ctx->img_width);
-				 aligned_height = ALIGN_TO_32B(mfc_ctx->img_height);
-				 dmac_map_area(out_Y_vir, 1, aligned_width*aligned_height);
-
-				 out_C_vir = phys_to_virt(dec_arg->out_display_C_addr);	
-				 aligned_height = ALIGN_TO_32B(mfc_ctx->img_height/2);
-				 dmac_map_area(out_C_vir, 1, aligned_width*aligned_height);
-		}	 
-	}	  
-		
 	mfc_debug_L0("--\n");
 
 	return ret_code;
@@ -1952,28 +1856,20 @@ enum mfc_error_code mfc_set_config(struct mfc_inst_ctx *mfc_ctx, union mfc_args 
 			mfc_ctx->shared_mem.ext_enc_control = (mfc_ctx->shared_mem.ext_enc_control | (0x1 << 1));
 		break;
 
+		/* XXX: need to implement */
 	case MFC_ENC_SETCONF_CHANGE_FRAME_RATE:
 		if (mfc_ctx->MfcState != MFCINST_STATE_ENC_EXE) {
 			mfc_err("MFC_ENC_SETCONF_FRAME_TYPE : state is invalid\n");
 			return MFCINST_ERR_STATE_INVALID;
 		}
-		mfc_ctx->dynamic_framerate = set_cnf_arg->in_config_value[0];
 		break;
 
+		/* XXX: need to implement */
 	case MFC_ENC_SETCONF_CHANGE_BIT_RATE:
 		if (mfc_ctx->MfcState != MFCINST_STATE_ENC_EXE) {
 			mfc_err("MFC_ENC_SETCONF_FRAME_TYPE : state is invalid\n");
 			return MFCINST_ERR_STATE_INVALID;
 		}
-		mfc_ctx->dynamic_bitrate = set_cnf_arg->in_config_value[0];
-		break;
-
-	case MFC_ENC_SETCONF_I_PERIOD:
-		if (mfc_ctx->MfcState != MFCINST_STATE_ENC_EXE) {
-			mfc_err("MFC_ENC_SETCONF_I_PERIOD : state is invalid\n");
-			return MFCINST_ERR_STATE_INVALID;
-		}
-		mfc_ctx->dynamic_iperoid = set_cnf_arg->in_config_value[0];
 		break;
 
 	default:
@@ -2447,7 +2343,6 @@ makefile_mfc_dec_err_info(struct mfc_inst_ctx *mfc_ctx,
 	mfc_dec_in_base_vaddr = phys_to_virt(dec_arg->in_strm_buf);
 	ctx_virbuf = phys_to_virt(mcontext_addr);
 
-	if (mfc_ctx->buf_type == MFC_BUFFER_NO_CACHE)
 	write_file(fileName0, mfc_dec_in_base_vaddr, dec_arg->in_strm_size);
 	write_file(fileName1, ctx_virbuf, mcontext_size);
 
@@ -2474,7 +2369,6 @@ void makefile_mfc_decinit_err_info(struct mfc_inst_ctx *mfc_ctx, struct mfc_dec_
 	mfc_dec_in_base_vaddr = phys_to_virt(decinit_arg->in_strm_buf);
 	ctx_virbuf = phys_to_virt(mcontext_addr);
 
-	if (mfc_ctx->buf_type == MFC_BUFFER_NO_CACHE)
 	write_file(fileName0, mfc_dec_in_base_vaddr, decinit_arg->in_strm_size);
 	write_file(fileName1, ctx_virbuf, mcontext_size);
 }
