@@ -386,9 +386,8 @@ static int logfs_sync_fs(struct super_block *sb, int wait)
 
 const struct super_operations logfs_super_operations = {
 	.alloc_inode	= logfs_alloc_inode,
-	.clear_inode	= logfs_clear_inode,
-	.delete_inode	= logfs_delete_inode,
 	.destroy_inode	= logfs_destroy_inode,
+	.evict_inode	= logfs_evict_inode,
 	.drop_inode	= logfs_drop_inode,
 	.write_inode	= logfs_write_inode,
 	.statfs		= logfs_statfs,
