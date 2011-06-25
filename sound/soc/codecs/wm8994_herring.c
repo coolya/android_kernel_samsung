@@ -1639,6 +1639,11 @@ void wm8994_record_main_mic(struct snd_soc_codec *codec)
 
 	u16 val;
 
+#if defined(CONFIG_SAMSUNG_VIBRANT)
+    /* DIRTY UGLY HACK */
+    wm8994_disable_rec_path(codec); /* fake a mute, that'll be followed by unmute below */
+#endif
+
 	DEBUG_LOG("Recording through Main Mic\n");
 	audio_ctrl_mic_bias_gpio(wm8994->pdata, 1);
 
@@ -1686,10 +1691,14 @@ void wm8994_record_main_mic(struct snd_soc_codec *codec)
 	val |= (WM8994_AIF1ADC1_VU);
 	wm8994_write(codec, WM8994_AIF1_ADC1_LEFT_VOLUME, val);
 
+#if defined(CONFIG_SAMSUNG_VIBRANT)
+	wm8994_write(codec, WM8994_AIF1_ADC1_FILTERS, 0x3000);
+#else
 	val = wm8994_read(codec, WM8994_AIF1_ADC1_FILTERS);
 	val &= ~(WM8994_AIF1ADC1L_HPF_MASK | WM8994_AIF1ADC1R_HPF_MASK);
 	val |= (WM8994_AIF1ADC1L_HPF | 0x2000);
 	wm8994_write(codec, WM8994_AIF1_ADC1_FILTERS, val);
+#endif
 
 	val = wm8994_read(codec, WM8994_AIF1_MASTER_SLAVE);
 	val |= (WM8994_AIF1_MSTR | WM8994_AIF1_CLK_FRC | WM8994_AIF1_LRCLK_FRC);

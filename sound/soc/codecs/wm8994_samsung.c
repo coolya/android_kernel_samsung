@@ -3121,6 +3121,11 @@ static int wm8994_init(struct wm8994_priv *wm8994_private,
 	pr_err("%s: wm8994_pdata = pdata, pdata=%p\n", __func__, pdata);
 	wm8994_pdata = pdata;
 
+#if defined(CONFIG_SAMSUNG_VIBRANT)
+    /* DIRTY UGLY HACK */
+    wm8994_disable_rec_path(codec); /* fake a mute, that'll be followed by unmute below */
+#endif
+
 	return ret;
 
 card_err:
