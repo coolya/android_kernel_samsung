@@ -85,7 +85,11 @@
 #include <plat/jpeg.h>
 #include <plat/clock.h>
 #include <plat/regs-otg.h>
+
+#ifndef CONFIG_SAMSUNG_FASCINATE
 #include <linux/gp2a.h>
+#endif
+
 #include <linux/yas529.h>
 #include <../../../drivers/video/samsung/s3cfb.h>
 #include <linux/sec_jack.h>
@@ -2468,6 +2472,7 @@ static struct i2c_board_info i2c_devs9[] __initdata = {
 	},
 };
 
+#ifndef CONFIG_SAMSUNG_FASCINATE
 static void gp2a_gpio_init(void)
 {
 	int ret = gpio_request(GPIO_PS_ON, "gp2a_power_supply_on");
@@ -2492,12 +2497,19 @@ static struct gp2a_platform_data gp2a_pdata = {
 	.p_out = GPIO_PS_VOUT,
 	.light_adc_value = gp2a_light_adc_value
 };
+#endif
 
 static struct i2c_board_info i2c_devs11[] __initdata = {
+#ifdef CONFIG_SAMSUNG_FASCINATE
+	{
+		I2C_BOARD_INFO("gp2a", (0x88 >> 1)),
+	},
+#else
 	{
 		I2C_BOARD_INFO("gp2a", (0x88 >> 1)),
 		.platform_data = &gp2a_pdata,
 	},
+#endif
 };
 
 static struct yas529_platform_data yas529_pdata = {
@@ -2598,6 +2610,13 @@ struct platform_device sec_device_battery = {
 	.name	= "sec-battery",
 	.id	= -1,
 };
+
+#if defined(CONFIG_SAMSUNG_FASCINATE)
+static struct platform_device opt_gp2a = {
+	.name = "gp2a-opt",
+	.id = -1,
+};
+#endif
 
 static struct platform_device sec_device_rfkill = {
 	.name	= "bt_rfkill",
@@ -4226,7 +4245,7 @@ static unsigned int aries_sleep_gpio_table[][3] = {
 	// GPG0 ---------------------------------------------------
 	{ S5PV210_GPG0(0), S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE},
 	{ S5PV210_GPG0(1), S3C_GPIO_SLP_OUT0,	S3C_GPIO_PULL_NONE},
-#if defined (CONFIG_SAMSUNG_CAPTIVATE)
+#if defined (CONFIG_SAMSUNG_CAPTIVATE) || defined(CONFIG_SAMSUNG_FASCINATE)
   	{ S5PV210_GPG0(2), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},	// GPIO_ALS_SCL_28V
 #else
   	{ S5PV210_GPG0(2), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},	// GPIO_ALS_SCL_28V
@@ -4257,7 +4276,7 @@ static unsigned int aries_sleep_gpio_table[][3] = {
 	// GPG2 ---------------------------------------------------
 	{ S5PV210_GPG2(0), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},	//GPIO_T_FLASH_CLK
 	{ S5PV210_GPG2(1), S3C_GPIO_SLP_OUT0,   S3C_GPIO_PULL_NONE},	//GPIO_T_FLASH_CMD
-#if defined (CONFIG_SAMSUNG_CAPTIVATE)
+#if defined (CONFIG_SAMSUNG_CAPTIVATE) || defined(CONFIG_SAMSUNG_FASCINATE)
   	{ S5PV210_GPG2(2), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_NONE},	//GPIO_ALS_SDA_28V
 #else
   	{ S5PV210_GPG2(2), S3C_GPIO_SLP_INPUT,  S3C_GPIO_PULL_DOWN},	//GPIO_ALS_SDA_28V
@@ -4938,6 +4957,10 @@ static struct platform_device *aries_devices[] __initdata = {
 	&sec_device_btsleep,
 	&ram_console_device,
 	&sec_device_wifi,
+
+#ifdef CONFIG_SAMSUNG_FASCINATE
+	&opt_gp2a,
+#endif
 };
 
 static void __init aries_map_io(void)
@@ -5199,7 +5222,9 @@ static void __init aries_machine_init(void)
 	i2c_register_board_info(9, i2c_devs9, ARRAY_SIZE(i2c_devs9));
 
 	/* optical sensor */
+#ifndef CONFIG_SAMSUNG_FASCINATE
 	gp2a_gpio_init();
+#endif
 	i2c_register_board_info(11, i2c_devs11, ARRAY_SIZE(i2c_devs11));
 	
 	/* yamaha magnetic sensor */
