@@ -298,6 +298,33 @@ static irqreturn_t sec_jack_detect_irq_thread(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
+static void sec_jack_init_jack_state(struct sec_jack_info *hi)
+{
+	struct sec_jack_platform_data *pdata = hi->pdata;
+	int time_left_ms = DET_CHECK_TIME_MS;
+	unsigned npolarity = !hi->pdata->det_active_high;
+
+    pr_debug("%s", __func__);
+
+	/* set mic bias to enable adc */
+	pdata->set_micbias_state(true);
+
+	/* debounce headset jack.  don't try to determine the type of
+	 * headset until the detect state is true for a while.
+	 */
+	while (time_left_ms > 0) {
+		if (!(gpio_get_value(hi->pdata->det_gpio) ^ npolarity)) {
+			/* jack not detected. */
+			handle_jack_not_inserted(hi);
+			return;
+		}
+		msleep(10);
+		time_left_ms -= 10;
+	}
+	/* jack presence was detected the whole time, figure out which type */
+	determine_jack_type(hi);
+}
+
 /* thread run whenever the button of headset is pressed or released */
 void sec_jack_buttons_work(struct work_struct *work)
 {
@@ -441,6 +468,9 @@ static int sec_jack_probe(struct platform_device *pdev)
 #else
 	pdata->det_active_high = 0;
 #endif
+
+    /* initialize headset jack state */
+    sec_jack_init_jack_state(hi);
 
 	return 0;
 

@@ -609,6 +609,10 @@ static int gp2a_i2c_probe(struct i2c_client *client,
 	/* set initial proximity value as 1 */
 	input_report_abs(gp2a->proximity_input_dev, ABS_DISTANCE, 1);
 	input_sync(gp2a->proximity_input_dev);
+#else
+	/* set initial proximity value as 1 */
+	input_report_abs(gp2a->proximity_input_dev, ABS_DISTANCE, 1);
+	input_sync(gp2a->proximity_input_dev);
 #endif
 	goto done;
 
