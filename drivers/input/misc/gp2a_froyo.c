@@ -305,10 +305,9 @@ static void gp2a_work_func_light(struct work_struct *work)
 		buffering = 1;
 	}
 #endif
-	//if((backlight_level > 5)&&(!lightsensor_test))
-	if(level_state > 5)
+	if((backlight_level > 5)&&(!lightsensor_test))
 	{
-		//gprintk("backlight_level = %d\n", backlight_level); //Temp
+		gprintk("backlight_level = %d\n", backlight_level); //Temp
 		cur_state = level_state;	
 	}
 #ifdef CONFIG_FB_S3C_MDNIE_TUNINGMODE_FOR_BACKLIGHT
