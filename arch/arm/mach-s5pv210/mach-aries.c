@@ -3515,11 +3515,19 @@ static struct gpio_init_data aries_init_gpios[] = {
 		.drv	= S3C_GPIO_DRVSTR_1X,
 #endif
 	}, {
+#if defined(CONFIG_SAMSUNG_FASCINATE)
+		.num	= S5PV210_GPH3(7), // GPIO_CP_RST	
+		.cfg	= S3C_GPIO_INPUT,
+		.val	= S3C_GPIO_SETPIN_NONE,
+		.pud	= S3C_GPIO_PULL_DOWN,
+		.drv	= S3C_GPIO_DRVSTR_1X,
+#else
 		.num	= S5PV210_GPH3(7), // GPIO_CP_RST	
 		.cfg	= S3C_GPIO_OUTPUT,
 		.val	= S3C_GPIO_SETPIN_ZERO,
 		.pud	= S3C_GPIO_PULL_NONE,
 		.drv	= S3C_GPIO_DRVSTR_1X,
+#endif
 	},
 
 	// GPI ----------------------------
@@ -4014,6 +4022,9 @@ void s3c_config_gpio_table(void)
 			s3c_gpio_set_drvstrength(gpio, aries_init_gpios[i].drv);
 		}
 	}
+#ifdef CONFIG_SAMSUNG_FASCINATE
+	s3c_gpio_set_drvstrength(S5PV210_GPH3(7), S3C_GPIO_DRVSTR_2X); 
+#endif
 }
 
 #define S5PV210_PS_HOLD_CONTROL_REG (S3C_VA_SYS+0xE81C)

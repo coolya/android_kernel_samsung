@@ -52,6 +52,16 @@ extern struct class *sec_class;
 extern void init_mdnie_class(void);
 #endif
 
+#ifdef CONFIG_SAMSUNG_FASCINATE
+typedef enum {
+	BACKLIGHT_LEVEL_OFF	= 0,
+	BACKLIGHT_LEVEL_DIMMING	= 1,
+	BACKLIGHT_LEVEL_NORMAL	= 6
+} backlight_level_t;
+
+backlight_level_t backlight_level = BACKLIGHT_LEVEL_OFF;
+#endif
+
 struct s5p_lcd {
     int ldi_enable;
     int bl;
@@ -286,6 +296,10 @@ static int s5p_lcd_set_power(struct lcd_device *ld, int power)
     else
         s6e63m0_panel_send_sequence(lcd, pdata->display_off);
 
+#ifdef CONFIG_SAMSUNG_FASCINATE
+    backlight_level = BACKLIGHT_LEVEL_OFF;
+#endif
+
     return 0;
 }
 
@@ -381,6 +395,15 @@ static int s5p_bl_update_status(struct backlight_device *bd)
 
     if (bl < 0 || bl > 255)
         return -EINVAL;
+
+#ifdef CONFIG_SAMSUNG_FASCINATE
+    if(bl == 0)
+            backlight_level = BACKLIGHT_LEVEL_OFF;	//lcd off
+    else if((bl < 30) && (bl > 0))
+            backlight_level = BACKLIGHT_LEVEL_DIMMING;	//dimming
+    else
+            backlight_level = BACKLIGHT_LEVEL_NORMAL;	//normal
+#endif
 
     mutex_lock(&lcd->lock);
 
