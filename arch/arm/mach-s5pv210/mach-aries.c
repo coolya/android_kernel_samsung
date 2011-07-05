@@ -4561,7 +4561,11 @@ void s3c_config_sleep_gpio(void)
 {
 	/* setting the alive mode registers */
 	s3c_gpio_cfgpin(S5PV210_GPH0(1), S3C_GPIO_INPUT);
+#if defined(CONFIG_SAMSUNG_FASCINATE)
+	s3c_gpio_setpull(S5PV210_GPH0(1), S3C_GPIO_PULL_DOWN);
+#else
 	s3c_gpio_setpull(S5PV210_GPH0(1), S3C_GPIO_PULL_NONE);
+#endif
 
 	s3c_gpio_cfgpin(S5PV210_GPH0(3), S3C_GPIO_OUTPUT);
 	s3c_gpio_setpull(S5PV210_GPH0(3), S3C_GPIO_PULL_NONE);
@@ -4575,16 +4579,36 @@ void s3c_config_sleep_gpio(void)
 	s3c_gpio_setpull(S5PV210_GPH0(5), S3C_GPIO_PULL_NONE);
 	gpio_set_value(S5PV210_GPH0(5), 0);
 
+#if defined(CONFIG_SAMSUNG_FASCINATE)
+	s3c_gpio_cfgpin(S5PV210_GPH1(0), S3C_GPIO_OUTPUT);
+#else
 	s3c_gpio_cfgpin(S5PV210_GPH1(0), S3C_GPIO_INPUT);
+#endif
 	s3c_gpio_setpull(S5PV210_GPH1(0), S3C_GPIO_PULL_DOWN);
+#if defined(CONFIG_SAMSUNG_FASCINATE)
+	gpio_set_value(S5PV210_GPH1(0), 0);
+#endif
 
+#if defined(CONFIG_SAMSUNG_FASCINATE)
+	s3c_gpio_cfgpin(S5PV210_GPH1(1), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH1(1), S3C_GPIO_PULL_DOWN);
+#else
 	s3c_gpio_cfgpin(S5PV210_GPH1(1), S3C_GPIO_OUTPUT);
 	s3c_gpio_setpull(S5PV210_GPH1(1), S3C_GPIO_PULL_NONE);
 	gpio_set_value(S5PV210_GPH1(1), 0);
+#endif
 
 	s3c_gpio_cfgpin(S5PV210_GPH1(2), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH1(2), S3C_GPIO_PULL_DOWN);
 
+#if defined(CONFIG_SAMSUNG_FASCINATE)
+	s3c_gpio_cfgpin(S5PV210_GPH1(4), S3C_GPIO_OUTPUT);
+	s3c_gpio_setpull(S5PV210_GPH1(4), S3C_GPIO_PULL_NONE);
+	gpio_set_value(S5PV210_GPH1(4), 0);
+
+	s3c_gpio_cfgpin(S5PV210_GPH1(5), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH1(5), S3C_GPIO_PULL_DOWN);
+#else
 	s3c_gpio_cfgpin(S5PV210_GPH1(4), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH1(4), S3C_GPIO_PULL_DOWN);
 
@@ -4594,6 +4618,8 @@ void s3c_config_sleep_gpio(void)
 
 	s3c_gpio_cfgpin(S5PV210_GPH1(6), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH1(6), S3C_GPIO_PULL_DOWN);
+
+#endif
 
 	s3c_gpio_cfgpin(S5PV210_GPH1(7), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH1(7), S3C_GPIO_PULL_NONE);
@@ -4612,13 +4638,21 @@ void s3c_config_sleep_gpio(void)
 
 	s3c_gpio_cfgpin(S5PV210_GPH2(3), S3C_GPIO_OUTPUT);
 	s3c_gpio_setpull(S5PV210_GPH2(3), S3C_GPIO_PULL_NONE);
+#if defined(CONFIG_SAMSUNG_FASCINATE)
+	gpio_set_value(S5PV210_GPH2(3), 1);
+#else
 	gpio_set_value(S5PV210_GPH2(3), 0);
+#endif
 
 	s3c_gpio_cfgpin(S5PV210_GPH3(0), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH3(0), S3C_GPIO_PULL_UP);
 
 	s3c_gpio_cfgpin(S5PV210_GPH3(3), S3C_GPIO_INPUT);
+#if defined(CONFIG_SAMSUNG_FASCINATE)
+	s3c_gpio_setpull(S5PV210_GPH3(3), S3C_GPIO_PULL_UP);
+#else
 	s3c_gpio_setpull(S5PV210_GPH3(3), S3C_GPIO_PULL_DOWN);
+#endif
 
 	s3c_gpio_cfgpin(S5PV210_GPH3(4), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH3(4), S3C_GPIO_PULL_DOWN);
