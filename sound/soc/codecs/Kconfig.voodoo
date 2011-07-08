@@ -1,6 +1,6 @@
 menuconfig SND_VOODOO
 	bool "Voodoo sound driver"
-	depends on SND_UNIVERSAL_WM8994 || SND_S3C24XX_SOC
+	depends on SND_UNIVERSAL_WM8994 || SND_S3C24XX_SOC || SND_SOC_WM8994_P3
 	default y
 	help
 	  With this option enabled, the kernel compile an additionnal driver
