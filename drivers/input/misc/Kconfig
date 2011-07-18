@@ -92,6 +92,13 @@ config INPUT_ORIENTATION
 	tristate "Yamaha Orientation Sensor"
 	depends on I2C
 
+config INPUT_YAMAHA
+	depends on I2C
+	tristate "YAMAHA"
+	help
+	  This option enables magnetic sensors using YAMAHA driver.
+	  It is optimized for s3c6410.
+
 config INPUT_PCSPKR
 	tristate "PC Speaker support"
 	depends on PCSPKR_PLATFORM

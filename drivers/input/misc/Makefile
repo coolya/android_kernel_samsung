@@ -18,6 +18,7 @@ obj-$(CONFIG_INPUT_BMA023)		+= bma023.o
 obj-$(CONFIG_INPUT_KR3DH)		+= kr3dh_i2c.o
 obj-$(CONFIG_INPUT_YAS529)		+= yas529.o
 obj-$(CONFIG_INPUT_ORIENTATION)		+= orientation.o
+obj-$(CONFIG_INPUT_YAMAHA)		+= yamaha.o
 obj-$(CONFIG_INPUT_CM109)		+= cm109.o
 obj-$(CONFIG_INPUT_COBALT_BTNS)		+= cobalt_btns.o
 obj-$(CONFIG_INPUT_DM355EVM)		+= dm355evm_keys.o
