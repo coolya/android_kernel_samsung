@@ -1581,7 +1581,7 @@ CONFIG_HID=y
 #
 # Special HID drivers
 #
-# CONFIG_HID_APPLE is not set
+CONFIG_HID_APPLE=y
 # CONFIG_HID_MAGICMOUSE is not set
 # CONFIG_HID_WACOM is not set
 CONFIG_USB_SUPPORT=y
