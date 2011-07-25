@@ -671,8 +671,8 @@ static void bfqio_attach(struct cgroup_subsys *subsys, struct cgroup *cgroup,
 	task_lock(tsk);
 	ioc = tsk->io_context;
 	if (ioc != NULL) {
-		BUG_ON(atomic_read(&ioc->refcount) == 0);
-		atomic_inc(&ioc->refcount);
+		BUG_ON(atomic_long_read(&ioc->refcount) == 0);
+		atomic_long_inc(&ioc->refcount);
 	}
 	task_unlock(tsk);
 
