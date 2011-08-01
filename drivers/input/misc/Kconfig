@@ -58,6 +58,47 @@ config INPUT_AD714X_SPI
 	  To compile this driver as a module, choose M here: the
 	  module will be called ad714x-spi.
 
+config INPUT_BMA023
+	tristate "Bosch Sensortec BMA023 Acceleration Sensor"
+	depends on I2C
+
+config INPUT_KR3DH
+        depends on I2C
+        tristate "KR3DH driver for s5pc11x"
+        help
+          This option enables accelerometer sensors using kr3dh driver.
+          It is optimized for s5pc11x.
+
+config INPUT_YAS529
+	tristate "Yamaha YAS529 Geomagnetic Sensor"
+	depends on I2C
+
+config INPUT_YAS529_POSITION
+	int "YAS529 Mounting Position on Board"
+	depends on INPUT_YAS529
+	default "1"
+	help
+	  Chip mounting position (pin 1).
+	    0: top, upper-left
+	    1: top, upper-right
+	    2: top, lower-right
+	    3: top, lower-left
+	    4: bottom, upper-left
+	    5: bottom, upper-right
+	    6: bottom, lower-right
+	    7: bottom, lower-left
+
+config INPUT_ORIENTATION
+	tristate "Yamaha Orientation Sensor"
+	depends on I2C
+
+config INPUT_YAMAHA
+	depends on I2C
+	tristate "YAMAHA"
+	help
+	  This option enables magnetic sensors using YAMAHA driver.
+	  It is optimized for s3c6410.
+
 config INPUT_PCSPKR
 	tristate "PC Speaker support"
 	depends on PCSPKR_PLATFORM
@@ -419,13 +460,12 @@ config OPTICAL_GP2A
 	help
 	  This option enables proximity & light sensors using gp2a driver.
 
-config INPUT_SMB380
-	tristate "SMB380 Triaxial acceleration sensor"
-	depends on I2C
+config OPTICAL_GP2A_FROYO
+	depends on I2C && GENERIC_GPIO
+	tristate "GP2A ambient light and proximity input device"
+	default n
 	help
-	  This driver provides support for the Bosche Sensortec Triaxial
-	  Acceleration Sensor IC, which provides measurements of acceleration
-	  in prependicular axes as well as absolute temperature measurement.
+	  This option enables proximity & light sensors using gp2a driver. (FroYo version)
 
 
 endif

@@ -46,7 +46,7 @@
 	#if defined(__arm__) || defined(__sh__)
 		#define	PGPROT_WC(pv)	pgprot_writecombine(pv)
 	#else
-		#if defined(__i386__)
+		#if defined(__i386__) || defined(__mips__)
 			#define	PGPROT_WC(pv)	pgprot_noncached(pv)
 		#else
 			#define PGPROT_WC(pv)	pgprot_noncached(pv)

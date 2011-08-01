@@ -3096,7 +3096,7 @@ static PVRSRV_ERROR ModifyCompleteSyncOpsCallBack(IMG_PVOID		pvParam,
 				goto OpFlushedComplete;
 			}
 			PVR_DPF((PVR_DBG_WARNING, "ModifyCompleteSyncOpsCallBack: waiting for current Ops to flush"));
-			OSWaitus(MAX_HW_TIME_US/WAIT_TRY_COUNT);
+			OSSleepms(1);
 		} END_LOOP_UNTIL_TIMEOUT();
 		
 		PVR_DPF((PVR_DBG_ERROR, "ModifyCompleteSyncOpsCallBack: timeout whilst waiting for current Ops to flush."));

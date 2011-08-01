@@ -961,6 +961,89 @@ SGXDevInitPart2BW(IMG_UINT32 ui32BridgeID,
 	}
 #endif
 
+#if defined(FIX_HW_BRN_31542)
+	eError = PVRSRVLookupHandle(psPerProc->psHandleBase,
+						   &hDummy,
+						   psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAVDMStreamMemInfo,
+						   PVRSRV_HANDLE_TYPE_MEM_INFO);
+	if (eError != PVRSRV_OK)
+	{
+		bLookupFailed = IMG_TRUE;
+	}
+	eError = PVRSRVLookupHandle(psPerProc->psHandleBase,
+						   &hDummy,
+						   psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAIndexStreamMemInfo,
+						   PVRSRV_HANDLE_TYPE_MEM_INFO);
+	if (eError != PVRSRV_OK)
+	{
+		bLookupFailed = IMG_TRUE;
+	}
+	eError = PVRSRVLookupHandle(psPerProc->psHandleBase,
+						   &hDummy,
+						   psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAPDSMemInfo,
+						   PVRSRV_HANDLE_TYPE_MEM_INFO);
+	if (eError != PVRSRV_OK)
+	{
+		bLookupFailed = IMG_TRUE;
+	}
+	eError = PVRSRVLookupHandle(psPerProc->psHandleBase,
+						   &hDummy,
+						   psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAUSEMemInfo,
+						   PVRSRV_HANDLE_TYPE_MEM_INFO);
+	if (eError != PVRSRV_OK)
+	{
+		bLookupFailed = IMG_TRUE;
+	}
+	eError = PVRSRVLookupHandle(psPerProc->psHandleBase,
+						   &hDummy,
+						   psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAParamMemInfo,
+						   PVRSRV_HANDLE_TYPE_MEM_INFO);
+	if (eError != PVRSRV_OK)
+	{
+		bLookupFailed = IMG_TRUE;
+	}
+	eError = PVRSRVLookupHandle(psPerProc->psHandleBase,
+						   &hDummy,
+						   psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAPMPTMemInfo,
+						   PVRSRV_HANDLE_TYPE_MEM_INFO);
+	if (eError != PVRSRV_OK)
+	{
+		bLookupFailed = IMG_TRUE;
+	}
+	eError = PVRSRVLookupHandle(psPerProc->psHandleBase,
+						   &hDummy,
+						   psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWADPMLSSMemInfo,
+						   PVRSRV_HANDLE_TYPE_MEM_INFO);
+	if (eError != PVRSRV_OK)
+	{
+		bLookupFailed = IMG_TRUE;
+	}
+	eError = PVRSRVLookupHandle(psPerProc->psHandleBase,
+						   &hDummy,
+						   psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWATPCMemInfo,
+						   PVRSRV_HANDLE_TYPE_MEM_INFO);
+	if (eError != PVRSRV_OK)
+	{
+		bLookupFailed = IMG_TRUE;
+	}
+	eError = PVRSRVLookupHandle(psPerProc->psHandleBase,
+						   &hDummy,
+						   psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAPSGRgnHdrMemInfo,
+						   PVRSRV_HANDLE_TYPE_MEM_INFO);
+	if (eError != PVRSRV_OK)
+	{
+		bLookupFailed = IMG_TRUE;
+	}
+	eError = PVRSRVLookupHandle(psPerProc->psHandleBase,
+						   &hDummy,
+						   psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAPartiPIMMemInfo,
+						   PVRSRV_HANDLE_TYPE_MEM_INFO);
+	if (eError != PVRSRV_OK)
+	{
+		bLookupFailed = IMG_TRUE;
+	}
+#endif
+
 #if defined(PVRSRV_USSE_EDM_STATUS_DEBUG)
 	eError = PVRSRVLookupHandle(psPerProc->psHandleBase,
 						   &hDummy,
@@ -1128,6 +1211,90 @@ SGXDevInitPart2BW(IMG_UINT32 ui32BridgeID,
 	}
 #endif
 
+
+#if defined(FIX_HW_BRN_31542)
+	eError = PVRSRVLookupAndReleaseHandle(psPerProc->psHandleBase,
+						   &psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAVDMStreamMemInfo,
+						   psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAVDMStreamMemInfo,
+						   PVRSRV_HANDLE_TYPE_MEM_INFO);
+	if (eError != PVRSRV_OK)
+	{
+		bReleaseFailed = IMG_TRUE;
+	}
+	eError = PVRSRVLookupAndReleaseHandle(psPerProc->psHandleBase,
+						   &psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAIndexStreamMemInfo,
+						   psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAIndexStreamMemInfo,
+						   PVRSRV_HANDLE_TYPE_MEM_INFO);
+	if (eError != PVRSRV_OK)
+	{
+		bReleaseFailed = IMG_TRUE;
+	}
+	eError = PVRSRVLookupAndReleaseHandle(psPerProc->psHandleBase,
+						   &psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAPDSMemInfo,
+						   psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAPDSMemInfo,
+						   PVRSRV_HANDLE_TYPE_MEM_INFO);
+	if (eError != PVRSRV_OK)
+	{
+		bReleaseFailed = IMG_TRUE;
+	}
+	eError = PVRSRVLookupAndReleaseHandle(psPerProc->psHandleBase,
+						   &psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAUSEMemInfo,
+						   psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAUSEMemInfo,
+						   PVRSRV_HANDLE_TYPE_MEM_INFO);
+	if (eError != PVRSRV_OK)
+	{
+		bReleaseFailed = IMG_TRUE;
+	}
+	eError = PVRSRVLookupAndReleaseHandle(psPerProc->psHandleBase,
+						   &psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAParamMemInfo,
+						   psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAParamMemInfo,
+						   PVRSRV_HANDLE_TYPE_MEM_INFO);
+	if (eError != PVRSRV_OK)
+	{
+		bReleaseFailed = IMG_TRUE;
+	}
+	eError = PVRSRVLookupAndReleaseHandle(psPerProc->psHandleBase,
+						   &psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAPMPTMemInfo,
+						   psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAPMPTMemInfo,
+						   PVRSRV_HANDLE_TYPE_MEM_INFO);
+	if (eError != PVRSRV_OK)
+	{
+		bReleaseFailed = IMG_TRUE;
+	}
+	eError = PVRSRVLookupAndReleaseHandle(psPerProc->psHandleBase,
+						   &psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWADPMLSSMemInfo,
+						   psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWADPMLSSMemInfo,
+						   PVRSRV_HANDLE_TYPE_MEM_INFO);
+	if (eError != PVRSRV_OK)
+	{
+		bReleaseFailed = IMG_TRUE;
+	}
+	eError = PVRSRVLookupAndReleaseHandle(psPerProc->psHandleBase,
+						   &psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWATPCMemInfo,
+						   psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWATPCMemInfo,
+						   PVRSRV_HANDLE_TYPE_MEM_INFO);
+	if (eError != PVRSRV_OK)
+	{
+		bReleaseFailed = IMG_TRUE;
+	}
+	eError = PVRSRVLookupAndReleaseHandle(psPerProc->psHandleBase,
+						   &psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAPSGRgnHdrMemInfo,
+						   psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAPSGRgnHdrMemInfo,
+						   PVRSRV_HANDLE_TYPE_MEM_INFO);
+	if (eError != PVRSRV_OK)
+	{
+		bReleaseFailed = IMG_TRUE;
+	}
+	eError = PVRSRVLookupAndReleaseHandle(psPerProc->psHandleBase,
+						   &psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAPartiPIMMemInfo,
+						   psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAPartiPIMMemInfo,
+						   PVRSRV_HANDLE_TYPE_MEM_INFO);
+	if (eError != PVRSRV_OK)
+	{
+		bReleaseFailed = IMG_TRUE;
+	}
+#endif
+
 #if defined(PVRSRV_USSE_EDM_STATUS_DEBUG)
 	eError = PVRSRVLookupAndReleaseHandle(psPerProc->psHandleBase,
 						   &psSGXDevInitPart2IN->sInitInfo.hKernelEDMStatusBufferMemInfo,
@@ -1248,6 +1415,29 @@ SGXDevInitPart2BW(IMG_UINT32 ui32BridgeID,
 
 #if defined(FIX_HW_BRN_29823)
 	eError = PVRSRVDissociateDeviceMemKM(hDevCookieInt, psSGXDevInitPart2IN->sInitInfo.hKernelDummyTermStreamMemInfo);
+	bDissociateFailed |= (IMG_BOOL)(eError != PVRSRV_OK);
+#endif
+
+#if defined(FIX_HW_BRN_31542)
+	eError = PVRSRVDissociateDeviceMemKM(hDevCookieInt, psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAVDMStreamMemInfo);
+	bDissociateFailed |= (IMG_BOOL)(eError != PVRSRV_OK);
+	eError = PVRSRVDissociateDeviceMemKM(hDevCookieInt, psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAIndexStreamMemInfo);
+	bDissociateFailed |= (IMG_BOOL)(eError != PVRSRV_OK);
+	eError = PVRSRVDissociateDeviceMemKM(hDevCookieInt, psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAPDSMemInfo);
+	bDissociateFailed |= (IMG_BOOL)(eError != PVRSRV_OK);
+	eError = PVRSRVDissociateDeviceMemKM(hDevCookieInt, psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAUSEMemInfo);
+	bDissociateFailed |= (IMG_BOOL)(eError != PVRSRV_OK);
+	eError = PVRSRVDissociateDeviceMemKM(hDevCookieInt, psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAParamMemInfo);
+	bDissociateFailed |= (IMG_BOOL)(eError != PVRSRV_OK);
+	eError = PVRSRVDissociateDeviceMemKM(hDevCookieInt, psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAPMPTMemInfo);
+	bDissociateFailed |= (IMG_BOOL)(eError != PVRSRV_OK);
+	eError = PVRSRVDissociateDeviceMemKM(hDevCookieInt, psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWADPMLSSMemInfo);
+	bDissociateFailed |= (IMG_BOOL)(eError != PVRSRV_OK);
+	eError = PVRSRVDissociateDeviceMemKM(hDevCookieInt, psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWATPCMemInfo);
+	bDissociateFailed |= (IMG_BOOL)(eError != PVRSRV_OK);
+	eError = PVRSRVDissociateDeviceMemKM(hDevCookieInt, psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAPSGRgnHdrMemInfo);
+	bDissociateFailed |= (IMG_BOOL)(eError != PVRSRV_OK);
+	eError = PVRSRVDissociateDeviceMemKM(hDevCookieInt, psSGXDevInitPart2IN->sInitInfo.hKernelClearClipWAPartiPIMMemInfo);
 	bDissociateFailed |= (IMG_BOOL)(eError != PVRSRV_OK);
 #endif
 

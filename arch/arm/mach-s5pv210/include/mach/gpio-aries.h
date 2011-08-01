@@ -3,6 +3,8 @@
 
 //#include <mach/gpio.h>
 
+#define S5PV210_GPE1_3_CAM_A_CLKOUT	(0x2 << 12)
+
 #define GPIO_LEVEL_LOW      	0
 #define GPIO_LEVEL_HIGH     	1
 #define GPIO_LEVEL_NONE     	2
@@ -51,7 +53,7 @@
 
 #define GPIO_CAM_VGA_nRST		S5PV210_GPB(2)
 
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 #define GPIO_BT_nRST			S5PV210_GPB(6)
 #else
 #define GPIO_BT_nRST			S5PV210_GPB(3)
@@ -302,7 +304,7 @@
 #define GPIO_T_FLASH_D3         S5PV210_GPG2(6)
 #define GPIO_T_FLASH_D3_AF		2
 
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 #define GPIO_GPS_nRST			S5PV210_GPG3(2)
 #else
 #define GPIO_GPS_nRST			S5PV210_GPG3(0)
@@ -338,7 +340,12 @@
 #define GPIO_AP_PMIC_IRQ		S5PV210_GPH0(7)
 #define GPIO_AP_PMIC_IRQ_AF		0xFF
 
+#if defined(CONFIG_SAMSUNG_FASCINATE)
+#define GPIO_PDA_ACTIVE				S5PV210_GPH1(0)
+#define GPIO_PDA_ACTIVE_AF			0x1
+#else
 #define GPIO_GPH10				S5PV210_GPH1(0)
+#endif
 
 #define GPIO_GPH11				S5PV210_GPH1(1)
 
@@ -354,6 +361,7 @@
 #define GPIO_GPH16				S5PV210_GPH1(6)
 
 #define GPIO_PHONE_ACTIVE		S5PV210_GPH1(7)
+#define GPIO_PHONE_ACTIVE_AF	2
 
 #define GPIO_KBC0				S5PV210_GPH2(0)
 #define GPIO_KBC0_AF			3
@@ -361,8 +369,13 @@
 #define GPIO_KBC1				S5PV210_GPH2(1)
 #define GPIO_KBC1_AF			3
 
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)  || defined (CONFIG_SAMSUNG_VIBRANT)
+#define GPIO_EAR_SEND_END35     S5PV210_GPH2(2)
+#define GPIO_EAR_SEND_END35_AF  0xFF
+#else
 #define GPIO_KBC2				S5PV210_GPH2(2)
 #define GPIO_KBC2_AF			3
+#endif
 
 #define GPIO_GPH23				S5PV210_GPH2(3)
 
@@ -418,37 +431,37 @@
 #define GPIO_MSENSE_SCL_28V				S5PV210_GPJ0(0)
 #define GPIO_MSENSE_SDA_28V				S5PV210_GPJ0(1)
 
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 #define GPIO_HWREV_MODE0		S5PV210_GPG3(6)
 #else
 #define GPIO_HWREV_MODE0		S5PV210_GPJ0(2)
 #endif
 
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 #define GPIO_HWREV_MODE1		S5PV210_GPJ2(0)
 #else
 #define GPIO_HWREV_MODE1		S5PV210_GPJ0(3)
 #endif
 
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 #define GPIO_HWREV_MODE2		S5PV210_GPJ2(1)
 #else
 #define GPIO_HWREV_MODE2		S5PV210_GPJ0(4)
 #endif
 
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 #define GPIO_TOUCH_INT			S5PV210_GPB(3)
 #else
 #define GPIO_TOUCH_INT			S5PV210_GPJ0(5)
 #endif
 
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 #define GPIO_CAM_MEGA_EN		S5PV210_GPJ0(7)
 #else
 #define GPIO_CAM_MEGA_EN		S5PV210_GPJ0(6)
 #endif
 
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 #define GPIO_HWREV_MODE3		S5PV210_GPJ2(3)
 #else
 #define GPIO_HWREV_MODE3		S5PV210_GPJ0(7)
@@ -477,7 +490,11 @@
 
 #define GPIO_FM_INT				S5PV210_GPJ2(4)
 
+#if !defined(CONFIG_SAMSUNG_VIBRANT)
 #define GPIO_FM_RST				S5PV210_GPJ2(5)
+#else
+#define GPIO_MICBIAS_EN2		S5PV210_GPJ2(5) //SGH-T959 REV0.5(HWREV = 0x0e) or 0.6 (HWREV = 0x0f)
+#endif
 
 #define GPIO_EARPATH_SEL		S5PV210_GPJ2(6)
 
@@ -500,14 +517,18 @@
 
 #define GPIO_AP_PMIC_SDA		S5PV210_GPJ4(0)
 
-#define  _3_GPIO_TOUCH_INT		S5PV210_GPJ4(1)
-#define _3_GPIO_TOUCH_INT_AF		S3C_GPIO_SFN(0xf)
+#define _3_GPIO_TOUCH_INT		S5PV210_GPJ4(1)
+#define _3_GPIO_TOUCH_INT_AF	S3C_GPIO_SFN(0xf)
 
 #define GPIO_MICBIAS_EN			S5PV210_GPJ4(2)
 
 #define GPIO_AP_PMIC_SCL		S5PV210_GPJ4(3)
 
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+#define GPIO_EAR_MICBIAS_EN		S5PV210_GPJ4(4)
+#else
 #define GPIO_TV_EN				S5PV210_GPJ4(4)
+#endif
 
 #define GPIO_MP010			S5PV210_MP01(0)
 
@@ -541,7 +562,9 @@
 
 #define GPIO_MP032				S5PV210_MP03(2)
 
+#if !defined(CONFIG_SAMSUNG_FASCINATE)
 #define GPIO_PDA_ACTIVE			S5PV210_MP03(3)
+#endif
 
 #define GPIO_VCC_18V_PDA		S5PV210_MP03(4)
 
@@ -561,9 +584,19 @@
 #define GPIO_DISPLAY_SI			S5PV210_MP04(3)
 #define GPIO_DISPLAY_SI_AF		S3C_GPIO_SFN(1)
 
-#define GPIO_MP044				S5PV210_MP04(4)
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+#define GPIO_A1026_SCL			S5PV210_MP04(4)
+#define GPIO_A1026_SCL_AF		2
+#else
+#define GPIO_MP044			S5PV210_MP04(4)
+#endif
 
+#if defined(CONFIG_SAMSUNG_CAPTIVATE)
+#define GPIO_A1026_SDA			S5PV210_MP04(5)
+#define GPIO_A1026_SDA_AF		2
+#else
 #define GPIO_LVDS_RST			S5PV210_MP04(5)
+#endif
 
 #define GPIO_GPS_CLK_EN			S5PV210_MP04(6)
 
@@ -593,7 +626,7 @@
 #define PMIC_I2C_SDA            S5PV210_GPJ4(0)
 #define PMIC_I2C_SCL            S5PV210_GPJ4(3)
 
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 #define GPIO_TOUCH_INT			S5PV210_GPB(3)
 #else
 #define GPIO_TOUCH_INT			S5PV210_GPJ0(5)
@@ -633,16 +666,12 @@
 #define 	GPIO_FLM_TXD_AF 	2
 
 #define		GPIO_AP_PS_HOLD		S5PV210_GPH0(0)
-#define		GPIO_AP_PS_HOLD_AF	1 //?
-
-
-#define		GPIO_PHONE_ACTIVE		S5PV210_GPH1(7)
-#define		GPIO_PHONE_ACTIVE_AF	2 //?
+#define		GPIO_AP_PS_HOLD_AF	1
 
 #define		GPIO_N_POWER		S5PV210_GPH2(6)
-#define		GPIO_N_POWER_AF		2 //?
+#define		GPIO_N_POWER_AF		2
 
-#if defined(CONFIG_SAMSUNG_GALAXYS_GTI9000B) // ffosilva : OK
+#if defined(CONFIG_SAMSUNG_GALAXYSB) // ffosilva : OK
 #define		GPIO_BT_RST			S5PV210_GPB(6)
 #else
 #define		GPIO_BT_RST			S5PV210_GPB(3)
@@ -653,4 +682,7 @@
 
 #define 	GPIO_JACK_INT_N 	S5PV210_GPH2(7)
 #define		GPIO_JACK_INT_N_AF	0xFF
+
+#define _3_GPIO_TOUCH_CE		S5PV210_GPJ3(3)
 #endif
+/* end of __GPIO_HERRING_H_ */

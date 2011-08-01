@@ -855,7 +855,10 @@ static int s3cfb_register_framebuffer(struct s3cfb_global *ctrl)
 				s3cfb_check_var(&ctrl->fb[j]->var, ctrl->fb[j]);
 				s3cfb_set_par(ctrl->fb[j]);
 				s3cfb_draw_logo(ctrl->fb[j]);
-
+				s3cfb_release_window(ctrl->fb[j]);
+			} else if (j == pdata->default_win) {
+				s3cfb_check_var(&ctrl->fb[j]->var, ctrl->fb[j]);
+				s3cfb_set_par(ctrl->fb[j]);
 			}
 
 #else
@@ -954,6 +957,33 @@ static int __devinit s3cfb_probe(struct platform_device *pdev)
 		ret = -EINVAL;
 		goto err_regulator;
 	}
+
+	fbdev->vcc_lcd = regulator_get(&pdev->dev, "vcc_lcd");
+	if (!fbdev->vcc_lcd) {
+		dev_err(fbdev->dev, "failed to get vcc_lcd\n");
+		ret = -EINVAL;
+		goto err_vcc_lcd;
+	}
+	ret = regulator_enable(fbdev->vcc_lcd);
+	if (ret < 0) {
+		dev_err(fbdev->dev, "failed to enable vcc_lcd\n");
+		ret = -EINVAL;
+		goto err_vcc_lcd;
+	}
+
+	fbdev->vlcd = regulator_get(&pdev->dev, "vlcd");
+	if (!fbdev->vlcd) {
+		dev_err(fbdev->dev, "failed to get vlcd\n");
+		ret = -EINVAL;
+		goto err_vlcd;
+	}
+	ret = regulator_enable(fbdev->vlcd);
+	if (ret < 0) {
+		dev_err(fbdev->dev, "failed to enable vlcd\n");
+		ret = -EINVAL;
+		goto err_vlcd;
+	}
+
 	pdata = to_fb_plat(&pdev->dev);
 	if (!pdata) {
 		dev_err(fbdev->dev, "failed to get platform data\n");
@@ -1069,6 +1099,12 @@ err_io:
 	pdata->clk_off(pdev, &fbdev->clock);
 
 err_pdata:
+	regulator_disable(fbdev->vlcd);
+
+err_vlcd:
+	regulator_disable(fbdev->vcc_lcd);
+
+err_vcc_lcd:
 	regulator_disable(fbdev->regulator);
 
 err_regulator:
@@ -1138,6 +1174,8 @@ void s3cfb_early_suspend(struct early_suspend *h)
 #if defined(CONFIG_FB_S3C_TL2796)
 	lcd_cfg_gpio_early_suspend();
 #endif
+	regulator_disable(fbdev->vlcd);
+	regulator_disable(fbdev->vcc_lcd);
 	regulator_disable(fbdev->regulator);
 
 	return ;
@@ -1158,6 +1196,14 @@ void s3cfb_late_resume(struct early_suspend *h)
 	ret = regulator_enable(fbdev->regulator);
 	if (ret < 0)
 		dev_err(fbdev->dev, "failed to enable regulator\n");
+
+	ret = regulator_enable(fbdev->vcc_lcd);
+	if (ret < 0)
+		dev_err(fbdev->dev, "failed to enable vcc_lcd\n");
+
+	ret = regulator_enable(fbdev->vlcd);
+	if (ret < 0)
+		dev_err(fbdev->dev, "failed to enable vlcd\n");
 
 #if defined(CONFIG_FB_S3C_TL2796)
 	lcd_cfg_gpio_late_resume();

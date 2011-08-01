@@ -54,6 +54,13 @@ config S5PV210_POWER_DOMAIN
 	help
 	  Enable S5PV210 power domain support.
 
+config S5PV210_CORESIGHT
+	bool "Coresight"
+	select OC_ETM
+	default y
+	help
+	  Support embedded trace cell
+
 # machine support
 
 config MACH_AQUILA
@@ -131,6 +138,7 @@ config MACH_HERRING
 	select ARCH_HAS_CPUFREQ
 	select S3C_DEV_HSMMC
 	select S3C_DEV_HSMMC1 if !S5PV210_SD_CH0_8BIT
+	select S3C_DEV_HSMMC2
 	select S3C_DEV_HSMMC3 if !S5PV210_SD_CH2_8BIT
 	select S5PV210_SETUP_SDHCI
 	select S5PV210_POWER_DOMAIN
@@ -157,6 +165,28 @@ config MACH_ARIES
 
 if MACH_ARIES
 choice
+	prompt "Select phone Type"
+	
+config PHONE_ARIES
+	bool "select aries"
+	depends on MACH_ARIES
+	help
+	 Select Aries Phone
+
+config PHONE_ARIES_CDMA
+	bool "select aries cdma"
+	depends on MACH_ARIES
+	help
+	 Select Aries Cdma Phone
+
+config PHONE_CRESPO
+	bool "select crespo"
+	depends on MACH_ARIES
+	help
+	 Select Crespo Phone
+
+endchoice
+choice
 	prompt "Select Device Type"
 
 config SAMSUNG_GALAXYS
@@ -165,8 +195,14 @@ config SAMSUNG_GALAXYS
 	help
 	 Select Samsung Galaxy S GT-I9000
 
+config SAMSUNG_GALAXYSB
+	bool "select GTI9000B"
+	depends on MACH_ARIES
+	help
+	 Select Samsung Galaxy S GT-I9000B
+
 config SAMSUNG_CAPTIVATE
-	bool "select SGHI879"
+	bool "select SGHI897"
 	depends on MACH_ARIES
 	help
 	 Select Samsung Captivate
@@ -188,24 +224,6 @@ config SAMSUNG_EPIC
 	depends on MACH_ARIES
 	help
 	 Select Samsung Epic 4G
-endchoice
-endif
-
-if SAMSUNG_GALAXYS
-choice
-	prompt "Select Device Type"
-
-config SAMSUNG_GALAXYS_GTI9000
-	bool "select GTI9000"
-	depends on SAMSUNG_GALAXYS
-	help
-	 Select Samsung Galaxy S GT-I9000
-
-config SAMSUNG_GALAXYS_GTI9000B
-	bool "select GTI9000B"
-	depends on SAMSUNG_GALAXYS
-	help
-	 Select Samsung Galaxy S GT-I9000B
 endchoice
 endif
 
@@ -250,6 +268,17 @@ config S5PV210_SETUP_CSIS
 	default y
 	help
 	  Common setup code for MIPI-CSIS
+
+config DVFS_LIMIT
+	bool "DVFS limit"
+	depends on CPU_FREQ
+	default n
+
+config CPU_DIDLE
+	bool "DEEP Idle"
+	depends on CPU_IDLE
+	default y
+
 
 config WIFI_CONTROL_FUNC
        bool "Enable WiFi control function abstraction"

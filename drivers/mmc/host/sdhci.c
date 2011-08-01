@@ -19,6 +19,7 @@
 #include <linux/dma-mapping.h>
 #include <linux/slab.h>
 #include <linux/scatterlist.h>
+#include <linux/regulator/consumer.h>
 
 #include <linux/leds.h>
 
@@ -1403,7 +1404,8 @@ static void sdhci_tasklet_finish(unsigned long param)
 		sdhci_reset(host, SDHCI_RESET_DATA);
 	}
 out:
-	if(readl(host->ioaddr + SDHCI_PRESENT_STATE) & SDHCI_DATA_INHIBIT)
+	if((readl(host->ioaddr + SDHCI_PRESENT_STATE) & SDHCI_DATA_INHIBIT) ||
+			(host->quirks & SDHCI_QUIRK_MUST_MAINTAIN_CLOCK))
 		mod_timer(&host->busy_check_timer, jiffies + msecs_to_jiffies(10));
 	else
 		sdhci_disable_clock_card(host);
@@ -1462,7 +1464,8 @@ static void sdhci_busy_check_timer(unsigned long data)
 
 	spin_lock_irqsave(&host->lock, flags);
 
-	if(readl(host->ioaddr + SDHCI_PRESENT_STATE) & (SDHCI_CMD_INHIBIT | SDHCI_DATA_INHIBIT))
+	if((readl(host->ioaddr + SDHCI_PRESENT_STATE) & (SDHCI_CMD_INHIBIT | SDHCI_DATA_INHIBIT)) ||
+			(host->quirks & SDHCI_QUIRK_MUST_MAINTAIN_CLOCK))
 		mod_timer(&host->busy_check_timer, jiffies + msecs_to_jiffies(10));
 	else
 		sdhci_disable_clock_card(host);
@@ -1719,10 +1722,8 @@ int sdhci_suspend_host(struct sdhci_host *host, pm_message_t state)
 
 	sdhci_mask_irqs(host, SDHCI_INT_ALL_MASK);
 
-	del_timer(&host->busy_check_timer);
-
-	if (host->irq)
-		disable_irq(host->irq);
+	if (host->vmmc)
+		ret = regulator_disable(host->vmmc);
 
 	return ret;
 }
@@ -1733,6 +1734,13 @@ int sdhci_resume_host(struct sdhci_host *host)
 {
 	int ret = 0;
 	struct mmc_host *mmc = host->mmc;
+
+	if (host->vmmc) {
+		int ret = regulator_enable(host->vmmc);
+		if (ret)
+			return ret;
+	}
+
 
 	if (host->flags & (SDHCI_USE_SDMA | SDHCI_USE_ADMA)) {
 		if (host->ops->enable_dma)
@@ -2010,6 +2018,14 @@ int sdhci_add_host(struct sdhci_host *host)
 	if (ret)
 		goto untasklet;
 
+	host->vmmc = regulator_get(mmc_dev(mmc), "vmmc");
+	if (IS_ERR(host->vmmc)) {
+		printk(KERN_INFO "%s: no vmmc regulator found\n", mmc_hostname(mmc));
+		host->vmmc = NULL;
+	} else {
+		regulator_enable(host->vmmc);
+	}
+
 	sdhci_init(host, 0);
 
 #ifdef CONFIG_MMC_DEBUG
@@ -2094,6 +2110,11 @@ void sdhci_remove_host(struct sdhci_host *host, int dead)
 
 	tasklet_kill(&host->card_tasklet);
 	tasklet_kill(&host->finish_tasklet);
+
+	if (host->vmmc) {
+		regulator_disable(host->vmmc);
+		regulator_put(host->vmmc);
+	}
 
 	kfree(host->adma_desc);
 	kfree(host->align_buffer);

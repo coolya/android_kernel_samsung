@@ -244,11 +244,15 @@ struct sdhci_host {
 #define SDHCI_QUIRK_NO_HISPD_BIT			(1<<27)
 /* Controller has unreliable card present bit */
 #define SDHCI_QUIRK_BROKEN_CARD_PRESENT_BIT		(1<<28)
+/* Controller must maintain clock when no activity*/
+#define SDHCI_QUIRK_MUST_MAINTAIN_CLOCK			(1<<29)
 
 	int			irq;		/* Device IRQ */
 	void __iomem *		ioaddr;		/* Mapped address */
 
 	const struct sdhci_ops	*ops;		/* Low level hw interface */
+
+	struct regulator	*vmmc;		/* Power regulator */
 
 	/* Internal data */
 	struct mmc_host		*mmc;		/* MMC structure */

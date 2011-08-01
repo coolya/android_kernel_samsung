@@ -94,6 +94,20 @@ typedef struct _SGX_BRIDGE_INIT_INFO_
 #if defined(FIX_HW_BRN_29823)
 	IMG_HANDLE	hKernelDummyTermStreamMemInfo;
 #endif
+
+#if defined(FIX_HW_BRN_31542)
+	IMG_HANDLE hKernelClearClipWAVDMStreamMemInfo;
+	IMG_HANDLE hKernelClearClipWAIndexStreamMemInfo;
+	IMG_HANDLE hKernelClearClipWAPDSMemInfo;
+	IMG_HANDLE hKernelClearClipWAUSEMemInfo;
+	IMG_HANDLE hKernelClearClipWAParamMemInfo;
+	IMG_HANDLE hKernelClearClipWAPMPTMemInfo;
+	IMG_HANDLE hKernelClearClipWADPMLSSMemInfo;
+	IMG_HANDLE hKernelClearClipWATPCMemInfo;
+	IMG_HANDLE hKernelClearClipWAPSGRgnHdrMemInfo;
+	IMG_HANDLE hKernelClearClipWAPartiPIMMemInfo;
+#endif
+
 #if defined(PVRSRV_USSE_EDM_STATUS_DEBUG)
 	IMG_HANDLE	hKernelEDMStatusBufferMemInfo;
 #endif
@@ -175,7 +189,8 @@ typedef struct _SGX_CCB_KICK_
 #if (defined(NO_HARDWARE) || defined(PDUMP))
 	IMG_BOOL	bTerminateOrAbort;
 #endif
-	IMG_BOOL 	bLastInScene;
+	IMG_BOOL	bLastInScene;
+
 	
 	IMG_UINT32	ui32CCBOffset;
 

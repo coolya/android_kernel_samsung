@@ -612,8 +612,10 @@ static int fsg_setup(struct usb_function *f,
 		if (ctrl->bRequestType !=
 		    (USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE))
 			break;
+#if 0
 		if (w_index != fsg->interface_number || w_value != 0)
 			return -EDOM;
+#endif
 
 		/* Raise an exception to stop the current operation
 		 * and reinitialize our state. */
@@ -625,9 +627,11 @@ static int fsg_setup(struct usb_function *f,
 		if (ctrl->bRequestType !=
 		    (USB_DIR_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE))
 			break;
+#if 0
 		if (w_index != fsg->interface_number || w_value != 0)
 			return -EDOM;
-		VDBG(fsg, "get max LUN\n");
+#endif
+		VDBG(fsg, "get max LUN: %d\n", fsg->common->nluns - 1);
 		*(u8 *) req->buf = fsg->common->nluns - 1;
 
 		/* Respond with data/status */
