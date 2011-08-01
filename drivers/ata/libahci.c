@@ -121,7 +121,7 @@ static DEVICE_ATTR(ahci_port_cmd, S_IRUGO, ahci_show_port_cmd, NULL);
 static DEVICE_ATTR(em_buffer, S_IWUSR | S_IRUGO,
 		   ahci_read_em_buffer, ahci_store_em_buffer);
 
-static struct device_attribute *ahci_shost_attrs[] = {
+struct device_attribute *ahci_shost_attrs[] = {
 	&dev_attr_link_power_management_policy,
 	&dev_attr_em_message_type,
 	&dev_attr_em_message,
@@ -132,22 +132,14 @@ static struct device_attribute *ahci_shost_attrs[] = {
 	&dev_attr_em_buffer,
 	NULL
 };
+EXPORT_SYMBOL_GPL(ahci_shost_attrs);
 
-static struct device_attribute *ahci_sdev_attrs[] = {
+struct device_attribute *ahci_sdev_attrs[] = {
 	&dev_attr_sw_activity,
 	&dev_attr_unload_heads,
 	NULL
 };
-
-struct scsi_host_template ahci_sht = {
-	ATA_NCQ_SHT("ahci"),
-	.can_queue		= AHCI_MAX_CMDS - 1,
-	.sg_tablesize		= AHCI_MAX_SG,
-	.dma_boundary		= AHCI_DMA_BOUNDARY,
-	.shost_attrs		= ahci_shost_attrs,
-	.sdev_attrs		= ahci_sdev_attrs,
-};
-EXPORT_SYMBOL_GPL(ahci_sht);
+EXPORT_SYMBOL_GPL(ahci_sdev_attrs);
 
 struct ata_port_operations ahci_ops = {
 	.inherits		= &sata_pmp_port_ops,
@@ -1832,12 +1824,24 @@ static unsigned int ahci_qc_issue(struct ata_queued_cmd *qc)
 static bool ahci_qc_fill_rtf(struct ata_queued_cmd *qc)
 {
 	struct ahci_port_priv *pp = qc->ap->private_data;
-	u8 *d2h_fis = pp->rx_fis + RX_FIS_D2H_REG;
+	u8 *rx_fis = pp->rx_fis;
 
 	if (pp->fbs_enabled)
-		d2h_fis += qc->dev->link->pmp * AHCI_RX_FIS_SZ;
+		rx_fis += qc->dev->link->pmp * AHCI_RX_FIS_SZ;
 
-	ata_tf_from_fis(d2h_fis, &qc->result_tf);
+	/*
+	 * After a successful execution of an ATA PIO data-in command,
+	 * the device doesn't send D2H Reg FIS to update the TF and
+	 * the host should take TF and E_Status from the preceding PIO
+	 * Setup FIS.
+	 */
+	if (qc->tf.protocol == ATA_PROT_PIO && qc->dma_dir == DMA_FROM_DEVICE &&
+	    !(qc->flags & ATA_QCFLAG_FAILED)) {
+		ata_tf_from_fis(rx_fis + RX_FIS_PIO_SETUP, &qc->result_tf);
+		qc->result_tf.command = (rx_fis + RX_FIS_PIO_SETUP)[15];
+	} else
+		ata_tf_from_fis(rx_fis + RX_FIS_D2H_REG, &qc->result_tf);
+
 	return true;
 }
 

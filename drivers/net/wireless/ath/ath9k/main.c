@@ -1124,6 +1124,8 @@ static int ath9k_start(struct ieee80211_hw *hw)
 		  "Starting driver with initial channel: %d MHz\n",
 		  curchan->center_freq);
 
+	ath9k_ps_wakeup(sc);
+
 	mutex_lock(&sc->mutex);
 
 	if (ath9k_wiphy_started(sc)) {
@@ -1237,6 +1239,8 @@ static int ath9k_start(struct ieee80211_hw *hw)
 
 mutex_unlock:
 	mutex_unlock(&sc->mutex);
+
+	ath9k_ps_restore(sc);
 
 	return r;
 }
@@ -1501,6 +1505,7 @@ static void ath9k_remove_interface(struct ieee80211_hw *hw,
 	struct ath_softc *sc = aphy->sc;
 	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
 	struct ath_vif *avp = (void *)vif->drv_priv;
+	bool bs_valid = false;
 	int i;
 
 	ath_print(common, ATH_DBG_CONFIG, "Detach Interface\n");
@@ -1529,7 +1534,15 @@ static void ath9k_remove_interface(struct ieee80211_hw *hw,
 			       "slot\n", __func__);
 			sc->beacon.bslot[i] = NULL;
 			sc->beacon.bslot_aphy[i] = NULL;
-		}
+		} else if (sc->beacon.bslot[i])
+			bs_valid = true;
+	}
+	if (!bs_valid && (sc->sc_ah->imask & ATH9K_INT_SWBA)) {
+		/* Disable SWBA interrupt */
+		sc->sc_ah->imask &= ~ATH9K_INT_SWBA;
+		ath9k_ps_wakeup(sc);
+		ath9k_hw_set_interrupts(sc->sc_ah, sc->sc_ah->imask);
+		ath9k_ps_restore(sc);
 	}
 
 	sc->nvifs--;

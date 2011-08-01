@@ -49,6 +49,26 @@ static struct gatt_mask intel_i810_masks[] =
 	 .type = INTEL_AGP_CACHED_MEMORY}
 };
 
+#define INTEL_AGP_UNCACHED_MEMORY              0
+#define INTEL_AGP_CACHED_MEMORY_LLC            1
+#define INTEL_AGP_CACHED_MEMORY_LLC_GFDT       2
+#define INTEL_AGP_CACHED_MEMORY_LLC_MLC        3
+#define INTEL_AGP_CACHED_MEMORY_LLC_MLC_GFDT   4
+
+static struct gatt_mask intel_gen6_masks[] =
+{
+	{.mask = I810_PTE_VALID | GEN6_PTE_UNCACHED,
+	 .type = INTEL_AGP_UNCACHED_MEMORY },
+	{.mask = I810_PTE_VALID | GEN6_PTE_LLC,
+         .type = INTEL_AGP_CACHED_MEMORY_LLC },
+	{.mask = I810_PTE_VALID | GEN6_PTE_LLC | GEN6_PTE_GFDT,
+         .type = INTEL_AGP_CACHED_MEMORY_LLC_GFDT },
+	{.mask = I810_PTE_VALID | GEN6_PTE_LLC_MLC,
+         .type = INTEL_AGP_CACHED_MEMORY_LLC_MLC },
+	{.mask = I810_PTE_VALID | GEN6_PTE_LLC_MLC | GEN6_PTE_GFDT,
+         .type = INTEL_AGP_CACHED_MEMORY_LLC_MLC_GFDT },
+};
+
 static struct _intel_private {
 	struct pci_dev *pcidev;	/* device one */
 	u8 __iomem *registers;
@@ -175,13 +195,6 @@ static void intel_agp_insert_sg_entries(struct agp_memory *mem,
 					off_t pg_start, int mask_type)
 {
 	int i, j;
-	u32 cache_bits = 0;
-
-	if (agp_bridge->dev->device == PCI_DEVICE_ID_INTEL_SANDYBRIDGE_HB ||
-	    agp_bridge->dev->device == PCI_DEVICE_ID_INTEL_SANDYBRIDGE_M_HB)
-	{
-		cache_bits = I830_PTE_SYSTEM_CACHED;
-	}
 
 	for (i = 0, j = pg_start; i < mem->page_count; i++, j++) {
 		writel(agp_bridge->driver->mask_memory(agp_bridge,
@@ -313,6 +326,23 @@ static int intel_i830_type_to_mask_type(struct agp_bridge_data *bridge,
 	else
 		return 0;
 }
+
+static int intel_gen6_type_to_mask_type(struct agp_bridge_data *bridge,
+					int type)
+{
+	unsigned int type_mask = type & ~AGP_USER_CACHED_MEMORY_GFDT;
+	unsigned int gfdt = type & AGP_USER_CACHED_MEMORY_GFDT;
+
+	if (type_mask == AGP_USER_UNCACHED_MEMORY)
+		return INTEL_AGP_UNCACHED_MEMORY;
+	else if (type_mask == AGP_USER_CACHED_MEMORY_LLC_MLC)
+		return gfdt ? INTEL_AGP_CACHED_MEMORY_LLC_MLC_GFDT :
+			      INTEL_AGP_CACHED_MEMORY_LLC_MLC;
+	else /* set 'normal'/'cached' to LLC by default */
+		return gfdt ? INTEL_AGP_CACHED_MEMORY_LLC_GFDT :
+			      INTEL_AGP_CACHED_MEMORY_LLC;
+}
+
 
 static int intel_i810_insert_entries(struct agp_memory *mem, off_t pg_start,
 				int type)
@@ -501,7 +531,7 @@ static void intel_i830_init_gtt_entries(void)
 
 	pci_read_config_word(agp_bridge->dev, I830_GMCH_CTRL, &gmch_ctrl);
 
-	if (IS_I965) {
+	if (IS_G33 || IS_I965) {
 		u32 pgetbl_ctl;
 		pgetbl_ctl = readl(intel_private.registers+I810_PGETBL_CTL);
 
@@ -534,22 +564,6 @@ static void intel_i830_init_gtt_entries(void)
 			size = 512;
 		}
 		size += 4; /* add in BIOS popup space */
-	} else if (IS_G33 && !IS_PINEVIEW) {
-	/* G33's GTT size defined in gmch_ctrl */
-		switch (gmch_ctrl & G33_PGETBL_SIZE_MASK) {
-		case G33_PGETBL_SIZE_1M:
-			size = 1024;
-			break;
-		case G33_PGETBL_SIZE_2M:
-			size = 2048;
-			break;
-		default:
-			dev_info(&agp_bridge->dev->dev,
-				 "unknown page table size 0x%x, assuming 512KB\n",
-				(gmch_ctrl & G33_PGETBL_SIZE_MASK));
-			size = 512;
-		}
-		size += 4;
 	} else if (IS_G4X || IS_PINEVIEW) {
 		/* On 4 series hardware, GTT stolen is separate from graphics
 		 * stolen, ignore it in stolen gtt entries counting.  However,
@@ -1155,7 +1169,7 @@ static int intel_i915_insert_entries(struct agp_memory *mem, off_t pg_start,
 
 	mask_type = agp_bridge->driver->agp_type_to_mask_type(agp_bridge, type);
 
-	if (mask_type != 0 && mask_type != AGP_PHYS_MEMORY &&
+	if (!IS_SNB && mask_type != 0 && mask_type != AGP_PHYS_MEMORY &&
 	    mask_type != INTEL_AGP_CACHED_MEMORY)
 		goto out_err;
 
@@ -1220,24 +1234,31 @@ static int intel_i915_get_gtt_size(void)
 	int size;
 
 	if (IS_G33) {
-		u16 gmch_ctrl;
+		u32 pgetbl_ctl;
+		pgetbl_ctl = readl(intel_private.registers+I810_PGETBL_CTL);
 
-		/* G33's GTT size defined in gmch_ctrl */
-		pci_read_config_word(agp_bridge->dev, I830_GMCH_CTRL, &gmch_ctrl);
-		switch (gmch_ctrl & I830_GMCH_GMS_MASK) {
-		case I830_GMCH_GMS_STOLEN_512:
+		switch (pgetbl_ctl & I965_PGETBL_SIZE_MASK) {
+		case I965_PGETBL_SIZE_128KB:
+			size = 128;
+			break;
+		case I965_PGETBL_SIZE_256KB:
+			size = 256;
+			break;
+		case I965_PGETBL_SIZE_512KB:
 			size = 512;
 			break;
-		case I830_GMCH_GMS_STOLEN_1024:
+		case I965_PGETBL_SIZE_1MB:
 			size = 1024;
 			break;
-		case I830_GMCH_GMS_STOLEN_8192:
-			size = 8*1024;
+		case I965_PGETBL_SIZE_2MB:
+			size = 2048;
+			break;
+		case I965_PGETBL_SIZE_1_5MB:
+			size = 1024 + 512;
 			break;
 		default:
-			dev_info(&agp_bridge->dev->dev,
-				 "unknown page table size 0x%x, assuming 512KB\n",
-				(gmch_ctrl & I830_GMCH_GMS_MASK));
+			dev_info(&intel_private.pcidev->dev,
+				 "unknown page table size, assuming 512KB\n");
 			size = 512;
 		}
 	} else {
@@ -1269,14 +1290,6 @@ static int intel_i915_create_gatt_table(struct agp_bridge_data *bridge)
 	pci_read_config_dword(intel_private.pcidev, I915_MMADDR, &temp);
 	pci_read_config_dword(intel_private.pcidev, I915_PTEADDR, &temp2);
 
-	gtt_map_size = intel_i915_get_gtt_size();
-
-	intel_private.gtt = ioremap(temp2, gtt_map_size);
-	if (!intel_private.gtt)
-		return -ENOMEM;
-
-	intel_private.gtt_total_size = gtt_map_size / 4;
-
 	temp &= 0xfff80000;
 
 	intel_private.registers = ioremap(temp, 128 * 4096);
@@ -1284,6 +1297,14 @@ static int intel_i915_create_gatt_table(struct agp_bridge_data *bridge)
 		iounmap(intel_private.gtt);
 		return -ENOMEM;
 	}
+
+	gtt_map_size = intel_i915_get_gtt_size();
+
+	intel_private.gtt = ioremap(temp2, gtt_map_size);
+	if (!intel_private.gtt)
+		return -ENOMEM;
+
+	intel_private.gtt_total_size = gtt_map_size / 4;
 
 	temp = readl(intel_private.registers+I810_PGETBL_CTL) & 0xfffff000;
 	global_cache_flush();	/* FIXME: ? */
@@ -1546,7 +1567,7 @@ static const struct agp_bridge_driver intel_gen6_driver = {
 	.fetch_size		= intel_i9xx_fetch_size,
 	.cleanup		= intel_i915_cleanup,
 	.mask_memory		= intel_gen6_mask_memory,
-	.masks			= intel_i810_masks,
+	.masks			= intel_gen6_masks,
 	.agp_enable		= intel_i810_agp_enable,
 	.cache_flush		= global_cache_flush,
 	.create_gatt_table	= intel_i965_create_gatt_table,
@@ -1559,7 +1580,7 @@ static const struct agp_bridge_driver intel_gen6_driver = {
 	.agp_alloc_pages        = agp_generic_alloc_pages,
 	.agp_destroy_page	= agp_generic_destroy_page,
 	.agp_destroy_pages      = agp_generic_destroy_pages,
-	.agp_type_to_mask_type	= intel_i830_type_to_mask_type,
+	.agp_type_to_mask_type	= intel_gen6_type_to_mask_type,
 	.chipset_flush		= intel_i915_chipset_flush,
 #ifdef USE_PCI_DMA_API
 	.agp_map_page		= intel_agp_map_page,

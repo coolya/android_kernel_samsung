@@ -1911,6 +1911,17 @@ enum {	/* hot key scan codes (derived from ACPI DSDT) */
 	TP_ACPI_HOTKEYSCAN_VOLUMEDOWN,
 	TP_ACPI_HOTKEYSCAN_MUTE,
 	TP_ACPI_HOTKEYSCAN_THINKPAD,
+	TP_ACPI_HOTKEYSCAN_UNK1,
+	TP_ACPI_HOTKEYSCAN_UNK2,
+	TP_ACPI_HOTKEYSCAN_UNK3,
+	TP_ACPI_HOTKEYSCAN_UNK4,
+	TP_ACPI_HOTKEYSCAN_UNK5,
+	TP_ACPI_HOTKEYSCAN_UNK6,
+	TP_ACPI_HOTKEYSCAN_UNK7,
+	TP_ACPI_HOTKEYSCAN_UNK8,
+
+	/* Hotkey keymap size */
+	TPACPI_HOTKEY_MAP_LEN
 };
 
 enum {	/* Keys/events available through NVRAM polling */
@@ -3082,6 +3093,9 @@ static const struct tpacpi_quirk tpacpi_hotkey_qtable[] __initconst = {
 	TPACPI_Q_IBM('1', 'D', TPACPI_HK_Q_INIMASK), /* X22, X23, X24 */
 };
 
+typedef u16 tpacpi_keymap_entry_t;
+typedef tpacpi_keymap_entry_t tpacpi_keymap_t[TPACPI_HOTKEY_MAP_LEN];
+
 static int __init hotkey_init(struct ibm_init_struct *iibm)
 {
 	/* Requirements for changing the default keymaps:
@@ -3113,9 +3127,17 @@ static int __init hotkey_init(struct ibm_init_struct *iibm)
 	 * If the above is too much to ask, don't change the keymap.
 	 * Ask the thinkpad-acpi maintainer to do it, instead.
 	 */
-	static u16 ibm_keycode_map[] __initdata = {
+
+	enum keymap_index {
+		TPACPI_KEYMAP_IBM_GENERIC = 0,
+		TPACPI_KEYMAP_LENOVO_GENERIC,
+	};
+
+	static const tpacpi_keymap_t tpacpi_keymaps[] __initconst = {
+	/* Generic keymap for IBM ThinkPads */
+	[TPACPI_KEYMAP_IBM_GENERIC] = {
 		/* Scan Codes 0x00 to 0x0B: ACPI HKEY FN+F1..F12 */
-		KEY_FN_F1,	KEY_FN_F2,	KEY_COFFEE,	KEY_SLEEP,
+		KEY_FN_F1,	KEY_BATTERY,	KEY_COFFEE,	KEY_SLEEP,
 		KEY_WLAN,	KEY_FN_F6, KEY_SWITCHVIDEOMODE, KEY_FN_F8,
 		KEY_FN_F9,	KEY_FN_F10,	KEY_FN_F11,	KEY_SUSPEND,
 
@@ -3146,11 +3168,13 @@ static int __init hotkey_init(struct ibm_init_struct *iibm)
 		/* (assignments unknown, please report if found) */
 		KEY_UNKNOWN, KEY_UNKNOWN, KEY_UNKNOWN, KEY_UNKNOWN,
 		KEY_UNKNOWN, KEY_UNKNOWN, KEY_UNKNOWN, KEY_UNKNOWN,
-	};
-	static u16 lenovo_keycode_map[] __initdata = {
+		},
+
+	/* Generic keymap for Lenovo ThinkPads */
+	[TPACPI_KEYMAP_LENOVO_GENERIC] = {
 		/* Scan Codes 0x00 to 0x0B: ACPI HKEY FN+F1..F12 */
 		KEY_FN_F1,	KEY_COFFEE,	KEY_BATTERY,	KEY_SLEEP,
-		KEY_WLAN,	KEY_FN_F6, KEY_SWITCHVIDEOMODE, KEY_FN_F8,
+		KEY_WLAN,	KEY_CAMERA, KEY_SWITCHVIDEOMODE, KEY_FN_F8,
 		KEY_FN_F9,	KEY_FN_F10,	KEY_FN_F11,	KEY_SUSPEND,
 
 		/* Scan codes 0x0C to 0x1F: Other ACPI HKEY hot keys */
@@ -3189,11 +3213,25 @@ static int __init hotkey_init(struct ibm_init_struct *iibm)
 		/* (assignments unknown, please report if found) */
 		KEY_UNKNOWN, KEY_UNKNOWN, KEY_UNKNOWN, KEY_UNKNOWN,
 		KEY_UNKNOWN, KEY_UNKNOWN, KEY_UNKNOWN, KEY_UNKNOWN,
+		},
 	};
 
-#define TPACPI_HOTKEY_MAP_LEN		ARRAY_SIZE(ibm_keycode_map)
-#define TPACPI_HOTKEY_MAP_SIZE		sizeof(ibm_keycode_map)
-#define TPACPI_HOTKEY_MAP_TYPESIZE	sizeof(ibm_keycode_map[0])
+	static const struct tpacpi_quirk tpacpi_keymap_qtable[] __initconst = {
+		/* Generic maps (fallback) */
+		{
+		  .vendor = PCI_VENDOR_ID_IBM,
+		  .bios = TPACPI_MATCH_ANY, .ec = TPACPI_MATCH_ANY,
+		  .quirks = TPACPI_KEYMAP_IBM_GENERIC,
+		},
+		{
+		  .vendor = PCI_VENDOR_ID_LENOVO,
+		  .bios = TPACPI_MATCH_ANY, .ec = TPACPI_MATCH_ANY,
+		  .quirks = TPACPI_KEYMAP_LENOVO_GENERIC,
+		},
+	};
+
+#define TPACPI_HOTKEY_MAP_SIZE		sizeof(tpacpi_keymap_t)
+#define TPACPI_HOTKEY_MAP_TYPESIZE	sizeof(tpacpi_keymap_entry_t)
 
 	int res, i;
 	int status;
@@ -3202,6 +3240,7 @@ static int __init hotkey_init(struct ibm_init_struct *iibm)
 	bool tabletsw_state = false;
 
 	unsigned long quirks;
+	unsigned long keymap_id;
 
 	vdbg_printk(TPACPI_DBG_INIT | TPACPI_DBG_HKEY,
 			"initializing hotkey subdriver\n");
@@ -3342,7 +3381,6 @@ static int __init hotkey_init(struct ibm_init_struct *iibm)
 		goto err_exit;
 
 	/* Set up key map */
-
 	hotkey_keycode_map = kmalloc(TPACPI_HOTKEY_MAP_SIZE,
 					GFP_KERNEL);
 	if (!hotkey_keycode_map) {
@@ -3352,17 +3390,14 @@ static int __init hotkey_init(struct ibm_init_struct *iibm)
 		goto err_exit;
 	}
 
-	if (tpacpi_is_lenovo()) {
-		dbg_printk(TPACPI_DBG_INIT | TPACPI_DBG_HKEY,
-			   "using Lenovo default hot key map\n");
-		memcpy(hotkey_keycode_map, &lenovo_keycode_map,
-			TPACPI_HOTKEY_MAP_SIZE);
-	} else {
-		dbg_printk(TPACPI_DBG_INIT | TPACPI_DBG_HKEY,
-			   "using IBM default hot key map\n");
-		memcpy(hotkey_keycode_map, &ibm_keycode_map,
-			TPACPI_HOTKEY_MAP_SIZE);
-	}
+	keymap_id = tpacpi_check_quirks(tpacpi_keymap_qtable,
+					ARRAY_SIZE(tpacpi_keymap_qtable));
+	BUG_ON(keymap_id >= ARRAY_SIZE(tpacpi_keymaps));
+	dbg_printk(TPACPI_DBG_INIT | TPACPI_DBG_HKEY,
+		   "using keymap number %lu\n", keymap_id);
+
+	memcpy(hotkey_keycode_map, &tpacpi_keymaps[keymap_id],
+		TPACPI_HOTKEY_MAP_SIZE);
 
 	input_set_capability(tpacpi_inputdev, EV_MSC, MSC_SCAN);
 	tpacpi_inputdev->keycodesize = TPACPI_HOTKEY_MAP_TYPESIZE;
@@ -3469,7 +3504,8 @@ static bool hotkey_notify_hotkey(const u32 hkey,
 	*send_acpi_ev = true;
 	*ignore_acpi_ev = false;
 
-	if (scancode > 0 && scancode < 0x21) {
+	/* HKEY event 0x1001 is scancode 0x00 */
+	if (scancode > 0 && scancode <= TPACPI_HOTKEY_MAP_LEN) {
 		scancode--;
 		if (!(hotkey_source_mask & (1 << scancode))) {
 			tpacpi_input_send_key_masked(scancode);

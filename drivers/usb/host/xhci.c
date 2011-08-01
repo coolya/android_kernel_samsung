@@ -1224,6 +1224,15 @@ static int xhci_configure_endpoint(struct xhci_hcd *xhci,
 		cmd_completion = command->completion;
 		cmd_status = &command->status;
 		command->command_trb = xhci->cmd_ring->enqueue;
+
+		/* Enqueue pointer can be left pointing to the link TRB,
+		 * we must handle that
+		 */
+		if ((command->command_trb->link.control & TRB_TYPE_BITMASK)
+				== TRB_TYPE(TRB_LINK))
+			command->command_trb =
+				xhci->cmd_ring->enq_seg->next->trbs;
+
 		list_add_tail(&command->cmd_list, &virt_dev->cmd_list);
 	} else {
 		in_ctx = virt_dev->in_ctx;
@@ -1933,6 +1942,15 @@ int xhci_reset_device(struct usb_hcd *hcd, struct usb_device *udev)
 	/* Attempt to submit the Reset Device command to the command ring */
 	spin_lock_irqsave(&xhci->lock, flags);
 	reset_device_cmd->command_trb = xhci->cmd_ring->enqueue;
+
+	/* Enqueue pointer can be left pointing to the link TRB,
+	 * we must handle that
+	 */
+	if ((reset_device_cmd->command_trb->link.control & TRB_TYPE_BITMASK)
+			== TRB_TYPE(TRB_LINK))
+		reset_device_cmd->command_trb =
+			xhci->cmd_ring->enq_seg->next->trbs;
+
 	list_add_tail(&reset_device_cmd->cmd_list, &virt_dev->cmd_list);
 	ret = xhci_queue_reset_device(xhci, slot_id);
 	if (ret) {
@@ -1992,10 +2010,18 @@ int xhci_reset_device(struct usb_hcd *hcd, struct usb_device *udev)
 	/* Everything but endpoint 0 is disabled, so free or cache the rings. */
 	last_freed_endpoint = 1;
 	for (i = 1; i < 31; ++i) {
-		if (!virt_dev->eps[i].ring)
-			continue;
-		xhci_free_or_cache_endpoint_ring(xhci, virt_dev, i);
-		last_freed_endpoint = i;
+		struct xhci_virt_ep *ep = &virt_dev->eps[i];
+
+		if (ep->ep_state & EP_HAS_STREAMS) {
+			xhci_free_stream_info(xhci, ep->stream_info);
+			ep->stream_info = NULL;
+			ep->ep_state &= ~EP_HAS_STREAMS;
+		}
+
+		if (ep->ring) {
+			xhci_free_or_cache_endpoint_ring(xhci, virt_dev, i);
+			last_freed_endpoint = i;
+		}
 	}
 	xhci_dbg(xhci, "Output context after successful reset device cmd:\n");
 	xhci_dbg_ctx(xhci, virt_dev->out_ctx, last_freed_endpoint);

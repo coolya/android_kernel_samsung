@@ -1710,6 +1710,8 @@ ieee80211_rx_h_mesh_fwding(struct ieee80211_rx_data *rx)
 			if (!fwd_skb && net_ratelimit())
 				printk(KERN_DEBUG "%s: failed to clone mesh frame\n",
 						   sdata->name);
+			if (!fwd_skb)
+				goto out;
 
 			fwd_hdr =  (struct ieee80211_hdr *) fwd_skb->data;
 			memcpy(fwd_hdr->addr2, sdata->vif.addr, ETH_ALEN);
@@ -1747,6 +1749,7 @@ ieee80211_rx_h_mesh_fwding(struct ieee80211_rx_data *rx)
 		}
 	}
 
+ out:
 	if (is_multicast_ether_addr(hdr->addr1) ||
 	    sdata->dev->flags & IFF_PROMISC)
 		return RX_CONTINUE;
@@ -2156,9 +2159,6 @@ static void ieee80211_rx_cooked_monitor(struct ieee80211_rx_data *rx,
 	struct net_device *prev_dev = NULL;
 	struct ieee80211_rx_status *status = IEEE80211_SKB_RXCB(skb);
 
-	if (status->flag & RX_FLAG_INTERNAL_CMTR)
-		goto out_free_skb;
-
 	if (skb_headroom(skb) < sizeof(*rthdr) &&
 	    pskb_expand_head(skb, sizeof(*rthdr), 0, GFP_ATOMIC))
 		goto out_free_skb;
@@ -2217,7 +2217,6 @@ static void ieee80211_rx_cooked_monitor(struct ieee80211_rx_data *rx,
 	} else
 		goto out_free_skb;
 
-	status->flag |= RX_FLAG_INTERNAL_CMTR;
 	return;
 
  out_free_skb:
