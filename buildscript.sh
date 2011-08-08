@@ -8,8 +8,10 @@ case $1 in
 		make aries_captivatemtd_defconfig
 		export KBUILD_BUILD_VERSION="TalonMTD 0.0.1"
 		make -j`grep 'processor' /proc/cpuinfo | wc -l`
-		cd releasetools
-		cp arch/arm/boot/zImage releasetools
+		initrd_files/mkshbootimg.py releasetools/boot.img arch/arm/boot/zImage initrd_files/ramdisk.img initrd_files/ramdisk-recovery.img
+		cp drivers/net/tun.ko releasetools/system/lib/modules/tun.ko
+		cp drivers/net/wireless/bcm4329/bcm4329.ko releasetools/system/lib/modules/bcm4329.ko
+		cp fs/cifs/cifs.ko releasetools/system/lib/modules/cifs.ko
 		cd releasetools
 		rm -f *.zip
 		zip -r TalonCaptivate *
@@ -20,8 +22,10 @@ case $1 in
 		make aries_galaxysmtd_defconfig
 		export KBUILD_BUILD_VERSION="TalonMTD 0.0.1"
 		make -j`grep 'processor' /proc/cpuinfo | wc -l`
-		cd releasetools
-		cp arch/arm/boot/zImage releasetools
+		initrd_files/mkshbootimg.py releasetools/boot.img arch/arm/boot/zImage initrd_files/ramdisk.img initrd_files/ramdisk-recovery.img
+		cp drivers/net/tun.ko releasetools/system/lib/modules/tun.ko
+		cp drivers/net/wireless/bcm4329/bcm4329.ko releasetools/system/lib/modules/bcm4329.ko
+		cp fs/cifs/cifs.ko releasetools/system/lib/modules/cifs.ko
 		cd releasetools
 		rm -f *.zip
 		zip -r TalonGalaxyS *
@@ -32,8 +36,10 @@ case $1 in
 		make aries_vibrantmtd_defconfig
 		export KBUILD_BUILD_VERSION="TalonMTD 0.0.1"
 		make -j`grep 'processor' /proc/cpuinfo | wc -l`
-		cd releasetools
-		cp arch/arm/boot/zImage releasetools
+		initrd_files/mkshbootimg.py releasetools/boot.img arch/arm/boot/zImage initrd_files/ramdisk.img initrd_files/ramdisk-recovery.img
+		cp drivers/net/tun.ko releasetools/system/lib/modules/tun.ko
+		cp drivers/net/wireless/bcm4329/bcm4329.ko releasetools/system/lib/modules/bcm4329.ko
+		cp fs/cifs/cifs.ko releasetools/system/lib/modules/cifs.ko
 		cd releasetools
 		rm -f *.zip
 		zip -r TalonVibrant *
@@ -44,8 +50,10 @@ case $1 in
 		make aries_galaxysbmtd_defconfig
 		export KBUILD_BUILD_VERSION="TalonMTD 0.0.1"
 		make -j`grep 'processor' /proc/cpuinfo | wc -l`
-		cd releasetools
-		cp arch/arm/boot/zImage releasetools
+		initrd_files/mkshbootimg.py releasetools/boot.img arch/arm/boot/zImage initrd_files/ramdisk.img initrd_files/ramdisk-recovery.img
+		cp drivers/net/tun.ko releasetools/system/lib/modules/tun.ko
+		cp drivers/net/wireless/bcm4329/bcm4329.ko releasetools/system/lib/modules/bcm4329.ko
+		cp fs/cifs/cifs.ko releasetools/system/lib/modules/cifs.ko
 		cd releasetools
 		rm -f *.zip
 		zip -r TalonGalaxySB *
@@ -56,8 +64,10 @@ case $1 in
 		make aries_fascinatemtd_defconfig
 		export KBUILD_BUILD_VERSION="TalonMTD 0.0.1"
 		make -j`grep 'processor' /proc/cpuinfo | wc -l`
-		cd releasetools
-		cp arch/arm/boot/zImage releasetools
+		initrd_files/mkshbootimg.py releasetools/boot.img arch/arm/boot/zImage initrd_files/ramdisk.img initrd_files/ramdisk-recovery.img
+		cp drivers/net/tun.ko releasetools/system/lib/modules/tun.ko
+		cp drivers/net/wireless/bcm4329/bcm4329.ko releasetools/system/lib/modules/bcm4329.ko
+		cp fs/cifs/cifs.ko releasetools/system/lib/modules/cifs.ko
 		cd releasetools
 		rm -f *.zip
 		zip -r TalonFascinate *
