@@ -1,0 +1,5 @@
+#!/system/bin/sh
+
+# inserting the android-logger module into kernel-space (thanks to koflem for idea !)
+
+insmod /data/local/logger.ko

@@ -1,7 +1,7 @@
 #script written by zacharias.maldroit/zachy_md and modified by ytt3r
 mount("yaffs2", "MTD", "system", "/system");
 show_progress(0.200000, 0);
-ui_print("Flashing TalonMTD");
+ui_print("Welcome to TalonMTD!");
 show_progress(0.500000, 0);
 #delete("/system/etc/init.d/89system_tweak");
 #delete("/system/etc/init.d/S98system_tweak");
@@ -20,7 +20,6 @@ show_progress(0.500000, 0);
 #ui_print("Formatting Cache Partition...");
 #format("yaffs2", "MTD", "cache");
 #show_progress(0.100000, 20);
-#ui_print(" ");
 #ui_print("Wiping dalvik-cache...");
 #delete_recursive("/data/dalvik-cache");
 #show_progress(0.100000, 40);
@@ -32,12 +31,12 @@ set_perm(0, 0, 0777, "/tmp/bml_over_mtd.sh");
 show_progress(0.200000, 10);
 ui_print("Extracting init scripts...");
 package_extract_dir("system/", "/system/");
-ui_print("Setting permissions ... 				     ");
+ui_print("Setting permissions ...");
 set_perm(0, 1000, 0777, "/system/bin/logcat-on.sh");
 set_perm(0, 1000, 0777, "/system/bin/logcat-off.sh");
 set_perm_recursive(0, 2000, 0755, 0750, "/system/etc/init.d");
 show_progress(0.200000, 10);
-ui_print("Flashing Talon");
+ui_print("Flashing TalonMTD...");
 assert(package_extract_file("boot.img", "/tmp/boot.img"),
        write_raw_image("/tmp/boot.img", "boot"),
        run_program("/tmp/bml_over_mtd.sh", "boot", "72", "reservoir", "2004", "/tmp/boot.img"),

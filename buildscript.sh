@@ -12,6 +12,7 @@ case $1 in
 		cp drivers/net/tun.ko releasetools/system/lib/modules/tun.ko
 		cp drivers/net/wireless/bcm4329/bcm4329.ko releasetools/system/lib/modules/bcm4329.ko
 		cp fs/cifs/cifs.ko releasetools/system/lib/modules/cifs.ko
+		cp drivers/staging/android/logger.ko releasetools/system/lib/modules/logger.ko
 		cd releasetools
 		rm -f *.zip
 		zip -r TalonCaptivate *
@@ -26,6 +27,7 @@ case $1 in
 		cp drivers/net/tun.ko releasetools/system/lib/modules/tun.ko
 		cp drivers/net/wireless/bcm4329/bcm4329.ko releasetools/system/lib/modules/bcm4329.ko
 		cp fs/cifs/cifs.ko releasetools/system/lib/modules/cifs.ko
+		cp drivers/staging/android/logger.ko releasetools/system/lib/modules/logger.ko
 		cd releasetools
 		rm -f *.zip
 		zip -r TalonGalaxyS *
@@ -40,6 +42,7 @@ case $1 in
 		cp drivers/net/tun.ko releasetools/system/lib/modules/tun.ko
 		cp drivers/net/wireless/bcm4329/bcm4329.ko releasetools/system/lib/modules/bcm4329.ko
 		cp fs/cifs/cifs.ko releasetools/system/lib/modules/cifs.ko
+		cp drivers/staging/android/logger.ko releasetools/system/lib/modules/logger.ko
 		cd releasetools
 		rm -f *.zip
 		zip -r TalonVibrant *
@@ -54,6 +57,7 @@ case $1 in
 		cp drivers/net/tun.ko releasetools/system/lib/modules/tun.ko
 		cp drivers/net/wireless/bcm4329/bcm4329.ko releasetools/system/lib/modules/bcm4329.ko
 		cp fs/cifs/cifs.ko releasetools/system/lib/modules/cifs.ko
+		cp drivers/staging/android/logger.ko releasetools/system/lib/modules/logger.ko
 		cd releasetools
 		rm -f *.zip
 		zip -r TalonGalaxySB *
@@ -68,6 +72,7 @@ case $1 in
 		cp drivers/net/tun.ko releasetools/system/lib/modules/tun.ko
 		cp drivers/net/wireless/bcm4329/bcm4329.ko releasetools/system/lib/modules/bcm4329.ko
 		cp fs/cifs/cifs.ko releasetools/system/lib/modules/cifs.ko
+		cp drivers/staging/android/logger.ko releasetools/system/lib/modules/logger.ko
 		cd releasetools
 		rm -f *.zip
 		zip -r TalonFascinate *
