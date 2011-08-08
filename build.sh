@@ -1,70 +1,84 @@
-#!/bin/bash
+# Script written by Evan alias ytt3r to build TalonMTD more easily.
+# Parse command line options
+#/bin/bash
 
-setup ()
-{
-    if [ x = "x$ANDROID_BUILD_TOP" ] ; then
-        echo "Android build environment must be configured"
-        exit 1
-    fi
-    . "$ANDROID_BUILD_TOP"/build/envsetup.sh
-
-    KERNEL_DIR="$(dirname "$(readlink -f "$0")")"
-    BUILD_DIR="$KERNEL_DIR/build"
-    MODULES=("drivers/net/wireless/bcm4329/bcm4329.ko" "fs/cifs/cifs.ko" "fs/fuse/fuse.ko" "drivers/net/tun.ko")
-
-    if [ x = "x$NO_CCACHE" ] && ccache -V &>/dev/null ; then
-        CCACHE=ccache
-        CCACHE_BASEDIR="$KERNEL_DIR"
-        CCACHE_COMPRESS=1
-        CCACHE_DIR="$BUILD_DIR/.ccache"
-        export CCACHE_DIR CCACHE_COMPRESS CCACHE_BASEDIR
-    else
-        CCACHE=""
-    fi
-
-    CROSS_PREFIX="$ANDROID_TOOLCHAIN/arm-eabi-"
-}
-
-build ()
-{
-    local target=$1
-    echo "Building for $target"
-    local target_dir="$BUILD_DIR/$target"
-    local module
-    rm -fr "$target_dir"
-    mkdir -p "$target_dir/usr"
-    cp "$KERNEL_DIR/usr/"*.list "$target_dir/usr"
-    sed "s|usr/|$KERNEL_DIR/usr/|g" -i "$target_dir/usr/"*.list
-    mka -C "$KERNEL_DIR" O="$target_dir" aries_${target}_defconfig HOSTCC="$CCACHE gcc"
-    mka -C "$KERNEL_DIR" O="$target_dir" HOSTCC="$CCACHE gcc" CROSS_COMPILE="$CCACHE $CROSS_PREFIX" zImage modules
-    cp "$target_dir"/arch/arm/boot/zImage $ANDROID_BUILD_TOP/device/samsung/$target/kernel
-    for module in "${MODULES[@]}" ; do
-        cp "$target_dir/$module" $ANDROID_BUILD_TOP/device/samsung/$target
-    done
-}
-    
-setup
-
-if [ "$1" = clean ] ; then
-    rm -fr "$BUILD_DIR"/*
-    exit 0
-fi
-
-targets=("$@")
-if [ 0 = "${#targets[@]}" ] ; then
-    targets=(captivatemtd fascinatemtd galaxysmtd galaxysbmtd vibrantmtd)
-fi
-
-START=$(date +%s)
-
-for target in "${targets[@]}" ; do 
-    build $target
-done
-
-END=$(date +%s)
-ELAPSED=$((END - START))
-E_MIN=$((ELAPSED / 60))
-E_SEC=$((ELAPSED - E_MIN * 60))
-printf "Elapsed: "
-[ $E_MIN != 0 ] && printf "%d min(s) " $E_MIN
-printf "%d sec(s)\n" $E_SEC
+USAGE="Usage: Type './buildscript.sh captivate' to build TalonMTD for captivate, build other devices in this fashion."
+case $1 in
+	captivate)
+		make aries_captivatemtd_defconfig
+		export KBUILD_BUILD_VERSION="TalonMTD 0.0.1"
+		make -j`grep 'processor' /proc/cpuinfo | wc -l`
+		initrd_files/mkshbootimg.py releasetools/boot.img arch/arm/boot/zImage initrd_files/ramdisk.img initrd_files/ramdisk-recovery.img
+		cp drivers/net/tun.ko releasetools/system/lib/modules/tun.ko
+		cp drivers/net/wireless/bcm4329/bcm4329.ko releasetools/system/lib/modules/bcm4329.ko
+		cp fs/cifs/cifs.ko releasetools/system/lib/modules/cifs.ko
+		cp drivers/staging/android/logger.ko releasetools/system/lib/modules/logger.ko
+		cd releasetools
+		rm -f *.zip
+		zip -r TalonCaptivate *
+		cd ..
+		echo "Finished."
+		;;
+	galaxys)
+		make aries_galaxysmtd_defconfig
+		export KBUILD_BUILD_VERSION="TalonMTD 0.0.1"
+		make -j`grep 'processor' /proc/cpuinfo | wc -l`
+		initrd_files/mkshbootimg.py releasetools/boot.img arch/arm/boot/zImage initrd_files/ramdisk.img initrd_files/ramdisk-recovery.img
+		cp drivers/net/tun.ko releasetools/system/lib/modules/tun.ko
+		cp drivers/net/wireless/bcm4329/bcm4329.ko releasetools/system/lib/modules/bcm4329.ko
+		cp fs/cifs/cifs.ko releasetools/system/lib/modules/cifs.ko
+		cp drivers/staging/android/logger.ko releasetools/system/lib/modules/logger.ko
+		cd releasetools
+		rm -f *.zip
+		zip -r TalonGalaxyS *
+		cd ..
+		echo "Finished."
+		;;
+	vibrant)
+		make aries_vibrantmtd_defconfig
+		export KBUILD_BUILD_VERSION="TalonMTD 0.0.1"
+		make -j`grep 'processor' /proc/cpuinfo | wc -l`
+		initrd_files/mkshbootimg.py releasetools/boot.img arch/arm/boot/zImage initrd_files/ramdisk.img initrd_files/ramdisk-recovery.img
+		cp drivers/net/tun.ko releasetools/system/lib/modules/tun.ko
+		cp drivers/net/wireless/bcm4329/bcm4329.ko releasetools/system/lib/modules/bcm4329.ko
+		cp fs/cifs/cifs.ko releasetools/system/lib/modules/cifs.ko
+		cp drivers/staging/android/logger.ko releasetools/system/lib/modules/logger.ko
+		cd releasetools
+		rm -f *.zip
+		zip -r TalonVibrant *
+		cd ..
+		echo "Finished."
+		;;
+	galaxysb)
+		make aries_galaxysbmtd_defconfig
+		export KBUILD_BUILD_VERSION="TalonMTD 0.0.1"
+		make -j`grep 'processor' /proc/cpuinfo | wc -l`
+		initrd_files/mkshbootimg.py releasetools/boot.img arch/arm/boot/zImage initrd_files/ramdisk.img initrd_files/ramdisk-recovery.img
+		cp drivers/net/tun.ko releasetools/system/lib/modules/tun.ko
+		cp drivers/net/wireless/bcm4329/bcm4329.ko releasetools/system/lib/modules/bcm4329.ko
+		cp fs/cifs/cifs.ko releasetools/system/lib/modules/cifs.ko
+		cp drivers/staging/android/logger.ko releasetools/system/lib/modules/logger.ko
+		cd releasetools
+		rm -f *.zip
+		zip -r TalonGalaxySB *
+		cd ..
+		echo "Finished."
+		;;
+	fascinate)
+		make aries_fascinatemtd_defconfig
+		export KBUILD_BUILD_VERSION="TalonMTD 0.0.1"
+		make -j`grep 'processor' /proc/cpuinfo | wc -l`
+		initrd_files/mkshbootimg.py releasetools/boot.img arch/arm/boot/zImage initrd_files/ramdisk.img initrd_files/ramdisk-recovery.img
+		cp drivers/net/tun.ko releasetools/system/lib/modules/tun.ko
+		cp drivers/net/wireless/bcm4329/bcm4329.ko releasetools/system/lib/modules/bcm4329.ko
+		cp fs/cifs/cifs.ko releasetools/system/lib/modules/cifs.ko
+		cp drivers/staging/android/logger.ko releasetools/system/lib/modules/logger.ko
+		cd releasetools
+		rm -f *.zip
+		zip -r TalonFascinate *
+		cd ..
+		echo "Finished."
+		;;
+	*)
+		echo "You didn't provide an argument, or provided an unsupported argument. Keep in mind that arguments are case-sensitive. Please type the name of your device after the command, e.g. './buildscript.sh captivate'."
+	esac
