@@ -1975,6 +1975,9 @@ task_hot(struct task_struct *p, u64 now, struct sched_domain *sd)
 
 	if (p->sched_class != &fair_sched_class)
 		return 0;
+	
+	if (p->policy == SCHED_IDLE)
+		return 0;
 
 	/*
 	 * Buddy candidates are cache hot:
