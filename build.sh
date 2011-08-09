@@ -13,6 +13,10 @@ case $1 in
 		cp drivers/net/wireless/bcm4329/bcm4329.ko releasetools/system/lib/modules/bcm4329.ko
 		cp fs/cifs/cifs.ko releasetools/system/lib/modules/cifs.ko
 		cp drivers/staging/android/logger.ko releasetools/system/lib/modules/logger.ko
+		cp crypto/ansi_cprng.ko releasetools/system/lib/modules/ansi_cprng.ko
+		cp drivers/cpufreq/cpufreq_conservative.ko releasetools/system/lib/modules/cpufreq_conservative.ko
+		cp drivers/scsi/scsi_wait_scan.ko releasetools/system/lib/modules/scsi_wait_scan.ko
+		cp fs/fuse/fuse.ko releasetools/system/lib/modules/fuse.ko
 		cd releasetools
 		rm -f *.zip
 		zip -r TalonCaptivate *
@@ -28,6 +32,10 @@ case $1 in
 		cp drivers/net/wireless/bcm4329/bcm4329.ko releasetools/system/lib/modules/bcm4329.ko
 		cp fs/cifs/cifs.ko releasetools/system/lib/modules/cifs.ko
 		cp drivers/staging/android/logger.ko releasetools/system/lib/modules/logger.ko
+		cp crypto/ansi_cprng.ko releasetools/system/lib/modules/ansi_cprng.ko
+		cp drivers/cpufreq/cpufreq_conservative.ko releasetools/system/lib/modules/cpufreq_conservative.ko
+		cp drivers/scsi/scsi_wait_scan.ko releasetools/system/lib/modules/scsi_wait_scan.ko
+		cp fs/fuse/fuse.ko releasetools/system/lib/modules/fuse.ko
 		cd releasetools
 		rm -f *.zip
 		zip -r TalonGalaxyS *
@@ -43,6 +51,10 @@ case $1 in
 		cp drivers/net/wireless/bcm4329/bcm4329.ko releasetools/system/lib/modules/bcm4329.ko
 		cp fs/cifs/cifs.ko releasetools/system/lib/modules/cifs.ko
 		cp drivers/staging/android/logger.ko releasetools/system/lib/modules/logger.ko
+		cp crypto/ansi_cprng.ko releasetools/system/lib/modules/ansi_cprng.ko
+		cp drivers/cpufreq/cpufreq_conservative.ko releasetools/system/lib/modules/cpufreq_conservative.ko
+		cp drivers/scsi/scsi_wait_scan.ko releasetools/system/lib/modules/scsi_wait_scan.ko
+		cp fs/fuse/fuse.ko releasetools/system/lib/modules/fuse.ko
 		cd releasetools
 		rm -f *.zip
 		zip -r TalonVibrant *
@@ -58,6 +70,10 @@ case $1 in
 		cp drivers/net/wireless/bcm4329/bcm4329.ko releasetools/system/lib/modules/bcm4329.ko
 		cp fs/cifs/cifs.ko releasetools/system/lib/modules/cifs.ko
 		cp drivers/staging/android/logger.ko releasetools/system/lib/modules/logger.ko
+		cp crypto/ansi_cprng.ko releasetools/system/lib/modules/ansi_cprng.ko
+		cp drivers/cpufreq/cpufreq_conservative.ko releasetools/system/lib/modules/cpufreq_conservative.ko
+		cp drivers/scsi/scsi_wait_scan.ko releasetools/system/lib/modules/scsi_wait_scan.ko
+		cp fs/fuse/fuse.ko releasetools/system/lib/modules/fuse.ko
 		cd releasetools
 		rm -f *.zip
 		zip -r TalonGalaxySB *
@@ -73,6 +89,10 @@ case $1 in
 		cp drivers/net/wireless/bcm4329/bcm4329.ko releasetools/system/lib/modules/bcm4329.ko
 		cp fs/cifs/cifs.ko releasetools/system/lib/modules/cifs.ko
 		cp drivers/staging/android/logger.ko releasetools/system/lib/modules/logger.ko
+		cp crypto/ansi_cprng.ko releasetools/system/lib/modules/ansi_cprng.ko
+		cp drivers/cpufreq/cpufreq_conservative.ko releasetools/system/lib/modules/cpufreq_conservative.ko
+		cp drivers/scsi/scsi_wait_scan.ko releasetools/system/lib/modules/scsi_wait_scan.ko
+		cp fs/fuse/fuse.ko releasetools/system/lib/modules/fuse.ko
 		cd releasetools
 		rm -f *.zip
 		zip -r TalonFascinate *
