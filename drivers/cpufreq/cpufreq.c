@@ -32,9 +32,9 @@
 #define dprintk(msg...) cpufreq_debug_printk(CPUFREQ_DEBUG_CORE, \
 						"cpufreq-core", msg)
 
-int exp_UV_mV[6];
-extern unsigned int freq_uv_table[6][3];
-int enabled_freqs[6] = { 1, 1, 1, 1, 1, 1 };
+int exp_UV_mV[9];
+extern unsigned int freq_uv_table[9][3];
+int enabled_freqs[9] = { 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
 /**
  * The "cpufreq driver" - the arch- or hardware-dependent low
@@ -652,7 +652,7 @@ static ssize_t show_scaling_setspeed(struct cpufreq_policy *policy, char *buf)
 }
 
 static ssize_t show_UV_mV_table(struct cpufreq_policy *policy, char *buf) {
-	return sprintf(buf, "%d %d %d %d %d %d\n", exp_UV_mV[0], exp_UV_mV[1], exp_UV_mV[2], exp_UV_mV[3], exp_UV_mV[4], exp_UV_mV[5]);
+	return sprintf(buf, "%d %d %d %d %d %d %d %d %d\n", exp_UV_mV[0], exp_UV_mV[1], exp_UV_mV[2], exp_UV_mV[3], exp_UV_mV[4], exp_UV_mV[5], exp_UV_mV[6], exp_UV_mV[7], exp_UV_mV[8]);
 
 }
 
@@ -660,7 +660,7 @@ static ssize_t store_UV_mV_table(struct cpufreq_policy *policy,
 					const char *buf, size_t count) {
 	unsigned int ret = -EINVAL;
 
-	ret = sscanf(buf, "%d %d %d %d %d %d", &exp_UV_mV[0], &exp_UV_mV[1], &exp_UV_mV[2], &exp_UV_mV[3], &exp_UV_mV[4], &exp_UV_mV[5]);
+	ret = sscanf(buf, "%d %d %d %d %d %d %d %d %d", &exp_UV_mV[0], &exp_UV_mV[1], &exp_UV_mV[2], &exp_UV_mV[3], &exp_UV_mV[4], &exp_UV_mV[5], &exp_UV_mV[6], &exp_UV_mV[7], &exp_UV_mV[8]);
 
 	if(ret != 1) {
 		return -EINVAL;
@@ -672,13 +672,16 @@ static ssize_t store_UV_mV_table(struct cpufreq_policy *policy,
 static ssize_t show_frequency_voltage_table(struct cpufreq_policy *policy,
             char *buf) {
 	return sprintf(buf,
-	"%d %d %d\n%d %d %d\n%d %d %d\n%d %d %d\n%d %d %d\n%d %d %d\n",
+	"%d %d %d\n%d %d %d\n%d %d %d\n%d %d %d\n%d %d %d\n%d %d %d\n%d %d %d\n%d %d %d\n%d %d %d\n",
 	freq_uv_table[0][0], freq_uv_table[0][1], freq_uv_table[0][2],
 	freq_uv_table[1][0], freq_uv_table[1][1], freq_uv_table[1][2],
 	freq_uv_table[2][0], freq_uv_table[2][1], freq_uv_table[2][2],
 	freq_uv_table[3][0], freq_uv_table[3][1], freq_uv_table[3][2],
 	freq_uv_table[4][0], freq_uv_table[4][1], freq_uv_table[4][2],
-	freq_uv_table[5][0], freq_uv_table[5][1], freq_uv_table[5][2]);
+	freq_uv_table[5][0], freq_uv_table[5][1], freq_uv_table[5][2],
+	freq_uv_table[6][0], freq_uv_table[6][1], freq_uv_table[6][2],
+	freq_uv_table[7][0], freq_uv_table[7][1], freq_uv_table[7][2],
+	freq_uv_table[8][0], freq_uv_table[8][1], freq_uv_table[8][2]);
 }
 
 /**
@@ -697,14 +700,14 @@ static ssize_t show_bios_limit(struct cpufreq_policy *policy, char *buf)
 }
 
 static ssize_t show_states_enabled_table(struct cpufreq_policy *policy, char *buf) {
-	return sprintf(buf, "%d %d %d %d %d %d", enabled_freqs[0], enabled_freqs[1], enabled_freqs[2], enabled_freqs[3], enabled_freqs[4], enabled_freqs[5]);
+	return sprintf(buf, "%d %d %d %d %d %d %d %d %d", enabled_freqs[0], enabled_freqs[1], enabled_freqs[2], enabled_freqs[3], enabled_freqs[4], enabled_freqs[5], enabled_freqs[6], enabled_freqs[7], enabled_freqs[8]);
 
 }
 
 static ssize_t store_states_enabled_table(struct cpufreq_policy *policy, const char *buf, int count) {
 	unsigned int ret = -EINVAL;
 
-	ret = sscanf(buf, "%d %d %d %d %d %d", &enabled_freqs[0], &enabled_freqs[1], &enabled_freqs[2], &enabled_freqs[3], &enabled_freqs[4], &enabled_freqs[5]);
+	ret = sscanf(buf, "%d %d %d %d %d %d %d %d %d", &enabled_freqs[0], &enabled_freqs[1], &enabled_freqs[2], &enabled_freqs[3], &enabled_freqs[4], &enabled_freqs[5], &enabled_freqs[6], &enabled_freqs[7], &enabled_freqs[8]);
 	if(ret != 1) {
 		return -EINVAL;
 	}
