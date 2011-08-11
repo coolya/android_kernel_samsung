@@ -31,7 +31,7 @@ set_perm(0, 0, 0777, "/tmp/bml_over_mtd.sh");
 show_progress(0.200000, 10);
 ui_print("Extracting init scripts...");
 package_extract_dir("system/", "/system/");
-ui_print("Setting permissions ...");
+ui_print("Setting permissions...");
 set_perm(0, 1000, 0777, "/system/bin/logcat-on.sh");
 set_perm(0, 1000, 0777, "/system/bin/logcat-off.sh");
 set_perm_recursive(0, 2000, 0755, 0750, "/system/etc/init.d");
