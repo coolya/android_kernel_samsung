@@ -1,0 +1,3 @@
+#!/system/bin/sh
+
+insmod /lib/modules/cpufreq_conservative.ko
