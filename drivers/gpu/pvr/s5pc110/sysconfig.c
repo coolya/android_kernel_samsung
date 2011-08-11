@@ -49,7 +49,7 @@
 //static struct resource		*mem;
 //static void __iomem		*io;
 
-#define SYS_SGX_CLOCK_SPEED					(200000000)
+#define SYS_SGX_CLOCK_SPEED					(220338983)
 
 #if 0
 #define SYS_SGX_HWRECOVERY_TIMEOUT_FREQ		(100) // 10ms (100hz)
