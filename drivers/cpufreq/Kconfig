@@ -111,6 +111,13 @@ config CPU_FREQ_DEFAULT_GOV_CONSERVATIVE
 	  governor. If unsure have a look at the help section of the
 	  driver. Fallback governor will be the performance governor.
 
+config CPU_FREQ_DEFAULT_GOV_SMARTASS
+	bool "smartass"
+	select CPU_FREQ_GOV_SMARTASS
+	select CPU_FREQ_GOV_PERFORMANCE
+	help
+	 Use the 'smartass' governor as default.
+
 config CPU_FREQ_DEFAULT_GOV_INTERACTIVEX
   bool "interactiveX"
   select CPU_FREQ_GOV_INTERACTIVEX
@@ -181,6 +188,13 @@ config CPU_FREQ_GOV_INTERACTIVEX
   tristate "'interactiveX' cpufreq policy governor"
   help
     'interactiveX' - Modified version of interactive with sleep+wake code.
+
+config CPU_FREQ_GOV_SMARTASS
+	tristate "'smartass' cpufreq policy governor"
+	help
+	 'smartass' - This driver adds a dynamic cpufreq policy governor.
+	 Designed like 'interactive', but spend more time in the lower
+	 frequencies. More adapted to mobile devices.
 
 config CPU_FREQ_GOV_CONSERVATIVE
 	tristate "'conservative' cpufreq governor"
