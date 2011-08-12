@@ -46,7 +46,7 @@
 
 #define DEVICE_NAME "cypress-touchkey"
 
-int bl_on = 0;
+int bl_on = 1;
 struct cypress_touchkey_devdata *bl_devdata;
 static struct timer_list bl_timer;
 static void bl_off(struct work_struct *bl_off_work);
@@ -206,7 +206,9 @@ static irqreturn_t touchkey_interrupt_thread(int irq, void *touchkey_devdata)
 	}
 
 	input_sync(devdata->input_dev);
+#if 0
 	mod_timer(&bl_timer, jiffies + msecs_to_jiffies(BACKLIGHT_TIMEOUT));
+#endif
 err:
 	return IRQ_HANDLED;
 }
@@ -289,7 +291,9 @@ static void cypress_touchkey_early_resume(struct early_suspend *h)
 	enable_irq(devdata->client->irq);
 	devdata->is_powering_on = false;
 	devdata->is_sleeping = false;
+#if 0
 	mod_timer(&bl_timer, jiffies + msecs_to_jiffies(BACKLIGHT_TIMEOUT));
+#endif
 }
 #endif
 
@@ -484,7 +488,9 @@ static int __devexit i2c_touchkey_remove(struct i2c_client *client)
 	free_irq(client->irq, devdata);
 	all_keys_up(devdata);
 	input_unregister_device(devdata->input_dev);
+#if 0
 	del_timer(&bl_timer);
+#endif	
 	kfree(devdata);
 	return 0;
 }
