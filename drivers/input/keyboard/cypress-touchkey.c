@@ -46,7 +46,7 @@
 
 #define DEVICE_NAME "cypress-touchkey"
 
-int bl_on = 1;
+int bl_on = 0;
 struct cypress_touchkey_devdata *bl_devdata;
 static struct timer_list bl_timer;
 static void bl_off(struct work_struct *bl_off_work);
