@@ -298,8 +298,8 @@ s5p_gpio_drvstr_t s5p_gpio_get_drvstr(unsigned int pin)
 	reg = chip->base + 0x0C;
 
 	drvstr = __raw_readl(reg);
-	drvstr &= (0x3 << shift);
 	drvstr = drvstr >> shift;
+	drvstr &= 0x3;
 
 	return (__force s5p_gpio_drvstr_t)drvstr;
 }
