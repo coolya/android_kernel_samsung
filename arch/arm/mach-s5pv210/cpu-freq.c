@@ -510,7 +510,7 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 	static bool first_run = true;
 	int ret = 0;
 	unsigned long arm_clk;
-	unsigned int index, /*old_index, */reg, arm_volt, int_volt;
+	unsigned int index, old_index, reg, arm_volt, int_volt;
 	unsigned int pll_changing = 0;
 	unsigned int bus_speed_changing = 0;
 
@@ -569,8 +569,47 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 	if (s3c_freqs.freqs.new == s3c_freqs.freqs.old && !first_run)
 		goto out;
 
-#if 0
-#define SMOOTH_STEPS 1 /* So what ;-) */
+#define SMOOTH_STEPS 1
+#ifdef SMOOTH_STEPS
+  if (cpufreq_frequency_table_target(policy, freq_table,
+  s3c_freqs.freqs.old, relation, &old_index)) {
+	ret = -EINVAL;
+	goto out;
+
+	/* No direct jump to 1.44GHz */
+	if (index == L0) {
+	      if (old_index > L1)
+		index = L1;
+	      if (old_index > L2)
+		index = L2;
+	}
+	/* No direct jump to 1.4GHz */
+	if (index == L1) {
+	      if (old_index > L2)
+		index = L2;
+	      if (old_index > L3)
+		index = L3;
+	}
+	/* No direct jump to 1.3GHz */
+	if (index == L2) {
+	      if (old_index > L3)
+		index = L3;
+	      if (old_index > L4)
+		index = L4;
+	}
+	/* No direct jump to 1.2GHz */
+	if (index == L3) {
+	      if (old_index > L4)
+		index = L4;
+	      if (old_index > L5)
+		index = L5;
+	}
+	/* No direct jump to 1GHz, but being less harsh */
+	if (index == L4)
+	      if (old_index > L4)
+		index = L4;
+	}
+#endif
 #ifdef SMOOTH_STEPS
   if (cpufreq_frequency_table_target(policy, freq_table,
   s3c_freqs.freqs.old, relation, &old_index)) {
@@ -581,7 +620,7 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 
 /* No direct jump to low freq (under 1Ghz) and go _real_ smooth
 * this time [STEP_DN] */
-  if (index < L4) {
+  if (index < L5) {
 	if (old_index == L0)
           index = L1;
 	else if (old_index == L1)
@@ -590,8 +629,9 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
           index = L3;
 	else if (old_index == L3)
           index = L4;
+	else if (old_index == L4)
+	  index = L5;
      }
-#endif
 #endif
 //Subtract the voltage in the undervolt table before supplying it to the cpu
 //Got to multiply by 1000 to account for the conversion between SGS and NS
