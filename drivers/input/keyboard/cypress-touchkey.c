@@ -170,6 +170,9 @@ out:
 	return ret;
 }
 
+// Accidental touch key prevention (see mxt224.c)
+extern unsigned int touch_state_val;
+
 static irqreturn_t touchkey_interrupt_thread(int irq, void *touchkey_devdata)
 {
 	u8 data;
@@ -195,9 +198,15 @@ static irqreturn_t touchkey_interrupt_thread(int irq, void *touchkey_devdata)
 				"range\n", __func__);
 			goto err;
 		}
-		input_report_key(devdata->input_dev,
-			devdata->pdata->keycode[scancode],
-			!(data & UPDOWN_EVENT_MASK));
+
+		/* Don't send down event while the touch screen is being pressed
+		 * to prevent accidental touch key hit.
+		 */
+		if ((data & UPDOWN_EVENT_MASK) || !touch_state_val) {
+			input_report_key(devdata->input_dev,
+				devdata->pdata->keycode[scancode],
+				!(data & UPDOWN_EVENT_MASK));
+		}
 	} else {
 		for (i = 0; i < devdata->pdata->keycode_cnt; i++)
 			input_report_key(devdata->input_dev,
