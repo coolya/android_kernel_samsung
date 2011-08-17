@@ -772,7 +772,8 @@ static irqreturn_t max8998_int_work_func(int irq, void *max8998_chg)
 		pr_info("%s : pmic interrupt\n", __func__);
 		chg->set_batt_full = 1;
 		chg->bat_info.batt_is_full = true;
-        if (chg->bat_info.batt_soc > 0) {
+        if (chg->bat_info.batt_soc > 0 &&
+            chg->bat_info.batt_soc > chg->bat_info.batt_max_soc) {
             chg->bat_info.batt_max_soc = chg->bat_info.batt_soc;
             pr_info("%s : batt_max_soc=%d\n", __func__, chg->bat_info.batt_max_soc);
         }
