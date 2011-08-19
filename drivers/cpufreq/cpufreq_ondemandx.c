@@ -131,7 +131,7 @@ static void ondemandx_late_resume(struct early_suspend *handler) {
 static struct early_suspend ondemandx_power_suspend = {
         .suspend = ondemandx_early_suspend,
         .resume = ondemandx_late_resume,
-        .level = EARLY_SUSPEND_LEVEL_DISABLE_FB  1,
+        .level = EARLY_SUSPEND_LEVEL_DISABLE_FB + 1,
 };
 
 /*
