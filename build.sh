@@ -6,7 +6,7 @@ USAGE="Usage: Type './buildscript.sh captivate' to build TalonMTD for captivate,
 case $1 in
 	captivate)
 		make aries_captivatemtd_defconfig
-		export KBUILD_BUILD_VERSION="TalonMTD 0.0.1"
+		export KBUILD_BUILD_VERSION="TalonMTD 0.0.2"
 		make -j`grep 'processor' /proc/cpuinfo | wc -l`
 		initrd_files/mkshbootimg.py releasetools/boot.img arch/arm/boot/zImage initrd_files/ramdisk.img initrd_files/ramdisk-recovery.img
 		cp drivers/net/tun.ko releasetools/system/lib/modules/tun.ko
@@ -25,7 +25,7 @@ case $1 in
 		;;
 	galaxys)
 		make aries_galaxysmtd_defconfig
-		export KBUILD_BUILD_VERSION="TalonMTD 0.0.1"
+		export KBUILD_BUILD_VERSION="TalonMTD 0.0.2"
 		make -j`grep 'processor' /proc/cpuinfo | wc -l`
 		initrd_files/mkshbootimg.py releasetools/boot.img arch/arm/boot/zImage initrd_files/ramdisk.img initrd_files/ramdisk-recovery.img
 		cp drivers/net/tun.ko releasetools/system/lib/modules/tun.ko
@@ -44,7 +44,7 @@ case $1 in
 		;;
 	vibrant)
 		make aries_vibrantmtd_defconfig
-		export KBUILD_BUILD_VERSION="TalonMTD 0.0.1"
+		export KBUILD_BUILD_VERSION="TalonMTD 0.0.2"
 		make -j`grep 'processor' /proc/cpuinfo | wc -l`
 		initrd_files/mkshbootimg.py releasetools/boot.img arch/arm/boot/zImage initrd_files/ramdisk.img initrd_files/ramdisk-recovery.img
 		cp drivers/net/tun.ko releasetools/system/lib/modules/tun.ko
@@ -63,7 +63,7 @@ case $1 in
 		;;
 	galaxysb)
 		make aries_galaxysbmtd_defconfig
-		export KBUILD_BUILD_VERSION="TalonMTD 0.0.1"
+		export KBUILD_BUILD_VERSION="TalonMTD 0.0.2"
 		make -j`grep 'processor' /proc/cpuinfo | wc -l`
 		initrd_files/mkshbootimg.py releasetools/boot.img arch/arm/boot/zImage initrd_files/ramdisk.img initrd_files/ramdisk-recovery.img
 		cp drivers/net/tun.ko releasetools/system/lib/modules/tun.ko
@@ -82,7 +82,7 @@ case $1 in
 		;;
 	fascinate)
 		make aries_fascinatemtd_defconfig
-		export KBUILD_BUILD_VERSION="TalonMTD 0.0.1"
+		export KBUILD_BUILD_VERSION="TalonMTD 0.0.2"
 		make -j`grep 'processor' /proc/cpuinfo | wc -l`
 		initrd_files/mkshbootimg.py releasetools/boot.img arch/arm/boot/zImage initrd_files/ramdisk.img initrd_files/ramdisk-recovery.img
 		cp drivers/net/tun.ko releasetools/system/lib/modules/tun.ko
