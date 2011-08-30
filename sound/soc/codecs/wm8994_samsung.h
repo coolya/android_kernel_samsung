@@ -102,7 +102,13 @@ Codec Output Path BIT
 #define FMRADIO_HP		(0x01 << 1)
 #define FMRADIO_SPK		(0x01 << 2)
 #define FMRADIO_SPK_HP		(0x01 << 3)
+
+#ifdef CONFIG_PHONE_ARIES_CDMA
+#define PLAYBACK_GAIN_NUM 48
+#else
 #define PLAYBACK_GAIN_NUM 43
+#endif
+
 #define VOICECALL_GAIN_NUM 38
 #define RECORDING_GAIN_NUM 32
 #define GAIN_CODE_NUM 13
