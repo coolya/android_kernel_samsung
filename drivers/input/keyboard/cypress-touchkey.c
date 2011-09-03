@@ -215,9 +215,10 @@ static irqreturn_t touchkey_interrupt_thread(int irq, void *touchkey_devdata)
 	}
 
 	input_sync(devdata->input_dev);
-#if 0
+#ifdef CONFIG_SAMSUNG_CAPTIVATE
+#else
 	mod_timer(&bl_timer, jiffies + msecs_to_jiffies(BACKLIGHT_TIMEOUT));
-#endif
+#endif 
 err:
 	return IRQ_HANDLED;
 }
@@ -300,7 +301,8 @@ static void cypress_touchkey_early_resume(struct early_suspend *h)
 	enable_irq(devdata->client->irq);
 	devdata->is_powering_on = false;
 	devdata->is_sleeping = false;
-#if 0
+#ifdef CONFIG_SAMSUNG_CAPTIVATE
+#else
 	mod_timer(&bl_timer, jiffies + msecs_to_jiffies(BACKLIGHT_TIMEOUT));
 #endif
 }
@@ -497,7 +499,8 @@ static int __devexit i2c_touchkey_remove(struct i2c_client *client)
 	free_irq(client->irq, devdata);
 	all_keys_up(devdata);
 	input_unregister_device(devdata->input_dev);
-#if 0
+#ifdef CONFIG_SAMSUNG_CAPTIVATE
+#else
 	del_timer(&bl_timer);
 #endif	
 	kfree(devdata);
