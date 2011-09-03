@@ -1,8 +1,9 @@
 # Script written by Evan alias ytt3r to build TalonMTD more easily.
 # Parse command line options
-#/bin/bash
+#!/bin/bash
 
 USAGE="Usage: Type './buildscript.sh captivatemtd' to build TalonMTD for captivate, build other devices in this fashion."
+export CROSS_COMPILE="/opt/toolchains/arm-eabi-4.4.3/bin/arm-eabi-"
 case $1 in
 	captivatemtd)
 		make aries_captivatemtd_defconfig
