@@ -28,6 +28,7 @@
 #include <mach/cpu-freq-v210.h>
 #include <mach/regs-clock.h>
 #include <mach/regs-gpio.h>
+#include <mach/voltages.h>
 
 #include <plat/cpu-freq.h>
 #include <plat/pll.h>
@@ -102,45 +103,45 @@ static unsigned int g_dvfslockval[DVFS_LOCK_TOKEN_NUM];
 #endif
 
 
-const unsigned long arm_volt_max = 1500001;
-const unsigned long int_volt_max = 1250000;
+const unsigned long arm_volt_max = ARMVOLT;
+const unsigned long int_volt_max = INTVOLT;
 
 static struct s5pv210_dvs_conf dvs_conf[] = {
 	[L0] = {
-		.arm_volt   = 1475000,
-		.int_volt   = 1250000,
+		.arm_volt   = DVSARM1,
+		.int_volt   = DVSINT1,
 	},
 	[L1] = {
-		.arm_volt   = 1450000,
-		.int_volt   = 1250000,
+		.arm_volt   = DVSARM2,
+		.int_volt   = DVSINT1,
 	},
 	[L2] = {
-		.arm_volt   = 1400000,
-		.int_volt   = 1250000,
+		.arm_volt   = DVSARM3,
+		.int_volt   = DVSINT1,
 	},
 	[L3] = {
-		.arm_volt   = 1350000,
-		.int_volt   = 1100000,
+		.arm_volt   = DVSARM4,
+		.int_volt   = DVSINT2,
 	},
 	[L4] = {
-		.arm_volt   = 1250000,
-		.int_volt   = 1100000,
+		.arm_volt   = DVSARM5,
+		.int_volt   = DVSINT2,
 	},
 	[L5] = {
-		.arm_volt   = 1200000,
-		.int_volt   = 1100000,
+		.arm_volt   = DVSARM6,
+		.int_volt   = DVSINT2,
 	},
 	[L6] = {
-		.arm_volt   = 1050000,
-		.int_volt   = 1100000,
+		.arm_volt   = DVSARM7,
+		.int_volt   = DVSINT2,
 	},
 	[L7] = {
-		.arm_volt   = 950000,
-		.int_volt   = 1100000,
+		.arm_volt   = DVSARM8,
+		.int_volt   = DVSINT2,
 	},
 	[L8] = {
-		.arm_volt   = 950000,
-		.int_volt   = 1000000,
+		.arm_volt   = DVSARM8,
+		.int_volt   = DVSINT3,
 	},
 };
 
