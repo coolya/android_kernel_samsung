@@ -3234,17 +3234,14 @@ static int wm8994_i2c_probe(struct i2c_client *i2c,
 			pr_err("Failed to request EAR_SEL!\n");
 			goto err_earsel;
 		}
-#if defined(CONFIG_SAMSUNG_CAPTIVATE)
-		gpio_direction_output(pdata->ear_sel, 1);
-#else
 		gpio_direction_output(pdata->ear_sel, 0);
-#endif
-	}
-	if (!herring_is_cdma_wimax_dev() && !phone_is_aries_cdma()) {
-		s3c_gpio_setpull(pdata->ear_sel, S3C_GPIO_PULL_NONE);
 
-		s3c_gpio_slp_cfgpin(pdata->ear_sel, S3C_GPIO_SLP_PREV);
-		s3c_gpio_slp_setpull_updown(pdata->ear_sel, S3C_GPIO_PULL_NONE);
+		if (!herring_is_cdma_wimax_dev() && !phone_is_aries_cdma()) {
+			s3c_gpio_setpull(pdata->ear_sel, S3C_GPIO_PULL_NONE);
+
+			s3c_gpio_slp_cfgpin(pdata->ear_sel, S3C_GPIO_SLP_PREV);
+			s3c_gpio_slp_setpull_updown(pdata->ear_sel, S3C_GPIO_PULL_NONE);
+		}
 	}
 	wm8994_ldo_control(pdata, 1);
 
@@ -3266,7 +3263,8 @@ static int wm8994_i2c_probe(struct i2c_client *i2c,
 	return ret;
 
 err_init:
-	gpio_free(pdata->ear_sel);
+	if (gpio_is_valid(pdata->ear_sel))
+		gpio_free(pdata->ear_sel);
 err_earsel:
 	gpio_free(pdata->ldo);
 err_ldo:
@@ -3280,7 +3278,9 @@ static int wm8994_i2c_remove(struct i2c_client *client)
 	struct wm8994_priv *wm8994_priv = i2c_get_clientdata(client);
 
 	gpio_free(wm8994_priv->pdata->ldo);
-	gpio_free(wm8994_priv->pdata->ear_sel);
+
+	if (gpio_is_valid(wm8994_priv->pdata->ear_sel))
+		gpio_free(wm8994_priv->pdata->ear_sel);
 
 	kfree(wm8994_priv);
 	return 0;
