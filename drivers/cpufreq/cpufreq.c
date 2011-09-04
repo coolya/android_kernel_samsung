@@ -35,7 +35,7 @@
 int exp_UV_mV[9];
 extern unsigned int freq_uv_table[9][3];
 int enabled_freqs[9] = { 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-extern unsigned int gpu[6][2];
+extern unsigned int gpu[9][2];
 
 /**
  * The "cpufreq driver" - the arch- or hardware-dependent low
@@ -718,26 +718,32 @@ static ssize_t store_states_enabled_table(struct cpufreq_policy *policy, const c
 
 static ssize_t show_gpu_clock_table(struct cpufreq_policy *policy, char *buf) {
  
-  return sprintf(buf, "%d %d\n%d %d\n%d %d\n%d %d\n%d %d\n%d %d\n",
+  return sprintf(buf, "%d %d\n%d %d\n%d %d\n%d %d\n%d %d\n%d %d\n%d %d\n%d %d\n%d %d\n",
     gpu[0][0], gpu[0][1],
     gpu[1][0], gpu[1][1],
     gpu[2][0], gpu[2][1],
     gpu[3][0], gpu[3][1],
     gpu[4][0], gpu[4][1],
-    gpu[5][0], gpu[5][1]);
+    gpu[5][0], gpu[5][1],
+    gpu[6][0], gpu[6][1],
+    gpu[7][0], gpu[7][1],
+    gpu[8][0], gpu[8][1]);
 }
  	
 static ssize_t store_gpu_clock_table(struct cpufreq_policy *policy, const char *buf, int count) {
 	
   unsigned int ret = -EINVAL;
 
-  ret = sscanf(buf, "%d %d\n%d %d\n%d %d\n%d %d\n%d %d\n%d %d\n",
+  ret = sscanf(buf, "%d %d\n%d %d\n%d %d\n%d %d\n%d %d\n%d %d\n%d %d\n%d %d\n%d %d\n",
     &gpu[0][0], &gpu[0][1],
     &gpu[1][0], &gpu[1][1],
     &gpu[2][0], &gpu[2][1],
     &gpu[3][0], &gpu[3][1],
     &gpu[4][0], &gpu[4][1],
-    &gpu[5][0], &gpu[5][1]);
+    &gpu[5][0], &gpu[5][1],
+    &gpu[6][0], &gpu[6][1],
+    &gpu[7][0], &gpu[7][1],
+    &gpu[8][0], &gpu[8][1]);
 
   if(ret != -1)
     return -EINVAL;
