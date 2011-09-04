@@ -1176,7 +1176,9 @@ static int wm8994_earsel_control(struct wm8994_platform_data *pdata, int en)
 		return -EINVAL;
 	}
 
-	gpio_set_value(pdata->ear_sel, en);
+	if (pdata->ear_sel) {
+		gpio_set_value(pdata->ear_sel, en);
+	}
 
 	return 0;
 

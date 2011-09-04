@@ -1373,7 +1373,11 @@ static void sec_jack_set_micbias_state(bool on)
 
 static struct wm8994_platform_data wm8994_pdata = {
 	.ldo = GPIO_CODEC_LDO_EN,
-        .ear_sel = GPIO_EARPATH_SEL,
+#if defined(CONFIG_SAMSUNG_GALAXYS)
+	.ear_sel = 0,
+#else
+	.ear_sel = GPIO_EARPATH_SEL,
+#endif
 	.set_mic_bias = wm8994_set_mic_bias,
 };
 
