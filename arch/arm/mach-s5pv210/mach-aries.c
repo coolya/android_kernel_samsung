@@ -2756,9 +2756,9 @@ static struct sec_jack_buttons_zone sec_jack_buttons_zones[] = {
 	},
 #else
 	{
-		/* 300 <= adc <=1000, stable zone */
+		/* 0 <= adc <=1000, stable zone */
 		.code		= KEY_MEDIA,
-		.adc_low	= 300,
+		.adc_low	= 0,
 		.adc_high	= 1000,
 	},
 #endif
