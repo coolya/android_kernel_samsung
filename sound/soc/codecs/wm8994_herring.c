@@ -1176,7 +1176,10 @@ static int wm8994_earsel_control(struct wm8994_platform_data *pdata, int en)
 		return -EINVAL;
 	}
 
-	gpio_set_value(pdata->ear_sel, en);
+	// Don't set ear_sel on aries devices
+	if (gpio_is_valid(pdata->ear_sel)) {
+		gpio_set_value(pdata->ear_sel, en);
+	}
 
 	return 0;
 
@@ -1945,11 +1948,7 @@ void wm8994_set_playback_headset(struct snd_soc_codec *codec)
 
 	DEBUG_LOG("");
 
-#if defined(CONFIG_SAMSUNG_CAPTIVATE)
-	wm8994_earsel_control(wm8994->pdata, 1); //keep earsel enabled otherwise adc disappears and sendend button fails
-#else
 	wm8994_earsel_control(wm8994->pdata, 0);
-#endif
 
 	/* Enable the Timeslot0 to DAC1L */
 	val = wm8994_read(codec, WM8994_DAC1_LEFT_MIXER_ROUTING);

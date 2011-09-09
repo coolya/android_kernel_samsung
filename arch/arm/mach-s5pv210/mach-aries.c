@@ -1373,7 +1373,7 @@ static void sec_jack_set_micbias_state(bool on)
 
 static struct wm8994_platform_data wm8994_pdata = {
 	.ldo = GPIO_CODEC_LDO_EN,
-        .ear_sel = GPIO_EARPATH_SEL,
+	.ear_sel = -1,
 	.set_mic_bias = wm8994_set_mic_bias,
 };
 
@@ -2756,9 +2756,9 @@ static struct sec_jack_buttons_zone sec_jack_buttons_zones[] = {
 	},
 #else
 	{
-		/* 300 <= adc <=1000, stable zone */
+		/* 0 <= adc <=1000, stable zone */
 		.code		= KEY_MEDIA,
-		.adc_low	= 300,
+		.adc_low	= 0,
 		.adc_high	= 1000,
 	},
 #endif
