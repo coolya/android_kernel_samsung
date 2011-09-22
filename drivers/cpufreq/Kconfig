@@ -131,13 +131,6 @@ config CPU_FREQ_DEFAULT_GOV_SMARTASS
 	select CPU_FREQ_GOV_PERFORMANCE
 	help
 	 Use the 'smartass' governor as default.
-	  Use the CPUFreq governor 'smartass' as default.
-
-config CPU_FREQ_DEFAULT_GOV_SMARTASS2
-	bool "smartass2"
-	select CPU_FREQ_GOV_SMARTASS2
-	help
-	  Use the CPUFreq governor 'smartassV2' as default.
 
 config CPU_FREQ_DEFAULT_GOV_INTERACTIVEX
   bool "interactiveX"
@@ -253,26 +246,5 @@ config CPU_FREQ_GOV_CONSERVATIVE
 	  For details, take a look at linux/Documentation/cpu-freq.
 
 	  If in doubt, say N.
-
-config CPU_FREQ_GOV_SMARTASS2
-	tristate "'smartassV2' cpufreq governor"
-	depends on CPU_FREQ
-	help
-	  'smartassV2' - a "smart" optimized governor for the hero!
-
-	  If in doubt, say N.
-
-config CPU_FREQ_MIN_TICKS
-	int "Ticks between governor polling interval."
-	default 10
-	help
-	  Minimum number of ticks between polling interval for governors.
-
-config CPU_FREQ_SAMPLING_LATENCY_MULTIPLIER
-	int "Sampling rate multiplier for governors."
-	default 1000
-	help
-	  Sampling latency rate multiplied by the cpu switch latency.
-	  Affects governor polling.
 
 endif	# CPU_FREQ
