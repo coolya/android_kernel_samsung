@@ -11,6 +11,7 @@ if WIMAX
 menu "WiMAX Wireless Broadband devices"
 
 source "drivers/net/wimax/i2400m/Kconfig"
+source "drivers/net/wimax/cmc7xx/Kconfig"
 
 endmenu
 

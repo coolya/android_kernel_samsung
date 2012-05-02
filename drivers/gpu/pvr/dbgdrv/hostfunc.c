@@ -29,6 +29,7 @@
 #include <linux/module.h>
 #include <linux/fs.h>
 #include <linux/kernel.h>
+#include <linux/slab.h>
 #include <linux/mm.h>
 #include <linux/string.h>
 #include <asm/page.h>
@@ -54,7 +55,7 @@
 #include "hostfunc.h"
 #include "dbgdriv.h"
 
-#if defined(DEBUG) && !defined(SUPPORT_DRI_DRM)
+#if defined(MODULE) && defined(DEBUG) && !defined(SUPPORT_DRI_DRM)
 IMG_UINT32	gPVRDebugLevel = (DBGPRIV_FATAL | DBGPRIV_ERROR | DBGPRIV_WARNING);
 
 #define PVR_STRING_TERMINATOR		'\0'

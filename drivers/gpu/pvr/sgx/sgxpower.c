@@ -192,18 +192,14 @@ static IMG_VOID SGXPollForClockGating (PVRSRV_SGXDEV_INFO	*psDevInfo,
 
 	#if !defined(NO_HARDWARE)
 	PVR_ASSERT(psDevInfo != IMG_NULL);
-	/* 
+
+	 
 	if (PollForValueKM((IMG_UINT32 *)psDevInfo->pvRegsBaseKM + (ui32Register >> 2),
 						0,
 						ui32RegisterValue,
+						MAX_HW_TIME_US,
 						MAX_HW_TIME_US/WAIT_TRY_COUNT,
-						WAIT_TRY_COUNT) != PVRSRV_OK)
-	*/	
-	if (PollForValueKM((IMG_UINT32 *)psDevInfo->pvRegsBaseKM + (ui32Register >> 2),
-						0,
-						ui32RegisterValue,
-						1000,
-						500) != PVRSRV_OK)			// for using msleep
+						IMG_FALSE) != PVRSRV_OK)
 	{
 		PVR_DPF((PVR_DBG_ERROR,"SGXPollForClockGating: %s failed.", pszComment));
 		PVR_DBG_BREAK;
@@ -268,8 +264,9 @@ PVRSRV_ERROR SGXPrePowerState (IMG_HANDLE				hDevHandle,
 		if (PollForValueKM(&psDevInfo->psSGXHostCtl->ui32PowerStatus,
 							ui32CompleteStatus,
 							ui32CompleteStatus,
+							MAX_HW_TIME_US,
 							MAX_HW_TIME_US/WAIT_TRY_COUNT,
-							WAIT_TRY_COUNT) != PVRSRV_OK)
+							IMG_FALSE) != PVRSRV_OK)
 		{
 			PVR_DPF((PVR_DBG_ERROR,"SGXPrePowerState: Wait for SGX ukernel power transition failed."));
 			PVR_DBG_BREAK;

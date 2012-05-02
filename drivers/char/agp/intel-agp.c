@@ -12,6 +12,7 @@
 #include <asm/smp.h>
 #include "agp.h"
 #include "intel-agp.h"
+#include <linux/intel-gtt.h>
 
 #include "intel-gtt.c"
 
@@ -1047,6 +1048,7 @@ static struct pci_device_id agp_intel_pci_table[] = {
 	ID(PCI_DEVICE_ID_INTEL_G45_HB),
 	ID(PCI_DEVICE_ID_INTEL_G41_HB),
 	ID(PCI_DEVICE_ID_INTEL_B43_HB),
+	ID(PCI_DEVICE_ID_INTEL_B43_1_HB),
 	ID(PCI_DEVICE_ID_INTEL_IRONLAKE_D_HB),
 	ID(PCI_DEVICE_ID_INTEL_IRONLAKE_M_HB),
 	ID(PCI_DEVICE_ID_INTEL_IRONLAKE_MA_HB),

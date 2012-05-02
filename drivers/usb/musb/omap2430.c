@@ -323,8 +323,10 @@ static int musb_platform_resume(struct musb *musb)
 
 int musb_platform_exit(struct musb *musb)
 {
+	del_timer_sync(&musb_idle_timer);
 
 	musb_platform_suspend(musb);
 
+	otg_put_transceiver(musb->xceiv);
 	return 0;
 }

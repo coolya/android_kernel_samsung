@@ -25,6 +25,9 @@
 
 #include <linux/regulator/machine.h>
 
+#define MAX8998_N_DVSARM_REGS	4
+#define MAX8998_N_DVSINT_REGS	2
+
 /* MAX 8998 regulator ids */
 enum {
 	MAX8998_LDO2 = 2,
@@ -107,6 +110,11 @@ struct max8998_platform_data {
 	int				num_regulators;
 	struct max8998_regulator_data	*regulators;
 	struct max8998_charger_data	*charger;
+	int				buck1_preload[MAX8998_N_DVSARM_REGS];
+	int				buck2_preload[MAX8998_N_DVSINT_REGS];
+	int				set1_gpio;
+	int				set2_gpio;
+	int				set3_gpio;
 };
 
 #endif /*  __LINUX_MFD_MAX8998_H */

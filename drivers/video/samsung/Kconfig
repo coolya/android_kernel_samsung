@@ -94,6 +94,21 @@ config FB_S3C_TL2796
         ---help---
           This enables support for Samsung TL2796 WVGA LCD panel
 
+config FB_VOODOO
+        bool "Voodoo Color"
+        depends on FB_S3C_TL2796
+        default y
+        ---help---
+          This enables support Voodoo color mods
+ 	
+config FB_VOODOO_DEBUG_LOG
+        bool "Verbose Super AMOLED driver logs"
+        depends on FB_VOODOO
+        default n
+        ---help---
+          Logging for developers
+          Super AMOLED hardware command decoding and driver calculations
+
 config FB_S3C_LVDS
 	bool "LVDS"
 	depends on FB_S3C && (ARCH_S5PV210)

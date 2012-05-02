@@ -49,6 +49,9 @@
 #include <plat/media.h>
 #include <mach/media.h>
 #include <plat/mfc.h>
+#ifdef CONFIG_DVFS_LIMIT
+#include <mach/cpu-freq-v210.h>
+#endif
 
 #include "mfc_interface.h"
 #include "mfc_logmsg.h"
@@ -81,6 +84,9 @@ static int mfc_open(struct inode *inode, struct file *file)
 			goto err_open;
 		}
 
+#ifdef CONFIG_DVFS_LIMIT
+		s5pv210_lock_dvfs_high_level(DVFS_LOCK_TOKEN_1, L5);
+#endif
 		clk_enable(mfc_sclk);
 
 		mfc_load_firmware(mfc_fw_info->data, mfc_fw_info->size);
@@ -133,6 +139,9 @@ err_mem_inst:
 	kfree(mfc_ctx);
 err_regulator:
 	if (!mfc_is_running()) {
+#ifdef CONFIG_DVFS_LIMIT
+		s5pv210_unlock_dvfs_high_level(DVFS_LOCK_TOKEN_1);
+#endif
 		/* Turn off mfc power domain regulator */
 		ret = regulator_disable(mfc_pd_regulator);
 		if (ret < 0)
@@ -174,16 +183,17 @@ static int mfc_release(struct inode *inode, struct file *file)
 
 	ret = 0;
 
+out_release:
 	if (!mfc_is_running()) {
+#ifdef CONFIG_DVFS_LIMIT
+		s5pv210_unlock_dvfs_high_level(DVFS_LOCK_TOKEN_1);
+#endif
 		/* Turn off mfc power domain regulator */
 		ret = regulator_disable(mfc_pd_regulator);
 		if (ret < 0) {
 			mfc_err("MFC_RET_POWER_DISABLE_FAIL\n");
-			goto out_release;
 		}
 	}
-
-out_release:
 
 	mutex_unlock(&mfc_mutex);
 	return ret;

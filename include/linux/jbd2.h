@@ -94,7 +94,7 @@ extern void jbd2_free(void *ptr, size_t size);
  *
  * This is an opaque datatype.
  **/
-typedef struct handle_s		handle_t;	/* Atomic operation type */
+typedef struct jbd2_journal_handle handle_t;	/* Atomic operation type */
 
 
 /**
@@ -416,7 +416,7 @@ struct jbd2_revoke_table_s;
  * in so it can be fixed later.
  */
 
-struct handle_s
+struct jbd2_journal_handle
 {
 	/* Which compound transaction is this update a part of? */
 	transaction_t		*h_transaction;
@@ -1082,7 +1082,9 @@ static inline handle_t *journal_current_handle(void)
  */
 
 extern handle_t *jbd2_journal_start(journal_t *, int nblocks);
-extern int	 jbd2_journal_restart (handle_t *, int nblocks);
+extern handle_t *jbd2__journal_start(journal_t *, int nblocks, int gfp_mask);
+extern int	 jbd2_journal_restart(handle_t *, int nblocks);
+extern int	 jbd2__journal_restart(handle_t *, int nblocks, int gfp_mask);
 extern int	 jbd2_journal_extend (handle_t *, int nblocks);
 extern int	 jbd2_journal_get_write_access(handle_t *, struct buffer_head *);
 extern int	 jbd2_journal_get_create_access (handle_t *, struct buffer_head *);
@@ -1154,6 +1156,22 @@ static inline handle_t *jbd2_alloc_handle(gfp_t gfp_flags)
 static inline void jbd2_free_handle(handle_t *handle)
 {
 	kmem_cache_free(jbd2_handle_cache, handle);
+}
+
+/*
+ * jbd2_inode management (optional, for those file systems that want to use
+ * dynamically allocated jbd2_inode structures)
+ */
+extern struct kmem_cache *jbd2_inode_cache;
+
+static inline struct jbd2_inode *jbd2_alloc_inode(gfp_t gfp_flags)
+{
+	return kmem_cache_alloc(jbd2_inode_cache, gfp_flags);
+}
+
+static inline void jbd2_free_inode(struct jbd2_inode *jinode)
+{
+	kmem_cache_free(jbd2_inode_cache, jinode);
 }
 
 /* Primary revoke support */

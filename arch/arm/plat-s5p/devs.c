@@ -42,11 +42,15 @@
 
 /* Android Gadget */
 #include <linux/usb/android_composite.h>
+#include <linux/usb/f_accessory.h>
+
 #define S3C_VENDOR_ID			0x18d1
 #define S3C_UMS_PRODUCT_ID		0x4E21
 #define S3C_UMS_ADB_PRODUCT_ID		0x4E22
 #define S3C_RNDIS_PRODUCT_ID		0x4E23
 #define S3C_RNDIS_ADB_PRODUCT_ID	0x4E24
+#define S3C_RNDIS_UMS_ADB_PRODUCT_ID	0x4E25
+
 #define MAX_USB_SERIAL_NUM	17
 
 static char *usb_functions_ums[] = {
@@ -65,11 +69,32 @@ static char *usb_functions_ums_adb[] = {
 	"usb_mass_storage",
 	"adb",
 };
-
-static char *usb_functions_all[] = {
-	"rndis",
-	"usb_mass_storage",
+static char *usb_functions_accessory[] = {
+	"accessory",
+};
+static char *usb_functions_accessory_adb[] = {
+	"accessory",
 	"adb",
+};
+static char *usb_functions_all[] = {
+#ifdef CONFIG_USB_ANDROID_RNDIS
+	"rndis",
+#endif
+#ifdef CONFIG_USB_ACCESSORY
+	"accessory",
+#endif
+#ifdef CONFIG_USB_ANDROID_MASS_STORAGE
+	"usb_mass_storage",
+#endif
+#ifdef CONFIG_USB_ANDROID_ADB
+	"adb",
+#endif
+#ifdef CONFIG_USB_ANDROID_MTP
+    "mtp",
+#endif
+#ifdef CONFIG_USB_ANDROID_ACM
+    "acm",
+#endif
 };
 static struct android_usb_product usb_products[] = {
 	{
@@ -92,6 +117,18 @@ static struct android_usb_product usb_products[] = {
 		.num_functions	= ARRAY_SIZE(usb_functions_rndis_adb),
 		.functions	= usb_functions_rndis_adb,
 	},
+	{
+		.vendor_id	= USB_ACCESSORY_VENDOR_ID,
+		.product_id	= USB_ACCESSORY_PRODUCT_ID,
+		.num_functions	= ARRAY_SIZE(usb_functions_accessory),
+		.functions	= usb_functions_accessory,
+	},
+	{
+		.vendor_id	= USB_ACCESSORY_VENDOR_ID,
+		.product_id	= USB_ACCESSORY_ADB_PRODUCT_ID,
+		.num_functions	= ARRAY_SIZE(usb_functions_accessory_adb),
+		.functions	= usb_functions_accessory_adb,
+	},
 };
 
 static char device_serial[MAX_USB_SERIAL_NUM] = "0123456789ABCDEF";
@@ -102,7 +139,17 @@ static struct android_usb_platform_data android_usb_pdata = {
 	.vendor_id		= S3C_VENDOR_ID,
 	.product_id		= S3C_UMS_PRODUCT_ID,
 	.manufacturer_name	= "Samsung",
+#if defined(CONFIG_SAMSUNG_GALAXYS) || defined(CONFIG_SAMSUNG_GALAXYSB)
+	.product_name		= "Galaxy S",
+#elif defined(CONFIG_SAMSUNG_CAPTIVATE)
+	.product_name		= "Captivate",
+#elif defined(CONFIG_SAMSUNG_VIBRANT)
+	.product_name		= "Vibrant",
+#elif defined(CONFIG_SAMSUNG_FASCINATE)
+	.product_name		= "Fascinate",
+#else
 	.product_name		= "Nexus S",
+#endif
 	.serial_number		= device_serial,
 	.num_products		= ARRAY_SIZE(usb_products),
 	.products		= usb_products,
@@ -157,7 +204,7 @@ static struct usb_mass_storage_platform_data ums_pdata = {
 	.vendor			= "Android",
 	.product		= "UMS Composite",
 	.release		= 1,
-#if defined(CONFIG_SAMSUNG_GALAXYS)
+#if defined(CONFIG_MACH_ARIES) && !defined(CONFIG_SAMSUNG_FASCINATE)
 	.nluns			= 2,
 #else
 	.nluns			= 1,

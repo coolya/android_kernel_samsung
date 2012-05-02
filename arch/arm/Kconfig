@@ -273,7 +273,6 @@ config ARCH_AT91
 	bool "Atmel AT91"
 	select ARCH_REQUIRE_GPIOLIB
 	select HAVE_CLK
-	select ARCH_USES_GETTIMEOFFSET
 	help
 	  This enables support for systems based on the Atmel AT91RM9200,
 	  AT91SAM9 and AT91CAP9 processors.
@@ -1198,8 +1197,8 @@ source kernel/Kconfig.preempt
 config HZ
 	int
 	default 128 if ARCH_L7200
-	default 256 if S5P_HIGH_RES_TIMERS
-	default 200 if ARCH_EBSA110 || ARCH_S3C2410 || ARCH_S5P6440 || ARCH_S5P6442 || ARCH_S5PV210
+	default 250 if S5P_HIGH_RES_TIMERS
+	default 250 if ARCH_EBSA110 || ARCH_S3C2410 || ARCH_S5P6440 || ARCH_S5P6442 || ARCH_S5PV210
 	default OMAP_32K_TIMER_HZ if ARCH_OMAP && OMAP_32K_TIMER
 	default AT91_TIMER_HZ if ARCH_AT91
 	default 100
@@ -1371,6 +1370,17 @@ config ALIGNMENT_TRAP
 	  here, which has a severe performance impact. This is necessary for
 	  correct operation of some network protocols. With an IP-only
 	  configuration it is safe to say N, otherwise say Y.
+
+config ALLOW_CPU_ALIGNMENT
+	bool "Allow CPU-based alignment handling"
+	default y if ARCH_MSM_SCORPION || ARCH_MSM_SCORPIONMP
+	help
+	  Advanced ARM processors, such as the Cortex series and ARMv7-based	
+          CPUS are capable of performing unaligned accesses for many types of
+          memory accesses.  Typically, using a cpu-based alignment fixup is
+          faster than doing such a fixup in software.  For best performance
+          on advanced CPUs, say Y here.
+
 
 config UACCESS_WITH_MEMCPY
 	bool "Use kernel mem{cpy,set}() for {copy_to,clear}_user() (EXPERIMENTAL)"

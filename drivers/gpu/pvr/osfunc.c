@@ -132,7 +132,16 @@ PVRSRV_ERROR OSAllocMem_Impl(IMG_UINT32 ui32Flags, IMG_UINT32 ui32Size, IMG_PVOI
     return PVRSRV_OK;
 }
 
-	
+#if (LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,24))
+
+static inline int is_vmalloc_addr(const void *pvCpuVAddr)
+{
+	unsigned long lAddr = (unsigned long)pvCpuVAddr;
+	return lAddr >= VMALLOC_START && lAddr < VMALLOC_END;
+}
+
+#endif 
+
 #if !defined(DEBUG_LINUX_MEMORY_ALLOCATIONS)
 PVRSRV_ERROR OSFreeMem_Impl(IMG_UINT32 ui32Flags, IMG_UINT32 ui32Size, IMG_PVOID pvCpuVAddr, IMG_HANDLE hBlockAlloc)
 #else
@@ -512,7 +521,6 @@ IMG_UINT32 OSClockus(IMG_VOID)
 }
 
 
- 
 IMG_VOID OSWaitus(IMG_UINT32 ui32Timeus)
 {
 
@@ -521,6 +529,12 @@ IMG_VOID OSWaitus(IMG_UINT32 ui32Timeus)
 		
 	if( (ui32Timeus%1000) > 0 )
 		udelay(ui32Timeus%1000);	// us	
+}
+
+
+IMG_VOID OSSleepms(IMG_UINT32 ui32Timems)
+{
+    msleep(ui32Timems);
 }
 
 
@@ -2691,16 +2705,38 @@ IMG_BOOL CheckExecuteCacheOp(IMG_HANDLE hOSMemHandle,
 	{
 		case LINUX_MEM_AREA_VMALLOC:
 		{
-			pvMinVAddr = psLinuxMemArea->uData.sVmalloc.pvVmallocAddress + ui32AreaOffset;
+			if(is_vmalloc_addr(pvRangeAddrStart))
+			{
+				pvMinVAddr = psLinuxMemArea->uData.sVmalloc.pvVmallocAddress + ui32AreaOffset;
 
-			
-			if(pvRangeAddrStart < pvMinVAddr &&
-			   ui32AreaOffset + ui32Length > ui32AreaLength)
-				goto err_blocked;
+				
+				if(pvRangeAddrStart < pvMinVAddr)
+					goto err_blocked;
+
+				pfnInnerCacheOp(pvRangeAddrStart, pvRangeAddrStart + ui32Length);
+			}
+			else
+			{
+				
+				
+
+				pvMinVAddr = FindMMapBaseVAddr(psMMapOffsetStructList,
+											   pvRangeAddrStart, ui32Length);
+				if(!pvMinVAddr)
+					goto err_blocked;
+
+				pfnInnerCacheOp(pvRangeAddrStart, pvRangeAddrStart + ui32Length);
 
 #if defined(CONFIG_OUTER_CACHE)
+				
+				pvRangeAddrStart = psLinuxMemArea->uData.sVmalloc.pvVmallocAddress +
+								   (ui32AreaOffset & PAGE_MASK) + (pvRangeAddrStart - pvMinVAddr);
+			}
+
 			pfnMemAreaToPhys = VMallocAreaToPhys;
-#endif
+#else 
+			}
+#endif 
 			break;
 		}
 
@@ -2729,6 +2765,8 @@ IMG_BOOL CheckExecuteCacheOp(IMG_HANDLE hOSMemHandle,
 			if(!pvMinVAddr)
 				goto err_blocked;
 
+			pfnInnerCacheOp(pvRangeAddrStart, pvRangeAddrStart + ui32Length);
+
 #if defined(CONFIG_OUTER_CACHE)
 			ui32PageNumOffset = ((ui32AreaOffset & PAGE_MASK) + (pvRangeAddrStart - pvMinVAddr)) >> PAGE_SHIFT;
 			pfnMemAreaToPhys = ExternalKVAreaToPhys;
@@ -2743,6 +2781,8 @@ IMG_BOOL CheckExecuteCacheOp(IMG_HANDLE hOSMemHandle,
 			if(!pvMinVAddr)
 				goto err_blocked;
 
+			pfnInnerCacheOp(pvRangeAddrStart, pvRangeAddrStart + ui32Length);
+
 #if defined(CONFIG_OUTER_CACHE)
 			ui32PageNumOffset = ((ui32AreaOffset & PAGE_MASK) + (pvRangeAddrStart - pvMinVAddr)) >> PAGE_SHIFT;
 			pfnMemAreaToPhys = AllocPagesAreaToPhys;
@@ -2754,12 +2794,10 @@ IMG_BOOL CheckExecuteCacheOp(IMG_HANDLE hOSMemHandle,
 			PVR_DBG_BREAK;
 	}
 
-	
-	pfnInnerCacheOp(pvRangeAddrStart, pvRangeAddrStart + ui32Length);
-
 #if defined(CONFIG_OUTER_CACHE)
+	PVR_ASSERT(pfnMemAreaToPhys != IMG_NULL);
+
 	
-	if (pfnMemAreaToPhys != IMG_NULL)
 	{
 		unsigned long ulStart, ulEnd, ulLength, ulStartOffset, ulEndOffset;
 		IMG_UINT32 i, ui32NumPages;
@@ -2787,10 +2825,6 @@ IMG_BOOL CheckExecuteCacheOp(IMG_HANDLE hOSMemHandle,
 			pfnOuterCacheOp(ulStart, ulEnd);
 		}
 	}
-	else
-	{
-		PVR_DBG_BREAK;
-	}
 #endif
 
 	return IMG_TRUE;
@@ -2802,7 +2836,8 @@ err_blocked:
 			 psLinuxMemArea->eAreaType));
 	return IMG_FALSE;
 }
-#endif 
+
+#endif
 
 #if defined(__i386__)
 
@@ -2942,7 +2977,6 @@ IMG_BOOL OSInvalidateCPUCacheRangeKM(IMG_HANDLE hOSMemHandle,
 #else 
 
 #if defined(__mips__)
-
 IMG_VOID OSCleanCPUCacheKM(IMG_VOID)
 {
 	
@@ -2979,8 +3013,7 @@ IMG_BOOL OSInvalidateCPUCacheRangeKM(IMG_HANDLE hOSMemHandle,
 	return IMG_TRUE;
 }
 
-
-#else
+#else 
 
 #error "Implement CPU cache flush/clean/invalidate primitives for this CPU!"
 

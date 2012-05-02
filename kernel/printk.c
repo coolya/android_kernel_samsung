@@ -666,6 +666,7 @@ static int have_callable_console(void)
 
 asmlinkage int printk(const char *fmt, ...)
 {
+#ifndef CONFIG_DISABLE_PRINTK
 	va_list args;
 	int r;
 
@@ -682,6 +683,9 @@ asmlinkage int printk(const char *fmt, ...)
 	va_end(args);
 
 	return r;
+#else
+	return 0;
+#endif //disable printk
 }
 
 /* cpu currently holding logbuf_lock */
@@ -755,6 +759,7 @@ static inline void printk_delay(void)
 
 asmlinkage int vprintk(const char *fmt, va_list args)
 {
+#ifndef CONFIG_DISABLE_PRINTK
 	int printed_len = 0;
 	int current_log_level = default_message_loglevel;
 	unsigned long flags;
@@ -886,6 +891,9 @@ out_restore_irqs:
 
 	preempt_enable();
 	return printed_len;
+#else
+	return 0;
+#endif //Disable printk
 }
 EXPORT_SYMBOL(printk);
 EXPORT_SYMBOL(vprintk);
@@ -1103,13 +1111,15 @@ void printk_tick(void)
 
 int printk_needs_cpu(int cpu)
 {
+	if (unlikely(cpu_is_offline(cpu)))
+		printk_tick();
 	return per_cpu(printk_pending, cpu);
 }
 
 void wake_up_klogd(void)
 {
 	if (waitqueue_active(&log_wait))
-		__raw_get_cpu_var(printk_pending) = 1;
+		this_cpu_write(printk_pending, 1);
 }
 
 /**

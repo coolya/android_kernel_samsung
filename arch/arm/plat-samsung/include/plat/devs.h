@@ -137,6 +137,8 @@ extern struct platform_device s5pv210_device_pdma0;
 extern struct platform_device s5pv210_device_pdma1;
 extern struct platform_device s5pv210_device_mdma;
 
+extern struct platform_device s5pv210_device_cpufreq;
+
 #ifdef CONFIG_CPU_S3C2440
 
 extern struct platform_device s3c_device_camif;

@@ -354,29 +354,6 @@ config SENSORS_YAMAHA_MS3C
 	  If you say yes here you get support for Yamaha's
 	  magnetic sensor MS3C.
 	  
-	  
-config INPUT_YAS529
-        tristate "Yamaha YAS529 Geomagnetic Sensor"
-        depends on I2C
-
-config INPUT_YAS529_POSITION
-        int "YAS529 Mounting Position on Board"
-        depends on INPUT_YAS529
-        default "0"
-        help
-          Chip mounting position (pin 1).
-            0: top, upper-left
-            1: top, upper-right
-            2: top, lower-right
-            3: top, lower-left
-            4: bottom, upper-left
-            5: bottom, upper-right
-            6: bottom, lower-right
-            7: bottom, lower-left
-
-config INPUT_ORIENTATION
-        tristate "Yamaha Orientation Sensor"
-        depends on I2C
 
 config SENSORS_KR3DM
 	tristate "KR3DM acceleration sensor support"

@@ -61,7 +61,7 @@ struct mtd_partition s3c_partition_info[] = {
 	           able to change the other partition layout without moving it */
 		.name		= "radio",
 		.offset		= (1940*SZ_256K),
-		.size		= (54*SZ_256K), //1993
+		.size		= (64*SZ_256K), //2003
 	},
 	{
 		.name		= "datadata",

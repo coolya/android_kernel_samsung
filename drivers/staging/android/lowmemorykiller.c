@@ -53,6 +53,7 @@ static size_t lowmem_minfree[6] = {
 static int lowmem_minfree_size = 4;
 
 static struct task_struct *lowmem_deathpending;
+static unsigned long lowmem_deathpending_timeout;
 
 #define lowmem_print(level, x...)			\
 	do {						\
@@ -71,10 +72,10 @@ static int
 task_notify_func(struct notifier_block *self, unsigned long val, void *data)
 {
 	struct task_struct *task = data;
-	if (task == lowmem_deathpending) {
+
+	if (task == lowmem_deathpending)
 		lowmem_deathpending = NULL;
-		task_free_unregister(&task_nb);
-	}
+
 	return NOTIFY_OK;
 }
 
@@ -86,11 +87,14 @@ static int lowmem_shrink(struct shrinker *s, int nr_to_scan, gfp_t gfp_mask)
 	int tasksize;
 	int i;
 	int min_adj = OOM_ADJUST_MAX + 1;
+	int target_free = 0;
 	int selected_tasksize = 0;
+	int selected_target_offset;
 	int selected_oom_adj;
 	int array_size = ARRAY_SIZE(lowmem_adj);
 	int other_free = global_page_state(NR_FREE_PAGES);
-	int other_file = global_page_state(NR_FILE_PAGES);
+	int other_file = global_page_state(NR_FILE_PAGES) -
+						global_page_state(NR_SHMEM);
 
 	/*
 	 * If we already have a death outstanding, then
@@ -99,7 +103,8 @@ static int lowmem_shrink(struct shrinker *s, int nr_to_scan, gfp_t gfp_mask)
 	 * this pass.
 	 *
 	 */
-	if (lowmem_deathpending)
+	if (lowmem_deathpending &&
+	    time_before_eq(jiffies, lowmem_deathpending_timeout))
 		return 0;
 
 	if (lowmem_adj_size < array_size)
@@ -133,6 +138,7 @@ static int lowmem_shrink(struct shrinker *s, int nr_to_scan, gfp_t gfp_mask)
 		struct mm_struct *mm;
 		struct signal_struct *sig;
 		int oom_adj;
+		int target_offset;
 
 		task_lock(p);
 		mm = p->mm;
@@ -150,15 +156,17 @@ static int lowmem_shrink(struct shrinker *s, int nr_to_scan, gfp_t gfp_mask)
 		task_unlock(p);
 		if (tasksize <= 0)
 			continue;
+		target_offset = abs(target_free - tasksize);
 		if (selected) {
 			if (oom_adj < selected_oom_adj)
 				continue;
 			if (oom_adj == selected_oom_adj &&
-			    tasksize <= selected_tasksize)
+			    target_offset >= selected_target_offset)
 				continue;
 		}
 		selected = p;
 		selected_tasksize = tasksize;
+		selected_target_offset = target_offset;
 		selected_oom_adj = oom_adj;
 		lowmem_print(2, "select %d (%s), adj %d, size %d, to kill\n",
 			     p->pid, p->comm, oom_adj, tasksize);
@@ -168,7 +176,7 @@ static int lowmem_shrink(struct shrinker *s, int nr_to_scan, gfp_t gfp_mask)
 			     selected->pid, selected->comm,
 			     selected_oom_adj, selected_tasksize);
 		lowmem_deathpending = selected;
-		task_free_register(&task_nb);
+		lowmem_deathpending_timeout = jiffies + HZ;
 		force_sig(SIGKILL, selected);
 		rem -= selected_tasksize;
 	}
@@ -185,6 +193,7 @@ static struct shrinker lowmem_shrinker = {
 
 static int __init lowmem_init(void)
 {
+	task_free_register(&task_nb);
 	register_shrinker(&lowmem_shrinker);
 	return 0;
 }
@@ -192,6 +201,7 @@ static int __init lowmem_init(void)
 static void __exit lowmem_exit(void)
 {
 	unregister_shrinker(&lowmem_shrinker);
+	task_free_unregister(&task_nb);
 }
 
 module_param_named(cost, lowmem_shrinker.seeks, int, S_IRUGO | S_IWUSR);

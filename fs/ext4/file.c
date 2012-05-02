@@ -70,7 +70,8 @@ ext4_file_write(struct kiocb *iocb, const struct iovec *iov,
 		struct ext4_sb_info *sbi = EXT4_SB(inode->i_sb);
 		size_t length = iov_length(iov, nr_segs);
 
-		if (pos > sbi->s_bitmap_maxbytes)
+		if ((pos > sbi->s_bitmap_maxbytes ||
+		    (pos == sbi->s_bitmap_maxbytes && length > 0)))
 			return -EFBIG;
 
 		if (pos + length > sbi->s_bitmap_maxbytes) {
@@ -103,6 +104,7 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 {
 	struct super_block *sb = inode->i_sb;
 	struct ext4_sb_info *sbi = EXT4_SB(inode->i_sb);
+	struct ext4_inode_info *ei = EXT4_I(inode);
 	struct vfsmount *mnt = filp->f_path.mnt;
 	struct path path;
 	char buf[64], *cp;
@@ -123,8 +125,29 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 		if (!IS_ERR(cp)) {
 			memcpy(sbi->s_es->s_last_mounted, cp,
 			       sizeof(sbi->s_es->s_last_mounted));
-			sb->s_dirt = 1;
+			ext4_mark_super_dirty(sb);
 		}
+	}
+	/*
+	 * Set up the jbd2_inode if we are opening the inode for
+	 * writing and the journal is present
+	 */
+	if (sbi->s_journal && !ei->jinode && (filp->f_mode & FMODE_WRITE)) {
+		struct jbd2_inode *jinode = jbd2_alloc_inode(GFP_KERNEL);
+
+		spin_lock(&inode->i_lock);
+		if (!ei->jinode) {
+			if (!jinode) {
+				spin_unlock(&inode->i_lock);
+				return -ENOMEM;
+			}
+			ei->jinode = jinode;
+			jbd2_journal_init_jbd_inode(ei->jinode, inode);
+			jinode = NULL;
+		}
+		spin_unlock(&inode->i_lock);
+		if (unlikely(jinode != NULL))
+			jbd2_free_inode(jinode);
 	}
 	return dquot_file_open(inode, filp);
 }

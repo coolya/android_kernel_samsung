@@ -634,6 +634,7 @@ struct s5k4ecgx_state {
 	int check_dataline;
 	int check_previewdata;
 	bool flash_on;
+	bool torch_on;
 	bool sensor_af_in_low_light_mode;
 	bool flash_state_on_previous_capture;
 	bool initialized;
@@ -1679,9 +1680,9 @@ static void s5k4ecgx_enable_torch(struct v4l2_subdev *sd)
 		container_of(sd, struct s5k4ecgx_state, sd);
 	struct s5k4ecgx_platform_data *pdata = client->dev.platform_data;
 
-	s5k4ecgx_set_from_table(sd, "flash start",
+	s5k4ecgx_set_from_table(sd, "torch start",
 				&state->regs->flash_start, 1, 0);
-	state->flash_on = true;
+	state->torch_on = true;
 	pdata->torch_onoff(1);
 }
 
@@ -1692,10 +1693,10 @@ static void s5k4ecgx_disable_torch(struct v4l2_subdev *sd)
 		container_of(sd, struct s5k4ecgx_state, sd);
 	struct s5k4ecgx_platform_data *pdata = client->dev.platform_data;
 
-	if (state->flash_on) {
-		state->flash_on = false;
+	if (state->torch_on) {
+		state->torch_on = false;
 		pdata->torch_onoff(0);
-		s5k4ecgx_set_from_table(sd, "flash end",
+		s5k4ecgx_set_from_table(sd, "torch end",
 					&state->regs->flash_end, 1, 0);
 	}
 }
@@ -1986,7 +1987,7 @@ static int s5k4ecgx_get_iso(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	/* restore write mode */
 	s5k4ecgx_i2c_write_twobyte(client, 0x0028, 0x7000);
 
-	read_value = read_value1 * read_value2 / 0x100 / 2;
+	read_value = read_value1 * read_value2 / 384;
 
 	if (read_value > 0x400)
 		ctrl->value = ISO_400;
@@ -2010,16 +2011,20 @@ static int s5k4ecgx_get_shutterspeed(struct v4l2_subdev *sd,
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	struct s5k4ecgx_state *state =
 		container_of(sd, struct s5k4ecgx_state, sd);
-	u16 read_value = 0;
+	u16 read_value_1;
+	u16 read_value_2;
+	u32 read_value;
 
 	err = s5k4ecgx_set_from_table(sd, "get shutterspeed",
 				&state->regs->get_shutterspeed, 1, 0);
-	err |= s5k4ecgx_i2c_read_twobyte(client, 0x0F12, &read_value);
+	err |= s5k4ecgx_i2c_read_twobyte(client, 0x0F12, &read_value_1);
+	err |= s5k4ecgx_i2c_read_twobyte(client, 0x0F12, &read_value_2);
 
+	read_value = (read_value_2 << 16) | (read_value_1 & 0xffff);
 	/* restore write mode */
 	s5k4ecgx_i2c_write_twobyte(client, 0x0028, 0x7000);
 
-	ctrl->value = read_value / 400;
+	ctrl->value = read_value * 1000 / 400;
 	dev_dbg(&client->dev,
 			"%s: get shutterspeed == %d\n", __func__, ctrl->value);
 

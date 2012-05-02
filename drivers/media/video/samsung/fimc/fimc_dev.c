@@ -38,6 +38,8 @@
 
 #include "fimc.h"
 
+#define CLEAR_FIMC2_BUFF
+
 struct fimc_global *fimc_dev;
 
 int fimc_dma_alloc(struct fimc_control *ctrl, struct fimc_buf_set *bs,
@@ -623,7 +625,11 @@ int fimc_mmap_out_dst(struct file *filp, struct vm_area_struct *vma, u32 idx)
 	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 	vma->vm_flags |= VM_RESERVED;
 
-	pfn = __phys_to_pfn(ctrl->out->ctx[ctx_id].dst[idx].base[0]);
+	if (ctrl->out->ctx[ctx_id].dst[idx].base[0])
+		pfn = __phys_to_pfn(ctrl->out->ctx[ctx_id].dst[idx].base[0]);
+	else
+		pfn = __phys_to_pfn(ctrl->mem.curr);
+
 	ret = remap_pfn_range(vma, vma->vm_start, pfn, size, vma->vm_page_prot);
 	if (ret != 0)
 		fimc_err("remap_pfn_range fail.\n");
@@ -797,13 +803,19 @@ int fimc_get_scaler_factor(u32 src, u32 tar, u32 *ratio, u32 *shift)
 }
 
 void fimc_get_nv12t_size(int img_hres, int img_vres,
-				int *y_size, int *cb_size)
+				int *y_size, int *cb_size, int rotate)
 {
 	int remain;
 	int y_hres_byte, y_vres_byte;
 	int cb_hres_byte, cb_vres_byte;
 	int y_hres_roundup, y_vres_roundup;
 	int cb_hres_roundup, cb_vres_roundup;
+
+	if (rotate == 90 || rotate == 270) {
+		int tmp = img_hres;
+		img_hres = img_vres;
+		img_vres = tmp;
+	}
 
 	/* to make 'img_hres and img_vres' be 16 multiple */
 	remain = img_hres % 16;
@@ -887,6 +899,9 @@ static int fimc_open(struct file *filp)
 	struct fimc_prv_data *prv_data;
 	int in_use;
 	int ret;
+#ifdef CLEAR_FIMC2_BUFF
+	unsigned int *fimc2_buff;
+#endif
 
 	ctrl = video_get_drvdata(video_devdata(filp));
 	pdata = to_fimc_plat(ctrl->dev);
@@ -944,6 +959,17 @@ static int fimc_open(struct file *filp)
 			fimc_clk_en(ctrl, false);
 	}
 
+#ifdef CLEAR_FIMC2_BUFF
+	if (2 == ctrl->id) {
+		fimc2_buff = (unsigned int *)ioremap(ctrl->mem.base,
+								ctrl->mem.size);
+		if (fimc2_buff) {
+			memset(fimc2_buff, 0, ctrl->mem.size);
+			iounmap(fimc2_buff);
+		}
+	}
+#endif
+
 	mutex_unlock(&ctrl->lock);
 
 	fimc_info1("%s opened.\n", ctrl->name);
@@ -972,7 +998,6 @@ static int fimc_release(struct file *filp)
 	struct mm_struct *mm = current->mm;
 	struct fimc_ctx *ctx;
 	int ret = 0, i;
-	ctx = &ctrl->out->ctx[ctx_id];
 
 	pdata = to_fimc_plat(ctrl->dev);
 
@@ -1005,6 +1030,7 @@ static int fimc_release(struct file *filp)
 	}
 
 	if (ctrl->out) {
+		ctx = &ctrl->out->ctx[ctx_id];
 		if (ctx->status != FIMC_STREAMOFF) {
 			fimc_clk_en(ctrl, true);
 			ret = fimc_outdev_stop_streaming(ctrl, ctx);
@@ -1032,7 +1058,9 @@ static int fimc_release(struct file *filp)
 				ctx->src[i].flags = V4L2_BUF_FLAG_MAPPED;
 			}
 
-			if (ctx->overlay.mode == FIMC_OVLY_DMA_AUTO) {
+			if ((ctx->overlay.mode == FIMC_OVLY_DMA_AUTO ||
+				ctx->overlay.mode == FIMC_OVLY_NOT_FIXED) &&
+				 ctx->dst[0].base[FIMC_ADDR_Y] != 0) {
 				ctrl->mem.curr = ctx->dst[0].base[FIMC_ADDR_Y];
 
 				for (i = 0; i < FIMC_OUTBUFS; i++) {
@@ -1061,8 +1089,16 @@ static int fimc_release(struct file *filp)
 			}
 		}
 
-		ctrl->ctx_busy[ctx_id] = 0;
 		memset(ctx, 0x00, sizeof(struct fimc_ctx));
+
+		ctx->ctx_num = ctx_id;
+		ctx->overlay.mode = FIMC_OVLY_NOT_FIXED;
+		ctx->status = FIMC_STREAMOFF;
+
+		for (i = 0; i < FIMC_OUTBUFS; i++) {
+			ctx->inq[i] = -1;
+			ctx->outq[i] = -1;
+		}
 
 		if (atomic_read(&ctrl->in_use) == 0) {
 			ctrl->status = FIMC_STREAMOFF;
@@ -1080,23 +1116,7 @@ static int fimc_release(struct file *filp)
 		}
 	}
 
-	/*
-	 * it remain afterimage when I play movie using overlay and exit
-	 */
-	if (ctrl->fb.is_enable == 1) {
-		fimc_info2("WIN_OFF for FIMC%d\n", ctrl->id);
-		ret = fb_blank(registered_fb[ctx->overlay.fb_id],
-				FB_BLANK_POWERDOWN);
-		if (ret < 0) {
-			fimc_err("%s: fb_blank: fb[%d] " \
-					"mode=FB_BLANK_POWERDOWN\n",
-					__func__, ctx->overlay.fb_id);
-			ret = -EINVAL;
-			goto release_err;
-		}
-
-		ctrl->fb.is_enable = 0;
-	}
+	ctrl->ctx_busy[ctx_id] = 0;
 
 	mutex_unlock(&ctrl->lock);
 

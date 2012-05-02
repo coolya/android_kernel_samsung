@@ -342,7 +342,7 @@ PVRSRV_ERROR IMG_CALLCONV PVRSRVDestroyCommandQueueKM(PVRSRV_QUEUE_INFO *psQueue
 			bTimeout = IMG_FALSE;
 			break;
 		}
-		OSWaitus(MAX_HW_TIME_US/WAIT_TRY_COUNT);
+		OSSleepms(1);
 	} END_LOOP_UNTIL_TIMEOUT();
 
 	if (bTimeout)
@@ -460,7 +460,7 @@ PVRSRV_ERROR IMG_CALLCONV PVRSRVGetQueueSpaceKM(PVRSRV_QUEUE_INFO *psQueue,
 			bTimeout = IMG_FALSE;
 			break;
 		}
-		OSWaitus(MAX_HW_TIME_US/WAIT_TRY_COUNT);
+		OSSleepms(1);
 	} END_LOOP_UNTIL_TIMEOUT();
 
 	if (bTimeout == IMG_TRUE)
@@ -822,10 +822,7 @@ PVRSRV_ERROR PVRSRVProcessQueues(IMG_UINT32	ui32CallerID,
 				
 				UPDATE_QUEUE_ROFF(psQueue, psCommand->ui32CmdSize)
 
-				if (bFlush)
-				{
-					continue;
-				}
+				continue;
 			}
 
 			break;

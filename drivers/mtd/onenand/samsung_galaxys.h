@@ -61,7 +61,7 @@ struct mtd_partition s3c_partition_info[] = {
 	           able to change the other partition layout without moving it */
 		.name		= "radio",
 		.offset		= (1940*SZ_256K),
-		.size		= (54*SZ_256K), //1993
+		.size		= (64*SZ_256K), //2003
 	},
 	{
 		.name		= "datadata",
@@ -78,6 +78,21 @@ struct mtd_partition s3c_partition_info[] = {
 		.offset		= (2004*SZ_256K),
 		.size		= (44*SZ_256K), //2047
 	},
+
+
+
+		/* param.lfs partition is used to config the bootloader.
+		   Params: SERIAL_SPEED, LCD_LEVEL, BOOT_DELAY, LOAD_RAMDISK, SWITCH_SEL, PHONE_DEBUG_ON, 
+		   LCD_DIM_LEVEL, LCD_DIM_TIME, MELODY_MODE, REBOOT_MODE, NATION_SEL, LANGUAGE_SEL, 
+		   SET_DEFAULT_PARAM, VERSION_LINE, COMMAND_LINE, BOOT_VERSION
+		*/
+/*  
+	{
+		.name		= "param",
+		.offset		= (52*SZ_256K),
+		.size		= (20*SZ_256K), //71
+	},
+*/
 };
 
 

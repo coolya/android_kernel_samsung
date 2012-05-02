@@ -22,9 +22,9 @@ config INITRAMFS_SOURCE
 	  If you are not sure, leave it blank.
 
 config INITRAMFS_ROOT_UID
-	int "User ID to map to 0 (user root)"
+	string "User ID to map to 0 (user root)"
 	depends on INITRAMFS_SOURCE!=""
-	default "0"
+	default "squash"
 	help
 	  This setting is only meaningful if the INITRAMFS_SOURCE is
 	  contains a directory.  Setting this user ID (UID) to something
@@ -34,9 +34,9 @@ config INITRAMFS_ROOT_UID
 	  If you are not sure, leave it set to "0".
 
 config INITRAMFS_ROOT_GID
-	int "Group ID to map to 0 (group root)"
+	string "Group ID to map to 0 (group root)"
 	depends on INITRAMFS_SOURCE!=""
-	default "0"
+	default "squash"
 	help
 	  This setting is only meaningful if the INITRAMFS_SOURCE is
 	  contains a directory.  Setting this group ID (GID) to something

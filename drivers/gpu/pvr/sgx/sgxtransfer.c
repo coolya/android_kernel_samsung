@@ -491,7 +491,7 @@ IMG_EXPORT PVRSRV_ERROR SGXSubmit2DKM(IMG_HANDLE hDevHandle, PVRSRV_2D_SGX_KICK 
 
 	sCommand.ui32Data[1] = psKick->sHW2DContextDevVAddr.uiAddr;
 	
-	eError = SGXScheduleCCBCommandKM(hDevHandle, SGXMKIF_CMD_2D, &sCommand, KERNEL_ID, psKick->ui32PDumpFlags);	
+	eError = SGXScheduleCCBCommandKM(hDevHandle, SGXMKIF_CMD_2D, &sCommand, KERNEL_ID, psKick->ui32PDumpFlags, IMG_FALSE);	
 
 	if (eError == PVRSRV_ERROR_RETRY)
 	{

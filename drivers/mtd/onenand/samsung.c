@@ -50,6 +50,8 @@ enum soc_type {
 #include "samsung_fascinate.h"
 #elif defined(CONFIG_SAMSUNG_GALAXYS)
 #include "samsung_galaxys.h"
+#elif defined(CONFIG_SAMSUNG_GALAXYSB)
+#include "samsung_galaxysb.h"
 #elif defined(CONFIG_SAMSUNG_VIBRANT)
 #include "samsung_vibrant.h"
 #else

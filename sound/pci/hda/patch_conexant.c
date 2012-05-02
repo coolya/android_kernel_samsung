@@ -391,10 +391,16 @@ static int conexant_add_jack(struct hda_codec *codec,
 	struct conexant_spec *spec;
 	struct conexant_jack *jack;
 	const char *name;
-	int err;
+	int i, err;
 
 	spec = codec->spec;
 	snd_array_init(&spec->jacks, sizeof(*jack), 32);
+
+	jack = spec->jacks.list;
+	for (i = 0; i < spec->jacks.used; i++, jack++)
+		if (jack->nid == nid)
+			return 0 ; /* already present */
+
 	jack = snd_array_new(&spec->jacks);
 	name = (type == SND_JACK_HEADPHONE) ? "Headphone" : "Mic" ;
 
@@ -1633,6 +1639,11 @@ static void cxt5051_update_speaker(struct hda_codec *codec)
 	pinctl = (!spec->hp_present && spec->cur_eapd) ? PIN_OUT : 0;
 	snd_hda_codec_write(codec, 0x1a, 0, AC_VERB_SET_PIN_WIDGET_CONTROL,
 			    pinctl);
+	/* on ideapad there is an aditional speaker (subwoofer) to mute */
+	if (spec->ideapad)
+		snd_hda_codec_write(codec, 0x1b, 0,
+				    AC_VERB_SET_PIN_WIDGET_CONTROL,
+				    pinctl);
 }
 
 /* turn on/off EAPD (+ mute HP) as a master switch */
@@ -1889,6 +1900,13 @@ static void cxt5051_init_mic_port(struct hda_codec *codec, hda_nid_t nid,
 #endif
 }
 
+static struct hda_verb cxt5051_ideapad_init_verbs[] = {
+	/* Subwoofer */
+	{0x1b, AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT},
+	{0x1b, AC_VERB_SET_CONNECT_SEL, 0x00},
+	{ } /* end */
+};
+
 /* initialize jack-sensing, too */
 static int cxt5051_init(struct hda_codec *codec)
 {
@@ -1918,6 +1936,7 @@ enum {
 	CXT5051_LENOVO_X200,	/* Lenovo X200 laptop, also used for Advanced Mini Dock 250410 */
 	CXT5051_F700,       /* HP Compaq Presario F700 */
 	CXT5051_TOSHIBA,	/* Toshiba M300 & co */
+	CXT5051_IDEAPAD,	/* Lenovo IdeaPad Y430 */
 	CXT5051_MODELS
 };
 
@@ -1928,6 +1947,7 @@ static const char *cxt5051_models[CXT5051_MODELS] = {
 	[CXT5051_LENOVO_X200]	= "lenovo-x200",
 	[CXT5051_F700]          = "hp-700",
 	[CXT5051_TOSHIBA]	= "toshiba",
+	[CXT5051_IDEAPAD]	= "ideapad",
 };
 
 static struct snd_pci_quirk cxt5051_cfg_tbl[] = {
@@ -1939,6 +1959,7 @@ static struct snd_pci_quirk cxt5051_cfg_tbl[] = {
 		      CXT5051_LAPTOP),
 	SND_PCI_QUIRK(0x14f1, 0x5051, "HP Spartan 1.1", CXT5051_HP),
 	SND_PCI_QUIRK(0x17aa, 0x20f2, "Lenovo X200", CXT5051_LENOVO_X200),
+	SND_PCI_QUIRK(0x17aa, 0x3a0d, "Lenovo IdeaPad", CXT5051_IDEAPAD),
 	{}
 };
 
@@ -1999,6 +2020,11 @@ static int patch_cxt5051(struct hda_codec *codec)
 	case CXT5051_TOSHIBA:
 		spec->mixers[0] = cxt5051_toshiba_mixers;
 		spec->auto_mic = AUTO_MIC_PORTB;
+		break;
+	case CXT5051_IDEAPAD:
+		spec->init_verbs[spec->num_init_verbs++] =
+			cxt5051_ideapad_init_verbs;
+		spec->ideapad = 1;
 		break;
 	}
 
@@ -3006,19 +3032,20 @@ static const char *cxt5066_models[CXT5066_MODELS] = {
 static struct snd_pci_quirk cxt5066_cfg_tbl[] = {
 	SND_PCI_QUIRK(0x14f1, 0x0101, "Conexant Reference board",
 		      CXT5066_LAPTOP),
-	SND_PCI_QUIRK(0x1028, 0x02f5, "Dell",
-		      CXT5066_DELL_LAPTOP),
+	SND_PCI_QUIRK(0x1028, 0x02f5, "Dell Vostro 320", CXT5066_IDEAPAD),
 	SND_PCI_QUIRK(0x152d, 0x0833, "OLPC XO-1.5", CXT5066_OLPC_XO_1_5),
 	SND_PCI_QUIRK(0x1028, 0x02d8, "Dell Vostro", CXT5066_DELL_VOSTO),
 	SND_PCI_QUIRK(0x1028, 0x0402, "Dell Vostro", CXT5066_DELL_VOSTO),
 	SND_PCI_QUIRK(0x1028, 0x0408, "Dell Inspiron One 19T", CXT5066_IDEAPAD),
 	SND_PCI_QUIRK(0x103c, 0x360b, "HP G60", CXT5066_HP_LAPTOP),
+	SND_PCI_QUIRK(0x1043, 0x13f3, "Asus A52J", CXT5066_HP_LAPTOP),
 	SND_PCI_QUIRK(0x1179, 0xff50, "Toshiba Satellite P500-PSPGSC-01800T", CXT5066_OLPC_XO_1_5),
 	SND_PCI_QUIRK(0x1179, 0xffe0, "Toshiba Satellite Pro T130-15F", CXT5066_OLPC_XO_1_5),
 	SND_PCI_QUIRK(0x17aa, 0x20f2, "Lenovo T400s", CXT5066_THINKPAD),
 	SND_PCI_QUIRK(0x17aa, 0x21b2, "Thinkpad X100e", CXT5066_IDEAPAD),
 	SND_PCI_QUIRK(0x17aa, 0x21b3, "Thinkpad Edge 13 (197)", CXT5066_IDEAPAD),
 	SND_PCI_QUIRK(0x17aa, 0x21b4, "Thinkpad Edge", CXT5066_IDEAPAD),
+	SND_PCI_QUIRK(0x17aa, 0x21c8, "Thinkpad Edge 11", CXT5066_IDEAPAD),
 	SND_PCI_QUIRK(0x17aa, 0x3a0d, "ideapad", CXT5066_IDEAPAD),
 	SND_PCI_QUIRK(0x17aa, 0x215e, "Lenovo Thinkpad", CXT5066_THINKPAD),
 	{}

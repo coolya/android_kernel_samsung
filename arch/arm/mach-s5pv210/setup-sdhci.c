@@ -29,7 +29,6 @@
 #include <asm/mach-types.h>
 
 /* clock sources for the mmc bus clock, order as for the ctrl2[5..4] */
-
 char *s5pv210_hsmmc_clksrcs[4] = {
 	[0] = "hsmmc",		/* HCLK */
 	[1] = "hsmmc",		/* HCLK */
@@ -284,7 +283,11 @@ unsigned int universal_sdhci2_detect_ext_cd(void)
 void universal_sdhci2_cfg_ext_cd(void)
 {
 	printk(KERN_DEBUG "Universal :SD Detect configuration\n");
-	s3c_gpio_setpull(S5PV210_GPH3(4), S3C_GPIO_PULL_NONE);
+#if defined(CONFIG_SAMSUNG_CAPTIVATE) || defined(CONFIG_SAMSUNG_VIBRANT)
+    s3c_gpio_setpull(S5PV210_GPH3(4), S3C_GPIO_PULL_UP);
+#else
+    s3c_gpio_setpull(S5PV210_GPH3(4), S3C_GPIO_PULL_NONE);
+#endif
 	set_irq_type(IRQ_EINT(28), IRQ_TYPE_EDGE_BOTH);
 }
 
@@ -298,6 +301,10 @@ static struct s3c_sdhci_platdata hsmmc0_platdata = {
 	.get_ro         = sdhci0_get_ro,
 #endif
 };
+
+#if defined(CONFIG_S3C_DEV_HSMMC1)
+static struct s3c_sdhci_platdata hsmmc1_platdata = { 0 };
+#endif
 
 #if defined(CONFIG_S3C_DEV_HSMMC2)
 static struct s3c_sdhci_platdata hsmmc2_platdata = {
@@ -316,6 +323,11 @@ void s3c_sdhci_set_platdata(void)
 {
 #if defined(CONFIG_S3C_DEV_HSMMC)
 	s3c_sdhci0_set_platdata(&hsmmc0_platdata);
+#endif
+#if defined(CONFIG_S3C_DEV_HSMMC1)
+	if (machine_is_aries())
+		hsmmc1_platdata.built_in = 1;
+	s3c_sdhci1_set_platdata(&hsmmc1_platdata);
 #endif
 #if defined(CONFIG_S3C_DEV_HSMMC2)
 	if (machine_is_herring()) {
