@@ -8,7 +8,7 @@ WHAT IS LINUX?
 
   Linux is a clone of the operating system Unix, written from scratch by
   Linus Torvalds with assistance from a loosely-knit team of hackers across
-  the Net. It aims towards POSIX and Single UNIX Specification compliance.
+  the net. It aims towards POSIX and Single UNIX Specification compliance.
 
   It has all the features you would expect in a modern fully-fledged Unix,
   including true multitasking, virtual memory, shared libraries, demand
@@ -28,11 +28,11 @@ ON WHAT HARDWARE DOES IT RUN?
 
   Linux is easily portable to most general-purpose 32- or 64-bit architectures
   as long as they have a paged memory management unit (PMMU) and a port of the
-  GNU C compiler (gcc) (part of The GNU Compiler Collection, GCC). Linux has
+  GNU C compiler (gcc) (part of The GNU Compiler Collection). Linux has
   also been ported to a number of architectures without a PMMU, although
-  functionality is then obviously somewhat limited.
+  functionality is then somewhat limited.
   Linux has also been ported to itself. You can now run the kernel as a
-  userspace application - this is called UserMode Linux (UML).
+  userspace application - this is called usermode Linux (UML).
 
 DOCUMENTATION:
 
@@ -52,28 +52,26 @@ DOCUMENTATION:
 
  - The Documentation/DocBook/ subdirectory contains several guides for
    kernel developers and users.  These guides can be rendered in a
-   number of formats:  PostScript (.ps), PDF, HTML, & man-pages, among others.
+   number of formats:  PostScript (.ps), PDF, HTML, & man pages, among others.
    After installation, "make psdocs", "make pdfdocs", "make htmldocs",
    or "make mandocs" will render the documentation in the requested format.
 
-INSTALLING the kernel source:
+Installing the kernel sources:
 
  - If you install the full sources, put the kernel tarball in a
-   directory where you have permissions (eg. your home directory) and
+   directory where you have permission (eg. your /home directory) and
    unpack it:
 
 		gzip -cd linux-2.6.XX.tar.gz | tar xvf -
-
    or
 		bzip2 -dc linux-2.6.XX.tar.bz2 | tar xvf -
 
 
-   Replace "XX" with the version number of the latest kernel.
+   Replace "XX" with the "sub" version number of the latest kernel.
 
    Do NOT use the /usr/src/linux area! This area has a (usually
    incomplete) set of kernel headers that are used by the library header
-   files.  They should match the library, and not get messed up by
-   whatever the kernel-du-jour happens to be.
+   files.  They should match the library, and not get messed up.
 
  - You can also upgrade between 2.6.xx releases by patching.  Patches are
    distributed in the traditional gzip and the newer bzip2 format.  To
@@ -81,14 +79,13 @@ INSTALLING the kernel source:
    top level directory of the kernel source (linux-2.6.xx) and execute:
 
 		gzip -cd ../patch-2.6.xx.gz | patch -p1
-
    or
 		bzip2 -dc ../patch-2.6.xx.bz2 | patch -p1
 
    (repeat xx for all versions bigger than the version of your current
-   source tree, _in_order_) and you should be ok.  You may want to remove
+   source tree, _in_order_) and you should be OK.  You may want to remove
    the backup files (xxx~ or xxx.orig), and make sure that there are no
-   failed patches (xxx# or xxx.rej). If there are, either you or me has
+   failed patches (xxx# or xxx.rej). If there are, you have
    made a mistake.
 
    Unlike patches for the 2.6.x kernels, patches for the 2.6.x.y kernels
@@ -99,7 +96,6 @@ INSTALLING the kernel source:
    Alternatively, the script patch-kernel can be used to automate this
    process.  It determines the current kernel version and applies any
    patches found.
-
 		linux/scripts/patch-kernel linux
 
    The first argument in the command above is the location of the
@@ -118,10 +114,8 @@ INSTALLING the kernel source:
    You can read more on this in Documentation/applying-patches.txt
 
  - Make sure you have no stale .o files and dependencies lying around:
-
 		cd linux
 		make mrproper
-
    You should now have the sources correctly installed.
 
 SOFTWARE REQUIREMENTS
@@ -135,9 +129,9 @@ SOFTWARE REQUIREMENTS
    you can just update packages when obvious problems arise during
    build or operation.
 
-BUILD directory for the kernel:
+The BUILD directory for the kernel:
 
-   When compiling the kernel all output files will per default be
+   When compiling the kernel all output files will by default be
    stored together with the kernel source code.
    Using the option "make O=output/dir" allow you to specify an alternate
    place for the output files (including .config).
@@ -154,7 +148,7 @@ BUILD directory for the kernel:
    Please note: If the 'O=output/dir' option is used then it must be
    used for all invocations of make.
 
-CONFIGURING the kernel:
+Configuring the kernel:
 
    Do not skip this step even if you are only upgrading one minor
    version.  New configuration options are added in each release, and
@@ -171,30 +165,6 @@ CONFIGURING the kernel:
 	"make oldconfig"   Default all questions based on the contents of
 			   your existing ./.config file and asking about
 			   new config symbols.
-	"make silentoldconfig"
-			   Like above, but avoids cluttering the screen
-			   with questions already answered.
-			   Additionally updates the dependencies.
-	"make defconfig"   Create a ./.config file by using the default
-			   symbol values from either arch/$ARCH/defconfig
-			   or arch/$ARCH/configs/${PLATFORM}_defconfig,
-			   depending on the architecture.
-	"make ${PLATFORM}_defconfig"
-			  Create a ./.config file by using the default
-			  symbol values from
-			  arch/$ARCH/configs/${PLATFORM}_defconfig.
-			  Use "make help" to get a list of all available
-			  platforms of your architecture.
-	"make allyesconfig"
-			   Create a ./.config file by setting symbol
-			   values to 'y' as much as possible.
-	"make allmodconfig"
-			   Create a ./.config file by setting symbol
-			   values to 'm' as much as possible.
-	"make allnoconfig" Create a ./.config file by setting symbol
-			   values to 'n' as much as possible.
-	"make randconfig"  Create a ./.config file by setting symbol
-			   values to random values.
 
    You can find more information on using the Linux kernel config tools
    in Documentation/kbuild/kconfig.txt.
@@ -218,7 +188,7 @@ CONFIGURING the kernel:
 	  should probably answer 'n' to the questions for
           "development", "experimental", or "debugging" features.
 
-COMPILING the kernel:
+Compling the kernel:
 
  - Make sure you have at least gcc 3.2 available.
    For more information, refer to Documentation/Changes.
@@ -242,7 +212,6 @@ COMPILING the kernel:
    to see compile, link, or other commands exactly as they are executed.
    For this, use "verbose" build mode.  This is done by inserting
    "V=1" in the "make" command.  E.g.:
-
 	make V=1 all
 
    To have the build system also tell the reason for the rebuild of each
