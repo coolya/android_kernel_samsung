@@ -54,8 +54,8 @@ void blk_execute_rq_nowait(struct request_queue *q, struct gendisk *bd_disk,
 	rq->end_io = done;
 	WARN_ON(irqs_disabled());
 	spin_lock_irq(q->queue_lock);
-	__elv_add_request(q, rq, where, 1);
-	__generic_unplug_device(q);
+	elv_add_request(q, rq, where, 1);
+	generic_unplug_device(q);
 	/* the queue is stopped so it won't be plugged+unplugged */
 	if (blk_pm_resume_request(rq))
 		q->request_fn(q);
